@@ -1,0 +1,8 @@
+linters: linters_with_defaults(
+    line_length_linter = line_length_linter(100L),
+    object_name_linter = NULL,      # allow SK50/CAS/MNT-style constants
+    object_usage_linter = NULL,     # data.table NSE (:=, bare cols) trips this
+    commented_code_linter = NULL
+  )
+exclusions: list("agent", "docs")
+encoding: "UTF-8"

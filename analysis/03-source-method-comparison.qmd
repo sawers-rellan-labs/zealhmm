@@ -1,0 +1,74 @@
+---
+title: "Cross-modality concordance on the paired BrB + skim cohort"
+subtitle: "Results §3.3 — transfer sim-calibrated params to ~400 NILs sequenced two ways"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**The benchmark cohort is the ~400 NILs that have BOTH BRB-seq and skim data.**
+The paired design is the point: the *same* NIL genotype seen through two
+modalities, so cross-source disagreement is **method, not sample**. We apply the
+sim-calibrated parameters from `02-simulation-calibration.qmd` and quantify
+concordance per sample.
+
+> **Emits (paper):** Figure F4 (400-cohort source × method concordance),
+> Results §3.3. Chromosome painting appears here only as supplementary QC (see
+> `99-sanity-paint.qmd`), never as a main figure.
+
+::: {.callout-important title="STATUS: blocked (B5 open input)"}
+Needs the **~400 paired-cohort sample manifest** (IDs, donor species, per-source
+depth). Trace from `sample_metatada.csv` / memory `bzea-sample-donor-metadata`
+plus the BRB and skim sample maps; the vary-skim sweep members are a subset.
+Record it in `data/MANIFEST.md` before running. This note is the analysis
+harness that consumes that manifest.
+:::
+
+```{r setup}
+suppressMessages({
+  library(nilHMM)
+  library(data.table)
+  library(ggplot2)
+})
+for (f in list.files(here::here("R"), "\\.R$", full.names = TRUE)) source(f)
+mnt <- bzea_mounts()
+```
+
+# 1. The three source paths (calibrated params from B2.2)
+
+- **Skim** (low-cov WGS + TP teosinte–B73 wideseq filtering): nNIL, RTIGER, binhmm.
+- **BrB** (3′ RNA-seq + TP filtering): nNIL, RTIGER, ATLAS.
+- **Target-seq** (MolBreeding 45K, high coverage): `gt` path — *completeness
+  only*, and doubles as the optional Holland-style calibration cross-check; not
+  headline.
+
+# 2. Concordance metrics (per sample)
+
+Computed on a shared marker/bin grid so tracks with different breakpoints are
+comparable (helpers in `R/metrics.R`):
+
+- **pairwise segment agreement** — `pairwise_agreement()`
+- **donor-footprint Jaccard** — `donor_jaccard()`
+- **breakpoint concordance** — compare `breakpoint_count()` across tracks
+- **control cleanliness on B73** — `control_donor_rate()` (should be ~0)
+
+```{r comparison, eval=FALSE}
+# manifest <- fread(here::here("data/paired_cohort_manifest.csv"))  # from B5
+# for each sample: stage skim + brb calls -> common schema -> metrics on grid.
+# jac <- donor_jaccard(skim_calls, brb_calls, grid)
+# agr <- pairwise_agreement(skim_calls, brb_calls, grid)
+```
+
+# 3. Read (to write once data is in)
+
+Cross-source / cross-caller concordance distributions, and where the modalities
+systematically disagree (expected: BRB-RTIGER RNA false-donor floor; ATLAS most
+conservative). This is F4.

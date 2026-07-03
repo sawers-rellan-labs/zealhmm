@@ -1,0 +1,34 @@
+Package: zealhmm
+Title: Simulation-Calibrated HMM Ancestry Calling for NILs (Analysis Repo)
+Version: 0.0.0.9000
+Authors@R:
+    person("Fausto", "Rodriguez Zapata", role = c("aut", "cre"),
+           email = "thegemmalab@ncsu.edu")
+Description: Analysis and benchmark repository backing the nilHMM methods paper.
+    Installs the nilHMM package, runs the ancestry-caller comparison across
+    sequencing modalities (Skim WGS, BRB-seq, target-seq) on BZea NILs,
+    calibrates and validates caller parameters against Broman simcross
+    simulations, and renders the paper's figures and analysis notes. This is
+    not itself a library: R/ holds shared analysis helpers, analysis/ holds the
+    rendered notes, sim/ holds the simulation generator.
+License: MIT + file LICENSE
+URL: https://github.com/sawers-rellan-labs/zealhmm,
+    https://sawers-rellan-labs.github.io/zealhmm/
+Encoding: UTF-8
+Remotes:
+    sawers-rellan-labs/nilhmm,
+    kbroman/simcross
+Depends:
+    R (>= 4.1)
+Imports:
+    nilHMM,
+    data.table,
+    ggplot2,
+    ggpubr
+Suggests:
+    simcross,
+    quarto,
+    knitr,
+    rmarkdown,
+    styler,
+    lintr

@@ -1,0 +1,43 @@
+---
+title: "B1 anthocyanin mapping benchmark (DEFERRED)"
+subtitle: "Discussion / future application — mapping power & resolution across callers × sources"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+::: {.callout-important title="STATUS: DEFERRED (B2.4)"}
+The B1 phenotype table + NIL panel are **not ready** (per user). This note plans
+the pipeline abstractly now; it becomes a real analysis once the B1 phenotype
+and panel are located, otherwise it stays a "future application" paragraph in the
+Discussion.
+:::
+
+# Planned pipeline (abstract)
+
+1. **Project decoded ancestry → mapping genotype.** Convert each caller's
+   REF/HET/ALT segments to a segment/dosage genotype — the mapping unit implied
+   by the zygosity-identifiability ceiling (memory
+   `snp50k-zygosity-identifiability`, `gatk-vs-posterior-genotype-calling`).
+2. **Map the B1 QTL** (anthocyanin) per (caller × source) call set.
+3. **Compare mapping power/resolution** — QTL detection, support-interval width,
+   effect-size stability — across callers and sequencing modalities.
+
+# Why it matters
+
+This is the downstream payoff: do the simulation-calibrated calls (B2.2) and the
+cheaper modality (BrB/skim vs target-seq) recover the same QTL at comparable
+resolution? A "yes" closes the loop from calibration → concordance → application.
+
+# Inputs still needed
+
+- B1 anthocyanin phenotype table (sample → phenotype).
+- The NIL panel genotyped for B1 (overlap with the paired cohort in B2.3).
