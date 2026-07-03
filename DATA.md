@@ -27,9 +27,9 @@ skim/BRB reads at those positions. (memory `snp50k-cohort-provenance`,
 
 ## Staged subset: skim sweep (`data/`, gitignored, ~33 MB)
 
-`stage_sanity_paint.R` copies the 11-sample vary-skim cohort (B73 control + 10
+`stage_sanity_check_paint.R` copies the 11-sample vary-skim cohort (B73 control + 10
 NILs) into `data/`, organized by **(source × input type)** and consumed by
-`analysis/nilhmm_sanity_paint.qmd`. Verified: the note reproduces the original
+`analysis/nilhmm_sanity_check_paint.qmd`. Verified: the note reproduces the original
 zealtiger output **row-for-row** (1709 segments, all 6 tracks identical).
 
 ```
@@ -51,7 +51,7 @@ data/
 | `skim/bins/<skim>_bin_genotypes.tsv` | rsstu `BZea/bzeaseq/ancestry/<skim>_bin_genotypes.tsv` (per-sample) |
 | `brb/pangene/`, `ref/` | rsstu `tlaloc/cassini/` (`results/<species>/pangene/`, `data/pangene/`, `data/meta/`) |
 
-Re-stage with `Rscript stage_sanity_paint.R` **run with the sandbox disabled** —
+Re-stage with `Rscript stage_sanity_check_paint.R` **run with the sandbox disabled** —
 both shares live under the `rsstu` automount, which the default sandbox cannot
 see (it reports the files as missing).
 

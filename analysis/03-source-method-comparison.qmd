@@ -22,7 +22,7 @@ concordance per sample.
 
 > **Emits (paper):** Figure F4 (400-cohort source × method concordance),
 > Results §3.3. Chromosome painting appears here only as supplementary QC (see
-> `99-sanity-paint.qmd`), never as a main figure.
+> `nilhmm_sanity_check_paint.qmd`), never as a main figure.
 
 ::: {.callout-important title="STATUS: blocked (B5 open input)"}
 Needs the **~400 paired-cohort sample manifest** (IDs, donor species, per-source

@@ -34,7 +34,7 @@ zealhmm/
     02-simulation-calibration.qmd   # §2.4-2.5, §3.1-3.2 CORE       (needs B5 sim design)
     03-source-method-comparison.qmd # §3.3 400-cohort concordance   (needs B5 manifest)
     04-b1-mapping-benchmark.qmd     # B1 mapping                    (deferred)
-    99-sanity-paint.qmd             # supplementary QC painting     (ported)
+    nilhmm_sanity_check_paint.qmd             # supplementary QC painting     (ported)
   docs/                  # rendered site (Pages, .nojekyll) — HTML committed
 
   # gitignored (bulk inputs / generated outputs — see DATA.md):
@@ -52,7 +52,7 @@ produces the figures, tables, and rendered notes. Section → note → figure ma
 | §2.4–2.5, §3.1–3.2 calibration + benchmark | `02-simulation-calibration.qmd` | Fig F2, F3 |
 | §3.3 cross-modality concordance | `03-source-method-comparison.qmd` | Fig F4 |
 | future application | `04-b1-mapping-benchmark.qmd` | (deferred) |
-| supplementary QC | `99-sanity-paint.qmd` | Supp. painting |
+| supplementary QC | `nilhmm_sanity_check_paint.qmd` | Supp. painting |
 
 ## Reproduce
 
@@ -71,7 +71,8 @@ renders off-mount. Seeds for `simcross` are pinned in `R/simulate.R`.
 
 ## Status
 
-The methods note (01) and supplementary paint (99) are wired to the package. The
+The methods note (01) and the supplementary sanity-check paint are wired to the
+package. The
 core calibration (02), the 400-cohort comparison (03), and B1 mapping (04) are
 scaffolded and **blocked on open inputs** tracked in [`DATA.md`](DATA.md) and
 plan B5.

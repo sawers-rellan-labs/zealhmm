@@ -26,7 +26,7 @@ restating signatures.
 > the zealtiger notes `generative_vs_discriminative_callers`,
 > `emission_by_depth_regime`, `genotype_likelihoods_and_hmm`,
 > `snp50k_genotype_identifiability`, and the ATLAS section of
-> `nilhmm_sanity_paint`, rewritten onto `library(nilHMM)`.
+> `nilhmm_sanity_check_paint`, rewritten onto `library(nilHMM)`.
 
 ```{r setup}
 suppressMessages({

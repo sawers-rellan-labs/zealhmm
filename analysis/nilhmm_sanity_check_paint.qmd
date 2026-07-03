@@ -1,5 +1,5 @@
 ---
-title: "nilHMM sanity paint: source × caller tracks, one engine, no Julia"
+title: "nilHMM sanity check paint: source × caller tracks, one engine, no Julia"
 subtitle: "Chromosome painting of the vary-skim sweep NILs (+B73 control) — 6 tracks = 2 data sources (Skim, BRB) crossed with nilHMM callers, all through the nilHMM package"
 author: "Fausto Rodríguez-Zapata"
 date: "2026-07-02"
@@ -100,7 +100,7 @@ suppressMessages({
   library(data.table)
   library(ggplot2)
 })
-# Inputs are staged locally under data/ by stage_sanity_paint.R (see DATA.md),
+# Inputs are staged locally under data/ by stage_sanity_check_paint.R (see DATA.md),
 # organized by (source x input type); paths below point into that layout.
 SS <- here::here("data/skimsweep") # the vary-skim cohort
 SKIM <- file.path(SS, "skim") # skim counts (counts_50k/) + bins (bins/)
@@ -408,7 +408,7 @@ p <- ggplot(df, aes(xmin = start_bp / 1e6, xmax = end_bp / 1e6, ymin = ylo, ymax
     expand = expansion(mult = 0.01)
   ) +
   labs(
-    title = "nilHMM sanity paint — vary-skim sweep (B73 control + 10 NILs)",
+    title = "nilHMM sanity check paint — vary-skim sweep (B73 control + 10 NILs)",
     subtitle = "6 tracks = data source × nilHMM caller (2 sources: Skim, BrB | 4 callers: binhmm, nNIL, RTIGER, ATLAS) | ordered by source then caller | all nilHMM, no Julia",
     x = "Position (Mb)", fill = "Genotype"
   ) +
@@ -432,8 +432,8 @@ p <- ggplot(df, aes(xmin = start_bp / 1e6, xmax = end_bp / 1e6, ymin = ylo, ymax
     axis.ticks.x = element_blank()
   )
 dir.create(here::here("results"), showWarnings = FALSE)
-ggsave(here::here("results/nilhmm_sanity_paint.png"), p, width = 16, height = 11, dpi = 130, limitsize = FALSE)
-fwrite(df, here::here("results/nilhmm_sanity_paint_segments.tsv"), sep = "\t")
+ggsave(here::here("results/nilhmm_sanity_check_paint.png"), p, width = 16, height = 11, dpi = 130, limitsize = FALSE)
+fwrite(df, here::here("results/nilhmm_sanity_check_paint_segments.tsv"), sep = "\t")
 p
 ```
 

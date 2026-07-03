@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Stage the skim-sweep subset (11 samples: B73 control + 10 vary-skim NILs) into
 # data/, organized by (source x input type). Consumed by
-# analysis/nilhmm_sanity_paint.qmd. Idempotent. ~ tens of MB.
+# analysis/nilhmm_sanity_check_paint.qmd. Idempotent. ~ tens of MB.
 #
 # Layout:
 #   data/ref/                                   genome-level, dataset-independent
