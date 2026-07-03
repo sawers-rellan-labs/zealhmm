@@ -25,11 +25,12 @@ suffice** and that the calibrated parameters transfer to real data (B2.3).
 > benchmark / caller ranking). Core Results §3.1–3.2.
 
 ::: {.callout-important title="STATUS: partially blocked (B5 open input)"}
-The generator scaffold lives in `sim/` and uses `nilHMM::load_map()` +
-`kbroman/simcross`. The concrete **simcross design to match BZea** — generations
-(BC2S2 bulked skim vs BC2S3), n per condition, cM map + interference — is still
-open (plan B5) and must be fixed before the calibration numbers are final. Seeds
-are pinned in `sim/` for reproducibility.
+The generator scaffold lives in `R/simulate.R` (simulations are written to the
+gitignored `sim/` dir) and uses `nilHMM::load_map()` + `kbroman/simcross`. The
+concrete **simcross design to match BZea** — generations (BC2S2 bulked skim vs
+BC2S3), n per condition, cM map + interference — is still open (plan B5) and
+must be fixed before the calibration numbers are final. Seeds are pinned in
+`R/simulate.R` for reproducibility.
 :::
 
 ```{r setup}
@@ -51,7 +52,7 @@ simulated NIL looks like a Skim or BRB sample:
 - Per-locus genotype expectations at the panel marker set.
 - Coverage-driven missingness `missing(λ) = π + (1 − π)e^{−kλ}` and per-read error.
 
-Generator: `sim/simulate_nils.R` (see `sim/README.md`). Truth is the simulated
+Generator: `R/simulate.R::simulate_source()`. Truth is the simulated
 mosaic; the degraded counts are the caller input.
 
 # 2. Calibration protocol (§2.5a — the contribution)
@@ -70,7 +71,7 @@ explicitly contrasting with Holland's high-coverage-truth calibration
 for calibration.*
 
 ```{r calibrate, eval=FALSE}
-# Skeleton — fill once sim/ emits (truth, degraded counts) per source.
+# Skeleton — fill once simulate_source() emits (truth, degraded counts) per source.
 # map  <- nilHMM::load_map()
 # sims <- simulate_source(map, design = "BC2S3", source = "skim", n = 200, seed = 1L)
 # r_hat <- nilHMM::calibrate_r(sims$counts, sims$truth, design = "BC2S3")
@@ -97,6 +98,6 @@ Reuse the n = 1500 expectation and fragment-size null (memory
 
 # 4. Next steps
 
-1. Fix the simcross design with the user (B5) → finalize `sim/simulate_nils.R`.
+1. Fix the simcross design with the user (B5) → finalize `R/simulate.R`.
 2. Run calibration across {Skim, BRB} × {nNIL, RTIGER, binhmm, ATLAS}.
 3. Produce F2 (calibration curves) and F3 (benchmark ranking).

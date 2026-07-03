@@ -9,8 +9,8 @@ Description: Analysis and benchmark repository backing the nilHMM methods paper.
     sequencing modalities (Skim WGS, BRB-seq, target-seq) on BZea NILs,
     calibrates and validates caller parameters against Broman simcross
     simulations, and renders the paper's figures and analysis notes. This is
-    not itself a library: R/ holds shared analysis helpers, analysis/ holds the
-    rendered notes, sim/ holds the simulation generator.
+    not itself a library: R/ holds shared analysis helpers and the simcross
+    generator, analysis/ holds the rendered notes.
 License: MIT + file LICENSE
 URL: https://github.com/sawers-rellan-labs/zealhmm,
     https://sawers-rellan-labs.github.io/zealhmm/

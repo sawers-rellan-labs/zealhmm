@@ -1,8 +1,9 @@
-# Data manifest — provenance for every input
+# Data provenance
 
-Large inputs stay on the mount and are referenced here (not committed); only
-small inputs + this manifest live under `data/`. Mount roots drift across
-machines — resolve them with `R/staging.R::bzea_mounts()` (`pick()` fallback).
+`data/`, `results/`, and `sim/` are **gitignored** (bulk inputs / generated
+outputs — not tracked). Large inputs live on the mount and are referenced here;
+resolve the mount roots with `R/staging.R::bzea_mounts()` (`pick()` fallback).
+This file is the tracked record of where everything comes from.
 
 ## Mount roots
 
@@ -36,7 +37,7 @@ skim/BRB reads at those positions. (memory `snp50k-cohort-provenance`,
 ## Migration from zealtiger (plan B3)
 
 The sanity-paint sweep inputs currently read from the zealtiger working repo
-(`results/sim_calibration/coverage_sweep_members.csv`,
-`data/rtiger_50K/`, `results/sim_calibration/brbseq_ks_wideseq/counts/`). Only
-the **validated, paper-bound** subsets migrate here as fixtures; the `agent/`
+(`results/sim_calibration/coverage_sweep_members.csv`, `data/rtiger_50K/`,
+`results/sim_calibration/brbseq_ks_wideseq/counts/`). Only the **validated,
+paper-bound** subsets migrate onto the mount / local `data/`; the `agent/`
 scratch tree is not copied.

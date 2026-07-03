@@ -65,7 +65,8 @@ contract is `call_ancestry(data, caller, design, params...) → segment table`.
 
 The Julia-free RTIGER port (memory `rtiger-fork`) is what lets all four share
 one R + Rcpp engine. Each caller gets a §2.2 subsection in the manuscript; the
-prose is drafted in the RILAB LaTeX template (see `paper/README.md`).
+prose is drafted in the RILAB LaTeX template in the separate manuscript repo
+(see the README section→note→figure map).
 
 # 3. Smoke test — every caller returns a valid segment table
 

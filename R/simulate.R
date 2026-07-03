@@ -1,23 +1,23 @@
-# sim/simulate_nils.R — simcross NIL generator + per-source degradation.
+# simcross NIL generator + per-source degradation.
 #
 # Emits, per (design, source): a truth mosaic and degraded allele counts that
 # look like a Skim or BRB sample, for calibration + validation (analysis note
-# 02-simulation-calibration.qmd). Seeds are pinned for reproducibility (B4).
+# 02-simulation-calibration.qmd). Generated simulations are bulk output — they
+# land in sim/ (gitignored); only this generator code is tracked.
+#
+# Uses kbroman/simcross + the map/fitting primitives already in the nilHMM
+# package (load_map, expected_fragment_dist, calibrate_r, cm_to_mb,
+# fit_design_gamma). Seeds are pinned for reproducibility.
 #
 # STATUS: scaffold. The concrete BZea simcross design (generations, n, cM map,
 # interference) is open (plan B5) and must be fixed with the user before the
-# numbers are final. This file records the intended interface; the map + fitting
-# primitives already live in the nilHMM package (load_map, expected_fragment_dist,
-# calibrate_r, cm_to_mb, fit_design_gamma).
+# numbers are final. This file records the intended interface.
+#
+# Source-safe: top level defines functions only (no library()/stopifnot), so
+# the analysis notes can source() all of R/ without side effects.
 
-suppressMessages({
-  library(nilHMM)
-  library(data.table)
-})
-stopifnot(requireNamespace("simcross", quietly = TRUE))
-
-# Reproducibility: fixed seed (B4). Vary only via the `seed` argument.
-DEFAULT_SEED <- 1L
+# Reproducibility: fixed seed. Vary only via the `seed` argument.
+SIM_DEFAULT_SEED <- 1L
 
 #' Simulate NILs for one design and degrade to one sequencing source
 #'
@@ -29,9 +29,12 @@ DEFAULT_SEED <- 1L
 #'   grid = <chr,pos evaluation grid>). NOTE: body is a stub pending B5.
 simulate_source <- function(design = c("BC2S3", "BC2S2"),
                             source = c("skim", "brb", "target"),
-                            n = 200L, seed = DEFAULT_SEED) {
+                            n = 200L, seed = SIM_DEFAULT_SEED) {
   design <- match.arg(design)
   source <- match.arg(source)
+  if (!requireNamespace("simcross", quietly = TRUE)) {
+    stop("simulate_source() needs the 'simcross' package (kbroman/simcross).")
+  }
   set.seed(seed)
 
   # 1. map + pedigree ---------------------------------------------------------
@@ -49,9 +52,6 @@ simulate_source <- function(design = c("BC2S3", "BC2S2"),
   stop("simulate_source(): stub — fix the BZea simcross design (plan B5) first.")
 }
 
-if (sys.nframe() == 0L) {
-  # CLI entry point (once implemented):
-  #   Rscript sim/simulate_nils.R BC2S3 skim 200
-  args <- commandArgs(trailingOnly = TRUE)
-  message("sim/simulate_nils.R is a scaffold; see plan B5 before running.")
-}
+# CLI entry point (once implemented; sourcing the file does not trigger this):
+#   Rscript -e 'source("R/simulate.R"); simulate_source("BC2S3", "skim", 200)'
+# Simulations are written under sim/ (gitignored).

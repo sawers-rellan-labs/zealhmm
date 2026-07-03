@@ -26,7 +26,7 @@ callers, naming `<Source>-<Caller>` (memory `method-naming-source-caller`).
 
 ::: {.callout-note title="STATUS: data migration pending (B3)"}
 The count/bin inputs still live in the zealtiger working repo. `ZT` below
-resolves to that repo as a stand-in data source; once `data/MANIFEST.md` freezes
+resolves to that repo as a stand-in data source; once `DATA.md` freezes
 provenance (B3), point these at migrated fixtures under `data/`.
 :::
 
@@ -243,6 +243,7 @@ p <- paint_tracks(
   title = "nilHMM sanity paint — vary-skim sweep (B73 control + NILs)",
   subtitle = "Supplementary QC: 2 sources x nilHMM callers | all nilHMM, no Julia"
 )
+dir.create(here::here("results"), showWarnings = FALSE)
 fwrite(df, here::here("results/sanity_paint_segments.tsv"), sep = "\t")
 p
 ```

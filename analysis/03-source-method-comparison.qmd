@@ -28,7 +28,7 @@ concordance per sample.
 Needs the **~400 paired-cohort sample manifest** (IDs, donor species, per-source
 depth). Trace from `sample_metatada.csv` / memory `bzea-sample-donor-metadata`
 plus the BRB and skim sample maps; the vary-skim sweep members are a subset.
-Record it in `data/MANIFEST.md` before running. This note is the analysis
+Record it in `DATA.md` before running. This note is the analysis
 harness that consumes that manifest.
 :::
 
