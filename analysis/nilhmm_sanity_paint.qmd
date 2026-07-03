@@ -53,18 +53,33 @@ callers (`binhmm` is Skim-only, `ATLAS` is BRB-only, `nNIL`/`RTIGER` run on both
 ::: {.callout-note title="Marker-set provenance — the tracks run at different SNP densities"}
 The three Skim tracks are **not** all on the same markers. **Skim-binhmm runs on
 the full dense set of ~27.6 M teosinte-informative SNPs** (2.0–4.0 M per
-chromosome; total 27,603,777), whereas **Skim-nNIL / Skim-rtiger run on the
-much coarser thinned 50K panel** — the SNP50K counts used for the 50K set.
+chromosome; total 27,603,777), whereas **Skim-nNIL / Skim-rtiger run on the much
+sparser ~52 K "SNP50K" set**. These are two different marker sets with two
+different provenances:
 
-That ~27.6 M set is itself a **wideseq thinning of an even larger SNP dataset**:
-per `bzeaseq` (`get_variants_from_schnable2023.sh`), the **Schnable et al. 2023**
-teosinte / *Tripsacum* diversity VCF is filtered to the teosinte/*Tripsacum*
-samples, restricted to biallelic SNPs, and MAF-filtered at ≥ 0.05 to yield the
-`wideseq_ref` panel; GATK `CollectAllelicCounts` then tallies skim/BRB reads at
-exactly those positions (`run_wideseq.sh`, `CollectAllelicCounts` — memory
-`gatk-table-readcount-standard`). So the **BRB count tracks (BrB-nNIL,
-BrB-rtiger) are also wideseq-thinned from the same larger source**; only
-Skim-binhmm keeps the full ~27.6 M density.
+- **The ~27.6 M panel** (`wideseq_ref`) is a **teosinte-informative SNP set** —
+  positions where teosinte (the donor) carries variation relative to B73 (the
+  recurrent parent), so a read there is diagnostic of donor-vs-recurrent ancestry.
+  That informativeness is the whole point of the panel; it is a **reference/filter
+  set, not sample genotypes**. It is built from the **Schnable et al. 2023** *Zea*
+  pan-genome VCF by keeping the teosinte/*Tripsacum* + B73 samples and biallelic
+  SNPs — the MAF ≥ 0.05 cutoff is merely the mechanism that selects the
+  donor-informative (species-common) sites
+  (`bzeaseq/get_variants_from_schnable2023.sh`). GATK `CollectAllelicCounts`
+  tallies each skim/BRB sample's reads at these positions — so the BRB count tracks
+  (BrB-nNIL, BrB-rtiger) draw on the same panel; only Skim-binhmm keeps the full
+  27.6 M density.
+- **The ~52 K SNP50K set is an *intersection* — not a genotyping array, and not
+  merely a coarse thinning of the 27.6 M panel.** Its unfiltered base is the
+  **BZea NIL BAMs → GATK joint genotyping (N. Tandukar) + Beagle imputation**
+  (196,120 SNPs); intersecting those genotyped sites with the 27.6 M
+  teosinte-informative panel yields **51,991 SNPs** (so the 50K is itself
+  teosinte-informative, being a subset of the panel). The Skim-nNIL / Skim-rtiger
+  counts are reads tallied at those ~52 K sites. Here the teosinte panel is the
+  **filter** and the
+  BZea genotyping is the base — full chain + paths in
+  `sawers-rellan-labs/BzeaSeq` → `docs/donor_id_jaccard.md`
+  ("SNP50K & marker-set provenance").
 
 The MAF ≥ 0.05 filter keeps donor-informative (species-common) sites, which
 raises the donor dose and widens REF/HET/ALT separation —
