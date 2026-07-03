@@ -41,10 +41,10 @@ tracks, then all three BRB tracks):
 | # | Track | Data source | nilHMM caller | Input marker set |
 |---|---|---|---|---|
 | 1 | **Skim-binhmm** | Skim (low-cov WGS) | `binhmm` — 3-state Gaussian on per-bin `ALT_FREQ`, REF anchored at the floor | **dense ~27.6 M-SNP set** — per-1 Mb `ALT_FREQ` `bin_genotypes` from GATK `CollectAllelicCounts` at the full teosinte-informative wideseq positions (mount, `bzeaseq/ancestry`) |
-| 2 | **Skim-nNIL** | Skim (low-cov WGS) | `nNIL` — count / BetaBinomial HMM (`r=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) |
-| 3 | **Skim-rtiger** | Skim (low-cov WGS) | `RTIGER` port (`r=5`) | **50K panel** counts (thinned SNP50K) |
-| 4 | **BrB-nNIL** | BrB (3′ RNA-seq) | `nNIL` — count HMM, `fit_means` (`r=1e-8`) | **wideseq-thinned** BRB counts |
-| 5 | **BrB-rtiger** | BrB (3′ RNA-seq) | `RTIGER` port (`r=7`) | **wideseq-thinned** BRB counts |
+| 2 | **Skim-nNIL** | Skim (low-cov WGS) | `nNIL` — count / BetaBinomial HMM (`rrate=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) |
+| 3 | **Skim-rtiger** | Skim (low-cov WGS) | `RTIGER` port (`rigidity=5`) | **50K panel** counts (thinned SNP50K) |
+| 4 | **BrB-nNIL** | BrB (3′ RNA-seq) | `nNIL` — count HMM, `fit_means` (`rrate=1e-8`) | **wideseq-thinned** BRB counts |
+| 5 | **BrB-rtiger** | BrB (3′ RNA-seq) | `RTIGER` port (`rigidity=7`) | **wideseq-thinned** BRB counts |
 | 6 | **BrB-atlas** | BrB (3′ RNA-seq) | `ATLAS` — GOOGA-shadow gene-level GT (`≥.95`/`≥.25`, min 5 reads) → geometric-duration HMM | cassini **pangene** counts, per donor species |
 
 So the grid is 2 sources × 3 caller-slots = 6 tracks, drawing on 4 unique
@@ -198,7 +198,7 @@ gmap <- unique(gmap[!is.na(chr)], by = "pan_gene")[, .(pan_gene, chr, pos = end)
 # are the packaged ATLAS caller (`call_ancestry(caller = "atlas")`). Here we do
 # only the consumer-side staging — read pangene counts, map to B73 gene
 # coordinates — and hand the engine `(name, chr, pos, n_ref = recurrent,
-# n_alt = donor)`. `r = 1e-3` matches the geometric duration used originally.
+# n_alt = donor)`. `rrate = 1e-3` matches the geometric duration used originally.
 atlas_seg <- function(brb, adir) {
   f <- file.path(BRB, "pangene", adir, paste0(brb, ".pangene_counts.tsv"))
   if (!file.exists(f)) {
@@ -207,7 +207,7 @@ atlas_seg <- function(brb, adir) {
   ct <- merge(fread(f), gmap, by = "pan_gene")[order(chr, pos)]
   seg <- as.data.table(call_ancestry(
     ct[, .(name = brb, chr, pos, n_ref = n_recur, n_alt = n_donor)],
-    caller = "atlas", design = "BC2S3", r = 1e-3
+    caller = "atlas", design = "BC2S3", rrate = 1e-3
   ))
   seg[, .(chr, start_bp, end_bp, state)]
 }

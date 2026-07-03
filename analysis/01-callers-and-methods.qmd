@@ -85,8 +85,8 @@ demo_calls <- function(path, ...) {
     source = "demo", name = basename(path)
   )
 }
-# nNIL:   demo_calls(f, caller = "nnil",   design = "BC2S2", r = 1e-4, err = 0.01)
-# RTIGER: demo_calls(f, caller = "rtiger", r = 5L)
+# nNIL:   demo_calls(f, caller = "nnil",   design = "BC2S2", rrate = 1e-4, err = 0.01)
+# RTIGER: demo_calls(f, caller = "rtiger", rigidity = 5L)
 cat("nilHMM", as.character(packageVersion("nilHMM")), "loaded; engine ready.\n")
 ```
 

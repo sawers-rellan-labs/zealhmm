@@ -2289,28 +2289,28 @@ vertical-align: -.125em;
 <td>2</td>
 <td><strong>Skim-nNIL</strong></td>
 <td>Skim (low-cov WGS)</td>
-<td><code>nNIL</code> — count / BetaBinomial HMM (<code>r=1e-4</code>, <code>err=0.01</code>)</td>
+<td><code>nNIL</code> — count / BetaBinomial HMM (<code>rrate=1e-4</code>, <code>err=0.01</code>)</td>
 <td><strong>50K panel</strong> counts (thinned SNP50K)</td>
 </tr>
 <tr class="odd">
 <td>3</td>
 <td><strong>Skim-rtiger</strong></td>
 <td>Skim (low-cov WGS)</td>
-<td><code>RTIGER</code> port (<code>r=5</code>)</td>
+<td><code>RTIGER</code> port (<code>rigidity=5</code>)</td>
 <td><strong>50K panel</strong> counts (thinned SNP50K)</td>
 </tr>
 <tr class="even">
 <td>4</td>
 <td><strong>BrB-nNIL</strong></td>
 <td>BrB (3′ RNA-seq)</td>
-<td><code>nNIL</code> — count HMM, <code>fit_means</code> (<code>r=1e-8</code>)</td>
+<td><code>nNIL</code> — count HMM, <code>fit_means</code> (<code>rrate=1e-8</code>)</td>
 <td><strong>wideseq-thinned</strong> BRB counts</td>
 </tr>
 <tr class="odd">
 <td>5</td>
 <td><strong>BrB-rtiger</strong></td>
 <td>BrB (3′ RNA-seq)</td>
-<td><code>RTIGER</code> port (<code>r=7</code>)</td>
+<td><code>RTIGER</code> port (<code>rigidity=7</code>)</td>
 <td><strong>wideseq-thinned</strong> BRB counts</td>
 </tr>
 <tr class="even">
@@ -2408,7 +2408,7 @@ vertical-align: -.125em;
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># are the packaged ATLAS caller (`call_ancestry(caller = &quot;atlas&quot;)`). Here we do</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># only the consumer-side staging — read pangene counts, map to B73 gene</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates — and hand the engine `(name, chr, pos, n_ref = recurrent,</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># n_alt = donor)`. `r = 1e-3` matches the geometric duration used originally.</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># n_alt = donor)`. `rrate = 1e-3` matches the geometric duration used originally.</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>atlas_seg <span class="ot">&lt;-</span> <span class="cf">function</span>(brb, adir) {</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;pangene&quot;</span>, adir, <span class="fu">paste0</span>(brb, <span class="st">&quot;.pangene_counts.tsv&quot;</span>))</span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
@@ -2417,7 +2417,7 @@ vertical-align: -.125em;
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  ct <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">fread</span>(f), gmap, <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)[<span class="fu">order</span>(chr, pos)]</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    ct[, .(<span class="at">name =</span> brb, chr, pos, <span class="at">n_ref =</span> n_recur, <span class="at">n_alt =</span> n_donor)],</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">caller =</span> <span class="st">&quot;atlas&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S3&quot;</span>, <span class="at">r =</span> <span class="fl">1e-3</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">caller =</span> <span class="st">&quot;atlas&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S3&quot;</span>, <span class="at">rrate =</span> <span class="fl">1e-3</span></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  ))</span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
