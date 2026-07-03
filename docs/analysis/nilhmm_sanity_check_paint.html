@@ -2449,21 +2449,29 @@ vertical-align: -.125em;
 </section>
 <section id="count-rtiger-via-the-engine" class="level1">
 <h1>4. Count / RTIGER via the engine</h1>
+<p><strong>nNIL and RTIGER are the same engine, different duration.</strong> Both are count-emission callers: they read per-SNP allele counts and score each marker with the count / BetaBinomial emission through the <em>one</em> <code>nilHMM</code> engine. The only thing that separates them is the duration layer — <strong>nNIL</strong> uses a <strong>geometric</strong> duration (a free per-marker switch probability), <strong>RTIGER</strong> a <strong>rigidity</strong> layer (an integer minimum run length). So both are just <code>call_ancestry(read_counts(path), caller = …)</code> with different arguments; there is no separate RTIGER program and no Julia.</p>
+<p><strong>Mind the overloaded <code>r</code>.</strong> For <code>caller = &quot;nnil&quot;</code> it is the small <em>geometric switch rate</em> (e.g. <code>1e-4</code>); for <code>caller = &quot;rtiger&quot;</code> it is the <em>integer rigidity / minimum run length</em> (e.g. <code>5</code>). The four count tracks below (Skim-nNIL, Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller, design prior, and these parameters — assembled in §5.</p>
+<p><code>eng()</code> is the thin adapter that wires a count file into the engine: locate and read the counts, decode through <code>call_ancestry()</code>, and hand back just the four columns the paint needs.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>find1 <span class="ot">&lt;-</span> <span class="cf">function</span>(dir, s) {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">list.files</span>(dir, <span class="fu">paste0</span>(<span class="st">&quot;^&quot;</span>, s, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.tsv$&quot;</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(f)) f[<span class="dv">1</span>] <span class="cf">else</span> <span class="cn">NA</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>eng <span class="ot">&lt;-</span> <span class="cf">function</span>(path, ...) {</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(path) <span class="sc">||</span> <span class="sc">!</span><span class="fu">file.exists</span>(path)) {</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(<span class="fu">read_counts</span>(path), ...))</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># parent of counts/ (NILs) + counts_checks/B73/ (control); find1 recurses</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>SK50 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;counts_50k&quot;</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>BRBW <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;counts_wideseq&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate a sample&#39;s count TSV under `dir`. Recursive because NILs and the B73</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># control may sit in different subfolders; returns NA if the sample isn&#39;t staged.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>find1 <span class="ot">&lt;-</span> <span class="cf">function</span>(dir, s) {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">list.files</span>(dir, <span class="fu">paste0</span>(<span class="st">&quot;^&quot;</span>, s, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.tsv$&quot;</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(f)) f[<span class="dv">1</span>] <span class="cf">else</span> <span class="cn">NA</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Read a count file and decode it through the shared engine with the caller +</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># params in `...` (caller = &quot;nnil&quot;/&quot;rtiger&quot;, design, r, err, fit_means, …).</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only the paint&#39;s 4 columns; return NULL — skipped, not fatal — if the</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># file is missing, so one absent sample never aborts the sweep.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>eng <span class="ot">&lt;-</span> <span class="cf">function</span>(path, ...) {</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(path) <span class="sc">||</span> <span class="sc">!</span><span class="fu">file.exists</span>(path)) {</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(<span class="fu">read_counts</span>(path), ...))</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>SK50 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;counts_50k&quot;</span>) <span class="co"># skim 50K-panel counts   (Skim-nNIL, Skim-RTIGER)</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>BRBW <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;counts_wideseq&quot;</span>) <span class="co"># BRB wideseq-thinned counts (BrB-nNIL, BrB-RTIGER)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="assemble-all-tracks" class="level1">

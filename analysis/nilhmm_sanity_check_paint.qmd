@@ -245,11 +245,36 @@ binhmm_gauss <- function(skim, design = "BC2S2") {
 
 # 4. Count / RTIGER via the engine
 
+**nNIL and RTIGER are the same engine, different duration.** Both are
+count-emission callers: they read per-SNP allele counts and score each marker
+with the count / BetaBinomial emission through the *one* `nilHMM` engine. The
+only thing that separates them is the duration layer — **nNIL** uses a
+**geometric** duration (a free per-marker switch probability), **RTIGER** a
+**rigidity** layer (an integer minimum run length). So both are just
+`call_ancestry(read_counts(path), caller = …)` with different arguments; there is
+no separate RTIGER program and no Julia.
+
+**Mind the overloaded `r`.** For `caller = "nnil"` it is the small *geometric
+switch rate* (e.g. `1e-4`); for `caller = "rtiger"` it is the *integer rigidity /
+minimum run length* (e.g. `5`). The four count tracks below (Skim-nNIL,
+Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller, design prior, and these
+parameters — assembled in §5.
+
+`eng()` is the thin adapter that wires a count file into the engine: locate and
+read the counts, decode through `call_ancestry()`, and hand back just the four
+columns the paint needs.
+
 ```{r engine}
+# Locate a sample's count TSV under `dir`. Recursive because NILs and the B73
+# control may sit in different subfolders; returns NA if the sample isn't staged.
 find1 <- function(dir, s) {
   f <- list.files(dir, paste0("^", s, "\\.tsv$"), full.names = TRUE, recursive = TRUE)
   if (length(f)) f[1] else NA
 }
+# Read a count file and decode it through the shared engine with the caller +
+# params in `...` (caller = "nnil"/"rtiger", design, r, err, fit_means, …).
+# Keep only the paint's 4 columns; return NULL — skipped, not fatal — if the
+# file is missing, so one absent sample never aborts the sweep.
 eng <- function(path, ...) {
   if (is.na(path) || !file.exists(path)) {
     return(NULL)
@@ -257,9 +282,8 @@ eng <- function(path, ...) {
   seg <- as.data.table(call_ancestry(read_counts(path), ...))
   seg[, .(chr, start_bp, end_bp, state)]
 }
-# parent of counts/ (NILs) + counts_checks/B73/ (control); find1 recurses
-SK50 <- file.path(SKIM, "counts_50k")
-BRBW <- file.path(BRB, "counts_wideseq")
+SK50 <- file.path(SKIM, "counts_50k") # skim 50K-panel counts   (Skim-nNIL, Skim-RTIGER)
+BRBW <- file.path(BRB, "counts_wideseq") # BRB wideseq-thinned counts (BrB-nNIL, BrB-RTIGER)
 ```
 
 # 5. Assemble all tracks
