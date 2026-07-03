@@ -9,9 +9,12 @@
 # package (load_map, expected_fragment_dist, calibrate_r, cm_to_mb,
 # fit_design_gamma). Seeds are pinned for reproducibility.
 #
-# STATUS: scaffold. The concrete BZea simcross design (generations, n, cM map,
-# interference) is open (plan B5) and must be fixed with the user before the
-# numbers are final. This file records the intended interface.
+# DESIGN (decided): a single BC2S2, n = 1500 truth, on the maize consensus cM
+# map (~1540 cM, TeoNAM/Chen 2019) with Stahl interference m = 10, p = 0. Truth =
+# the donor mosaic; degrade to each source's depth/error regime. Only the
+# simcross body remains to wire (map + pedigree + degrade); the interface and
+# outputs (results/sim/{bc2s2_truth_segments.csv, grid.csv, <source>_counts/})
+# are what 02-simulation-calibration.qmd consumes.
 #
 # Source-safe: top level defines functions only (no library()/stopifnot), so
 # the analysis notes can source() all of R/ without side effects.
@@ -21,15 +24,16 @@ SIM_DEFAULT_SEED <- 1L
 
 #' Simulate NILs for one design and degrade to one sequencing source
 #'
-#' @param design "BC2S2" (bulked skim) or "BC2S3".
+#' @param design "BC2S2" (bulked skim; the decided truth) or "BC2S3".
 #' @param source "skim", "brb", or "target".
-#' @param n Number of NILs to simulate.
+#' @param n Number of NILs to simulate (default 1500).
+#' @param m,p Stahl interference parameters (default m = 10, p = 0).
 #' @param seed RNG seed (pinned).
 #' @return list(truth = <common-schema segments>, counts = <per-marker counts>,
-#'   grid = <chr,pos evaluation grid>). NOTE: body is a stub pending B5.
-simulate_source <- function(design = c("BC2S3", "BC2S2"),
+#'   grid = <chr,pos evaluation grid>). NOTE: body is a stub — wire simcross next.
+simulate_source <- function(design = c("BC2S2", "BC2S3"),
                             source = c("skim", "brb", "target"),
-                            n = 200L, seed = SIM_DEFAULT_SEED) {
+                            n = 1500L, m = 10L, p = 0, seed = SIM_DEFAULT_SEED) {
   design <- match.arg(design)
   source <- match.arg(source)
   if (!requireNamespace("simcross", quietly = TRUE)) {
@@ -49,9 +53,9 @@ simulate_source <- function(design = c("BC2S3", "BC2S2"),
   #   coverage-driven missingness: missing(lambda) = pi + (1-pi) e^{-k lambda}
   #   + per-read error; source-specific depth (skim ~0.4x, brb expression-driven).
 
-  stop("simulate_source(): stub — fix the BZea simcross design (plan B5) first.")
+  stop("simulate_source(): stub — wire the simcross map + pedigree + degrade next.")
 }
 
 # CLI entry point (once implemented; sourcing the file does not trigger this):
-#   Rscript -e 'source("R/simulate.R"); simulate_source("BC2S3", "skim", 200)'
-# Simulations are written under sim/ (gitignored).
+#   Rscript -e 'source("R/simulate.R"); simulate_source("BC2S2", "skim")'
+# Simulations are written under sim/ / results/sim/ (gitignored).
