@@ -17,6 +17,10 @@
 # agent/ — internal working area (plan, handoff prompts); not published
 /agent
 
+# nilhmm-paper/ — the manuscript is its OWN standalone git repo, nested here
+# for convenience; zealhmm does not track it.
+/nilhmm-paper/
+
 # macOS
 .DS_Store
 

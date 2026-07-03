@@ -79,5 +79,8 @@ plan B5.
 ## Relationship to other repos
 
 - **`nilhmm`** — the R + Rcpp caller package this repo consumes.
+- **`nilhmm-paper`** — the manuscript (RILAB bioRxiv template, Bioinformatics
+  structure). Its own standalone git repo; nested locally at `nilhmm-paper/` but
+  gitignored here. This repo produces the figures it consumes.
 - **`zealtiger`** — the exploratory lab notebook; stays as-is. Only validated,
   paper-bound notes are ported here (plan B3); the `agent/` scratch is not.
