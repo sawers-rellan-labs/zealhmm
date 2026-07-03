@@ -1,0 +1,435 @@
+---
+title: "nilHMM sanity paint: source × caller tracks, one engine, no Julia"
+subtitle: "Chromosome painting of the vary-skim sweep NILs (+B73 control) — 6 tracks = 2 data sources (Skim, BRB) crossed with nilHMM callers, all through the nilHMM package"
+author: "Fausto Rodríguez-Zapata"
+date: "2026-07-02"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**Context.** This is the cross-track sanity check for the unified `nilHMM`
+engine, where every caller runs through one duration-aware 3-state
+(REF/HET/ALT) HMM with the emission as the only swappable piece. We paint the
+same **vary-skim coverage-sweep NILs** (plus a clean B73 control) and eyeball
+whether the independent tracks agree on where the donor blocks are, and whether
+the control stays REF. Memory: `wideseq-chrpainting-code`,
+`generative_vs_discriminative_callers`, `cassini-googa-caller`,
+`method-naming-source-caller`, `skim-count-caller-calibration`,
+`rtiger-betabinomial-cost`.
+
+**The six tracks are *not* six callers.** Each track is a combination of a
+**data source** and a **nilHMM caller method** (naming convention
+`<DataSource>-<Caller>`, source first — memory `method-naming-source-caller`).
+There are only **two data sources** and **four distinct callers**; Skim and BRB
+each run three tracks and *share* the nNIL and RTIGER callers:
+
+- **Data sources (2):** `Skim` = low-coverage WGS; `BrB` = 3′ RNA-seq (BRB-seq).
+- **Callers (4 distinct):** `binhmm` (Gaussian on per-bin `ALT_FREQ`), `nNIL`
+  (count / BetaBinomial HMM), `RTIGER` (Julia-free port), `ATLAS`
+  (GOOGA-shadow gene-level GT).
+
+The tracks are ordered **first by data source, then by caller** (all three Skim
+tracks, then all three BRB tracks):
+
+| # | Track | Data source | nilHMM caller | Input marker set |
+|---|---|---|---|---|
+| 1 | **Skim-binhmm** | Skim (low-cov WGS) | `binhmm` — 3-state Gaussian on per-bin `ALT_FREQ`, REF anchored at the floor | **dense ~27.6 M-SNP set** — per-1 Mb `ALT_FREQ` `bin_genotypes` from GATK `CollectAllelicCounts` at the full teosinte-informative wideseq positions (mount, `bzeaseq/ancestry`) |
+| 2 | **Skim-nNIL** | Skim (low-cov WGS) | `nNIL` — count / BetaBinomial HMM (`r=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) |
+| 3 | **Skim-rtiger** | Skim (low-cov WGS) | `RTIGER` port (`r=5`) | **50K panel** counts (thinned SNP50K) |
+| 4 | **BrB-nNIL** | BrB (3′ RNA-seq) | `nNIL` — count HMM, `fit_means` (`r=1e-8`) | **wideseq-thinned** BRB counts |
+| 5 | **BrB-rtiger** | BrB (3′ RNA-seq) | `RTIGER` port (`r=7`) | **wideseq-thinned** BRB counts |
+| 6 | **BrB-atlas** | BrB (3′ RNA-seq) | `ATLAS` — GOOGA-shadow gene-level GT (`≥.95`/`≥.25`, min 5 reads) → geometric-duration HMM | cassini **pangene** counts, per donor species |
+
+So the grid is 2 sources × 3 caller-slots = 6 tracks, drawing on 4 unique
+callers (`binhmm` is Skim-only, `ATLAS` is BRB-only, `nNIL`/`RTIGER` run on both).
+
+::: {.callout-note title="Marker-set provenance — the tracks run at different SNP densities"}
+The three Skim tracks are **not** all on the same markers. **Skim-binhmm runs on
+the full dense set of ~27.6 M teosinte-informative SNPs** (2.0–4.0 M per
+chromosome; total 27,603,777), whereas **Skim-nNIL / Skim-rtiger run on the
+much coarser thinned 50K panel** — the SNP50K counts used for the 50K set.
+
+That ~27.6 M set is itself a **wideseq thinning of an even larger SNP dataset**:
+per `bzeaseq` (`get_variants_from_schnable2023.sh`), the **Schnable et al. 2023**
+teosinte / *Tripsacum* diversity VCF is filtered to the teosinte/*Tripsacum*
+samples, restricted to biallelic SNPs, and MAF-filtered at ≥ 0.05 to yield the
+`wideseq_ref` panel; GATK `CollectAllelicCounts` then tallies skim/BRB reads at
+exactly those positions (`run_wideseq.sh`, `CollectAllelicCounts` — memory
+`gatk-table-readcount-standard`). So the **BRB count tracks (BrB-nNIL,
+BrB-rtiger) are also wideseq-thinned from the same larger source**; only
+Skim-binhmm keeps the full ~27.6 M density.
+
+The MAF ≥ 0.05 filter keeps donor-informative (species-common) sites, which
+raises the donor dose and widens REF/HET/ALT separation —
+see [`genotype_likelihoods_and_hmm` §5](genotype_likelihoods_and_hmm.html#what-survives-the-information-ceiling)
+and [`snp50k_genotype_identifiability` §2.1/§2.6/§3](snp50k_genotype_identifiability.html#consequences).
+:::
+
+> **Parameters are illustrative, not fully re-calibrated.** This note is a
+> coherence check across sources and callers, not a final call set.
+
+---
+
+# 1. Setup — engine, paths, samples
+
+```{r setup}
+suppressMessages({
+  library(nilHMM)
+  library(data.table)
+  library(ggplot2)
+})
+# Inputs are staged locally under data/ by stage_sanity_paint.R (see DATA.md),
+# organized by (source x input type); paths below point into that layout.
+SS <- here::here("data/skimsweep") # the vary-skim cohort
+SKIM <- file.path(SS, "skim") # skim counts (counts_50k/) + bins (bins/)
+BRB <- file.path(SS, "brb") # brb counts (counts_wideseq/) + pangene (pangene/)
+REF <- here::here("data/ref") # genome-level ATLAS gene maps
+
+# samples: control + 10 vary-skim NILs (ordered by skim lambda)
+mem <- fread(file.path(SS, "coverage_sweep_members.csv"))[sweep == "vary_skim"][order(vary_cov)]
+mem[, tax := sub("\\..*", "", nil)]
+tax2dir <- c(
+  Zx = "mexicana", Zl = "luxurians", Zd = "diploperennis",
+  Zv = "parviglumis", Zh = "huehuetenangensis"
+)
+mem[, adir := tax2dir[tax]]
+# wrapped left-hand label: cov + FULL pedigree string, then skim/brb plate ids
+wraplab <- function(cov, ped, skim, brb) sprintf("%s\n%s\nskim:%s\nbrb:%s", cov, ped, skim, brb)
+rows <- rbind(
+  data.table(
+    rowlab = wraplab("B73 ctrl", "B73 (control)", "PN10_SID893", "PN3_SID213"),
+    skim = "PN10_SID893", brb = "PN3_SID213", adir = "mexicana"
+  ),
+  mem[, .(
+    rowlab = wraplab(sprintf("%.2f×", vary_cov), nil, skim_name, brb_name),
+    skim = skim_name, brb = brb_name, adir
+  )]
+)
+```
+
+# 2. ATLAS: competitive-mapping ancestry (GOOGA-shadow)
+
+**ATLAS** = **A**ncestry by **T**ranscript-**L**evel **A**lignment **S**cores.
+
+**The basic principle is competitive mapping: count the reads that match each
+founder genome.** Where the SNP-panel callers read an *allele fraction* at
+predefined variant sites, ATLAS instead aligns each transcript read against
+**both founder references at once** — B73 (the recurrent parent) and the
+teosinte **donor** transcriptome — and lets the **alignment scores** decide
+which parent that read came from. Per read, the best alignment score (with a
+margin `k` on the score gap `ΔAS`) votes the read as **REF**, **DONOR**, or
+**AMBIGUOUS**. A read that maps equally well to both parents landed on sequence
+that is *identical* between them (conserved — at ~2 % B73-vs-donor divergence
+this is ~98 % of positions), so it carries no ancestry information: **AMBIGUOUS
+= non-informative → dropped** (it is *not* a HET call). Summing the informative
+votes over a gene gives the two competitive-mapping counts, `n_recur`
+(B73-matching reads) and `n_donor` (donor-matching reads); ancestry is then just
+"which founder's genome captured the reads at this gene."
+
+**Caveat — the "donor" reference is a species-level stand-in, not the actual
+donor accession.** We do not have the genome/transcriptome of the specific
+teosinte accession used in each cross, so the donor side of the competitive
+alignment is a **representative reference for the donor's species** (per
+`tax2dir`: mexicana, luxurians, diploperennis, parviglumis, huehuetenangensis).
+A read is scored donor-vs-B73 against that proxy, not against the true parent —
+the same reference-data gap as the SNP-panel accession ceiling
+([`snp50k_genotype_identifiability` §2.6](snp50k_genotype_identifiability.html#the-site-selection-ceiling)):
+sequence the accession carries but the species proxy lacks (or vice versa) is
+mis-scored, so `n_donor` is only as good as the stand-in's match to the real donor.
+
+**GOOGA is the template.** GOOGA (Fishman lab, *PLoS Genet* 2024,
+[pgen.1011072](https://doi.org/10.1371/journal.pgen.1011072)) is a *Mimulus* F2
+genetic-map-building pipeline whose ancestry step is **threshold-then-HMM**.
+ATLAS is a "GOOGA-shadow": it ports that step onto the shared nilHMM engine —
+
+1. **Per-gene hard call from the count fractions** (GOOGA `s2.py`, verbatim):
+   `n_recur + n_donor < 5` → missing; recurrent fraction `≥ 0.95` → **REF** (AA);
+   donor fraction `≥ 0.95` → **ALT / donor-hom** (BB); *both* parents `≥ 0.25`
+   → **HET** (AB); otherwise missing. (Thresholds `0.95` / `0.25`, min 5 reads.)
+2. **Place each gene at its B73 coordinate** and order it along the chromosome.
+3. **Smooth with the engine's categorical genotype-error (`gt`) emission +
+   geometric-duration HMM** — the same duration/rigidity layer as every other
+   caller, but a *categorical confusion* emission instead of count/BetaBinomial.
+
+Why categorical and not a count model: these are **3′ RNA (BRB-seq) reads**, so
+a gene's read depth is driven by **expression**, not coverage, and
+**allele-specific expression** pushes a true HET's donor fraction off 0.5 — both
+confound a count/BetaBinomial emission. Discretizing to a hard genotype *first*
+(exactly what GOOGA, itself an eQTL/ASE pipeline, does) makes the emission
+**expression-agnostic**. Memory: `cassini-googa-caller`,
+`feedback-reproduce-from-source`.
+
+The code below is the consumer-side staging: read the cassini pangene counts per
+donor species, apply the GOOGA hard call, map genes to B73 coordinates, and
+decode each chromosome through the `gt`-emission geometric-duration HMM.
+
+```{r atlas}
+g2p <- fread(file.path(REF, "gene_to_pangene.tsv"))[species == "B73", .(gene, pan_gene)]
+co <- fread(file.path(REF, "b73_gene_coords.tsv"),
+  header = FALSE,
+  col.names = c("gene", "chr", "start", "end")
+)
+gmap <- merge(g2p, co, by = "gene")
+gmap[, chr := as.integer(sub("chr", "", chr))]
+gmap <- unique(gmap[!is.na(chr)], by = "pan_gene")[, .(pan_gene, chr, pos = end)]
+gcall <- function(nr, nd) {
+  nt <- nr + nd
+  fr <- fifelse(nt > 0, nr / nt, 0)
+  fd <- fifelse(nt > 0, nd / nt, 0)
+  g <- rep(3L, length(nt))
+  ok <- nt >= 5L
+  g[ok & fr >= .95] <- 0L
+  g[ok & fd >= .95] <- 2L
+  g[ok & fr >= .25 & fd >= .25] <- 1L
+  g
+}
+gtmodel <- nilHMM:::fit(
+  list(), emission_gt(), duration_geometric(1e-3), design_priors("BC2S3")
+)
+atlas_seg <- function(brb, adir) {
+  f <- file.path(BRB, "pangene", adir, paste0(brb, ".pangene_counts.tsv"))
+  if (!file.exists(f)) {
+    return(NULL)
+  }
+  ct <- merge(fread(f), gmap, by = "pan_gene")
+  ct[, g := gcall(n_recur, n_donor)]
+  ct <- ct[order(chr, pos)]
+  rbindlist(lapply(sort(unique(ct$chr)), function(cc) {
+    d <- ct[chr == cc]
+    p <- nilHMM:::decode(gtmodel, list(g = d$g))
+    r <- rle(p)
+    e <- cumsum(r$lengths)
+    s <- c(1L, head(e, -1) + 1L)
+    data.table(chr = cc, start_bp = d$pos[s], end_bp = d$pos[e], state = r$values)
+  }))
+}
+```
+
+# 3. binhmm (corrected) on the dense skim bins
+
+3-state **Gaussian**-emission HMM on per-bin `ALT_FREQ`, porting the nilhifi
+`chromosome_painting.R` fix: REF is **anchored at the baseline floor** (mean
+fixed, sd from the low bins) so REF noise stays REF; HET/ALT are seeded from the
+data and refined by hard-EM with REF fixed; sticky transitions + design start
+priors + collapse guards. This replaces the free K=3 GMM (which always invents a
+3rd cluster → HET over-call).
+
+```{r binhmm}
+binhmm_gauss <- function(skim, design = "BC2S2", stay = 0.995) {
+  f <- file.path(SKIM, "bins", paste0(skim, "_bin_genotypes.tsv"))
+  if (!file.exists(f)) {
+    return(NULL)
+  }
+  d <- fread(f)
+  dt <- data.table(
+    chr = as.integer(sub("chr", "", d$CONTIG)), bin = d$BIN_POS,
+    af = d$ALT_FREQ, s = d$BIN_START, e = d$BIN_END
+  )[order(chr, bin)]
+  af <- dt$af
+  pri <- design_priors(design)
+  START <- c(1 - pri$f_1 - pri$f_2, pri$f_1, pri$f_2)
+  trans <- matrix((1 - stay) / 2, 3, 3)
+  diag(trans) <- stay
+  seg_all <- function(state) {
+    rbindlist(lapply(sort(unique(dt$chr)), function(cc) {
+      i <- which(dt$chr == cc)
+      i <- i[order(dt$bin[i])]
+      p <- state[i]
+      rr <- rle(p)
+      rr$values[rr$values > 0L & rr$lengths < 2L] <- 0L
+      p <- inverse.rle(rr) # drop 1-bin donor specks
+      r <- rle(p)
+      e <- cumsum(r$lengths)
+      s <- c(1L, head(e, -1) + 1L)
+      data.table(chr = cc, start_bp = dt$s[i][s], end_bp = dt$e[i][e], state = r$values)
+    }))
+  }
+
+  # bulk of the bins = REF baseline (NILs are mostly REF)
+  base_bins <- af[af <= stats::quantile(af, 0.6)]
+  ref_mean <- mean(base_bins)
+  sd_base <- max(1e-3, sd(base_bins)) # anchor REF at the FLOOR (not 0)
+  hi <- af[af > ref_mean + 4 * sd_base] # bins clearly above the floor
+  if (length(hi) < 4) {
+    # collapse guard: no donor signal -> call everything REF
+    return(seg_all(rep(0L, length(af))))
+  }
+
+  alt_mean <- as.numeric(stats::quantile(hi, 0.75)) # seed ALT from data
+  het_mean <- ref_mean + (alt_mean - ref_mean) / 2 # HET midway floor..ALT
+  # Floor REF width to the signal scale: a hyper-tight baseline (high coverage)
+  # must not push mildly-elevated single bins into donor (anti-fragmentation).
+  sd_ref <- max(sd_base, (alt_mean - ref_mean) / 6)
+  means <- c(ref_mean, het_mean, alt_mean)
+  sds <- c(sd_ref, max(sd_ref, sd(hi)), max(sd_ref, sd(hi)))
+  # per-bin log-emission: dnorm of alt_frac under each of the 3 state means
+  emit <- function(m, s) {
+    vapply(
+      1:3,
+      function(k) stats::dnorm(af, m[k], max(s[k], 1e-3), log = TRUE),
+      numeric(length(af))
+    )
+  }
+  path <- integer(length(af))
+  for (it in 1:8) { # hard-EM: Viterbi -> refit HET/ALT means (REF fixed at 0)
+    le <- emit(means, sds)
+    np <- integer(length(af))
+    for (cc in unique(dt$chr)) {
+      i <- which(dt$chr == cc)
+      i <- i[order(dt$bin[i])]
+      np[i] <- nilHMM:::viterbi_log_cpp(log(START), log(trans), le[i, , drop = FALSE])
+    }
+    if (identical(np, path)) break
+    path <- np
+    for (k in 2:3) {
+      if (any(path == k - 1L)) {
+        means[k] <- mean(af[path == k - 1L])
+        sds[k] <- max(sd_ref, sd(af[path == k - 1L]))
+      }
+    }
+  }
+  # collapse guards: fold a state whose mean isn't separated from the REF floor
+  # HET indistinct from floor
+  if (means[2] < ref_mean + 4 * sd_ref) path[path == 1L] <- 0L
+  # ALT indistinct from floor
+  if (means[3] < ref_mean + 4 * sd_ref) path[path == 2L] <- 0L
+  seg_all(path)
+}
+```
+
+# 4. Count / RTIGER via the engine
+
+```{r engine}
+find1 <- function(dir, s) {
+  f <- list.files(dir, paste0("^", s, "\\.tsv$"), full.names = TRUE, recursive = TRUE)
+  if (length(f)) f[1] else NA
+}
+eng <- function(path, ...) {
+  if (is.na(path) || !file.exists(path)) {
+    return(NULL)
+  }
+  seg <- as.data.table(call_ancestry(read_counts(path), ...))
+  seg[, .(chr, start_bp, end_bp, state)]
+}
+# parent of counts/ (NILs) + counts_checks/B73/ (control); find1 recurses
+SK50 <- file.path(SKIM, "counts_50k")
+BRBW <- file.path(BRB, "counts_wideseq")
+```
+
+# 5. Assemble all tracks
+
+```{r assemble}
+methods <- c(
+  "Skim-binhmm", "Skim-nNIL", "Skim-rtiger",
+  "BrB-nNIL", "BrB-rtiger", "BrB-atlas"
+)
+
+# run a caller, returning NULL (with a message) instead of aborting on error
+grab <- function(fn) {
+  tryCatch(fn, error = function(e) {
+    message("  ! ", conditionMessage(e))
+    NULL
+  })
+}
+
+all <- list()
+for (i in seq_len(nrow(rows))) {
+  rl <- rows$rowlab[i]
+  sk <- rows$skim[i]
+  br <- rows$brb[i]
+  ad <- rows$adir[i]
+
+  sk_counts <- find1(SK50, sk) # skim 50K panel counts
+  brb_counts <- file.path(BRBW, paste0(br, ".tsv")) # wideseq-thinned BRB counts
+
+  tr <- list(
+    `Skim-binhmm` = grab(binhmm_gauss(sk)),
+    `Skim-nNIL` = grab(eng(sk_counts,
+      caller = "nnil", design = "BC2S2", r = 1e-4, err = 0.01
+    )),
+    `Skim-rtiger` = grab(eng(sk_counts, caller = "rtiger", r = 5L)),
+    `BrB-nNIL` = grab(eng(brb_counts,
+      caller = "nnil", design = "BC2S3", r = 1e-8, fit_means = TRUE
+    )),
+    `BrB-rtiger` = grab(eng(brb_counts, caller = "rtiger", r = 7L)),
+    `BrB-atlas` = grab(atlas_seg(br, ad))
+  )
+
+  # keep the non-empty tracks, tagging each with its row label and method
+  for (m in names(tr)) {
+    if (!is.null(tr[[m]]) && nrow(tr[[m]])) {
+      all[[length(all) + 1L]] <- tr[[m]][, `:=`(rowlab = rl, method = m)]
+    }
+  }
+}
+df <- rbindlist(all)
+df[, .N, by = method]
+```
+
+# 6. Paint
+
+```{r paint, fig.width=16, fig.height=11, dpi=130}
+yb <- data.table(method = methods, k = 5:0) # top -> bottom
+df <- merge(df, yb, by = "method")
+df[, `:=`(ylo = k / 6 + 0.01, yhi = (k + 1) / 6 - 0.01)]
+# B73 ctrl on top, then skim-cov descending (facet switch = 'y')
+df[, rowlab := factor(rowlab, levels = c(rows$rowlab[1], rev(rows$rowlab[-1])))]
+df[, chr := factor(chr, levels = 1:10, labels = paste0("chr", 1:10))]
+df[, state := factor(state, 0:2, c("REF", "HET", "ALT"))]
+pal <- c(REF = "gold", HET = "springgreen4", ALT = "purple4")
+p <- ggplot(df, aes(xmin = start_bp / 1e6, xmax = end_bp / 1e6, ymin = ylo, ymax = yhi, fill = state)) +
+  geom_rect() +
+  facet_grid(rowlab ~ chr, scales = "free_x", space = "free_x", switch = "y") +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  scale_y_continuous(
+    breaks = (5:0) / 6 + 1 / 12, labels = methods, position = "right",
+    expand = expansion(mult = 0.01)
+  ) +
+  labs(
+    title = "nilHMM sanity paint — vary-skim sweep (B73 control + 10 NILs)",
+    subtitle = "6 tracks = data source × nilHMM caller (2 sources: Skim, BrB | 4 callers: binhmm, nNIL, RTIGER, ATLAS) | ordered by source then caller | all nilHMM, no Julia",
+    x = "Position (Mb)", fill = "Genotype"
+  ) +
+  ggpubr::theme_classic2(base_size = 8) +
+  theme(
+    plot.title = element_text(size = 12),
+    plot.subtitle = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    panel.spacing.x = unit(0.04, "lines"),
+    panel.spacing.y = unit(0.15, "lines"),
+    strip.background = element_blank(),
+    strip.text.y.left = element_text(
+      angle = 0, hjust = 1, size = 12, lineheight = 0.9
+    ),
+    axis.text.y.right = element_text(size = 11),
+    axis.ticks.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+dir.create(here::here("results"), showWarnings = FALSE)
+ggsave(here::here("results/nilhmm_sanity_paint.png"), p, width = 16, height = 11, dpi = 130, limitsize = FALSE)
+fwrite(df, here::here("results/nilhmm_sanity_paint_segments.tsv"), sep = "\t")
+p
+```
+
+# 7. Sanity read
+
+- **The anchor holds:** the B73 control (top row) is essentially all-REF across
+  all six tracks — a clean control paints clean.
+- **NILs show localized donor blocks that broadly agree across callers.** The
+  major introgressions land in the same chromosomes across independent callers
+  and across the two data sources — the core sanity result.
+- **Caller-specific behavior, as expected:** Skim-binhmm paints the broadest
+  blocks and is more permissive toward ALT; BrB-rtiger is the noisiest (the
+  known BRB-RTI RNA false-donor floor); BrB-atlas and BrB-nNIL are the most
+  conservative.

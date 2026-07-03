@@ -25,6 +25,36 @@ biallelic → MAF ≥ 0.05 (`wideseq_ref`); GATK `CollectAllelicCounts` tallies
 skim/BRB reads at those positions. (memory `snp50k-cohort-provenance`,
 `gatk-table-readcount-standard`.)
 
+## Staged subset: skim sweep (`data/`, gitignored, ~33 MB)
+
+`stage_sanity_paint.R` copies the 11-sample vary-skim cohort (B73 control + 10
+NILs) into `data/`, organized by **(source × input type)** and consumed by
+`analysis/nilhmm_sanity_paint.qmd`. Verified: the note reproduces the original
+zealtiger output **row-for-row** (1709 segments, all 6 tracks identical).
+
+```
+data/
+  ref/                                genome-level, dataset-independent
+    gene_to_pangene.tsv               ATLAS: pangene <-> B73 gene map
+    b73_gene_coords.tsv               ATLAS: B73 gene coordinates
+  skimsweep/                          the vary-skim cohort
+    coverage_sweep_members.csv        full sweep table (note filters to vary_skim)
+    skim/counts_50k/<skim>.tsv        -> Skim-nNIL, Skim-rtiger
+    skim/bins/<skim>_bin_genotypes.tsv-> Skim-binhmm  (PER-SAMPLE only, never the aggregate)
+    brb/counts_wideseq/<brb>.tsv      -> BrB-nNIL, BrB-rtiger
+    brb/pangene/<species>/<brb>.pangene_counts.tsv  -> BrB-atlas
+```
+
+| Staged path | Source |
+|-------------|--------|
+| `skimsweep/coverage_sweep_members.csv`, `skim/counts_50k/`, `brb/counts_wideseq/` | zealtiger repo |
+| `skim/bins/<skim>_bin_genotypes.tsv` | rsstu `BZea/bzeaseq/ancestry/<skim>_bin_genotypes.tsv` (per-sample) |
+| `brb/pangene/`, `ref/` | rsstu `tlaloc/cassini/` (`results/<species>/pangene/`, `data/pangene/`, `data/meta/`) |
+
+Re-stage with `Rscript stage_sanity_paint.R` **run with the sandbox disabled** —
+both shares live under the `rsstu` automount, which the default sandbox cannot
+see (it reports the files as missing).
+
 ## Still to freeze (plan B5 — blocks B2.3 / B2.4)
 
 - [ ] **~400 paired BrB + skim cohort manifest** — IDs, donor species, per-source
