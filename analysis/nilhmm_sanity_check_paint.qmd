@@ -254,11 +254,15 @@ only thing that separates them is the duration layer — **nNIL** uses a
 `call_ancestry(read_counts(path), caller = …)` with different arguments; there is
 no separate RTIGER program and no Julia.
 
-**Mind the overloaded `r`.** For `caller = "nnil"` it is the small *geometric
-switch rate* (e.g. `1e-4`); for `caller = "rtiger"` it is the *integer rigidity /
-minimum run length* (e.g. `5`). The four count tracks below (Skim-nNIL,
-Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller, design prior, and these
-parameters — assembled in §5.
+**The duration knob has a distinct name per caller** (no overloaded `r`):
+`caller = "nnil"` takes **`rrate`**, the expected per-marker *recombination rate*
+of the geometric duration (Holland's nNIL calibrates it as
+`2·total_cM / (100·n_markers)` ≈ `30/n_markers` for a 1500 cM maize map, and it is
+tunable from data by KS-vs-sim); `caller = "rtiger"` takes **`rigidity`**, the
+integer minimum run length (e.g. `5`). (`nilHMM`'s rigidity *duration* also has an
+exit rate `xrate`, but the faithful RTIGER port doesn't use it.) The four count
+tracks below (Skim-nNIL, Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller,
+design prior, and these knobs — assembled in §5.
 
 `eng()` is the thin adapter that wires a count file into the engine: locate and
 read the counts, decode through `call_ancestry()`, and hand back just the four
@@ -272,7 +276,7 @@ find1 <- function(dir, s) {
   if (length(f)) f[1] else NA
 }
 # Read a count file and decode it through the shared engine with the caller +
-# params in `...` (caller = "nnil"/"rtiger", design, r, err, fit_means, …).
+# params in `...` (caller, design, rrate (nnil) / rigidity (rtiger), err, …).
 # Keep only the paint's 4 columns; return NULL — skipped, not fatal — if the
 # file is missing, so one absent sample never aborts the sweep.
 eng <- function(path, ...) {
@@ -315,13 +319,13 @@ for (i in seq_len(nrow(rows))) {
   tr <- list(
     `Skim-binhmm` = grab(binhmm_gauss(sk)),
     `Skim-nNIL` = grab(eng(sk_counts,
-      caller = "nnil", design = "BC2S2", r = 1e-4, err = 0.01
+      caller = "nnil", design = "BC2S2", rrate = 1e-4, err = 0.01
     )),
-    `Skim-rtiger` = grab(eng(sk_counts, caller = "rtiger", r = 5L)),
+    `Skim-rtiger` = grab(eng(sk_counts, caller = "rtiger", rigidity = 5L)),
     `BrB-nNIL` = grab(eng(brb_counts,
-      caller = "nnil", design = "BC2S3", r = 1e-8, fit_means = TRUE
+      caller = "nnil", design = "BC2S3", rrate = 1e-8, fit_means = TRUE
     )),
-    `BrB-rtiger` = grab(eng(brb_counts, caller = "rtiger", r = 7L)),
+    `BrB-rtiger` = grab(eng(brb_counts, caller = "rtiger", rigidity = 7L)),
     `BrB-atlas` = grab(atlas_seg(br, ad))
   )
 
