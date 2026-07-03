@@ -2404,123 +2404,47 @@ vertical-align: -.125em;
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>gmap <span class="ot">&lt;-</span> <span class="fu">merge</span>(g2p, co, <span class="at">by =</span> <span class="st">&quot;gene&quot;</span>)</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>gmap[, chr <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(<span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, chr))]</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>gmap <span class="ot">&lt;-</span> <span class="fu">unique</span>(gmap[<span class="sc">!</span><span class="fu">is.na</span>(chr)], <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)[, .(pan_gene, chr, <span class="at">pos =</span> end)]</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>gcall <span class="ot">&lt;-</span> <span class="cf">function</span>(nr, nd) {</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  nt <span class="ot">&lt;-</span> nr <span class="sc">+</span> nd</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  fr <span class="ot">&lt;-</span> <span class="fu">fifelse</span>(nt <span class="sc">&gt;</span> <span class="dv">0</span>, nr <span class="sc">/</span> nt, <span class="dv">0</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  fd <span class="ot">&lt;-</span> <span class="fu">fifelse</span>(nt <span class="sc">&gt;</span> <span class="dv">0</span>, nd <span class="sc">/</span> nt, <span class="dv">0</span>)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">3</span>L, <span class="fu">length</span>(nt))</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> nt <span class="sc">&gt;=</span> <span class="dv">5</span>L</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  g[ok <span class="sc">&amp;</span> fr <span class="sc">&gt;=</span> .<span class="dv">95</span>] <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  g[ok <span class="sc">&amp;</span> fd <span class="sc">&gt;=</span> .<span class="dv">95</span>] <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  g[ok <span class="sc">&amp;</span> fr <span class="sc">&gt;=</span> .<span class="dv">25</span> <span class="sc">&amp;</span> fd <span class="sc">&gt;=</span> .<span class="dv">25</span>] <span class="ot">&lt;-</span> <span class="dv">1</span>L</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  g</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>gtmodel <span class="ot">&lt;-</span> nilHMM<span class="sc">:::</span><span class="fu">fit</span>(</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(), <span class="fu">emission_gt</span>(), <span class="fu">duration_geometric</span>(<span class="fl">1e-3</span>), <span class="fu">design_priors</span>(<span class="st">&quot;BC2S3&quot;</span>)</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>atlas_seg <span class="ot">&lt;-</span> <span class="cf">function</span>(brb, adir) {</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;pangene&quot;</span>, adir, <span class="fu">paste0</span>(brb, <span class="st">&quot;.pangene_counts.tsv&quot;</span>))</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  ct <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">fread</span>(f), gmap, <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  ct[, g <span class="sc">:</span><span class="er">=</span> <span class="fu">gcall</span>(n_recur, n_donor)]</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  ct <span class="ot">&lt;-</span> ct[<span class="fu">order</span>(chr, pos)]</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(<span class="fu">sort</span>(<span class="fu">unique</span>(ct<span class="sc">$</span>chr)), <span class="cf">function</span>(cc) {</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    d <span class="ot">&lt;-</span> ct[chr <span class="sc">==</span> cc]</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> nilHMM<span class="sc">:::</span><span class="fu">decode</span>(gtmodel, <span class="fu">list</span>(<span class="at">g =</span> d<span class="sc">$</span>g))</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="fu">rle</span>(p)</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(r<span class="sc">$</span>lengths)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    s <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>L, <span class="fu">head</span>(e, <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> <span class="dv">1</span>L)</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.table</span>(<span class="at">chr =</span> cc, <span class="at">start_bp =</span> d<span class="sc">$</span>pos[s], <span class="at">end_bp =</span> d<span class="sc">$</span>pos[e], <span class="at">state =</span> r<span class="sc">$</span>values)</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># The GOOGA hard-call (`≥.95`/`≥.25`, min 5 reads) + gt/geometric-duration HMM</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># are the packaged ATLAS caller (`call_ancestry(caller = &quot;atlas&quot;)`). Here we do</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># only the consumer-side staging — read pangene counts, map to B73 gene</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates — and hand the engine `(name, chr, pos, n_ref = recurrent,</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># n_alt = donor)`. `r = 1e-3` matches the geometric duration used originally.</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>atlas_seg <span class="ot">&lt;-</span> <span class="cf">function</span>(brb, adir) {</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;pangene&quot;</span>, adir, <span class="fu">paste0</span>(brb, <span class="st">&quot;.pangene_counts.tsv&quot;</span>))</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  ct <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">fread</span>(f), gmap, <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)[<span class="fu">order</span>(chr, pos)]</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    ct[, .(<span class="at">name =</span> brb, chr, pos, <span class="at">n_ref =</span> n_recur, <span class="at">n_alt =</span> n_donor)],</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">caller =</span> <span class="st">&quot;atlas&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S3&quot;</span>, <span class="at">r =</span> <span class="fl">1e-3</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="binhmm-corrected-on-the-dense-skim-bins" class="level1">
 <h1>3. binhmm (corrected) on the dense skim bins</h1>
 <p>3-state <strong>Gaussian</strong>-emission HMM on per-bin <code>ALT_FREQ</code>, porting the nilhifi <code>chromosome_painting.R</code> fix: REF is <strong>anchored at the baseline floor</strong> (mean fixed, sd from the low bins) so REF noise stays REF; HET/ALT are seeded from the data and refined by hard-EM with REF fixed; sticky transitions + design start priors + collapse guards. This replaces the free K=3 GMM (which always invents a 3rd cluster → HET over-call).</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>binhmm_gauss <span class="ot">&lt;-</span> <span class="cf">function</span>(skim, <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span>, <span class="at">stay =</span> <span class="fl">0.995</span>) {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;bins&quot;</span>, <span class="fu">paste0</span>(skim, <span class="st">&quot;_bin_genotypes.tsv&quot;</span>))</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">fread</span>(f)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  dt <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">chr =</span> <span class="fu">as.integer</span>(<span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, d<span class="sc">$</span>CONTIG)), <span class="at">bin =</span> d<span class="sc">$</span>BIN_POS,</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">af =</span> d<span class="sc">$</span>ALT_FREQ, <span class="at">s =</span> d<span class="sc">$</span>BIN_START, <span class="at">e =</span> d<span class="sc">$</span>BIN_END</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  )[<span class="fu">order</span>(chr, bin)]</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  af <span class="ot">&lt;-</span> dt<span class="sc">$</span>af</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  pri <span class="ot">&lt;-</span> <span class="fu">design_priors</span>(design)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  START <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> pri<span class="sc">$</span>f_1 <span class="sc">-</span> pri<span class="sc">$</span>f_2, pri<span class="sc">$</span>f_1, pri<span class="sc">$</span>f_2)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  trans <span class="ot">&lt;-</span> <span class="fu">matrix</span>((<span class="dv">1</span> <span class="sc">-</span> stay) <span class="sc">/</span> <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">3</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(trans) <span class="ot">&lt;-</span> stay</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  seg_all <span class="ot">&lt;-</span> <span class="cf">function</span>(state) {</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(<span class="fu">sort</span>(<span class="fu">unique</span>(dt<span class="sc">$</span>chr)), <span class="cf">function</span>(cc) {</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>      i <span class="ot">&lt;-</span> <span class="fu">which</span>(dt<span class="sc">$</span>chr <span class="sc">==</span> cc)</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>      i <span class="ot">&lt;-</span> i[<span class="fu">order</span>(dt<span class="sc">$</span>bin[i])]</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>      p <span class="ot">&lt;-</span> state[i]</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      rr <span class="ot">&lt;-</span> <span class="fu">rle</span>(p)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      rr<span class="sc">$</span>values[rr<span class="sc">$</span>values <span class="sc">&gt;</span> <span class="dv">0</span>L <span class="sc">&amp;</span> rr<span class="sc">$</span>lengths <span class="sc">&lt;</span> <span class="dv">2</span>L] <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      p <span class="ot">&lt;-</span> <span class="fu">inverse.rle</span>(rr) <span class="co"># drop 1-bin donor specks</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>      r <span class="ot">&lt;-</span> <span class="fu">rle</span>(p)</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>      e <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(r<span class="sc">$</span>lengths)</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>      s <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>L, <span class="fu">head</span>(e, <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> <span class="dv">1</span>L)</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">data.table</span>(<span class="at">chr =</span> cc, <span class="at">start_bp =</span> dt<span class="sc">$</span>s[i][s], <span class="at">end_bp =</span> dt<span class="sc">$</span>e[i][e], <span class="at">state =</span> r<span class="sc">$</span>values)</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    }))</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bulk of the bins = REF baseline (NILs are mostly REF)</span></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  base_bins <span class="ot">&lt;-</span> af[af <span class="sc">&lt;=</span> stats<span class="sc">::</span><span class="fu">quantile</span>(af, <span class="fl">0.6</span>)]</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  ref_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(base_bins)</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  sd_base <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fl">1e-3</span>, <span class="fu">sd</span>(base_bins)) <span class="co"># anchor REF at the FLOOR (not 0)</span></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  hi <span class="ot">&lt;-</span> af[af <span class="sc">&gt;</span> ref_mean <span class="sc">+</span> <span class="dv">4</span> <span class="sc">*</span> sd_base] <span class="co"># bins clearly above the floor</span></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(hi) <span class="sc">&lt;</span> <span class="dv">4</span>) {</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># collapse guard: no donor signal -&gt; call everything REF</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">seg_all</span>(<span class="fu">rep</span>(<span class="dv">0</span>L, <span class="fu">length</span>(af))))</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>  alt_mean <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(hi, <span class="fl">0.75</span>)) <span class="co"># seed ALT from data</span></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>  het_mean <span class="ot">&lt;-</span> ref_mean <span class="sc">+</span> (alt_mean <span class="sc">-</span> ref_mean) <span class="sc">/</span> <span class="dv">2</span> <span class="co"># HET midway floor..ALT</span></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Floor REF width to the signal scale: a hyper-tight baseline (high coverage)</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># must not push mildly-elevated single bins into donor (anti-fragmentation).</span></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  sd_ref <span class="ot">&lt;-</span> <span class="fu">max</span>(sd_base, (alt_mean <span class="sc">-</span> ref_mean) <span class="sc">/</span> <span class="dv">6</span>)</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  means <span class="ot">&lt;-</span> <span class="fu">c</span>(ref_mean, het_mean, alt_mean)</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>  sds <span class="ot">&lt;-</span> <span class="fu">c</span>(sd_ref, <span class="fu">max</span>(sd_ref, <span class="fu">sd</span>(hi)), <span class="fu">max</span>(sd_ref, <span class="fu">sd</span>(hi)))</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  <span class="co"># per-bin log-emission: dnorm of alt_frac under each of the 3 state means</span></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>  emit <span class="ot">&lt;-</span> <span class="cf">function</span>(m, s) {</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">vapply</span>(</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>      <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(k) stats<span class="sc">::</span><span class="fu">dnorm</span>(af, m[k], <span class="fu">max</span>(s[k], <span class="fl">1e-3</span>), <span class="at">log =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">numeric</span>(<span class="fu">length</span>(af))</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  path <span class="ot">&lt;-</span> <span class="fu">integer</span>(<span class="fu">length</span>(af))</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (it <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>) { <span class="co"># hard-EM: Viterbi -&gt; refit HET/ALT means (REF fixed at 0)</span></span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    le <span class="ot">&lt;-</span> <span class="fu">emit</span>(means, sds)</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    np <span class="ot">&lt;-</span> <span class="fu">integer</span>(<span class="fu">length</span>(af))</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (cc <span class="cf">in</span> <span class="fu">unique</span>(dt<span class="sc">$</span>chr)) {</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>      i <span class="ot">&lt;-</span> <span class="fu">which</span>(dt<span class="sc">$</span>chr <span class="sc">==</span> cc)</span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>      i <span class="ot">&lt;-</span> i[<span class="fu">order</span>(dt<span class="sc">$</span>bin[i])]</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>      np[i] <span class="ot">&lt;-</span> nilHMM<span class="sc">:::</span><span class="fu">viterbi_log_cpp</span>(<span class="fu">log</span>(START), <span class="fu">log</span>(trans), le[i, , <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">identical</span>(np, path)) <span class="cf">break</span></span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    path <span class="ot">&lt;-</span> np</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>) {</span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">any</span>(path <span class="sc">==</span> k <span class="sc">-</span> <span class="dv">1</span>L)) {</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>        means[k] <span class="ot">&lt;-</span> <span class="fu">mean</span>(af[path <span class="sc">==</span> k <span class="sc">-</span> <span class="dv">1</span>L])</span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>        sds[k] <span class="ot">&lt;-</span> <span class="fu">max</span>(sd_ref, <span class="fu">sd</span>(af[path <span class="sc">==</span> k <span class="sc">-</span> <span class="dv">1</span>L]))</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>  <span class="co"># collapse guards: fold a state whose mean isn&#39;t separated from the REF floor</span></span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>  <span class="co"># HET indistinct from floor</span></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (means[<span class="dv">2</span>] <span class="sc">&lt;</span> ref_mean <span class="sc">+</span> <span class="dv">4</span> <span class="sc">*</span> sd_ref) path[path <span class="sc">==</span> <span class="dv">1</span>L] <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ALT indistinct from floor</span></span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (means[<span class="dv">3</span>] <span class="sc">&lt;</span> ref_mean <span class="sc">+</span> <span class="dv">4</span> <span class="sc">*</span> sd_ref) path[path <span class="sc">==</span> <span class="dv">2</span>L] <span class="ot">&lt;-</span> <span class="dv">0</span>L</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>  <span class="fu">seg_all</span>(path)</span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The anchored 3-state Gaussian HMM is the packaged `binhmm` gauss backend. Our</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># input is the pre-computed per-1 Mb `bin_genotypes.tsv` (ALT_FREQ over the dense</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ~27.6 M set); `call_ancestry(caller = &quot;binhmm&quot;)` accepts a pre-binned table (an</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># `alt_freq` column + `start_bp`/`end_bp`, `pos` as the bin order key) and runs</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># the HMM directly, with no re-binning.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>binhmm_gauss <span class="ot">&lt;-</span> <span class="cf">function</span>(skim, <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span>) {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;bins&quot;</span>, <span class="fu">paste0</span>(skim, <span class="st">&quot;_bin_genotypes.tsv&quot;</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">fread</span>(f)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  obs <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> skim, <span class="at">chr =</span> <span class="fu">as.integer</span>(<span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, d<span class="sc">$</span>CONTIG)), <span class="at">pos =</span> d<span class="sc">$</span>BIN_POS,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">alt_freq =</span> d<span class="sc">$</span>ALT_FREQ, <span class="at">start_bp =</span> d<span class="sc">$</span>BIN_START, <span class="at">end_bp =</span> d<span class="sc">$</span>BIN_END</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(obs, <span class="at">caller =</span> <span class="st">&quot;binhmm&quot;</span>, <span class="at">design =</span> design))</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="count-rtiger-via-the-engine" class="level1">
