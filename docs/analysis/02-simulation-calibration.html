@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-03">
+<meta name="dcterms.date" content="2026-07-04">
 
 <title>Simulation-calibrated ancestry calling: fit on simcross, validate on truth</title>
 <style>
@@ -2211,7 +2211,7 @@ vertical-align: -.125em;
   <ul>
   <li><a href="#the-simulation-model-bc2s2-n-1500-2.4" id="toc-the-simulation-model-bc2s2-n-1500-2.4" class="nav-link active" data-scroll-target="#the-simulation-model-bc2s2-n-1500-2.4">1. The simulation model — BC2S2, n = 1500 (§2.4)</a></li>
   <li><a href="#calibration-fit-the-duration-knob-on-truth-2.5a-results-3.1-fig-f2" id="toc-calibration-fit-the-duration-knob-on-truth-2.5a-results-3.1-fig-f2" class="nav-link" data-scroll-target="#calibration-fit-the-duration-knob-on-truth-2.5a-results-3.1-fig-f2">2. Calibration — fit the duration knob on truth (§2.5a, Results §3.1) — Fig F2</a></li>
-  <li><a href="#validation-on-held-out-sims-caller-ranking-2.5b-results-3.2-fig-f3" id="toc-validation-on-held-out-sims-caller-ranking-2.5b-results-3.2-fig-f3" class="nav-link" data-scroll-target="#validation-on-held-out-sims-caller-ranking-2.5b-results-3.2-fig-f3">3. Validation on held-out sims — caller ranking (§2.5b, Results §3.2) — Fig F3</a></li>
+  <li><a href="#benchmark-at-the-calibrated-parameter-2.5b-results-3.2-fig-f3" id="toc-benchmark-at-the-calibrated-parameter-2.5b-results-3.2-fig-f3" class="nav-link" data-scroll-target="#benchmark-at-the-calibrated-parameter-2.5b-results-3.2-fig-f3">3. Benchmark at the calibrated parameter (§2.5b, Results §3.2) — Fig F3</a></li>
   <li><a href="#fragment-size-fit-supplementary-the-bc2s2_vs_bc2s3-view" id="toc-fragment-size-fit-supplementary-the-bc2s2_vs_bc2s3-view" class="nav-link" data-scroll-target="#fragment-size-fit-supplementary-the-bc2s2_vs_bc2s3-view">4. Fragment-size fit (supplementary) — the <code>bc2s2_vs_bc2s3</code> view</a></li>
   <li><a href="#genotype-frequency-vs-the-one-locus-expectation-supplementary" id="toc-genotype-frequency-vs-the-one-locus-expectation-supplementary" class="nav-link" data-scroll-target="#genotype-frequency-vs-the-one-locus-expectation-supplementary">5. Genotype-frequency vs the one-locus expectation (supplementary)</a></li>
   <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
@@ -2240,7 +2240,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 3, 2026</p>
+      <p class="date">July 4, 2026</p>
     </div>
   </div>
   
@@ -2252,138 +2252,120 @@ vertical-align: -.125em;
 </header>
 
 
-<p><strong>Thesis (the paper’s novelty).</strong> Ancestry-caller parameters (<code>rrate</code>, <code>rigidity</code>, <code>err</code>, emission means) can be <strong>calibrated from cheap Broman <code>simcross</code> simulations</strong> rather than from scarce high-coverage truth samples, and the calibrated parameters transfer across Skim and BrB modalities.</p>
-<p><strong>Methodological point (this section’s argument).</strong> Holland’s nNIL grid search maximized <strong>marker true-positives</strong> (donor-marker recall). That objective rewards calling <em>more</em> donor, which <strong>over-fragments</strong> — it opens spurious short donor blocks to catch every donor marker. We instead <strong>calibrate on F1</strong> (marker and donor-fragment) and show the true-positive optimum inflates the breakpoint/ crossover count at little F1 gain. All metrics live in <code>R/metrics.R</code>.</p>
-<div class="callout callout-style-default callout-important callout-titled" title="STATUS: metrics ready; simcross truth generator pending">
+<p><strong>Thesis (the paper’s novelty).</strong> Ancestry-caller parameters (<code>rrate</code>, <code>rigidity</code>, <code>err</code>, emission means) can be <strong>calibrated from cheap Broman <code>simcross</code> simulations</strong> rather than from scarce high-coverage truth samples, and transfer across Skim and BrB modalities.</p>
+<p><strong>Methodological point (this section’s argument).</strong> Holland’s nNIL grid search maximized <strong>marker true-positives</strong> (donor-marker recall). On well-covered truth that objective <strong>saturates</strong> — donor recall is ~0.99 across four orders of magnitude of <code>rrate</code> — so it cannot discriminate a good parameter from a bad one, and any value inside the plateau looks “optimal.” The discriminating axis is on the <em>precision</em> side: raising <code>rrate</code> licenses ever-shorter donor blocks, so the false-discovery rate and breakpoint count climb while recall does not move. We therefore calibrate on <strong>F1</strong> (marker and donor-fragment), which has a well-defined optimum whose breakpoint count matches truth. Metrics: <code>R/metrics.R</code>; truth: <code>R/simulate.R</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Compute is separated from this note">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Important</span>STATUS: metrics ready; simcross truth generator pending
+<span class="screen-reader-only">Note</span>Compute is separated from this note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The scoring harness (<code>R/metrics.R</code>: <code>marker_f1</code>, <code>donor_fragment_f1</code>, <code>fragment_size_ks</code>, <code>genotype_fractions</code>, <code>single_locus_expectation</code>, <code>calibrate_sweep</code>) is implemented and tested. The <strong>BC2S2, n = 1500 simcross truth</strong> is generated by <code>R/simulate.R</code> (still a scaffold) → the sim-dependent chunks below are gated on the truth files existing and are the intended shape.</p>
+<p>The sweeps, RTIGER EM, and benchmark run in <strong><code>scripts/02_calibrate.R</code></strong>, which writes small summary CSVs to <code>results/sim/</code> (gitignored). This note only loads and plots them, so it renders in seconds. Regenerate everything with <code>Rscript scripts/02_calibrate.R --generate</code>. Truth: BC2S2, n = 1500, <strong>50 000 markers</strong> — the caller runs directly on per-marker skim counts (no binning), at a density where a donor block spans enough markers for the duration prior to integrate over.</p>
 </div>
 </div>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;R&quot;</span>), <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.R$&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># simcross truth + degraded counts land here (gitignored); R/simulate.R writes them.</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>SIM <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/sim&quot;</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>truth_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SIM, <span class="st">&quot;bc2s2_truth_segments.csv&quot;</span>) <span class="co"># common schema</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>have_sim <span class="ot">&lt;-</span> <span class="fu">file.exists</span>(truth_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>SIM <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/sim&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">file.path</span>(SIM, x)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>have_calib <span class="ot">&lt;-</span> <span class="fu">file.exists</span>(<span class="fu">f</span>(<span class="st">&quot;nnil_rrate_sweep.csv&quot;</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (have_calib) {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  params <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;calib_params.csv&quot;</span>))<span class="sc">$</span>value, <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;calib_params.csv&quot;</span>))<span class="sc">$</span>key)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  nnil_sweep <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;nnil_rrate_sweep.csv&quot;</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  rtiger_sweep <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;rtiger_rigidity_sweep.csv&quot;</span>))</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  benchmark <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;benchmark.csv&quot;</span>))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  frag <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;frag_sizes.csv&quot;</span>))</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  geno <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;geno_fractions.csv&quot;</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="the-simulation-model-bc2s2-n-1500-2.4" class="level1">
 <h1>1. The simulation model — BC2S2, n = 1500 (§2.4)</h1>
-<p>One truth, for simplicity: <strong>BC2S2</strong> (2 backcrosses to B73, 2 selfs), the bulked- skim generation (memory <code>bzea-skim-bulked-bc2s2</code>; <code>bc2s2_vs_bc2s3</code> argues bulked skim references BC2S2, one meiosis short of BC2S3). Forward-simulate with <code>simcross</code> on the maize consensus cM map (~1540 cM, per TeoNAM / Chen 2019) with <strong>Stahl interference m = 10, p = 0</strong>, <strong>n = 1500</strong> NILs, fixed seed. Truth = the donor mosaic (common-schema segments). Then <strong>degrade</strong> to each source’s regime (coverage-driven missingness <code>missing(λ) = π + (1 − π)e^{−kλ}</code>, per-read error) so a simulated NIL looks like a Skim / BrB sample.</p>
-<p>Generator: <code>R/simulate.R::simulate_source(design = &quot;BC2S2&quot;, ...)</code>. Expected per- locus genotype target (the calibration/validation anchor):</p>
+<p><strong>BC2S2</strong> (2 backcrosses to B73, 2 selfs — the bulked-skim generation, memory <code>bzea-skim-bulked-bc2s2</code>). <code>simcross</code> on the maize consensus cM map (<code>maize_map_v5_clean.rds</code>, ~1783 cM) with <strong>Stahl interference m = 10, p = 0</strong>, <strong>50 000 markers</strong>, fixed seed. Truth = the donor mosaic (dosage 0/1/2 at each marker → common-schema segments). Degrade to the skim regime (coverage-driven missingness <code>π + (1−π)e^{−kλ}</code>, per-read error): skim ≈ 0.43× / ~72% missing.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>p0 <span class="ot">&lt;-</span> <span class="fu">single_locus_expectation</span>(<span class="at">n_bc =</span> <span class="dv">2</span>L, <span class="at">n_self =</span> <span class="dv">2</span>L)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(p0, <span class="dv">4</span>) <span class="co"># REF 0.844 / HET 0.0625 / ALT 0.0938 ; donor dosage 0.125</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   REF    HET    ALT dosage 
-0.8438 0.0625 0.0938 0.1250 </code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Truth genome composition vs the single-locus expectation. (TeoNAM / Chen 2019 is</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># a *different* design — BC1S4, ~15% teosinte-hom / ~8% het — cited elsewhere for</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># orientation only, not a target here.)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(<span class="st">&quot;REF&quot;</span>, <span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>, <span class="st">&quot;dosage&quot;</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">truth_mean =</span> <span class="fu">round</span>(params[<span class="fu">c</span>(<span class="st">&quot;REF_truth&quot;</span>, <span class="st">&quot;HET_truth&quot;</span>, <span class="st">&quot;ALT_truth&quot;</span>, <span class="st">&quot;dosage_truth&quot;</span>)], <span class="dv">4</span>),</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">bc2s2_expectation =</span> <span class="fu">round</span>(params[<span class="fu">c</span>(<span class="st">&quot;REF_expect&quot;</span>, <span class="st">&quot;HET_expect&quot;</span>, <span class="st">&quot;ALT_expect&quot;</span>, <span class="st">&quot;dosage_expect&quot;</span>)], <span class="dv">4</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="calibration-fit-the-duration-knob-on-truth-2.5a-results-3.1-fig-f2" class="level1">
 <h1>2. Calibration — fit the duration knob on truth (§2.5a, Results §3.1) — Fig F2</h1>
-<p>Sweep the caller’s duration knob (<code>rrate</code> for nNIL, <code>rigidity</code> for RTIGER) and score each value against the BC2S2 truth with <code>calibrate_sweep()</code>. The curve gives three coincident optima (F1-max, KS-min, crossover-match) — and shows the true-positive (recall) optimum sits elsewhere, over-fragmenting.</p>
+<p><code>scripts/02_calibrate.R</code> sweeps <code>rrate</code> (nNIL) and <code>rigidity</code> (RTIGER) with <code>calibrate_sweep()</code> and scores each against truth. The F1 optimum, the KS-min, and the truth-matching breakpoint count roughly coincide; the marker true-positive (recall) objective is flat across the whole sweep and cannot pick a winner.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">fread</span>(truth_file) <span class="co"># name, chr, start_bp, end_bp, state (BC2S2 truth)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(SIM, <span class="st">&quot;grid.csv&quot;</span>)) <span class="co"># chr, pos (marker grid)</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>skim <span class="ot">&lt;-</span> <span class="fu">read_counts_dir</span>(<span class="fu">file.path</span>(SIM, <span class="st">&quot;skim_counts&quot;</span>)) <span class="co"># degraded-sim Skim counts (helper </span><span class="al">TODO</span><span class="co">)</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>nnil_sweep <span class="ot">&lt;-</span> <span class="fu">calibrate_sweep</span>(skim, sim, grid,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>, <span class="at">param =</span> <span class="st">&quot;rrate&quot;</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">values =</span> <span class="dv">10</span><span class="sc">^</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">6</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="at">by =</span> <span class="fl">0.25</span>), <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span>, <span class="at">err =</span> <span class="fl">0.01</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>rtiger_sweep <span class="ot">&lt;-</span> <span class="fu">calibrate_sweep</span>(skim, sim, grid,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">param =</span> <span class="st">&quot;rigidity&quot;</span>, <span class="at">values =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># F1 optimum vs the Holland true-positive (marker donor-recall) optimum</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>f1_opt <span class="ot">&lt;-</span> nnil_sweep[<span class="fu">which.max</span>(donor_frag_F1)]</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>tp_opt <span class="ot">&lt;-</span> nnil_sweep[<span class="fu">which.max</span>(donor_marker_recall)]</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">cbind</span>(<span class="at">objective =</span> <span class="st">&quot;F1-optimal&quot;</span>, f1_opt), <span class="fu">cbind</span>(<span class="at">objective =</span> <span class="st">&quot;TP-optimal&quot;</span>, tp_opt))[</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  , .(objective, value, donor_frag_F1, donor_marker_recall, donor_frag_FDR, n_breakpoints, ks_fragsize)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>nnil_sweep[, .(<span class="at">rrate =</span> <span class="fu">signif</span>(value, <span class="dv">2</span>), <span class="at">donor_marker_recall =</span> <span class="fu">round</span>(donor_marker_recall, <span class="dv">3</span>),</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">donor_frag_F1 =</span> <span class="fu">round</span>(donor_frag_F1, <span class="dv">3</span>), <span class="at">donor_frag_FDR =</span> <span class="fu">round</span>(donor_frag_FDR, <span class="dv">3</span>),</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  n_breakpoints, truth_bp, <span class="at">ks_fragsize =</span> <span class="fu">round</span>(ks_fragsize, <span class="dv">3</span>))]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># F2a: donor-fragment F1 vs marker donor-recall (Holland&#39;s TP objective) across</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the swept parameter; the F1 optimum (dashed) and the TP optimum differ.</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># F2b/F2c: n_breakpoints and ks_fragsize vs `value` are the over-fragmentation</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># and fragment-size-fit companion panels (same nnil_sweep columns).</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(nnil_sweep, <span class="fu">aes</span>(value)) <span class="sc">+</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> donor_frag_F1, <span class="at">colour =</span> <span class="st">&quot;donor-fragment F1&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> donor_marker_recall, <span class="at">colour =</span> <span class="st">&quot;marker donor recall (TP)&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> f1_opt<span class="sc">$</span>value, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;rrate&quot;</span>, <span class="at">y =</span> <span class="st">&quot;score&quot;</span>, <span class="at">colour =</span> <span class="cn">NULL</span>,</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;F2a — F1 vs true-positive objective (nNIL); dashed = F1 optimum&quot;</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Marker donor-recall (Holland&#39;s TP objective) is saturated, so a recall-only search</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is *indifferent* between the F1 optimum and the most permissive rrate. Donor-fragment</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># F1, FDR, and breakpoint count are not — they pick the parameter that matches truth.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">objective =</span> <span class="st">&quot;F1-optimal&quot;</span>, nnil_sweep[<span class="fu">which.max</span>(donor_frag_F1)]),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">objective =</span> <span class="st">&quot;most permissive (recall ties)&quot;</span>, nnil_sweep[<span class="fu">which.max</span>(value)])</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)[, .(objective, <span class="at">rrate =</span> <span class="fu">signif</span>(value, <span class="dv">2</span>), <span class="at">donor_marker_recall =</span> <span class="fu">round</span>(donor_marker_recall, <span class="dv">3</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">donor_frag_F1 =</span> <span class="fu">round</span>(donor_frag_F1, <span class="dv">3</span>), <span class="at">donor_frag_FDR =</span> <span class="fu">round</span>(donor_frag_FDR, <span class="dv">3</span>),</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  n_breakpoints, truth_bp)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> nnil_sweep[, .(<span class="at">rrate =</span> value, <span class="st">`</span><span class="at">donor-fragment F1</span><span class="st">`</span> <span class="ot">=</span> donor_frag_F1,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">marker donor recall (TP)</span><span class="st">`</span> <span class="ot">=</span> donor_marker_recall, <span class="st">`</span><span class="at">donor-fragment FDR</span><span class="st">`</span> <span class="ot">=</span> donor_frag_FDR)]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dm <span class="ot">&lt;-</span> <span class="fu">melt</span>(d, <span class="at">id.vars =</span> <span class="st">&quot;rrate&quot;</span>, <span class="at">variable.name =</span> <span class="st">&quot;metric&quot;</span>, <span class="at">value.name =</span> <span class="st">&quot;score&quot;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dm, <span class="fu">aes</span>(rrate, score, <span class="at">colour =</span> metric)) <span class="sc">+</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> params[<span class="st">&quot;rrate_star&quot;</span>], <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;rrate&quot;</span>, <span class="at">y =</span> <span class="st">&quot;score&quot;</span>, <span class="at">colour =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;F2 — F1 has a peak; the TP (recall) objective is flat (dashed = F1 optimum)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="validation-on-held-out-sims-caller-ranking-2.5b-results-3.2-fig-f3" class="level1">
-<h1>3. Validation on held-out sims — caller ranking (§2.5b, Results §3.2) — Fig F3</h1>
-<p>Score each caller × source at its calibrated parameter against held-out BC2S2 truth: per-state marker F1, donor-fragment F1/FDR/boundary, and the crossover / breakpoint count vs truth (the over-fragmentation number).</p>
+<section id="benchmark-at-the-calibrated-parameter-2.5b-results-3.2-fig-f3" class="level1">
+<h1>3. Benchmark at the calibrated parameter (§2.5b, Results §3.2) — Fig F3</h1>
+<p>Each caller at its F1-optimal knob (<code>rrate =</code> , <code>rigidity =</code> ), scored on a held-out set vs truth: per-state marker F1, donor-fragment F1/FDR, fragment-size KS, and breakpoint count vs truth.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>score_caller <span class="ot">&lt;-</span> <span class="cf">function</span>(called, tag) {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  mf <span class="ot">&lt;-</span> <span class="fu">marker_f1</span>(called, sim, grid)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  ff <span class="ot">&lt;-</span> <span class="fu">donor_fragment_f1</span>(called, sim)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">caller =</span> tag,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">marker_macroF1 =</span> mf<span class="sc">$</span>macro_f1,</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">donor_marker_F1 =</span> mf<span class="sc">$</span>per_class[class <span class="sc">==</span> <span class="st">&quot;donor(&gt;0)&quot;</span>, f1],</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">donor_frag_F1 =</span> ff<span class="sc">$</span>f1, <span class="at">donor_frag_FDR =</span> ff<span class="sc">$</span>fdr,</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_breakpoints =</span> <span class="fu">breakpoint_count</span>(called),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_breakpoints_truth =</span> <span class="fu">breakpoint_count</span>(sim)</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># rbindlist(list(score_caller(skim_nnil, &quot;Skim-nNIL&quot;), score_caller(skim_rtiger, &quot;Skim-RTIGER&quot;), ...))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>benchmark[]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="fragment-size-fit-supplementary-the-bc2s2_vs_bc2s3-view" class="level1">
 <h1>4. Fragment-size fit (supplementary) — the <code>bc2s2_vs_bc2s3</code> view</h1>
-<p>Called donor-block sizes vs the simulated-truth distribution (ECDF + KS). Over- fragmentation shows as mass shifted to short blocks; a good fit tracks the truth.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sizes <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(<span class="at">src =</span> <span class="st">&quot;truth&quot;</span>, <span class="at">mb =</span> <span class="fu">donor_block_sizes</span>(sim))</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data.table(src = &quot;Skim-nNIL&quot;, mb = donor_block_sizes(skim_nnil)), ...</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sizes, <span class="fu">aes</span>(mb, <span class="at">colour =</span> src)) <span class="sc">+</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_ecdf</span>() <span class="sc">+</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;donor block size (Mb)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;ECDF&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Fragment-size fit vs BC2S2 truth&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(frag, <span class="fu">aes</span>(mb, <span class="at">colour =</span> src)) <span class="sc">+</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_ecdf</span>() <span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;donor block size (Mb)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;ECDF&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Fragment-size fit vs BC2S2 truth (KS in the benchmark table)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="genotype-frequency-vs-the-one-locus-expectation-supplementary" class="level1">
 <h1>5. Genotype-frequency vs the one-locus expectation (supplementary)</h1>
-<p>The <code>skim_brbseq_skimbin</code> view: per-NIL genome fractions vs the Mendelian single-locus expectation <code>p0</code> and vs the simcross distribution. <strong>Reference (Chen 2019 / TeoNAM, BC1S4):</strong> ~15% homozygous teosinte, ~8% heterozygous — donor dosage runs <em>below</em> neutral (selection), and a <em>modest</em> real het excess exists; the RNA failure mode (BrB over-calling HET) is a far grosser inflation.</p>
+<p>The <code>skim_brbseq_skimbin</code> view. Reference (Chen 2019 / TeoNAM, BC1S4): ~15% teosinte-hom, ~8% het — donor dosage runs <em>below</em> neutral (selection) and a <em>modest</em> real het excess exists; the RNA failure mode is a far grosser inflation.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>gf <span class="ot">&lt;-</span> <span class="fu">genotype_fractions</span>(sim) <span class="co"># + rbind each caller&#39;s genotype_fractions, tagged</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(gf[, .(name, HET, ALT)], <span class="at">id.vars =</span> <span class="st">&quot;name&quot;</span>), <span class="fu">aes</span>(variable, value)) <span class="sc">+</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_violin</span>() <span class="sc">+</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">data =</span> <span class="fu">data.table</span>(<span class="at">variable =</span> <span class="fu">c</span>(<span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>), <span class="at">y =</span> <span class="fu">c</span>(p0[<span class="st">&quot;HET&quot;</span>], p0[<span class="st">&quot;ALT&quot;</span>])),</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">yintercept =</span> y), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">&quot;genome fraction&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Genotype freq vs one-locus expectation (dashed)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(geno[, .(src, HET, ALT)], <span class="at">id.vars =</span> <span class="st">&quot;src&quot;</span>), <span class="fu">aes</span>(src, value)) <span class="sc">+</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_violin</span>(<span class="at">scale =</span> <span class="st">&quot;width&quot;</span>) <span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">data =</span> <span class="fu">data.table</span>(<span class="at">variable =</span> <span class="fu">c</span>(<span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fu">c</span>(params[<span class="st">&quot;HET_expect&quot;</span>], params[<span class="st">&quot;ALT_expect&quot;</span>])),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">yintercept =</span> y), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">&quot;genome fraction&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Genotype freq vs one-locus expectation (dashed)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="next-steps" class="level1">
 <h1>Next steps</h1>
-<ol type="1">
-<li>Wire <code>R/simulate.R::simulate_source(&quot;BC2S2&quot;, n = 1500, m = 10)</code> → write <code>results/sim/{bc2s2_truth_segments.csv, grid.csv, &lt;source&gt;_counts/}</code>.</li>
-<li>Run the F2 sweep for nNIL (<code>rrate</code>) and RTIGER (<code>rigidity</code>) on the degraded Skim and BrB sims; confirm F1-opt ≠ TP-opt and the breakpoint blow-up.</li>
-<li>Produce F3 (caller ranking) + the supplementary fragment-size and genotype-frequency panels; carry the calibrated parameters to <code>03-source-method-comparison.qmd</code>. ```</li>
-</ol>
+<ul>
+<li>Add the BrB regime and the per-source calibrated parameters; carry them to <code>03-source-method-comparison.qmd</code>.</li>
+<li>Add the donor-footprint ROC and HET-vs-ALT calibration panels. ```</li>
+</ul>
 </section>
 
 </main>
