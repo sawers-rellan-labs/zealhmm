@@ -36,7 +36,7 @@ Julia source and the saved RTIGER fits (not from code comments):
 | taxon / comparison | result |
 |---|---|
 | **Zh** — identical params + identical covered markers (decode of RTIGER's exact fit) | **100.00%** per-marker; ALT 4387/4387 (recall & precision 1.000) |
-| **Zh** — nilHMM's own r=8 fit + covered filter vs RTIGER | **99.95%** per-marker; donor-present F1 1.000; ALT recall 0.965 |
+| **Zh** — nilHMM's own r=8 fit + covered filter vs RTIGER | **99.95%** per-marker; donor-present Dice 1.000; ALT recall 0.965 |
 | **Zl** — nilHMM's own r=8 fit vs RTIGER (emission means, QC'd) | **19 iterations, means 0.99 / 0.870 / 0.659** vs RTIGER 19 iters, 0.99 / 0.870 / 0.661 |
 | **Zh** — nilHMM's own r=5 fit vs RTIGER (per-marker, 848 k) | **99.76%**; ALT recall 0.944 / precision 0.802 |
 | **Zl** — nilHMM's own r=5 fit vs RTIGER (per-marker, 1.98 M) | **99.95%**; ALT recall 0.997 / precision 0.989 |

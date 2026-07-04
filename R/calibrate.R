@@ -61,8 +61,8 @@ feasible_rigidity <- function(data, values) {
 #' @param threads Fan-out width forwarded to `caller_sweep`.
 #' @param refit `"none"` (fit once at `ref`; the fast scan default) or `"cold"`.
 #' @param ... Forwarded to `caller_sweep` (`design`/`f_1`,`f_2`, `err`, `ref`, ...).
-#' @return `data.table(param, value, donor_frag_F1, donor_frag_FDR,
-#'   donor_marker_recall, marker_macroF1, n_breakpoints, truth_bp, ks_fragsize)`,
+#' @return `data.table(param, value, donor_frag_dice, donor_frag_FDR,
+#'   donor_marker_recall, marker_macro_dice, n_breakpoints, truth_bp, ks_fragsize)`,
 #'   ascending in `value`.
 #' @export
 sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger"),
@@ -80,13 +80,13 @@ sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger"),
   tbp <- breakpoint_count(truth)
   data.table::rbindlist(lapply(sort(values), function(v) {
     called <- segs[get(pcol) == v]
-    mf <- marker_f1(called, truth, grid)
-    ff <- donor_fragment_f1(called, truth)
+    mf <- marker_dice(called, truth, grid)
+    ff <- donor_fragment_dice(called, truth)
     dr <- mf$per_class[class == "donor(>0)"]
     data.table::data.table(
       param = pcol, value = v,
-      donor_frag_F1 = ff$f1, donor_frag_FDR = ff$fdr,
-      donor_marker_recall = dr$recall, marker_macroF1 = mf$macro_f1,
+      donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
+      donor_marker_recall = dr$recall, marker_macro_dice = mf$macro_dice,
       n_breakpoints = breakpoint_count(called), truth_bp = tbp,
       ks_fragsize = fragment_size_ks(donor_block_sizes(called), tsz)
     )
@@ -103,7 +103,7 @@ sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger"),
 #' @param objective Column optimized (see [best_value()]).
 #' @return Numeric `c(lo, hi)`.
 #' @export
-bracket_from_sweep <- function(scores, objective = "donor_frag_F1") {
+bracket_from_sweep <- function(scores, objective = "donor_frag_dice") {
   s <- scores[order(scores$value)]
   i <- match(best_value(s, objective)$value, s$value)
   lo <- s$value[max(1L, i - 1L)]
@@ -124,7 +124,7 @@ bracket_from_sweep <- function(scores, objective = "donor_frag_F1") {
 #'
 #' @param data,truth,grid,caller,threads,... As in [sweep_calibrate()].
 #' @param lo,hi Bracket endpoints (`0 < lo < hi`).
-#' @param objective Column to optimize (F1 maximized; `ks_fragsize`/`donor_frag_FDR` minimized).
+#' @param objective Column to optimize (Dice maximized; `ks_fragsize`/`donor_frag_FDR` minimized).
 #' @param tol Stop when the bracket width on the log10 scale is below this
 #'   (default 0.05 ~ a 1.12x ratio).
 #' @param max_iter Iteration cap.
@@ -133,7 +133,7 @@ bracket_from_sweep <- function(scores, objective = "donor_frag_F1") {
 #'   `trace` (per-iteration bracket), `evals` (all probed value/objective pairs).
 #' @export
 golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger"),
-                          lo, hi, objective = "donor_frag_F1", threads = 1L,
+                          lo, hi, objective = "donor_frag_dice", threads = 1L,
                           tol = 0.05, max_iter = 20L, integer = NULL, ...) {
   caller <- match.arg(caller)
   if (lo <= 0 || hi <= 0 || lo >= hi) stop("golden_refine(): need 0 < lo < hi")
@@ -161,22 +161,22 @@ golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger"),
   H <- log10(hi)
   c1 <- H - gr * (H - L)
   c2 <- L + gr * (H - L)
-  f1 <- score_at(c1)
-  f2 <- score_at(c2)
+  p1 <- score_at(c1) # probe at interior point 1 (not the golden-section objective)
+  p2 <- score_at(c2)
   trace <- vector("list", max_iter)
   for (it in seq_len(max_iter)) {
-    if (f1$y >= f2$y) {
+    if (p1$y >= p2$y) {
       H <- c2
       c2 <- c1
-      f2 <- f1
+      p2 <- p1
       c1 <- H - gr * (H - L)
-      f1 <- score_at(c1)
+      p1 <- score_at(c1)
     } else {
       L <- c1
       c1 <- c2
-      f1 <- f2
+      p1 <- p2
       c2 <- L + gr * (H - L)
-      f2 <- score_at(c2)
+      p2 <- score_at(c2)
     }
     trace[[it]] <- data.table::data.table(iter = it, lo = 10^L, hi = 10^H)
     if ((H - L) < tol) break
@@ -201,7 +201,7 @@ golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger"),
 #'   metric (`ks_fragsize`, `donor_frag_FDR`), which is minimized.
 #' @return List: `value` (the optimizer), `objective`, and the winning `row`.
 #' @export
-best_value <- function(scores, objective = "donor_frag_F1") {
+best_value <- function(scores, objective = "donor_frag_dice") {
   if (!objective %in% names(scores)) stop("best_value(): no column '", objective, "'")
   minimize <- objective %in% c("ks_fragsize", "donor_frag_FDR")
   i <- if (minimize) which.min(scores[[objective]]) else which.max(scores[[objective]])

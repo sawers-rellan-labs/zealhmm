@@ -8,7 +8,7 @@
 #         bc2s2_truth_segments.csv. Load with load_sim() / sim_counts().
 #   2. two-stage calibrate each knob (nNIL rrate, RTIGER rigidity): log sweep
 #      to bracket the optimum, then golden-ratio refine  [R/calibrate.R]
-#   3. benchmark each caller at its refined F1-optimal knob against truth
+#   3. benchmark each caller at its refined Dice-optimal knob against truth
 #   4. write small summary tables + the fragment-size / genotype-frequency
 #      tables the note plots.
 #
@@ -60,7 +60,7 @@ sub <- function(dt, k) dt[name %in% ids[seq_len(min(k, length(ids)))]]
 # --- 1. two-stage calibration: log sweep -> golden-ratio refine --------------
 # Stage 1 brackets the optimum on a coarse log grid (sweep_calibrate = one shared
 # caller_sweep fit + truth scoring); stage 2 golden-section-refines within the
-# bracket. Both maximize donor-fragment F1. [R/calibrate.R]
+# bracket. Both maximize donor-fragment Dice. [R/calibrate.R]
 calibrate_param <- function(caller, cal_k, values, integer, ...) {
   sk <- sub(skim, cal_k)
   tr <- sub(sim, cal_k)
@@ -70,11 +70,11 @@ calibrate_param <- function(caller, cal_k, values, integer, ...) {
   sweep <- sweep_calibrate(sk, tr, grid,
     caller = caller, threads = THREADS, values = values, ...
   )
-  br <- bracket_from_sweep(sweep, "donor_frag_F1")
+  br <- bracket_from_sweep(sweep, "donor_frag_dice")
   message(sprintf("  %s: golden refine in [%.3g, %.3g] ...", caller, br[["lo"]], br[["hi"]]))
   ref <- golden_refine(sk, tr, grid,
     caller = caller, lo = br[["lo"]], hi = br[["hi"]],
-    objective = "donor_frag_F1", threads = THREADS, ...
+    objective = "donor_frag_dice", threads = THREADS, ...
   )
   list(sweep = sweep, refine = ref)
 }
@@ -88,7 +88,7 @@ fwrite(nnil_sweep, file.path(SIM, "nnil_rrate_sweep.csv"))
 fwrite(rtiger_sweep, file.path(SIM, "rtiger_rigidity_sweep.csv"))
 fwrite(nnil_cal$refine$evals, file.path(SIM, "nnil_rrate_refine.csv"))
 fwrite(rtig_cal$refine$evals, file.path(SIM, "rtiger_rigidity_refine.csv"))
-message(sprintf("F1-optimal (refined): rrate=%.3g | rigidity=%d", rrate_star, rig_star))
+message(sprintf("Dice-optimal (refined): rrate=%.3g | rigidity=%d", rrate_star, rig_star))
 
 # --- 2. benchmark at the calibrated knobs ------------------------------------
 skim_b <- sub(skim, N_BENCH)
@@ -98,14 +98,14 @@ skim_nnil <- as.data.table(call_ancestry(skim_b, caller = "nnil", design = "BC2S
 skim_rtiger <- as.data.table(call_ancestry(skim_b, caller = "rtiger", design = "BC2S2", rigidity = rig_star))
 
 score_caller <- function(called, tag, param) {
-  mf <- marker_f1(called, sim_b, grid)
-  ff <- donor_fragment_f1(called, sim_b)
+  mf <- marker_dice(called, sim_b, grid)
+  ff <- donor_fragment_dice(called, sim_b)
   data.table(
     caller = tag, param = param,
-    marker_macroF1 = round(mf$macro_f1, 3),
-    donor_marker_F1 = round(mf$per_class[class == "donor(>0)", f1], 3),
+    marker_macro_dice = round(mf$macro_dice, 3),
+    donor_marker_dice = round(mf$per_class[class == "donor(>0)", dice], 3),
     donor_marker_recall = round(mf$per_class[class == "donor(>0)", recall], 3),
-    donor_frag_F1 = round(ff$f1, 3), donor_frag_FDR = round(ff$fdr, 3),
+    donor_frag_dice = round(ff$dice, 3), donor_frag_FDR = round(ff$fdr, 3),
     ks_fragsize = round(fragment_size_ks(donor_block_sizes(called), donor_block_sizes(sim_b)), 3),
     breakpoints = breakpoint_count(called), breakpoints_truth = breakpoint_count(sim_b)
   )
