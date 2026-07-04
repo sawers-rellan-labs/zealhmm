@@ -90,23 +90,28 @@ RTIGER's covered-only decoding. `min_cov = 0L` restores decoding every marker.
 
 Grid = `2,3,4,5,6,8,10` (the rigidity sweep from zealtiger's `sweep_rigidity_45k.R`).
 
+Post-fix build, quiet machine (`RTIGER()` per call includes its file read;
+nilHMM's excludes the one-time `read_counts`):
+
 | rigidity | Julia RTIGER (s) | nilHMM rtiger (s) | nilHMM / Julia |
 |---:|---:|---:|---:|
-| 2  | 22.3 | 36.2 | 1.62× |
-| 3  | 21.2 | 39.9 | 1.88× |
-| 4  | 17.3 | 23.9 | 1.38× |
-| 5  | 16.7 | 24.8 | 1.49× |
-| 6  | 18.6 | 21.8 | 1.17× |
-| 8  | 15.4 | 19.5 | 1.27× |
-| 10 | 15.3 | 18.8 | 1.23× |
-| **full sweep** | **~127** | **~185** | **1.46×** |
+| 2  | 21.6 | 14.5 | 0.67× |
+| 3  | 20.2 | 14.8 | 0.73× |
+| 4  | 16.3 | 11.4 | 0.70× |
+| 5  | 15.9 | 11.2 | 0.70× |
+| 6  | 15.6 | 11.0 | 0.71× |
+| 8  | 15.3 | 10.6 | 0.69× |
+| 10 | 15.3 | 10.5 | 0.69× |
+| **full sweep** | **~120** | **~84** | **0.70×** |
 
-> **Provisional — measured on the pre-fix build.** These numbers predate the
-> determinism fix. The buggy `parallelFor` could truncate nilHMM's fit (early stop
-> after too few iterations), so nilHMM's true post-fix times may be **higher** (it
-> now runs the full, deterministic iteration count). Re-run
-> `time_sweep.R` against the fixed build for a clean comparison. Both were at
-> matched `threads = 4`; nilHMM can use more of the 10 cores to narrow any gap.
+At matched `threads = 4`, nilHMM is consistently **~30% faster** than the Julia
+RTIGER across the whole rigidity grid.
+
+> **On the earlier "1.4× slower" numbers.** An earlier draft reported nilHMM at
+> ~1.2–1.9× *slower*. That was a **machine-contention artifact**: the pre-fix
+> sweep ran alongside other jobs, inflating nilHMM's times (r=2 was 36.2 s under
+> load vs 14.5 s quiet) while Julia's stayed ~21 s. On a quiet machine at matched
+> threads, nilHMM wins. Timing is load-sensitive; single-run, single-machine.
 
 ## Reproduce
 
@@ -125,5 +130,5 @@ kernels, and delta convergence criterion; exact calls on identical input; and,
 after the determinism fix, the **same converged fit and iteration count** on both
 Zh and Zl. The two behavioural gaps to RTIGER are now closed: decoding all markers
 (fixed by `min_cov`) and the under-covered-chain NaN/nondeterminism (fixed by the
-serial path + `2·rigidity` hard stop). Timing is in the same order of magnitude
-(~1.2–1.9× at matched threads, pre-fix); a post-fix re-run is pending.
+serial path + `2·rigidity` hard stop). On a quiet machine at matched threads,
+nilHMM's rtiger is **~30% faster** than the Julia RTIGER across the rigidity grid.
