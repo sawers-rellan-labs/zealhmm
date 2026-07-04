@@ -6,13 +6,15 @@
 #   1. (optional) generate the BC2S2 truth + degraded skim counts   [R/simulate.R]
 #      -> results/sim/skim.rds (compact bundle: grid once + count matrices) +
 #         bc2s2_truth_segments.csv. Load with load_sim() / sim_counts().
-#   2. sweep the duration knob for nNIL (rrate) and RTIGER (rigidity)
-#   3. benchmark each caller at its F1-optimal knob against truth
+#   2. two-stage calibrate each knob (nNIL rrate, RTIGER rigidity): log sweep
+#      to bracket the optimum, then golden-ratio refine  [R/calibrate.R]
+#   3. benchmark each caller at its refined F1-optimal knob against truth
 #   4. write small summary tables + the fragment-size / genotype-frequency
 #      tables the note plots.
 #
 # Outputs (results/sim/, gitignored — the rendered docs/ HTML carries the figures):
-#   nnil_rrate_sweep.csv, rtiger_rigidity_sweep.csv
+#   nnil_rrate_sweep.csv, rtiger_rigidity_sweep.csv   (stage-1 log-sweep curves)
+#   nnil_rrate_refine.csv, rtiger_rigidity_refine.csv (stage-2 golden probes)
 #   benchmark.csv, calib_params.csv, frag_sizes.csv, geno_fractions.csv
 #
 # Run:  Rscript scripts/02_calibrate.R            # uses existing results/sim
@@ -27,11 +29,13 @@ for (f in list.files(file.path(root, "R"), "\\.R$", full.names = TRUE)) source(f
 SIM <- file.path(root, "results/sim")
 
 # --- knobs (offline, so we can afford larger sets than a live render) --------
-N_CAL_NNIL <- 300L # calibration subset for the (batched) nNIL sweep
-N_CAL_RTIG <- 60L # rtiger EM is per-sample -> smaller sweep subset
+N_CAL_NNIL <- 300L # calibration subset for the nNIL log sweep
+N_CAL_RTIG <- 60L # rtiger fit is joint EM -> smaller subset
 N_BENCH <- 300L # held-out benchmark set
-RRATE_GRID <- 10^seq(-6, -1.5, by = 0.5)
-RIGIDITY_GRID <- c(20L, 50L, 100L, 200L, 400L) # min-run in markers (50k grid)
+THREADS <- max(1L, parallel::detectCores() - 2L) # fan-out for caller_sweep
+LOG_N <- 10L # coarse rrate log-sweep points before the golden refine
+NNIL_VALUES <- log_grid(1e-6, 1e-1, LOG_N) # rrate: log-spaced (continuous)
+RTIG_VALUES <- 2L^(1:9) # rigidity: powers of 2 (2..512); feasibility-filtered per cohort
 
 if ("--generate" %in% commandArgs(TRUE)) {
   message("generating BC2S2 skim truth (n=1500, 50k markers)...")
@@ -53,24 +57,38 @@ message(sprintf(
 
 sub <- function(dt, k) dt[name %in% ids[seq_len(min(k, length(ids)))]]
 
-# --- 1. sweeps ---------------------------------------------------------------
-message("nNIL rrate sweep on ", N_CAL_NNIL, " NILs ...")
-nnil_sweep <- calibrate_sweep(sub(skim, N_CAL_NNIL), sub(sim, N_CAL_NNIL), grid,
-  caller = "nnil", param = "rrate", values = RRATE_GRID, design = "BC2S2", err = 0.01
-)
-nnil_sweep[, truth_bp := breakpoint_count(sub(sim, N_CAL_NNIL))]
+# --- 1. two-stage calibration: log sweep -> golden-ratio refine --------------
+# Stage 1 brackets the optimum on a coarse log grid (sweep_calibrate = one shared
+# caller_sweep fit + truth scoring); stage 2 golden-section-refines within the
+# bracket. Both maximize donor-fragment F1. [R/calibrate.R]
+calibrate_param <- function(caller, cal_k, values, integer, ...) {
+  sk <- sub(skim, cal_k)
+  tr <- sub(sim, cal_k)
+  # rtiger: keep only rigidities every chromosome can support (> 2*r covered markers)
+  if (integer) values <- feasible_rigidity(sk, values)
+  message(sprintf("  %s: log sweep (%d NILs, %d pts) ...", caller, uniqueN(sk$name), length(values)))
+  sweep <- sweep_calibrate(sk, tr, grid,
+    caller = caller, threads = THREADS, values = values, ...
+  )
+  br <- bracket_from_sweep(sweep, "donor_frag_F1")
+  message(sprintf("  %s: golden refine in [%.3g, %.3g] ...", caller, br[["lo"]], br[["hi"]]))
+  ref <- golden_refine(sk, tr, grid,
+    caller = caller, lo = br[["lo"]], hi = br[["hi"]],
+    objective = "donor_frag_F1", threads = THREADS, ...
+  )
+  list(sweep = sweep, refine = ref)
+}
+nnil_cal <- calibrate_param("nnil", N_CAL_NNIL, NNIL_VALUES, integer = FALSE, design = "BC2S2", err = 0.01)
+rtig_cal <- calibrate_param("rtiger", N_CAL_RTIG, RTIG_VALUES, integer = TRUE, design = "BC2S2")
+nnil_sweep <- nnil_cal$sweep
+rtiger_sweep <- rtig_cal$sweep
+rrate_star <- nnil_cal$refine$value
+rig_star <- as.integer(rtig_cal$refine$value)
 fwrite(nnil_sweep, file.path(SIM, "nnil_rrate_sweep.csv"))
-
-message("RTIGER rigidity sweep on ", N_CAL_RTIG, " NILs ...")
-rtiger_sweep <- calibrate_sweep(sub(skim, N_CAL_RTIG), sub(sim, N_CAL_RTIG), grid,
-  caller = "rtiger", param = "rigidity", values = RIGIDITY_GRID, design = "BC2S2"
-)
-rtiger_sweep[, truth_bp := breakpoint_count(sub(sim, N_CAL_RTIG))]
 fwrite(rtiger_sweep, file.path(SIM, "rtiger_rigidity_sweep.csv"))
-
-rrate_star <- nnil_sweep[which.max(donor_frag_F1), value]
-rig_star <- rtiger_sweep[which.max(donor_frag_F1), value]
-message(sprintf("F1-optimal: rrate=%.2e | rigidity=%d", rrate_star, rig_star))
+fwrite(nnil_cal$refine$evals, file.path(SIM, "nnil_rrate_refine.csv"))
+fwrite(rtig_cal$refine$evals, file.path(SIM, "rtiger_rigidity_refine.csv"))
+message(sprintf("F1-optimal (refined): rrate=%.3g | rigidity=%d", rrate_star, rig_star))
 
 # --- 2. benchmark at the calibrated knobs ------------------------------------
 skim_b <- sub(skim, N_BENCH)
@@ -117,7 +135,9 @@ fwrite(geno, file.path(SIM, "geno_fractions.csv"))
 # --- 4. calibrated params + expectation for the note header ------------------
 p0 <- single_locus_expectation(n_bc = 2L, n_self = 2L)
 gf0 <- genotype_fractions(sim)
-fwrite(data.table(
+# data.frame, not data.table: `data.table(key = ...)` would treat `key` as the
+# reserved key= argument (setkeyv error), not a column. The note reads $key/$value.
+fwrite(data.frame(
   key = c(
     "rrate_star", "rigidity_star", "n_cal_nnil", "n_cal_rtiger", "n_bench",
     "REF_truth", "HET_truth", "ALT_truth", "dosage_truth",
@@ -127,7 +147,7 @@ fwrite(data.table(
     rrate_star, rig_star, N_CAL_NNIL, N_CAL_RTIG, N_BENCH,
     mean(gf0$REF), mean(gf0$HET), mean(gf0$ALT), mean(gf0$dosage),
     p0["REF"], p0["HET"], p0["ALT"], p0["dosage"]
-  )
+  ), stringsAsFactors = FALSE
 ), file.path(SIM, "calib_params.csv"))
 
 message("done. wrote sweep/benchmark/frag/geno/params CSVs to ", SIM)

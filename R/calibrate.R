@@ -20,6 +20,32 @@ log_grid <- function(lo, hi, n = 12L, integer = FALSE) {
   v
 }
 
+#' Keep only the rigidity values a cohort can support
+#'
+#' RTIGER requires more than `2 * rigidity` covered markers on every chromosome of
+#' every sample (below that the E-step degenerates and `caller_sweep` hard-stops).
+#' Drop grid values that violate this against the tightest `(sample, chromosome)`
+#' in `data`, so a rigidity sweep never trips the floor.
+#'
+#' @param data Marker input (`name, chr, n_ref, n_alt`).
+#' @param values Candidate rigidity grid (e.g. `2^(1:9)`).
+#' @return The feasible subset of `values` (ascending); warns about any dropped.
+#' @export
+feasible_rigidity <- function(data, values) {
+  d <- data.table::as.data.table(data)[n_ref + n_alt > 0L]
+  min_cov <- d[, .N, by = list(name, chr)][, min(N)]
+  keep <- sort(values[2L * values < min_cov])
+  if (length(keep) < length(values)) {
+    message(sprintf(
+      "feasible_rigidity: min covered markers/chromosome = %d -> keeping rigidity <= %d (dropped %s)",
+      min_cov, if (length(keep)) max(keep) else 0L,
+      paste(setdiff(values, keep), collapse = ", ")
+    ))
+  }
+  if (!length(keep)) stop("feasible_rigidity: no rigidity satisfies 2*r < ", min_cov)
+  keep
+}
+
 #' Coarse log sweep: score a caller's parameter grid against simulated truth
 #'
 #' Runs [nilHMM::caller_sweep()] over `values` (one shared fit, parallel decodes)
