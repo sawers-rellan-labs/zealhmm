@@ -38,6 +38,8 @@ Julia source and the saved RTIGER fits (not from code comments):
 | **Zh** — identical params + identical covered markers (decode of RTIGER's exact fit) | **100.00%** per-marker; ALT 4387/4387 (recall & precision 1.000) |
 | **Zh** — nilHMM's own r=8 fit + covered filter vs RTIGER | **99.95%** per-marker; donor-present F1 1.000; ALT recall 0.965 |
 | **Zl** — nilHMM's own r=8 fit vs RTIGER (emission means, QC'd) | **19 iterations, means 0.99 / 0.870 / 0.659** vs RTIGER 19 iters, 0.99 / 0.870 / 0.661 |
+| **Zh** — nilHMM's own r=5 fit vs RTIGER (per-marker, 848 k) | **99.76%**; ALT recall 0.944 / precision 0.802 |
+| **Zl** — nilHMM's own r=5 fit vs RTIGER (per-marker, 1.98 M) | **99.95%**; ALT recall 0.997 / precision 0.989 |
 
 - Given the same parameters and marker support, the two Viterbis are **bit-for-bit
   identical**, including the rare donor-hom state.
@@ -128,7 +130,7 @@ Scripts (session scratchpad; data paths point at the zealtiger repo):
 nilHMM's `rtiger` is a faithful reproduction of RTIGER — identical optimizer,
 kernels, and delta convergence criterion; exact calls on identical input; and,
 after the determinism fix, the **same converged fit and iteration count** on both
-Zh and Zl. The two behavioural gaps to RTIGER are now closed: decoding all markers
+Zh and Zl, at **r = 5 and r = 8** (~99.8–99.95% per-marker). The two behavioural gaps to RTIGER are now closed: decoding all markers
 (fixed by `min_cov`) and the under-covered-chain NaN/nondeterminism (fixed by the
 serial path + `2·rigidity` hard stop). On a quiet machine at matched threads,
 nilHMM's rtiger is **~30% faster** than the Julia RTIGER across the rigidity grid.
