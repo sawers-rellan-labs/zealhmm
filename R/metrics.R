@@ -287,8 +287,12 @@ donor_fragment_f1 <- function(called, truth, states = c(1L, 2L), min_overlap = 0
     for (a in ci) {
       for (b in ti) {
         ov <- max(0, min(cb$end_bp[a], tb$end_bp[b]) - max(cb$start_bp[a], tb$start_bp[b]))
-        if (ov / (cb$end_bp[a] - cb$start_bp[a]) >= min_overlap &&
-          ov / (tb$end_bp[b] - tb$start_bp[b]) >= min_overlap) {
+        # Guard the reciprocal-overlap denominators: a single-marker donor block
+        # has end_bp == start_bp (0 bp span) -> max(span, 1) avoids the 0/0 = NaN
+        # that would break the comparison. A point block has ov = 0 either way, so
+        # it never reaches the 50% threshold (spurious 1-marker blocks stay unmatched).
+        if (ov / max(cb$end_bp[a] - cb$start_bp[a], 1) >= min_overlap &&
+          ov / max(tb$end_bp[b] - tb$start_bp[b], 1) >= min_overlap) {
           cb$hit[a] <- TRUE
           tb$hit[b] <- TRUE
         }
