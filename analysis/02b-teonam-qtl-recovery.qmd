@@ -1,0 +1,395 @@
+---
+title: "TeoNAM STAM — GWAS Manhattan with candidate genes (Chen 2019 Fig 4C)"
+subtitle: "Empirical-truth validation: reproduce Chen 2019 STAM on real TeoNAM genotypes"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The STAM GWAS Manhattan (Chen 2019 Fig 4C) reproduced on the
+TeoNAM genotypes, with the domestication candidate genes placed at their **real
+B73 v5 coordinates** (MaizeGDB `genemodel_locus` → `b73_gene_coords`), a red star
+at each gene's genomic position, and the LOD = 5 dotted significance line.
+
+This notebook **loads pre-computed CSVs and plots** (compute lives in the `agent/`
+scripts): the per-marker GWAS scans (`teonam_stam_gwas_scan.R` interpolated /
+`teonam_stam_gwas_unimputed.R` raw) and the candidate-gene overlap
+(`teonam_candidate_overlap.R`). We show both the **unimputed** scan (natural
+scatter) and the **interpolated/densified** scan (block-terraced — the artifact of
+step-interpolated genotypes, see below).
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+```
+
+```{r helpers}
+# Coordinate transformer replicating fastman_gg's internal x layout, so we can
+# place gene labels / lines at arbitrary (chr, bp). From inv4m make_manhattan_plots.Rmd.
+get_transformer <- function(m) {
+  cmat <- do.call(rbind, lapply(
+    split(m[order(m$CHR, m$BP), ], m$CHR[order(m$CHR, m$BP)]),
+    function(d) {
+      data.frame(
+        CHR = d$CHR[1], min_bp = min(d$BP),
+        width = max(d$BP) - min(d$BP),
+        medgap = if (nrow(d) > 1) median(diff(sort(d$BP))) else 1
+      )
+    }
+  ))
+  cmat <- cmat[order(cmat$CHR), ]
+  maxgap <- max(cmat$medgap, na.rm = TRUE)
+  numc <- nrow(cmat)
+  cmat$base <- 0
+  cmat$midp <- 0
+  cmat$midp[1] <- cmat$width[1] / 2
+  for (i in 2:numc) {
+    cmat$base[i] <- cmat$base[i - 1] + cmat$width[i - 1] + maxgap
+    cmat$midp[i] <- cmat$base[i] + cmat$width[i] / 2
+  }
+  fac <- numc / cmat$midp[numc]
+  cmat$basef <- fac * cmat$base
+  function(chr, bp) {
+    i <- match(chr, cmat$CHR)
+    fac * (bp - cmat$min_bp[i]) + cmat$basef[i]
+  }
+}
+
+LOD <- 5 # Chen 2019: P < 1e-5 (LOD = 5)
+
+#' STAM GWAS Manhattan with candidate genes at their true v5 positions.
+#' Odd chromosomes black, even gray75; y-axis expanded one major-tick unit above
+#' the top tick; gene labels repelled into the headroom above the maximum peak
+#' (segments back to the red star at each gene's local peak).
+#' @param scan_csv per-marker scan (SNP, CHR, BP[v5], P)
+#' @param title    plot title
+#' @param out_png  optional path to save a PNG
+plot_stam_manhattan <- function(scan_csv, title, out_png = NULL) {
+  scan <- as.data.frame(fread(scan_csv))
+  scan <- scan[is.finite(scan$P) & scan$P > 0, ]
+  m <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
+
+  ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv")) # symbol, chr, start (v5)
+  # star height = local max -log10P within +/-500 kb IN THIS scan
+  ov[, y := vapply(seq_len(.N), function(i) {
+    w <- m$P[m$CHR == chr[i] & abs(m$BP - start[i]) <= 5e5]
+    if (length(w)) -log10(min(w)) else NA_real_
+  }, numeric(1))]
+  tr <- get_transformer(m)
+  ov[, BPn := tr(chr, start)]
+  ov <- ov[is.finite(y)]
+
+  mp <- -log10(min(m$P)) # maximum peak
+  ticks <- pretty(c(0, mp))
+  unit <- diff(ticks)[1]
+  ytop <- max(ticks) + unit # one major-tick unit of headroom
+
+  p <- fastman_gg(
+    m = m, snp = "SNP", col = c("black", "gray75"), maxP = mp,
+    genomewideline = NULL, suggestiveline = NULL,
+    ylab = expression(-log[10](italic(P))), xlab = ""
+  ) +
+    geom_hline(yintercept = LOD, linetype = "dotted", linewidth = 0.7, color = "black") +
+    geom_point(
+      data = ov, aes(x = BPn, y = y), inherit.aes = FALSE,
+      shape = 8, size = 3, stroke = 1, color = "red"
+    ) +
+    ggrepel::geom_text_repel(
+      data = ov, aes(x = BPn, y = y, label = symbol),
+      inherit.aes = FALSE, fontface = "italic", size = 5,
+      segment.color = "grey50", min.segment.length = 0, box.padding = 0.5,
+      max.overlaps = Inf, ylim = c(mp + 0.3 * unit, ytop)
+    ) + # above the max peak
+    ggtitle(title) +
+    theme_classic(base_size = 18) +
+    scale_y_continuous(
+      breaks = ticks, limits = c(0, ytop),
+      expand = expansion(mult = c(0.01, 0))
+    ) +
+    theme(
+      plot.title = element_markdown(hjust = 1, size = 16, face = "bold"),
+      legend.position = "none",
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2)
+    )
+
+  if (!is.null(out_png)) ggsave(out_png, p, width = 9, height = 4.6, dpi = 200, bg = "white")
+  p
+}
+
+#' Chen 2019 Fig 4A: JLM QTL genomic distribution as a lollipop plot.
+#' Full 10-chromosome axis is obtained by passing the dense scan to fastman_gg
+#' with fully transparent points (col = transparent); the JLM QTL are overlaid as
+#' blue stems + points, candidate genes labeled bold-italic above.
+#' @param jlm_txt  TASSEL StepwiseOLSModelFitter output (stam_jlm_1.txt): Name,
+#'   Locus, Position (v5 bp), `pr>F`
+#' @param scan_csv dense per-marker scan, only used (transparent) to lay out the axis
+plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
+  scan <- as.data.frame(fread(scan_csv))
+  scan <- scan[is.finite(scan$P) & scan$P > 0, ]
+  maxis <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
+
+  j <- fread(jlm_txt)
+  j <- j[!(Name %in% c("mean", "Family", "Error"))]
+  q <- data.table(
+    SNP = j$Name, CHR = as.integer(j$Locus), BP = as.integer(j$Position),
+    logP = -log10(as.numeric(j$`pr>F`))
+  )
+  ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv")) # symbol, chr, start (v5)
+  ov <- ov[symbol %in% c("ts2", "tb1", "tru1", "zmm16", "tsh4")] # JLM Fig-4A candidates (an1 is GWAS-only)
+  q[, gene := ""] # assign each candidate gene to its NEAREST JLM QTL (1:1)
+  for (i in seq_len(nrow(ov))) {
+    idx <- which(q$CHR == ov$chr[i])
+    if (length(idx)) {
+      k <- idx[which.min(abs(q$BP[idx] - ov$start[i]))]
+      q$gene[k] <- ov$symbol[i]
+    }
+  }
+  tr <- get_transformer(maxis)
+  q[, BPn := tr(CHR, BP)]
+
+  maxlogP <- max(q$logP)
+  brks <- seq(0, floor(maxlogP / 10) * 10, by = 10)
+  ytop <- maxlogP * 1.18 # headroom for the top label
+
+  p <- fastman_gg(
+    m = maxis, snp = "SNP", col = c("#00000000", "#00000000"),
+    maxP = maxlogP, genomewideline = NULL, suggestiveline = NULL,
+    ylab = expression(-log[10](italic(P))), xlab = ""
+  ) +
+    geom_segment(
+      data = q, aes(x = BPn, xend = BPn, y = 0, yend = logP),
+      inherit.aes = FALSE, color = "blue", linewidth = 0.5
+    ) +
+    geom_point(
+      data = q, aes(x = BPn, y = logP), inherit.aes = FALSE,
+      color = "blue", size = 2.5
+    ) +
+    ggrepel::geom_text_repel(
+      data = q[gene != ""], aes(x = BPn, y = logP, label = gene),
+      inherit.aes = FALSE, fontface = "bold.italic", size = 5,
+      segment.color = NA, box.padding = 0.4, point.padding = 0.3,
+      nudge_y = 0.05 * maxlogP, seed = 1, max.overlaps = Inf
+    ) +
+    ggtitle(title) + theme_classic(base_size = 18) +
+    scale_y_continuous(breaks = brks, limits = c(0, ytop), expand = expansion(mult = c(0.01, 0))) +
+    theme(
+      plot.title = element_markdown(hjust = 1, size = 16, face = "bold"),
+      legend.position = "none",
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2)
+    )
+  if (!is.null(out_png)) ggsave(out_png, p, width = 9, height = 4, dpi = 200, bg = "white")
+  p
+}
+
+#' Coverage-sweep line-Manhattan (geom_line, one line per coverage).
+#' −log10P vs genomic position along the union grid; `group = interaction(CHR,
+#' coverage)` so lines never connect across chromosomes. Color = coverage on a
+#' viridis ramp, the λ = ∞ truth baseline in black. LOD = 5 dotted. NO gene labels.
+#' Reused for the control / nNIL / RTIGER panels of the degradation composite.
+#' @param sweep_csv combined sweep CSV (SNP, CHR, BP[v5], P, coverage; coverage=Inf
+#'   for the λ=∞ baseline rows)
+#' @param title panel title (markdown)
+#' @param legend show the coverage legend (FALSE for composite panels sharing one)
+#' @param base_size theme base size
+plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
+  sw <- as.data.table(fread(sweep_csv))
+  sw <- sw[is.finite(P) & P > 0]
+  sw[, logP := -log10(P)]
+  # x layout from the union grid (every coverage carries the identical marker set)
+  tr <- get_transformer(as.data.frame(sw[coverage == sw$coverage[1], .(CHR, BP)]))
+  sw[, BPn := tr(CHR, BP)]
+
+  cov_levels <- c("0.1", "0.2", "0.5", "1", "5", "10", "20", "∞") # ∞ = infinity
+  sw[, cov_lab := factor(ifelse(is.finite(coverage), formatC(coverage), "∞"),
+    levels = cov_levels
+  )]
+  pal <- c(grDevices::hcl.colors(7, "viridis"), "black")
+  names(pal) <- cov_levels
+  axis_df <- sw[, .(mid = (min(BPn) + max(BPn)) / 2), by = CHR][order(CHR)]
+  ytop <- max(sw$logP) * 1.04
+
+  ggplot(
+    sw[order(coverage, CHR, BP)],
+    aes(x = BPn, y = logP, color = cov_lab, group = interaction(CHR, coverage))
+  ) +
+    geom_line(linewidth = 0.4) +
+    geom_hline(yintercept = LOD, linetype = "dotted", linewidth = 0.7, color = "grey30") +
+    scale_color_manual(values = pal, name = "coverage (×)", drop = FALSE) +
+    scale_x_continuous(breaks = axis_df$mid, labels = axis_df$CHR, expand = c(0.01, 0)) +
+    scale_y_continuous(limits = c(0, ytop), expand = expansion(mult = c(0.01, 0))) +
+    labs(x = "chromosome", y = expression(-log[10](italic(P))), title = title) +
+    theme_classic(base_size = base_size) +
+    theme(
+      plot.title = element_markdown(hjust = 0, size = base_size, face = "bold"),
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2),
+      legend.position = if (legend) "right" else "none"
+    )
+}
+```
+
+## JLM QTL genomic distribution (Fig 4A)
+
+The STAM QTL detected by JLM as a lollipop plot across all 10 chromosomes
+(height = −log10 P from TASSEL's stepwise model), candidate genes bold-italic
+above the corresponding QTL. Reproduces Chen 2019 Fig 4A.
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- plot_stam_lollipop(
+  here("data/teonam/tassel/stam_jlm_1.txt"),
+  here("data/teonam/stam_gwas_scan_unimputed.csv"),
+  "STAM — JLM QTL genomic distribution (TeoNAM)",
+  here("results/sim/teonam/stam_jlm_lollipop.png")
+)
+p_lolli
+```
+
+## Unimputed genotypes (the faithful Fig 4C)
+
+Each marker tested only on its actually-typed lines — natural GWAS scatter.
+
+```{r manhattan-unimputed, fig.width=9, fig.height=4.4}
+p_unimp <- plot_stam_manhattan(
+  here("data/teonam/stam_gwas_scan_unimputed.csv"),
+  "STAM — GWAS (TeoNAM, unimputed), candidate genes at v5 positions",
+  here("results/sim/teonam/stam_gwas_manhattan_annotated.png")
+)
+p_unimp
+```
+
+## Interpolated (densified) genotypes
+
+The same scan on the step-interpolated matrix. Ancestry is a piecewise-constant
+block signal, so step interpolation makes contiguous markers identical → identical
+p-values → **terraced plateaus** (an artifact of noise-free interpolated genotypes;
+the peaks are still correctly located). Use the unimputed version for the figure;
+this panel documents the artifact.
+
+```{r manhattan-interpolated, fig.width=9, fig.height=4.4}
+p_interp <- plot_stam_manhattan(
+  here("data/teonam/stam_gwas_scan.csv"),
+  "STAM — GWAS (TeoNAM, interpolated), candidate genes at v5 positions",
+  here("results/sim/teonam/stam_gwas_manhattan_interpolated_annotated.png")
+)
+p_interp
+```
+
+## Composite (Fig 4A lollipop + Fig 4C unimputed + interpolated)
+
+```{r composite, fig.width=9, fig.height=13}
+composite <- cowplot::plot_grid(
+  p_lolli, p_unimp, p_interp,
+  ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr"
+)
+ggsave(here("results/sim/teonam/stam_composite.png"), composite,
+  width = 9, height = 13, dpi = 200, bg = "white"
+)
+composite
+```
+
+## RTIGER ancestry vs sequencing coverage (degradation sweep)
+
+The panel-C baseline above is the **λ = ∞, perfect-caller** curve (GWAS on the
+interpolated *truth* genotypes). Here we ask how low-coverage sequencing degrades
+that signal **through the RTIGER ancestry caller**: for each family × coverage
+`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the real genotypes
+(`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
+`call_ancestry(caller = "rtiger", rigidity = 2)` (the calibrated `rigidity_star`),
+step-interpolate the recovered block onto the same union grid, and rerun the same
+`STAM ~ Family + marker` scan. Compute lives in
+`agent/teonam_rtiger_sweep.R --generate`; this chunk only **loads** the combined
+sweep CSV and plots.
+
+The read as a **line-Manhattan** (`geom_line`, one line per coverage; chromosomes
+never connect because `group = interaction(CHR, coverage)`): coverage on a viridis
+ramp, the λ = ∞ truth baseline in **black** as the reference curve, LOD = 5 dotted.
+The striking result is how **robust** RTIGER is — ancestry is a long-block signal,
+so even 0.1× (~9.5 % of markers carrying a read) reconstructs the blocks well
+enough that the *tb1* peak only slips from ≈17.3 (baseline) to ≈16.1. Degradation
+is real but lives mostly in HET recovery (het-recall 0.77 at 0.1× → 1.00 at ≥20×),
+not in the additive QTL peaks.
+
+```{r line-manhattan, fig.width=9, fig.height=4.6}
+p_sweep <- plot_sweep_line(
+  here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
+  "STAM — RTIGER ancestry, GWAS −log10P vs coverage",
+  base_size = 15
+)
+ggsave(here("results/sim/teonam/stam_gwas_rtiger_sweep_manhattan.png"),
+  p_sweep,
+  width = 9, height = 4.6, dpi = 200, bg = "white"
+)
+p_sweep
+```
+
+## Coverage-degradation composite: interpolation control / nNIL / RTIGER
+
+The three-panel contrast (`agent/teonam-control-sweep-plan.md`). All three degrade
+the **identical** truth mosaics over the same coverage grid
+`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ interpolated-truth baseline) and
+feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs:
+
+- **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
+  step-interpolation; `agent/teonam_control_sweep.R`): the deliberately het-prone
+  no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
+- **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
+  `f_1 = 0.08`, `f_2 = 0.15`; `agent/teonam_nnil_sweep.R`): count emission + geometric
+  duration.
+- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `agent/teonam_rtiger_sweep.R`):
+  count emission + rigidity duration.
+
+The **contrast is het handling**. The two duration-aware HMMs (B, C) tie neighbouring
+markers into ancestry blocks, so a lone ALT read cannot open a het call — het-call
+fraction stays at the ~8 % truth level and the STAM peaks hold near the baseline down
+to 0.1×. The control (A) decides each site independently, so at low coverage the HWE
+prior inflates het to ~20 % (het **excess**) and the *tb1* peak degrades more (≈13.4
+at 0.1× vs ≈17.3 baseline). `geom_line`, colored by coverage, no gene labels, LOD = 5,
+chromosomes never connect (`group = interaction(CHR, coverage)`).
+
+```{r het-fraction-table}
+het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction.csv"))[, .(coverage, control = round(het_frac, 3))]
+het_nnil <- fread(here("results/sim/teonam/stam_nnil_het_fraction.csv"))[, .(coverage, nnil = round(het_frac, 3))]
+het_tab <- merge(het_ctrl, het_nnil, by = "coverage")
+het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nNIL (flat ~truth)
+```
+
+```{r sweep-composite, fig.width=9, fig.height=12}
+pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_sweep.csv"),
+  "STAM — interpolation control (GL + HWE)",
+  legend = FALSE
+)
+pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_sweep.csv"),
+  "STAM — nNIL ancestry",
+  legend = FALSE
+)
+pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
+  "STAM — RTIGER ancestry",
+  legend = FALSE
+)
+leg <- cowplot::get_legend(
+  plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"), "", legend = TRUE)
+)
+
+col <- cowplot::plot_grid(pA, pB, pC,
+  ncol = 1, align = "v", axis = "lr",
+  labels = c("A", "B", "C"), label_size = 18
+)
+composite <- cowplot::plot_grid(col, leg, ncol = 2, rel_widths = c(1, 0.13))
+ggsave(here("results/sim/teonam/stam_sweep_composite.png"), composite,
+  width = 9, height = 12, dpi = 200, bg = "white"
+)
+composite
+```
