@@ -115,6 +115,76 @@ RTIGER across the whole rigidity grid.
 > load vs 14.5 s quiet) while Julia's stayed ~21 s. On a quiet machine at matched
 > threads, nilHMM wins. Timing is load-sensitive; single-run, single-machine.
 
+## nnil vs rtiger (same covered support)
+
+With `min_cov` applied to both callers, `nnil` and `rtiger` now decode the
+**identical covered-marker set**, so their calls join directly, per-marker, with
+no support mismatch. This is a caller-vs-caller *concordance* (there is no ground
+truth on real data; rtiger is the reference, itself validated against Julia RTIGER
+above). Taxon **Zh** (61 samples, 848,498 covered markers), `design = "BC2S2"`.
+
+| caller | time | breakpoints | donor blocks | < 0.1 Mb | median block | vs rtiger (per-marker / donor-present) |
+|---|---:|---:|---:|---:|---:|---|
+| **rtiger** r=8 | 1.0 s | 743 | 454 | 18 | 12.3 Mb | — |
+| **nnil** rrate=1e-4 | 1.0 s | 484 | 465 | 40 | 9.9 Mb | **98.2% / 98.8%** |
+| **nnil** rrate=1e-3 | 1.0 s | 797 | 705 | 114 | 5.4 Mb | 98.0% / 98.5% |
+
+Reading it — the two are **different models** and agree to ~98%:
+
+- **Soft (nnil) vs hard (rtiger) segmentation.** rtiger's `rigidity` is a *hard*
+  minimum run length — it structurally cannot emit a donor block shorter than
+  `r` markers. nnil's `rrate` is a *soft* per-marker switch prior — it only
+  discourages short blocks. So nnil admits a larger tiny-block tail (40 vs 18
+  sub-0.1 Mb blocks): single covered markers with a spurious donor read open a
+  1-marker block that rtiger forbids. (Raising nnil's `err` toward the real
+  per-read error rate absorbs these; see the fragmentation exploration.)
+- **3-state breakpoints go the other way** — nnil 484 < rtiger 743. rtiger's
+  extra transitions are HET↔ALT flips *within* donor regions; nnil's duration
+  prior smooths those, so it fragments the donor *state* less even while admitting
+  a few more tiny donor *blocks*.
+- **`rrate` is the fragmentation knob for nnil**: 1e-4 → 465 blocks (median
+  9.9 Mb); 1e-3 → 705 blocks (median 5.4 Mb), matching rtiger's block *count*
+  less well. Neither `rrate` nor `err` was calibrated here — these are
+  illustrative defaults, not an optimized operating point.
+- **Speed is equal** on the covered support (~1.0 s each for 61 samples); both
+  benefit from the `min_cov` filter (nnil ~4× faster than on the full panel).
+
+## Performance (engineering, measured during this work)
+
+Parallelism and amortization added to `nilHMM` while validating against RTIGER —
+each verified to preserve exact output:
+
+- **Per-sample parallelism.** `call_states`' per-sample loop (emission fit +
+  decode) is independent across samples; it now runs via `parallel::mclapply`
+  (`threads`) with an `rbindlist` assembly. `fit_means` on Zl (121 samples):
+  **45 s → 13.4 s (3.3×)** at `threads = 8`, bit-identical output.
+
+- **`to_segments` vectorized.** Replaced the per-`(name, chr)` RLE loop +
+  `do.call(rbind)` with one O(n) pass (order by group+pos; a run starts wherever
+  the group or state changes). On 1.98 M markers: **~6.5 s → 1.3 s (5×)**,
+  bit-identical. Speeds every caller and both sweep modes.
+
+- **`caller_sweep()` — fit-once parameter scan.** The segmentation parameter
+  (`rigidity`/`rrate`) is a *prior*, not an emission property, so the emission is
+  fit **once** (at `ref`) and the grid is swept by decodes fanned across
+  `threads`. On a 12-rigidity Zl grid (`threads = 8`): **10.4 s vs 37.1 s cold
+  (3.6×)**; the advantage grows with grid size and shrinks when the grid fits in
+  cores (cold's fits parallelize). Workflow: **scan with `refit = "none"` → pick
+  the best value → take the exact final calls from one `call_ancestry()` at that
+  value.**
+  - `refit = "none"` (fit once, reuse) is exact at `ref` and a close
+    approximation elsewhere: mean seg-overlap-to-cold 0.93, but **min 0.62 at the
+    grid extremes** — keep `ref` central and the grid not too wide.
+  - `refit = "cold"` refits per value (exact baseline; == per-value `call_ancestry`).
+  - A warm-start mode was evaluated and **dropped**: on the multimodal rtiger fit
+    it reaches a *different* optimum than cold, so it is neither exact nor better
+    than `none` for ranking (warm seg-overlap-to-cold 0.94–0.96, below `none`'s
+    0.97–0.99, and slower).
+
+Two dead ends, recorded for honesty: an `is.data.frame` "hotspot" in the
+`fit_means` EM was a profiling artifact (fixing it changed nothing; reverted), and
+the warm-start's "exact but cheaper" premise fails on multimodal fits (above).
+
 ## Reproduce
 
 Scripts (session scratchpad; data paths point at the zealtiger repo):
@@ -124,6 +194,9 @@ Scripts (session scratchpad; data paths point at the zealtiger repo):
 - `endtoend.R` — nilHMM's own-fit + covered filter vs RTIGER (Zh, 99.95%).
 - `qc_det.R` — determinism across threads + Zl emission match to RTIGER (post-fix).
 - `iters_zl.R` — EM iteration counts, nilHMM vs RTIGER's saved fits.
+- `nnil_vs_rtiger.R` — nnil vs rtiger on the shared covered support (Zh).
+- `bench_sweep.R` / `cmp_refit.R` — caller_sweep vs cold timing + refit-mode fidelity.
+- `tseg_check.R` — to_segments correctness (vs old RLE) + speed.
 
 ## Conclusion
 
@@ -134,3 +207,6 @@ Zh and Zl, at **r = 5 and r = 8** (~99.8–99.95% per-marker). The two behaviour
 (fixed by `min_cov`) and the under-covered-chain NaN/nondeterminism (fixed by the
 serial path + `2·rigidity` hard stop). On a quiet machine at matched threads,
 nilHMM's rtiger is **~30% faster** than the Julia RTIGER across the rigidity grid.
+Beyond parity, the engineering pass (per-sample `mclapply`, a 5× `to_segments`,
+and the fit-once `caller_sweep`) makes cohort fits and rigidity/`rrate` scans
+several-fold cheaper again.
