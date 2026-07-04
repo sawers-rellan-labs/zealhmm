@@ -1,6 +1,6 @@
 ---
-title: "Simulation-calibrated ancestry calling: fit on simcross, validate on truth"
-subtitle: "Materials & Methods §2.4–2.5 + Results §3.1–3.2 — the paper's core contribution"
+title: "Simulation-calibrated ancestry calling: two-stage parameter search"
+subtitle: "Materials & Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -14,30 +14,26 @@ execute:
   echo: true
 ---
 
-**Thesis (the paper's novelty).** Ancestry-caller parameters (`rrate`, `rigidity`,
-`err`, emission means) can be **calibrated from cheap Broman `simcross`
-simulations** rather than from scarce high-coverage truth samples, and transfer
-across Skim and BrB modalities.
+**Thesis.** Ancestry-caller segmentation parameters (`rrate` for nNIL, `rigidity`
+for RTIGER) can be **calibrated from cheap Broman `simcross` simulations** where
+the donor mosaic is known truth, rather than tuned by eye on real data.
 
-**Methodological point (this section's argument).** Holland's nNIL grid search
-maximized **marker true-positives** (donor-marker recall). On well-covered truth
-that objective **saturates** — donor recall is ~0.99 across four orders of
-magnitude of `rrate` — so it cannot discriminate a good parameter from a bad one,
-and any value inside the plateau looks "optimal." The discriminating axis is on
-the *precision* side: raising `rrate` licenses ever-shorter donor blocks, so the
-false-discovery rate and breakpoint count climb while recall does not move. We
-therefore calibrate on **F1** (marker and donor-fragment), which has a
-well-defined optimum whose breakpoint count matches truth. Metrics: `R/metrics.R`;
-truth: `R/simulate.R`.
+**Method — a two-stage search** (`R/calibrate.R`, driven by
+`scripts/02_calibrate.R`):
+
+1. **Log sweep** — score a coarse log-spaced grid against truth to *bracket* the
+   optimum (`sweep_calibrate` → one shared `nilHMM::caller_sweep` fit + scoring).
+2. **Golden-ratio refine** — golden-section search inside the bracket on the
+   continuous `log10(parameter)` to *localize* it (`golden_refine`).
+
+The objective is **donor-fragment F1** (reciprocal-overlap of called vs true
+introgression blocks) — it penalizes both missed donor and the spurious 1-marker
+blocks that over-fragmentation produces, unlike marker recall which saturates.
 
 ::: {.callout-note title="Compute is separated from this note"}
-The sweeps, RTIGER EM, and benchmark run in **`scripts/02_calibrate.R`**, which
-writes small summary CSVs to `results/sim/` (gitignored). This note only loads and
-plots them, so it renders in seconds. Regenerate everything with
-`Rscript scripts/02_calibrate.R --generate`. Truth: BC2S2, n = 1500, **50 000
-markers** — the caller runs directly on per-marker skim counts (no binning), at a
-density where a donor block spans enough markers for the duration prior to
-integrate over.
+`scripts/02_calibrate.R` runs the sim, calibration, and benchmark, writing summary
+CSVs to `results/sim/` (gitignored). This note only loads and plots them.
+Regenerate with `Rscript scripts/02_calibrate.R --generate`.
 :::
 
 ```{r setup}
@@ -47,129 +43,120 @@ suppressMessages({
 })
 SIM <- here::here("results/sim")
 f <- function(x) file.path(SIM, x)
-have_calib <- file.exists(f("nnil_rrate_sweep.csv"))
-if (have_calib) {
-  params <- setNames(fread(f("calib_params.csv"))$value, fread(f("calib_params.csv"))$key)
-  nnil_sweep <- fread(f("nnil_rrate_sweep.csv"))
-  rtiger_sweep <- fread(f("rtiger_rigidity_sweep.csv"))
-  benchmark <- fread(f("benchmark.csv"))
+have <- file.exists(f("calib_params.csv"))
+if (have) {
+  P <- fread(f("calib_params.csv"))
+  par <- setNames(P$value, P$key)
+  nnil_sw <- fread(f("nnil_rrate_sweep.csv"))
+  rtig_sw <- fread(f("rtiger_rigidity_sweep.csv"))
+  nnil_rf <- fread(f("nnil_rrate_refine.csv"))
+  rtig_rf <- fread(f("rtiger_rigidity_refine.csv"))
+  bench <- fread(f("benchmark.csv"))
   frag <- fread(f("frag_sizes.csv"))
   geno <- fread(f("geno_fractions.csv"))
 }
 ```
 
-# 1. The simulation model — BC2S2, n = 1500 (§2.4)
+# 1. The simulation and its truth (§2.4)
 
-**BC2S2** (2 backcrosses to B73, 2 selfs — the bulked-skim generation, memory
-`bzea-skim-bulked-bc2s2`). `simcross` on the maize consensus cM map
-(`maize_map_v5_clean.rds`, ~1783 cM) with **Stahl interference m = 10, p = 0**,
-**50 000 markers**, fixed seed. Truth = the donor mosaic (dosage 0/1/2 at each
-marker → common-schema segments). Degrade to the skim regime (coverage-driven
-missingness `π + (1−π)e^{−kλ}`, per-read error): skim ≈ 0.43× / ~72% missing.
+**BC2S2**, n = 1500, `simcross` on the maize consensus map (~1783 cM, Stahl
+interference m = 10 / p = 0), 50 000 markers, degraded to the skim regime
+(~0.43× / ~72% missing). Truth = the donor mosaic. The simulated genome
+composition should match the single-locus (Mendelian) expectation:
 
-```{r expectation, eval=have_calib}
-# Truth genome composition vs the single-locus expectation. (TeoNAM / Chen 2019 is
-# a *different* design — BC1S4, ~15% teosinte-hom / ~8% het — cited elsewhere for
-# orientation only, not a target here.)
+```{r truth, eval=have}
 data.table(
-  metric = c("REF", "HET", "ALT", "dosage"),
-  truth_mean = round(params[c("REF_truth", "HET_truth", "ALT_truth", "dosage_truth")], 4),
-  bc2s2_expectation = round(params[c("REF_expect", "HET_expect", "ALT_expect", "dosage_expect")], 4)
+  metric = c("REF", "HET", "ALT", "donor dosage"),
+  simulated = round(par[c("REF_truth", "HET_truth", "ALT_truth", "dosage_truth")], 4),
+  expected = round(par[c("REF_expect", "HET_expect", "ALT_expect", "dosage_expect")], 4)
 )
 ```
 
-# 2. Calibration — fit the duration knob on truth (§2.5a, Results §3.1) — Fig F2
+# 2. Two-stage calibration
 
-`scripts/02_calibrate.R` sweeps `rrate` (nNIL) and `rigidity` (RTIGER) with
-`calibrate_sweep()` and scores each against truth. The F1 optimum, the KS-min, and
-the truth-matching breakpoint count roughly coincide; the marker true-positive
-(recall) objective is flat across the whole sweep and cannot pick a winner.
+For each caller the coarse **log sweep** (line) brackets the optimum, and the
+**golden-ratio refine** (points) homes in; the dashed line is the refined
+parameter carried to the benchmark.
 
-```{r nnil-sweep, eval=have_calib}
-nnil_sweep[, .(
-  rrate = signif(value, 2), donor_marker_recall = round(donor_marker_recall, 3),
-  donor_frag_F1 = round(donor_frag_F1, 3), donor_frag_FDR = round(donor_frag_FDR, 3),
-  n_breakpoints, truth_bp, ks_fragsize = round(ks_fragsize, 3)
-)]
+```{r calib-fig, eval=have, fig.width=9, fig.height=4}
+calib_panel <- function(sweep, refine, star, xlab, xtrans) {
+  ggplot(sweep, aes(value)) +
+    geom_line(aes(y = donor_frag_F1, colour = "donor-fragment F1")) +
+    geom_line(aes(y = donor_frag_FDR, colour = "donor-fragment FDR")) +
+    geom_point(data = refine, aes(value, objective, colour = "golden probes"), size = 1.6) +
+    geom_vline(xintercept = star, linetype = "dashed") +
+    xtrans +
+    labs(x = xlab, y = "score", colour = NULL) +
+    theme(legend.position = "top")
+}
+p_nnil <- calib_panel(nnil_sw, nnil_rf, par["rrate_star"], "nNIL rrate", scale_x_log10()) +
+  ggtitle(sprintf("nNIL — refined rrate = %.2g", par["rrate_star"]))
+p_rtig <- calib_panel(
+  rtig_sw, rtig_rf, par["rigidity_star"], "RTIGER rigidity",
+  scale_x_continuous(trans = "log2")
+) +
+  ggtitle(sprintf("RTIGER — refined rigidity = %d", as.integer(par["rigidity_star"])))
+patchwork_ok <- requireNamespace("patchwork", quietly = TRUE)
+if (patchwork_ok) {
+  print(patchwork::wrap_plots(p_nnil, p_rtig))
+} else {
+  print(p_nnil)
+  print(p_rtig)
+}
 ```
 
-```{r F1-vs-TP, eval=have_calib}
-# Marker donor-recall (Holland's TP objective) is saturated, so a recall-only search
-# is *indifferent* between the F1 optimum and the most permissive rrate. Donor-fragment
-# F1, FDR, and breakpoint count are not — they pick the parameter that matches truth.
-rbind(
-  cbind(objective = "F1-optimal", nnil_sweep[which.max(donor_frag_F1)]),
-  cbind(objective = "most permissive (recall ties)", nnil_sweep[which.max(value)])
-)[, .(objective,
-  rrate = signif(value, 2), donor_marker_recall = round(donor_marker_recall, 3),
-  donor_frag_F1 = round(donor_frag_F1, 3), donor_frag_FDR = round(donor_frag_FDR, 3),
-  n_breakpoints, truth_bp
-)]
+```{r calib-tables, eval=have}
+# The log-sweep curves (F1 peaks then over-fragments as FDR/breakpoints climb).
+show <- function(s, pcol) {
+  s[, .(
+    value = signif(value, 3), donor_frag_F1 = round(donor_frag_F1, 3),
+    donor_frag_FDR = round(donor_frag_FDR, 3), donor_marker_recall = round(donor_marker_recall, 3),
+    n_breakpoints, truth_bp, ks = round(ks_fragsize, 3)
+  )]
+}
+cat("nNIL rrate log sweep:\n")
+print(show(nnil_sw))
+cat("\nRTIGER rigidity log sweep (powers of 2, feasibility-capped):\n")
+print(show(rtig_sw))
 ```
 
-```{r fig-F2, eval=have_calib, fig.width=7, fig.height=4.2}
-d <- nnil_sweep[, .(
-  rrate = value, `donor-fragment F1` = donor_frag_F1,
-  `marker donor recall (TP)` = donor_marker_recall, `donor-fragment FDR` = donor_frag_FDR
-)]
-dm <- melt(d, id.vars = "rrate", variable.name = "metric", value.name = "score")
-ggplot(dm, aes(rrate, score, colour = metric)) +
-  geom_line() +
-  geom_vline(xintercept = params["rrate_star"], linetype = "dashed") +
-  scale_x_log10() +
-  labs(
-    x = "rrate", y = "score", colour = NULL,
-    title = "F2 — F1 has a peak; the TP (recall) objective is flat (dashed = F1 optimum)"
-  )
+# 3. Benchmark at the calibrated parameters (§2.5, §3.2)
+
+Each caller run at its refined optimum on a held-out set, scored vs truth:
+
+```{r benchmark, eval=have}
+bench[]
 ```
 
-# 3. Benchmark at the calibrated parameter (§2.5b, Results §3.2) — Fig F3
+# 4. Fragment-size fit (supplementary)
 
-Each caller at its F1-optimal knob (`rrate = ` `r if (have_calib) signif(params["rrate_star"],2)`,
-`rigidity = ` `r if (have_calib) params["rigidity_star"]`), scored on a held-out
-set vs truth: per-state marker F1, donor-fragment F1/FDR, fragment-size KS, and
-breakpoint count vs truth.
+Donor-block size distributions vs the BC2S2 truth (the calibrated callers should
+track the truth's fragment sizes; KS in the benchmark table).
 
-```{r benchmark, eval=have_calib}
-benchmark[]
-```
-
-# 4. Fragment-size fit (supplementary) — the `bc2s2_vs_bc2s3` view
-
-```{r fragsize, eval=have_calib, fig.width=7, fig.height=4}
+```{r fragsize, eval=have, fig.width=7, fig.height=4}
 ggplot(frag, aes(mb, colour = src)) +
   stat_ecdf() +
   scale_x_log10() +
-  labs(
-    x = "donor block size (Mb)", y = "ECDF",
-    title = "Fragment-size fit vs BC2S2 truth (KS in the benchmark table)"
-  )
+  labs(x = "donor block size (Mb)", y = "ECDF", title = "Fragment-size fit vs truth")
 ```
 
 # 5. Genotype-frequency vs the one-locus expectation (supplementary)
 
-The `skim_brbseq_skimbin` view. Reference (Chen 2019 / TeoNAM, BC1S4): ~15%
-teosinte-hom, ~8% het — donor dosage runs *below* neutral (selection) and a
-*modest* real het excess exists; the RNA failure mode is a far grosser inflation.
-
-```{r genofreq, eval=have_calib, fig.width=7, fig.height=4}
+```{r genofreq, eval=have, fig.width=7, fig.height=4}
 ggplot(melt(geno[, .(src, HET, ALT)], id.vars = "src"), aes(src, value)) +
   geom_violin(scale = "width") +
   facet_wrap(~variable, scales = "free_y") +
-  geom_hline(
-    data = data.table(
-      variable = c("HET", "ALT"),
-      y = c(params["HET_expect"], params["ALT_expect"])
-    ),
-    aes(yintercept = y), linetype = "dashed"
-  ) +
-  labs(x = NULL, y = "genome fraction", title = "Genotype freq vs one-locus expectation (dashed)") +
+  geom_hline(data = data.table(
+    variable = c("HET", "ALT"), y = c(par["HET_expect"], par["ALT_expect"])
+  ), aes(yintercept = y), linetype = "dashed") +
+  labs(x = NULL, y = "genome fraction", title = "Genotype frequency vs one-locus expectation (dashed)") +
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
 # Next steps
 
-- Add the BrB regime and the per-source calibrated parameters; carry them to
+- Add the BrB regime and carry the per-source calibrated parameters to
   `03-source-method-comparison.qmd`.
-- Add the donor-footprint ROC and HET-vs-ALT calibration panels.
+- Sharpen the objective's soft plateau near the optimum with a KS or
+  breakpoint-match tie-breaker.
 ```
