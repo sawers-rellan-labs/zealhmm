@@ -30,11 +30,11 @@ zealhmm/
     plotting.R           #   REF/HET/ALT palette + chromosome-painting plot
     simulate.R           #   simcross NIL generator + per-source degradation
   analysis/              # paper notes -> docs/*.html
-    01-callers-and-methods.qmd      # §2.1-2.2 engine + 4 callers  (ready)
-    02-simulation-calibration.qmd   # §2.4-2.5, §3.1-3.2 CORE       (needs B5 sim design)
-    03-source-method-comparison.qmd # §3.3 400-cohort concordance   (needs B5 manifest)
-    04-b1-mapping-benchmark.qmd     # B1 mapping                    (deferred)
-    nilhmm_sanity_check_paint.qmd             # supplementary QC painting     (ported)
+    callers-and-methods.qmd       # §2.1-2.2 engine + 4 callers  (ready)
+    simulation-calibration.qmd    # §2.4-2.5, §3.1-3.2 CORE       (needs B5 sim design)
+    source-method-comparison.qmd  # §3.3 400-cohort concordance   (needs B5 manifest)
+    b1-mapping-benchmark.qmd      # B1 mapping                    (deferred)
+    nilhmm_sanity_check_paint.qmd # supplementary QC painting     (ported)
   docs/                  # rendered site (Pages, .nojekyll) — HTML committed
 
   # gitignored (bulk inputs / generated outputs — see DATA.md):
@@ -48,10 +48,10 @@ produces the figures, tables, and rendered notes. Section → note → figure ma
 
 | Manuscript section | Note | Emits |
 |--------------------|------|-------|
-| §2.1–2.2 engine + callers | `01-callers-and-methods.qmd` | Fig F1 |
-| §2.4–2.5, §3.1–3.2 calibration + benchmark | `02-simulation-calibration.qmd` | Fig F2, F3 |
-| §3.3 cross-modality concordance | `03-source-method-comparison.qmd` | Fig F4 |
-| future application | `04-b1-mapping-benchmark.qmd` | (deferred) |
+| §2.1–2.2 engine + callers | `callers-and-methods.qmd` | Fig F1 |
+| §2.4–2.5, §3.1–3.2 calibration + benchmark | `simulation-calibration.qmd` | Fig F2, F3 |
+| §3.3 cross-modality concordance | `source-method-comparison.qmd` | Fig F4 |
+| future application | `b1-mapping-benchmark.qmd` | (deferred) |
 | supplementary QC | `nilhmm_sanity_check_paint.qmd` | Supp. painting |
 
 ## Reproduce

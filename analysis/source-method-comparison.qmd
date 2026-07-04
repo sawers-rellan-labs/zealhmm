@@ -17,7 +17,7 @@ execute:
 **The benchmark cohort is the ~400 NILs that have BOTH BRB-seq and skim data.**
 The paired design is the point: the *same* NIL genotype seen through two
 modalities, so cross-source disagreement is **method, not sample**. We apply the
-sim-calibrated parameters from `02-simulation-calibration.qmd` and quantify
+sim-calibrated parameters from `simulation-calibration.qmd` and quantify
 concordance per sample.
 
 > **Emits (paper):** Figure F4 (400-cohort source × method concordance),

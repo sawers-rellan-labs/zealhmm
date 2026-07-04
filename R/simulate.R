@@ -7,7 +7,7 @@
 #
 # DESIGN (decided): BC2S2, n = 1500, maize consensus cM map (~1783 cM; the
 # `maize_map_v5_clean.rds` staged under data/ref/), Stahl interference m = 10,
-# p = 0. Consumed by analysis/02-simulation-calibration.qmd.
+# p = 0. Consumed by analysis/simulation-calibration.qmd.
 #
 # Source-safe: top level defines functions only (no library()/stopifnot); the
 # analysis notes source() all of R/ without side effects. Uses data.table + the

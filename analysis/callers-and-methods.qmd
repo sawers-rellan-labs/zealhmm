@@ -100,6 +100,6 @@ cat("nilHMM", as.character(packageVersion("nilHMM")), "loaded; engine ready.\n")
   expression-agnostic, built for BRB-seq (RNA), where a count model is confounded
   by expression and allele-specific expression.
 
-See `02-simulation-calibration.qmd` for how each caller's parameters are
-calibrated from simulations, and `03-source-method-comparison.qmd` for the
+See `simulation-calibration.qmd` for how each caller's parameters are
+calibrated from simulations, and `source-method-comparison.qmd` for the
 cross-modality benchmark.

@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Heavy compute for analysis/02-simulation-calibration.qmd — kept OUT of the
+# Heavy compute for analysis/simulation-calibration.qmd — kept OUT of the
 # notebook so the render is fast (the note only reads the CSVs written here).
 #
 # Pipeline:

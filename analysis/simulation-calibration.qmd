@@ -156,7 +156,7 @@ ggplot(melt(geno[, .(src, HET, ALT)], id.vars = "src"), aes(src, value)) +
 # Next steps
 
 - Add the BrB regime and carry the per-source calibrated parameters to
-  `03-source-method-comparison.qmd`.
+  `source-method-comparison.qmd`.
 - Sharpen the objective's soft plateau near the optimum with a KS or
   breakpoint-match tie-breaker.
 ```
