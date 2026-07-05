@@ -27,6 +27,7 @@
 # Quarto render artifacts: freeze/exec caches and stray per-figure _files dirs
 # (embed-resources docs are self-contained and need no sidecar dir).
 /.quarto/
+/_freeze/
 **/*.quarto_ipynb
 *_cache/
 *_files/

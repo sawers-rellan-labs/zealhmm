@@ -107,6 +107,20 @@
         </div>
         <p class="card-sub">Empirical-truth validation: reproduce Chen 2019 Fig 4C on real TeoNAM genotypes, plus the GL+HWE / nNIL / RTIGER coverage-degradation sweep.</p>
       </a>
+      <a class="card" href="analysis/teonam-stam-gwas-unimputed.html">
+        <div class="card-head">
+          <span class="card-title">TeoNAM STAM — unimputed GWAS scan</span>
+          <span class="badge ready">rendered</span>
+        </div>
+        <p class="card-sub">The tracked computation behind the faithful Fig 4C: per-marker across-family fixed GLM (STAM ~ Family + marker, 1-df F) on the raw genotypes, with model, QC, and top hits. Reproduces the canonical scan CSV byte-for-byte.</p>
+      </a>
+      <a class="card" href="analysis/marker-thinning.html">
+        <div class="card-head">
+          <span class="card-title">Marker thinning for JLM — provenance &amp; proof</span>
+          <span class="badge ready">rendered</span>
+        </div>
+        <p class="card-sub">What built the JLM marker framework (FastIndep on cM distance, reproduced bit-for-bit, Jaccard = 1), why it has 6059 markers vs Chen's 4578, and how a cM-distance thin differs from an r² LD prune.</p>
+      </a>
       <a class="card" href="analysis/nilhmm_sanity_check_paint.html">
         <div class="card-head">
           <span class="card-title">nilHMM sanity-check painting</span>

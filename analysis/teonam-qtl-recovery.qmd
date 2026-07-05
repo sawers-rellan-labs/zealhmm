@@ -270,13 +270,15 @@ p_unimp <- plot_stam_manhattan(
 p_unimp
 ```
 
-## Interpolated (densified) genotypes
+## Non-redundant intermediate (`teonam_map_v5_gwas_nr`) — artifact only
 
-The same scan on the step-interpolated matrix. Ancestry is a piecewise-constant
-block signal, so step interpolation makes contiguous markers identical → identical
-p-values → **terraced plateaus** (an artifact of noise-free interpolated genotypes;
-the peaks are still correctly located). Use the unimputed version for the figure;
-this panel documents the artifact.
+The same scan on the step-interpolated **`teonam_map_v5_gwas_nr`** grid (47,750
+markers, one per unique cM). This set is **not a GWAS analysis output** — it exists
+only as the non-redundant pool that FastIndep thins to the JLM framework
+(`teonam_map_v5_jlm`); it is shown here purely to document an artifact. Ancestry is a
+piecewise-constant block signal, so step interpolation makes contiguous markers
+identical → identical p-values → **terraced plateaus** (peaks still correctly
+located). The GWAS figure uses the unimputed base (`teonam_map_v5_gwas`) above.
 
 ```{r manhattan-interpolated, fig.width=9, fig.height=4.4}
 p_interp <- plot_stam_manhattan(

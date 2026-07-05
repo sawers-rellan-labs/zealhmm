@@ -1,0 +1,200 @@
+---
+title: "TeoNAM STAM — unimputed GWAS scan (the faithful Fig 4C)"
+subtitle: "Per-marker across-family GLM on the raw genotypes — computation, model, and QC"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+  echo: true
+  freeze: auto
+---
+
+**What this is.** The *computation* behind the unimputed STAM GWAS scan
+(`data/teonam/stam_gwas_scan_unimputed.csv`), tracked in its own right. It ports
+the throwaway `agent/teonam_stam_gwas_unimputed.R` into a rendered notebook so the
+scan — not just its Manhattan — is reproducible from primary data. The annotated
+Fig-4C Manhattan that *consumes* this CSV lives in
+[`teonam-qtl-recovery`](teonam-qtl-recovery.html); this notebook **produces** it.
+
+"Unimputed" = each marker is tested only on the lines that actually carry a call at
+it (untyped lines dropped), giving the natural GWAS scatter with no
+step-interpolation plateau artifact.
+
+```{r setup}
+library(here)
+library(data.table)
+library(parallel)
+library(readxl)
+library(ggplot2)
+theme_set(theme_bw(base_size = 12))
+THREADS <- max(1L, detectCores() - 2L)
+LOD <- 5 # Chen 2019 significance line: P < 1e-5
+```
+
+## Inputs (all primary data — no `.rds` intermediates)
+
+```{r inputs}
+# raw cleaned dosages: 1237 lines x 51,482 markers, NA = untyped (0/1/2 = W22 / het / teosinte)
+geno <- fread(here("data/teonam/TeoNAM_genotype_clean.csv"))
+
+# robust key = family + line, e.g. "TIL01" + "A001"; family from the population column
+key <- paste0(sub("^W22", "", geno[[2]]), sub("^.*Line_", "", geno[[1]]))
+fam <- factor(sub("^W22", "", geno[[2]]))
+
+# phenotype: STAM (staminate spikelet), joined by line key
+ph <- as.data.frame(read_excel(
+  here("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")
+))
+names(ph)[1] <- "line"
+y <- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[key]))
+
+# v5 coordinates + consensus cM; restrict the scan to markers that lifted to v5
+mc <- fread(here("data/teonam/marker_info_v5_cm.tsv"))
+chr_by <- setNames(mc$chr_v5, mc$marker)
+pos_by <- setNames(mc$pos_v5, mc$marker)
+mk <- intersect(names(geno)[-(1:3)], mc$marker)
+
+data.table(
+  quantity = c(
+    "lines", "markers (raw)", "markers (lifted, scanned)",
+    "STAM phenotyped", "families"
+  ),
+  value = c(
+    nrow(geno), ncol(geno) - 3L, length(mk),
+    sum(!is.na(y)), nlevels(fam)
+  )
+)
+```
+
+## The model
+
+For each marker $m$, restrict to the lines $i$ with a non-missing dosage
+$g_{im}\in\{0,1,2\}$ **and** a non-missing STAM value $y_i$, then compare two
+nested least-squares fits:
+
+$$
+\textbf{Null:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \varepsilon_i
+$$
+$$
+\textbf{Full:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \gamma\, g_{im} + \varepsilon_i
+$$
+
+The marker enters as a **single additive dosage effect $\gamma$ shared across
+families** (1 numerator df). Significance is the marginal $F$-test of $\gamma$:
+
+$$
+F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank})},
+\qquad P = \Pr\big(F_{1,\,n-\mathrm{rank}} > F\big).
+$$
+
+Family enters as a fixed categorical covariate (levels dropped to those present for
+that marker) — it plays the role of the structure term. **This is a fixed-effect
+GLM: there is no kinship/polygenic random effect $K$.** Chen 2019 instead used a
+mixed model `y ~ Q(5 PCs) + SNP + K(IBS)`, so peak heights here are expected to run
+hotter; quantifying that inflation ($\lambda_{GC}$, QQ) is a separate analysis.
+
+## The scan
+
+```{r scan}
+scan1 <- function(m) {
+  g <- geno[[m]]
+  ok <- !is.na(g) & !is.na(y)
+  if (sum(ok) < 20) {
+    return(c(NA_real_, sum(ok)))
+  }
+  gg <- g[ok]
+  if (stats::sd(gg) == 0) {
+    return(c(NA_real_, sum(ok)))
+  }
+  yy <- y[ok]
+  ff <- droplevels(fam[ok])
+  Xr <- if (nlevels(ff) > 1) model.matrix(~ff) else matrix(1, sum(ok), 1)
+  n <- sum(ok)
+  RSS0 <- sum(lm.fit(Xr, yy)$residuals^2)
+  fit <- lm.fit(cbind(Xr, gg), yy)
+  RSS1 <- sum(fit$residuals^2)
+  df2 <- n - fit$rank
+  if (df2 <= 0 || RSS1 <= 0) {
+    return(c(NA_real_, n))
+  }
+  c(pf(((RSS0 - RSS1) / 1) / (RSS1 / df2), 1, df2, lower.tail = FALSE), n)
+}
+out <- mclapply(mk, scan1, mc.cores = THREADS)
+P <- vapply(out, `[`, numeric(1), 1)
+N <- vapply(out, `[`, numeric(1), 2)
+
+scan <- data.table(
+  SNP = mk, CHR = as.integer(chr_by[mk]),
+  BP = as.integer(pos_by[mk]), P = P,
+  n = as.integer(N)
+)[order(CHR, BP)]
+fwrite(scan, here("data/teonam/stam_gwas_scan_unimputed.csv")) # canonical output
+```
+
+## QC and results
+
+```{r results}
+fin <- scan[is.finite(P) & P > 0]
+data.table(
+  metric = c(
+    "markers scanned", "markers tested (finite P)",
+    "median lines / marker", "max -log10P",
+    sprintf("genome-wide sig. (P < 1e-%d)", LOD)
+  ),
+  value = c(
+    nrow(scan), nrow(fin), median(scan$n),
+    round(max(-log10(fin$P)), 2), sum(fin$P < 10^(-LOD))
+  )
+)
+```
+
+```{r top-hits}
+top <- fin[order(P)][1:10, .(SNP, CHR, BP, n, logP = round(-log10(P), 2))]
+knitr::kable(top, caption = "Top 10 STAM associations (unimputed scan)")
+```
+
+```{r per-marker-n, fig.width=7, fig.height=2.8}
+ggplot(scan, aes(n)) +
+  geom_histogram(bins = 60, fill = "grey30") +
+  labs(
+    x = "lines tested per marker (families typing that marker)",
+    y = "markers", title = "Per-marker sample size — the source of the natural scatter"
+  )
+```
+
+```{r manhattan, fig.width=9, fig.height=3.4}
+# lightweight Manhattan (the annotated Fig-4C version lives in teonam-qtl-recovery)
+m <- fin[order(CHR, BP)]
+off <- m[, .(mx = max(BP)), by = CHR][order(CHR)]
+off[, base := cumsum(shift(mx, fill = 0))]
+m <- merge(m, off[, .(CHR, base)], by = "CHR")
+m[, x := BP + base]
+axis <- m[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)]
+ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
+  geom_point(size = 0.5) +
+  geom_hline(yintercept = LOD, linetype = "dotted") +
+  scale_colour_manual(values = c("grey60", "black"), guide = "none") +
+  scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
+  labs(
+    x = "chromosome", y = expression(-log[10](italic(P))),
+    title = "STAM unimputed GWAS (fixed GLM: STAM ~ Family + marker)"
+  )
+```
+
+## Notes
+
+- This notebook is the **canonical, tracked source** for
+  `stam_gwas_scan_unimputed.csv`; it supersedes the untracked
+  `agent/teonam_stam_gwas_unimputed.R` (identical model, ported verbatim).
+- Model is a **fixed-effect GLM with no kinship term** — deliberately faithful to
+  the throwaway script, *not* to Chen's MLM. The peak-height / $\lambda_{GC}$
+  comparison against Chen's `Q + K` mixed model is deferred to a dedicated
+  inflation notebook.
+```
