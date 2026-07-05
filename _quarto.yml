@@ -3,3 +3,5 @@ project:
   output-dir: docs
   render:
     - analysis/*.qmd
+    - analysis/*.md
+    - DATA.md

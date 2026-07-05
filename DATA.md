@@ -198,12 +198,12 @@ SNPs, different filter chain); we keep working on the 50K and will fold in the 1
 | JLM engine | SAS `PROC GLMSELECT`, marker nested-in-family, permutation threshold | TASSEL5 StepwiseOLS, nested-in-family, default threshold | perm threshold TODO |
 | JLM result | STAM 5 QTL, DTA 19 QTL | recovers STAM QTL (more enter w/o perm cutoff) | reproducing |
 | **GWAS markers** | `chen2019_GWAS` 118,838 (MAF>0.01, unthinned → FSFHap) | `teonam_map_v5_gwas` 51,004 (`_gwas_nr` 47,750 is a JLM intermediate, not a GWAS base) | 118K to obtain |
-| GWAS model | MLM: Q (5 PCs) + K (IBS) | fixed GLM: Family + marker, 1-df F | MLM upgrade TODO |
+| GWAS model | MLM: Q (5 PCs) + K (IBS) | OLS: Family + marker, 1-df F | MLM upgrade TODO |
 | GWAS threshold | P < 1e-5 (LOD 5) | LOD 5 | ✓ |
 
 Consequences to keep closing (not blockers): the GWAS Manhattan on `teonam_map_v5_gwas` is
 sparser than `chen2019_GWAS` (some gaps, esp. low-recombination regions) and runs hotter (fixed
-GLM vs Q+K MLM → peak inflation; λ_GC analysis pending). JLM QTL recovery is the primary
+OLS vs Q+K MLM → peak inflation; λ_GC analysis pending). JLM QTL recovery is the primary
 empirical-truth anchor and is unaffected by the GWAS-set gap.
 
 ## Still to freeze (plan B5 — blocks B2.3 / B2.4)
