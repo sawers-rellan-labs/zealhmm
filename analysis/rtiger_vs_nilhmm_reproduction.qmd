@@ -1,4 +1,13 @@
-# RTIGER reproduction and timing: nilHMM's `rtiger` vs the Julia RTIGER
+---
+title: "RTIGER reproduction & timing: nilHMM `rtiger` vs the Julia RTIGER"
+author: "Fausto Rodríguez-Zapata"
+date: 2026-07-03
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+---
 
 **Date:** 2026-07-03 (updated after fixing a determinism bug in `rtiger_fit_cpp`)
 **Machine:** Apple Silicon (arm64), 10 cores, macOS (Darwin 25.5); R 4.5.
