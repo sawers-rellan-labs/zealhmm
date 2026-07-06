@@ -1,6 +1,6 @@
 ---
-title: "TeoNAM STAM — unimputed GWAS scan (the faithful Fig 4C)"
-subtitle: "Per-marker across-family OLS on the raw genotypes — computation, model, and QC"
+title: "TeoNAM STAM — OLS GWAS on the imputed map panel (Fig 4C)"
+subtitle: "Per-marker across-family OLS on the FSFHap-imputed map-panel genotypes — computation, model & QC"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,16 +16,18 @@ execute:
   freeze: auto
 ---
 
-**What this is.** The *computation* behind the unimputed STAM GWAS scan
-(`data/teonam/stam_gwas_scan_unimputed.csv`), tracked in its own right. It ports
+**What this is.** The *computation* behind the STAM OLS GWAS scan on the imputed map
+panel (`data/teonam/stam_gwas_scan_unimputed.csv`), tracked in its own right. It ports
 the throwaway `agent/teonam_stam_gwas_unimputed.R` into a rendered notebook so the
 scan — not just its Manhattan — is reproducible from primary data. The annotated
 Fig-4C Manhattan that *consumes* this CSV lives in
 [`teonam-qtl-recovery`](teonam-qtl-recovery.html); this notebook **produces** it.
 
-"Unimputed" = each marker is tested only on the lines that actually carry a call at
-it (untyped lines dropped), giving the natural GWAS scatter with no
-step-interpolation plateau artifact.
+The genotypes are **FSFHap-imputed** (`teonam_map_v5_gwas`, 51,004 markers — Chen's map
+construction, complete within family). Each marker is tested only on the families that
+typed it (cross-family gaps left as NA, **not** densified), giving the natural GWAS
+scatter with no step-interpolation plateau artifact. (The plain-`unimputed` in the CSV
+filename means "not cross-family-densified", *not* "raw genotypes".)
 
 ```{r setup}
 library(here)
@@ -41,7 +43,7 @@ LOD <- 5 # Chen 2019 significance line: P < 1e-5
 ## Inputs (all primary data — no `.rds` intermediates)
 
 ```{r inputs}
-# raw cleaned dosages: 1237 lines x 51,482 markers, NA = untyped (0/1/2 = W22 / het / teosinte)
+# FSFHap-imputed recoded dosages (complete within family): 1237 lines x 51,482 markers; NA = cross-family untyped (0/1/2 = W22 / het / teosinte)
 geno <- fread(here("data/teonam/TeoNAM_genotype_clean.csv"))
 
 # robust key = family + line, e.g. "TIL01" + "A001"; family from the population column

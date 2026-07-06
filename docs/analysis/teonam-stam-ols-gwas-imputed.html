@@ -9,7 +9,7 @@
 <meta name="author" content="Fausto Rodríguez-Zapata">
 <meta name="dcterms.date" content="2026-07-05">
 
-<title>TeoNAM STAM — unimputed GWAS scan (the faithful Fig 4C)</title>
+<title>TeoNAM STAM — OLS GWAS on the imputed map panel (Fig 4C)</title>
 <style>
 
 code{white-space: pre-wrap;}
@@ -2360,8 +2360,8 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">TeoNAM STAM — unimputed GWAS scan (the faithful Fig 4C)</h1>
-<p class="subtitle lead">Per-marker across-family OLS on the raw genotypes — computation, model, and QC</p>
+<h1 class="title">TeoNAM STAM — OLS GWAS on the imputed map panel (Fig 4C)</h1>
+<p class="subtitle lead">Per-marker across-family OLS on the FSFHap-imputed map-panel genotypes — computation, model &amp; QC</p>
 </div>
 
 
@@ -2390,8 +2390,8 @@ window.Quarto = {
 </header>
 
 
-<p><strong>What this is.</strong> The <em>computation</em> behind the unimputed STAM GWAS scan (<code>data/teonam/stam_gwas_scan_unimputed.csv</code>), tracked in its own right. It ports the throwaway <code>agent/teonam_stam_gwas_unimputed.R</code> into a rendered notebook so the scan — not just its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that <em>consumes</em> this CSV lives in <a href="teonam-qtl-recovery.html"><code>teonam-qtl-recovery</code></a>; this notebook <strong>produces</strong> it.</p>
-<p>“Unimputed” = each marker is tested only on the lines that actually carry a call at it (untyped lines dropped), giving the natural GWAS scatter with no step-interpolation plateau artifact.</p>
+<p><strong>What this is.</strong> The <em>computation</em> behind the STAM OLS GWAS scan on the imputed map panel (<code>data/teonam/stam_gwas_scan_unimputed.csv</code>), tracked in its own right. It ports the throwaway <code>agent/teonam_stam_gwas_unimputed.R</code> into a rendered notebook so the scan — not just its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that <em>consumes</em> this CSV lives in <a href="teonam-qtl-recovery.html"><code>teonam-qtl-recovery</code></a>; this notebook <strong>produces</strong> it.</p>
+<p>The genotypes are <strong>FSFHap-imputed</strong> (<code>teonam_map_v5_gwas</code>, 51,004 markers — Chen’s map construction, complete within family). Each marker is tested only on the families that typed it (cross-family gaps left as NA, <strong>not</strong> densified), giving the natural GWAS scatter with no step-interpolation plateau artifact. (The plain-<code>unimputed</code> in the CSV filename means “not cross-family-densified”, <em>not</em> “raw genotypes”.)</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
@@ -2405,7 +2405,7 @@ window.Quarto = {
 <section id="inputs-all-primary-data-no-.rds-intermediates" class="level2">
 <h2 class="anchored" data-anchor-id="inputs-all-primary-data-no-.rds-intermediates">Inputs (all primary data — no <code>.rds</code> intermediates)</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># raw cleaned dosages: 1237 lines x 51,482 markers, NA = untyped (0/1/2 = W22 / het / teosinte)</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># FSFHap-imputed recoded dosages (complete within family): 1237 lines x 51,482 markers; NA = cross-family untyped (0/1/2 = W22 / het / teosinte)</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>geno <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/TeoNAM_genotype_clean.csv&quot;</span>))</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># robust key = family + line, e.g. &quot;TIL01&quot; + &quot;A001&quot;; family from the population column</span></span>
