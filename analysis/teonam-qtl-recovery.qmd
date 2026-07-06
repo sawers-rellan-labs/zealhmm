@@ -304,14 +304,16 @@ composite
 ## RTIGER ancestry vs sequencing coverage (degradation sweep)
 
 The panel-C baseline above is the **λ = ∞, perfect-caller** curve (GWAS on the
-interpolated *truth* genotypes). Here we ask how low-coverage sequencing degrades
+interpolated *truth* genotypes). All sweeps below run on the same full
+**51,004**-marker GWAS grid as the Fig-4C panels above. Here we ask
+how low-coverage sequencing degrades
 that signal **through the RTIGER ancestry caller**: for each family × coverage
 `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the real genotypes
 (`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
 `call_ancestry(caller = "rtiger", rigidity = 2)` (the calibrated `rigidity_star`),
 step-interpolate the recovered block onto the same union grid, and rerun the same
 `STAM ~ Family + marker` scan. Compute lives in
-`agent/teonam_rtiger_sweep.R --generate`; this chunk only **loads** the combined
+`scripts/teonam_rtiger_sweep.R --generate`; this chunk only **loads** the combined
 sweep CSV and plots.
 
 The read as a **line-Manhattan** (`geom_line`, one line per coverage; chromosomes
@@ -336,29 +338,37 @@ ggsave(here("results/sim/teonam/stam_gwas_rtiger_sweep_manhattan.png"),
 p_sweep
 ```
 
-## Coverage-degradation composite: interpolation control / nNIL / RTIGER
+## Coverage-degradation composite: interpolation control / nNIL / RTIGER / LB-Impute
 
-The three-panel contrast (`agent/teonam-control-sweep-plan.md`). All three degrade
+The four-panel contrast (`agent/teonam-control-sweep-plan.md`). All four degrade
 the **identical** truth mosaics over the same coverage grid
 `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ interpolated-truth baseline) and
 feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs:
 
 - **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
-  step-interpolation; `agent/teonam_control_sweep.R`): the deliberately het-prone
+  step-interpolation; `scripts/teonam_control_sweep.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
 - **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
-  `f_1 = 0.08`, `f_2 = 0.15`; `agent/teonam_nnil_sweep.R`): count emission + geometric
+  `f_1 = 0.08`, `f_2 = 0.15`; `scripts/teonam_nnil_sweep.R`): count emission + geometric
   duration.
-- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `agent/teonam_rtiger_sweep.R`):
+- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep.R`):
   count emission + rigidity duration.
+- **D — LB-Impute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = 50)`;
+  `scripts/teonam_lbimpute_sweep.R`): coverage-aware emission + distance-dependent
+  (map-aware cM) transition with a double-recombination penalty, full-chromosome
+  Viterbi (nilHMM native port of Fragoso et al. 2014).
 
-The **contrast is het handling**. The two duration-aware HMMs (B, C) tie neighbouring
-markers into ancestry blocks, so a lone ALT read cannot open a het call — het-call
-fraction stays at the ~8 % truth level and the STAM peaks hold near the baseline down
-to 0.1×. The control (A) decides each site independently, so at low coverage the HWE
-prior inflates het to ~20 % (het **excess**) and the *tb1* peak degrades more (≈13.4
-at 0.1× vs ≈17.3 baseline). `geom_line`, colored by coverage, no gene labels, LOD = 5,
-chromosomes never connect (`group = interaction(CHR, coverage)`).
+The **contrast is het handling**. The three duration/distance-aware HMMs (B, C, D) tie
+neighbouring markers into ancestry blocks, so a lone ALT read cannot open a het call —
+het-call fraction stays near the ~8 % truth level and the STAM peaks hold near the
+baseline down to 0.1×. LB-Impute (D) is the most aggressive smoother: at 0.1× it
+actually **over-shoots** the truth peak (*tb1* ≈19.4 vs ≈17.3 baseline) — the signature
+of long imputed homozygous blocks amplifying the terraced pseudo-replication of the
+duplicate-cM markers. The control (A) decides each site independently, so at low
+coverage the HWE prior inflates het to ~20 % (het **excess**) and the *tb1* peak
+degrades the other way (≈13.4 at 0.1× vs ≈17.3 baseline). `geom_line`, colored by
+coverage, no gene labels, LOD = 5, chromosomes never connect
+(`group = interaction(CHR, coverage)`).
 
 ```{r het-fraction-table}
 het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction.csv"))[, .(coverage, control = round(het_frac, 3))]
@@ -367,7 +377,7 @@ het_tab <- merge(het_ctrl, het_nnil, by = "coverage")
 het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nNIL (flat ~truth)
 ```
 
-```{r sweep-composite, fig.width=9, fig.height=12}
+```{r sweep-composite, fig.width=9, fig.height=16}
 pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_sweep.csv"),
   "STAM — interpolation control (GL + HWE)",
   legend = FALSE
@@ -380,17 +390,21 @@ pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
   "STAM — RTIGER ancestry",
   legend = FALSE
 )
+pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_sweep.csv"),
+  "STAM — LB-Impute ancestry (map-aware cM)",
+  legend = FALSE
+)
 leg <- cowplot::get_legend(
   plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"), "", legend = TRUE)
 )
 
-col <- cowplot::plot_grid(pA, pB, pC,
+col <- cowplot::plot_grid(pA, pB, pC, pD,
   ncol = 1, align = "v", axis = "lr",
-  labels = c("A", "B", "C"), label_size = 18
+  labels = c("A", "B", "C", "D"), label_size = 18
 )
 composite <- cowplot::plot_grid(col, leg, ncol = 2, rel_widths = c(1, 0.13))
 ggsave(here("results/sim/teonam/stam_sweep_composite.png"), composite,
-  width = 9, height = 12, dpi = 200, bg = "white"
+  width = 9, height = 16, dpi = 200, bg = "white"
 )
 composite
 ```

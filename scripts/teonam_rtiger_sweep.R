@@ -9,7 +9,7 @@
 #   2. RTIGER-call ancestry [call_ancestry(caller="rtiger", rigidity=2)]
 #   3. step-interpolate the recovered per-family block onto the union cM grid
 #      [nilHMM::interpolate_genotype(mode="step")]
-# Then assemble the union matrix (~47,750 markers x 1,237 lines) at each lambda
+# Then assemble the union matrix (51,004 markers x 1,237 lines; full GWAS set) at each lambda
 # and run the same GWAS scan as the baseline (STAM ~ Family + marker, 1-df F).
 #
 # Writes results/sim/teonam/stam_gwas_rtiger_lambda<L>.csv (per lambda) and the
@@ -68,14 +68,15 @@ setnames(mc, "chr_v5", "chr")
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 
-setorder(mc, chr, cm)
-u <- mc[, .SD[!duplicated(cm)], by = chr] # union grid: cm-dedup per chr
+gcols <- names(fread(file.path(ROOT, "data/teonam/TeoNAM_genotype_clean.csv"), nrows = 0))[-(1:3)]
+GWAS_MK <- intersect(gcols, mc$marker) # 51,004 (teonam_map_v5_gwas)
+u <- mc[marker %in% GWAS_MK] # FULL GWAS set (51K) — duplicate cM kept as terraced target rows
 setorder(u, chr, cm)
 target_df <- data.frame(chr = as.integer(u$chr), cm = as.numeric(u$cm))
 union_markers <- u$marker
 union_pos <- as.integer(pos_by[union_markers])
 union_chr <- as.integer(u$chr)
-message(sprintf("union grid: %d markers x 10 chromosomes", nrow(u)))
+message(sprintf("union grid (51K GWAS set): %d markers x 10 chromosomes", nrow(u)))
 
 # --- per-family: genotypes, robust keys, cm-dedup marker table, truth dosage --
 fams <- c(
