@@ -10,7 +10,8 @@
 #   1. simulate low-coverage reads from the real (truth) 0/1/2 genotypes
 #      [R/simulate.R::.draw_counts(pi_floor=0, k_decay=1, error=0.01)]
 #   2. LB-Impute-call ancestry  [call_ancestry(caller="lbimpute", unit="cm",
-#      recombdist=50, err=0.01, genotypeerr=0.05, drp=FALSE)]
+#      recombdist=recombdist_star, genotypeerr=0.05, drp=drp) — recombdist + drp
+#      CALIBRATED, read from calib_params.csv]
 #   3. step-interpolate the recovered per-family block onto the union grid
 #      [nilHMM::interpolate_genotype(mode="step")]
 # Then assemble the union matrix at each lambda and run the same GWAS scan as the
@@ -24,11 +25,13 @@
 # interpolated OLS scan, stam_gwas_scan_interpolated.csv.
 #
 # LB-IMPUTE PARAMS (map-aware; owner decision 2026-07-06):
-#  - unit = "cm", recombdist = 50: transition decays over v5 consensus cM, so local
-#    recombination-rate variation (maize centromeric suppression) is captured —
-#    consistent with the cM step-interpolation and RTIGER/nNIL's map-based operation.
+#  - unit = "cm": transition decays over v5 consensus cM, so local recombination-
+#    rate variation (maize centromeric suppression) is captured — consistent with
+#    the cM step-interpolation and RTIGER/nNIL's map-based operation.
+#  - recombdist + drp: CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+#    scripts/02_calibrate.R) and read from calib_params.csv (drp=TRUE for RILs).
 #  - err = 0.01 (read/allele error, = the read-sim error), genotypeerr = 0.05
-#    (LB-Impute default), drp = FALSE (no double-recomb penalty), min_cov = 0L
+#    (LB-Impute default), min_cov = 0L
 #    (decode every family marker; zero-coverage markers carry a flat emission and
 #    are filled by the distance transition -> complete rectangular block).
 #  - Flat start (no design prior): LB-Impute has no state-frequency prior in its
@@ -61,10 +64,18 @@ if (!("--generate" %in% commandArgs(TRUE))) {
 }
 
 LAMBDAS <- c(0.1, 0.2, 0.5, 1, 5, 10, 20)
-RECOMBDIST <- 50 # cM (unit-aware LB-Impute transition scale)
+# recombdist + drp are CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+# scripts/02_calibrate.R) and READ from calib_params.csv — do not hardcode.
+cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
+RECOMBDIST <- as.numeric(cp$value[cp$key == "recombdist_star"]) # cM (unit-aware transition scale)
+if (!isTRUE(is.finite(RECOMBDIST))) {
+  stop("recombdist_star not in results/sim/calib_params.csv — run scripts/02_calibrate.R first")
+}
+DRP <- isTRUE(toupper(cp$value[cp$key == "lbimpute_drp"]) == "TRUE") # double-recomb penalty (RIL)
 GENOERR <- 0.05 # LB-Impute genotypeerr default
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
+message(sprintf("LB-Impute: recombdist_star = %.4g cM, drp = %s (calib_params.csv)", RECOMBDIST, DRP))
 
 # --- marker map + FULL 51,004 GWAS union target grid -------------------------
 mc <- fread(file.path(ROOT, "data/teonam/marker_info_v5_cm.tsv"))
@@ -151,7 +162,7 @@ recover_block <- function(fam, li) {
 
   st <- call_states(long,
     caller = "lbimpute", unit = "cm", recombdist = RECOMBDIST,
-    err = READ_PARS$error, genotypeerr = GENOERR, drp = FALSE,
+    err = READ_PARS$error, genotypeerr = GENOERR, drp = DRP,
     min_cov = 0L, threads = 1L
   )
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")

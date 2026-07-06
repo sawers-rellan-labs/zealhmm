@@ -58,7 +58,13 @@ if (!("--generate" %in% commandArgs(TRUE))) {
 }
 
 LAMBDAS <- c(0.1, 0.2, 0.5, 1, 5, 10, 20)
-RIGIDITY <- 2L # rigidity_star (calib_params.csv)
+# rigidity is CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+# scripts/02_calibrate.R) and READ from calib_params.csv — do not hardcode.
+cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
+RIGIDITY <- as.integer(cp$value[cp$key == "rigidity_star"])
+if (!isTRUE(is.finite(RIGIDITY))) {
+  stop("rigidity_star not in results/sim/calib_params.csv — run scripts/02_calibrate.R first")
+}
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 

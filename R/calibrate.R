@@ -56,7 +56,8 @@ feasible_rigidity <- function(data, values) {
 #' @param data Marker input for the (degraded-sim) cohort.
 #' @param truth Common-schema truth segments (from [simulate_source()]).
 #' @param grid Shared marker grid `data.table(chr, pos)` for the marker metrics.
-#' @param caller `"nnil"` (sweeps `rrate`) or `"rtiger"` (sweeps `rigidity`).
+#' @param caller `"nnil"` (sweeps `rrate`), `"rtiger"` (sweeps `rigidity`), or
+#'   `"lbimpute"` (sweeps `recombdist`; needs a `cm` column when `unit = "cm"`).
 #' @param values Parameter grid (e.g. from [log_grid()]).
 #' @param threads Fan-out width forwarded to `caller_sweep`.
 #' @param refit `"none"` (fit once at `ref`; the fast scan default) or `"cold"`.
@@ -65,10 +66,14 @@ feasible_rigidity <- function(data, values) {
 #'   donor_marker_recall, marker_macro_dice, n_breakpoints, truth_bp, ks_fragsize)`,
 #'   ascending in `value`.
 #' @export
-sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger"),
+sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger", "lbimpute"),
                             values, threads = 1L, refit = "none", ...) {
   caller <- match.arg(caller)
-  pcol <- if (caller == "rtiger") "rigidity" else "rrate"
+  pcol <- switch(caller,
+    rtiger = "rigidity",
+    lbimpute = "recombdist",
+    "rrate"
+  )
   segs <- data.table::as.data.table(
     nilHMM::caller_sweep(data,
       caller = caller, values = values,
@@ -132,7 +137,7 @@ bracket_from_sweep <- function(scores, objective = "donor_frag_dice") {
 #' @return List: `value` (refined optimum), `objective`, `score` (its scored row),
 #'   `trace` (per-iteration bracket), `evals` (all probed value/objective pairs).
 #' @export
-golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger"),
+golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger", "lbimpute"),
                           lo, hi, objective = "donor_frag_dice", threads = 1L,
                           tol = 0.05, max_iter = 20L, integer = NULL, ...) {
   caller <- match.arg(caller)

@@ -16,23 +16,55 @@
 SIM_DEFAULT_SEED <- 1L
 
 # --- pedigree ---------------------------------------------------------------
-# Founders 1 = recurrent (B73), 2 = donor (teosinte). Two backcrosses to 1, then
-# selfing: id5 = BC2, id6 = BC2S1, id7 = BC2S2, id8 = BC2S3. A base data.frame
-# is required (simcross::check_pedigree indexes it as `ped$col`).
-.nil_pedigree <- function() {
-  data.frame(
-    id = 1:8,
-    mom = c(0, 0, 1, 1, 1, 5, 6, 7),
-    dad = c(0, 0, 2, 3, 4, 5, 6, 7),
-    sex = c(0, 1, 0, 1, 0, 1, 0, 1),
-    gen = c(0, 0, 1, 2, 3, 4, 5, 6)
+# Founders 1 = recurrent (B73), 2 = donor (teosinte). F1 = 1 x 2; then `n_bc`
+# backcrosses to the recurrent (1); then `n_self` generations of selfing. Builds
+# the pedigree for ANY BC_n S_m design (BC2S2 = the old hardcoded 8-row table;
+# BC1S4 = TeoNAM). For anything else simcross can simulate (RIL, AIL, MAGIC),
+# pass a ready `pedigree` + `nil_id` to simulate_source() directly. simcross
+# selfing is sex-agnostic (mom == dad); backcrosses use recurrent(sex 0) x
+# prev(sex 1). A base data.frame is required (simcross::check_pedigree indexes it
+# as `ped$col`).
+.bcsft_pedigree <- function(n_bc, n_self) {
+  id <- c(1L, 2L)
+  mom <- c(0L, 0L)
+  dad <- c(0L, 0L)
+  gen <- c(0L, 0L)
+  add <- function(mm, dd, g) { # append one progeny, return its id
+    i <- length(id) + 1L
+    id[i] <<- i
+    mom[i] <<- mm
+    dad[i] <<- dd
+    gen[i] <<- g
+    i
+  }
+  cur <- add(1L, 2L, 1L) # F1
+  for (k in seq_len(n_bc)) cur <- add(1L, cur, 1L + k) # BCk = recurrent x prev
+  g <- 1L + n_bc
+  for (j in seq_len(n_self)) {
+    g <- g + 1L
+    cur <- add(cur, cur, g)
+  } # self x n_self
+  # sex by role: anyone ever used as a `mom` is female (0), else male (1). sex is
+  # cosmetic for our use -- sim_from_pedigree() takes the maternal gamete from
+  # `mom` and paternal from `dad` regardless of sex, and backcrosses always put
+  # the recurrent (1) as mom, so dosage is correct. (simcross::check_pedigree
+  # cannot validate selfing at all: a selfed individual is both mom and dad, so it
+  # trips either "moms male" or "dads female" -- which is why the original never
+  # called it. sim_from_pedigree is the workhorse and handles mom == dad selfing.)
+  sex <- ifelse(id %in% mom[mom > 0L], 0L, 1L)
+  list(
+    ped = data.frame(id = id, mom = mom, dad = dad, sex = sex, gen = gen),
+    nil_id = as.character(cur)
   )
 }
-.nil_id_for <- function(design) {
-  switch(design,
-    BC2S2 = "7",
-    BC2S3 = "8"
-  )
+
+# "BC1S4" -> list(n_bc = 1, n_self = 4)
+.parse_design <- function(design) {
+  mm <- regmatches(design, regexec("^BC(\\d+)S(\\d+)$", design))[[1]]
+  if (!length(mm)) {
+    stop(".parse_design(): design must be 'BC<n>S<m>' (e.g. BC1S4, BC2S2): ", design)
+  }
+  list(n_bc = as.integer(mm[2]), n_self = as.integer(mm[3]))
 }
 
 # --- consensus map ----------------------------------------------------------
@@ -153,7 +185,12 @@ build_marker_grid <- function(map, n_markers = 2500L, chr_prefix = "chr") {
 #' files -> ~27 MB / 0.4 s). Reconstruct the caller-ready long table with
 #' [sim_counts()]; open the bundle with [load_sim()].
 #'
-#' @param design "BC2S2" (default) or "BC2S3".
+#' @param design Breeding design as `"BC<n>S<m>"` (e.g. `"BC2S2"`, `"BC1S4"`):
+#'   F1, then n backcrosses to the recurrent, then m selfs. Ignored if `pedigree`
+#'   is supplied.
+#' @param pedigree,nil_id Optional escape hatch for any simcross-simulable design:
+#'   a ready pedigree data.frame (`id, mom, dad, sex, gen`) and the id of the
+#'   individual to sample. When given, `design` is used only to name the output.
 #' @param source "skim" (default), "brb", or "target".
 #' @param n Number of NILs (default 1500).
 #' @param m,p Stahl interference (default m = 10, p = 0).
@@ -164,14 +201,14 @@ build_marker_grid <- function(map, n_markers = 2500L, chr_prefix = "chr") {
 #'   but slower to read).
 #' @return (invisibly) list(rds, truth, grid).
 #' @export
-simulate_source <- function(design = c("BC2S2", "BC2S3"),
+simulate_source <- function(design = "BC2S2",
                             source = c("skim", "brb", "target"),
                             n = 1500L, m = 10L, p = 0, seed = SIM_DEFAULT_SEED,
                             n_markers = 50000L,
+                            pedigree = NULL, nil_id = NULL,
                             outdir = here::here("results/sim"),
                             map_path = here::here("data/ref/maize_map_v5_clean.rds"),
                             compress = "gzip") {
-  design <- match.arg(design)
   source <- match.arg(source)
   if (!requireNamespace("simcross", quietly = TRUE)) {
     stop("simulate_source() needs the 'simcross' package (kbroman/simcross).")
@@ -180,8 +217,16 @@ simulate_source <- function(design = c("BC2S2", "BC2S3"),
   map <- load_consensus_map(map_path)
   cmlen <- .chr_cm_lengths(map)
   markers <- build_marker_grid(map, n_markers)
-  ped <- .nil_pedigree()
-  nid <- .nil_id_for(design)
+  if (!is.null(pedigree)) { # custom-pedigree escape hatch
+    if (is.null(nil_id)) stop("simulate_source(): supply `nil_id` with a custom `pedigree`.")
+    ped <- pedigree
+    nid <- as.character(nil_id)
+  } else {
+    pd <- .parse_design(design)
+    bp <- .bcsft_pedigree(pd$n_bc, pd$n_self)
+    ped <- bp$ped
+    nid <- bp$nil_id
+  }
   reg <- .source_regime(source)
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
