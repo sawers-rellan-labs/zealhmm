@@ -154,13 +154,16 @@ downstream. Counts verified 2026-07-05.
 
 **Naming system — `teonam_<panel>_<assembly>_<role>`.** `panel` = `map` (all our data
 derives from the composite MAP panel); `assembly` = `v2` (marker-name coords) | `v5`
-(lifted); `role` = `unimputed` (raw dosages) | `markers` (annotation) | `gwas` (GWAS base)
-| `gwas_nr` (non-redundant, unique-cM — a JLM intermediate) | `jlm` (JLM base).
-Interpolation is a transient in-memory step, NOT part of a set's identity, so it is not named.
+(lifted); `role` = `imputed` (the base FSFHap-imputed calls) | `markers` (annotation) |
+`gwas` (GWAS base) | `gwas_nr` (non-redundant, unique-cM — a JLM intermediate) | `jlm` (JLM base).
+**All map sets share the same base calls, which are FSFHap-imputed** (Chen's map
+construction — complete within family; verified 0% partial-missing). So "imputed" is the
+base state, not a distinguishing step; the later suffixes describe downstream *selection*.
+Our cross-family step-interpolation (for `gwas_nr`) is a transient in-memory op, not named.
 
 | name | markers | assembly | role / provenance |
 |---|---|---|---|
-| `teonam_map_v2_unimputed` | 51,482 | v2 | raw recoded dosages (EasiGP `TeoNAM_genotype_clean.csv`); coords live in marker names |
+| `teonam_map_v2_imputed` | 51,482 | v2 | **FSFHap-imputed** recoded dosages (Chen map construction; complete within family — verified 0% partial-missing); EasiGP `TeoNAM_genotype_clean.csv`; coords in marker names |
 | `teonam_map_v5_markers` | 51,065 | v5 | annotation (lift v2→v5 + consensus cM); `marker_info_v5_cm.tsv` (`R/teonam_liftover.R`) |
 | `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_unimputed.csv` |
 | `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Intermediate → JLM only; NOT an analysis base.** |
@@ -191,7 +194,7 @@ SNPs, different filter chain); we keep working on the 50K and will fold in the 1
 | pipeline stage | `chen2019_*` (published) | `teonam_*` (this work) | status |
 |---|---|---|---|
 | raw GBS calls | 955,690 SNPs (ZeaGBSv2.7, AGPv2, HapMap) | not held (EasiGP ships post-filter 0/1/2 dosages) | to obtain |
-| **map panel** | `chen2019_map` 51,544 — MAF<5% + 64-bp thin → FSFHap → composite | `teonam_map_v2_unimputed` 51,482 / `teonam_map_v5_markers` 51,065 | ✓ have |
+| **map panel** | `chen2019_map` 51,544 — MAF<5% + 64-bp thin → FSFHap → composite | `teonam_map_v2_imputed` 51,482 / `teonam_map_v5_markers` 51,065 | ✓ have |
 | genetic map | R/qtl `est.map`, 1540 cM, AGPv2 order | consensus Marey cM (Ed Coe composite), 1781 cM | different map |
 | coordinates | AGPv2 → AGPv4 (CrossMap) | AGPv2 → AGPv5 (liftover) | v5 vs v4 |
 | **JLM markers** | `chen2019_JLM` 4,578 (0.1 cM thin of map set) | `teonam_map_v5_jlm` 6,059 (FastIndep on cM-dist @0.1) | ✓ same op, denser/longer map |
