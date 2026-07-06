@@ -1,0 +1,314 @@
+---
+title: "TeoNAM STAM — MLM (Q+K) GWAS on the imputed map panel"
+subtitle: "The correct mixed model: Q = 5 PCs + K = Centered-IBS (P3D), with the OLS→MLM genomic-inflation comparison"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The GWAS model Chen 2019 actually used for Fig 4C — a **linear
+mixed model** with population structure (Q) and kinship (K) — run in TASSEL5
+(native arm64), and contrasted with the fixed-effect **OLS** scan
+([`teonam-stam-ols-gwas-imputed`](teonam-stam-ols-gwas-imputed.html)). A mixed model
+needs a **complete** genotype matrix, so this runs on the step-interpolated complete
+matrix (`teonam_map_v5_gwas_nr`, 47,750 markers × 1,237 lines), **not** the sparse
+observed set. Compute lives in `agent/teonam_mlm_interp.R`; this notebook loads,
+documents, and plots.
+
+> **Read this first — two caveats that bound every number below.** (1) The
+> interpolated matrix is block-constant within ancestry blocks, so the Manhattan is
+> *terraced* (plateaus), not scatter. (2) On this map panel the MLM **over-corrects** —
+> a LOCO test ([§ below](#loco-test-is-the-loss-over-correction)) confirms **proximal
+> contamination**: kinship absorbs each large QTL's own-chromosome signal, so peaks like
+> *tb1*/*tsh4*/*zmm16* fall below threshold and **return under LOCO**. A data artifact,
+> not biology. A faithful, scatter-preserving MLM needs Chen's
+> 118,838 **directly-typed** SNPs (`chen2019_GWAS`), which we do not have. This
+> notebook is about the **model** (OLS → MLM), holding genotypes fixed.
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+theme_set(theme_bw(base_size = 13))
+LOD <- 5   # Chen 2019 significance line: P < 1e-5
+
+# genomic inflation factor: median(chi^2_obs) / median(chi^2_null)
+lambda_gc <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, df = 1, lower.tail = FALSE)) / qchisq(0.5, df = 1), 3)
+}
+
+# Manhattan in the teonam-stam-ols-gwas-imputed style (odd chr grey60 / even black,
+# LOD dotted, chromosome axis). Input: data.table(CHR, BP, logP).
+manhattan <- function(d, title) {
+  d <- d[order(CHR, BP)]
+  off <- d[, .(mx = max(BP)), by = CHR][order(CHR)]
+  off[, base := cumsum(as.numeric(shift(mx, fill = 0)))]
+  d <- merge(d, off[, .(CHR, base)], by = "CHR")
+  d[, x := as.numeric(BP) + base]
+  axis <- d[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)]
+  ggplot(d, aes(x, logP, colour = factor(CHR %% 2))) +
+    geom_point(size = 0.5) +
+    geom_hline(yintercept = LOD, linetype = "dotted") +
+    scale_colour_manual(values = c("grey60", "black"), guide = "none") +
+    scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
+    labs(x = "chromosome", y = expression(-log[10](italic(P))), title = title)
+}
+```
+
+## The model
+
+The previous notebook fit **OLS** (fixed effects only):
+
+$$
+y_i \;=\; \mu \;+\; \sum_f \beta_f\,\mathbb{1}[\text{family}_i=f] \;+\; \gamma\,g_{im} \;+\; \varepsilon_i .
+$$
+
+Chen's GWAS fits a **linear mixed model** (Yu et al. 2006), adding a polygenic
+**random** term with covariance given by the kinship matrix:
+
+$$
+\mathbf{y} \;=\; \mathbf{1}\mu \;+\; \mathbf{Q}\boldsymbol{\alpha}
+\;+\; \mathbf{g}_a\,\gamma_a \;+\; \mathbf{g}_d\,\gamma_d
+\;+\; \mathbf{Z}\mathbf{u} \;+\; \boldsymbol{\varepsilon},
+\qquad
+\mathbf{u}\sim N(\mathbf 0,\,\mathbf K\sigma^2_g),\;\;
+\boldsymbol{\varepsilon}\sim N(\mathbf 0,\,\mathbf I\sigma^2_e).
+$$
+
+- $\mathbf{Q}$ — first **5 principal components** (fixed, population structure).
+- $\mathbf{g}_a$ — additive marker dosage (0/1/2), effect $\gamma_a$;
+  $\mathbf{g}_d$ — dominance indicator (1 if heterozygous), effect $\gamma_d$.
+  **Both** are TASSEL's default; the marker is tested by the **joint 2-df** hypothesis
+  $H_0:\gamma_a=\gamma_d=0$.
+- $\mathbf{u}$ — polygenic background; $\mathbf{K}$ = **centered IBS** kinship.
+
+**Estimation (TASSEL, P3D).** Variance components $(\sigma^2_g,\sigma^2_e)$ are fit by
+**REML** via the EMMA spectral trick (eigendecompose $\mathbf K$ once), estimated **once
+under the null** and reused for every marker (**P3D**). Each marker is then a
+generalized-least-squares **$F$-test (2 df: $\gamma_a,\gamma_d$)** using $\mathbf V^{-1}$,
+$\mathbf V=\mathbf K\sigma^2_g+\mathbf I\sigma^2_e$. (The additive-only 1-df test, TASSEL's
+`add_p`, is the alternative — arguably better for a ~homozygous RIL panel; it gives
+$\lambda_{GC}\approx0.95$ vs 1.36 for the joint test.)
+
+**Why it matters.** OLS omits $\mathbf{Z}\mathbf{u}$ — no polygenic shrinkage — so
+test statistics inflate under structure/relatedness. The MLM's $\mathbf K$ term is
+exactly the correction; the effect is quantified below as the drop in $\lambda_{GC}$.
+
+## Pipeline (`agent/teonam_mlm_interp.R`, native arm64 TASSEL5)
+
+```{r pipeline-doc, eval=FALSE}
+# 1. densify the unique-cM union per chr by step-interpolation (nilHMM) -> complete
+#    47,750 x 1,237 matrix (no missing) -> hapmap geno_gwas_interp.hmp.txt
+# 2. K: TASSEL Centered_IBS on the complete matrix
+run_pipeline.pl -importGuess geno_gwas_interp.hmp.txt \
+  -KinshipPlugin -method Centered_IBS -endPlugin -export kinship_cIBS_interp.txt -exportType SqrMatrix
+# 3. Q: 5 PCs via prcomp(complete matrix) -> phenotype covariates (STAM + PC1..5)
+# 4. MLM (P3D): genotype + phenotype(+Q) + K, two-stage combine
+run_pipeline.pl -fork1 -h geno_gwas_interp.hmp.txt -fork2 -r pheno_stam_pc_interp.txt \
+  -fork3 -k kinship_cIBS_interp.txt -combine4 -input1 -input2 -intersect \
+  -combine5 -input4 -input3 -mlm -mlmVarCompEst P3D -mlmCompressionLevel None -export mlm_interp
+```
+
+```{r timings}
+tim <- fread(here("results/sim/teonam/mlm_interp_timings.csv"))
+knitr::kable(tim, caption = "TASSEL5 step timings (native arm64, Temurin 17; MLM uses pure-Java EJML, no native BLAS)")
+```
+
+## Load results
+
+```{r load}
+ols <- fread(here("data/teonam/stam_gwas_scan.csv"))            # OLS on the interpolated 47,750
+ols <- ols[is.finite(P) & P > 0, .(CHR = as.integer(CHR), BP = as.integer(BP), P)]
+mlm <- fread(here("data/teonam/tassel/mlm_interp2.txt"))        # TASSEL MLM (for the gene table)
+mlm <- mlm[Marker != "None", .(CHR = as.integer(Chr), BP = as.integer(Pos), P = as.numeric(p))][is.finite(P) & P > 0]
+lc  <- fread(here("results/sim/teonam/mlm_loco_scan.csv"))      # p_full = MLM Q+K (faithful, = TASSEL), p_loco = LOCO
+
+# the three models on the same interpolated 47,750-marker matrix
+three <- rbindlist(list(
+  ols[, .(CHR, BP, P, method = "OLS (no K)")],
+  lc[is.finite(p_full) & p_full > 0, .(CHR = chr, BP = bp, P = p_full, method = "MLM Q+K")],
+  lc[is.finite(p_loco) & p_loco > 0, .(CHR = chr, BP = bp, P = p_loco, method = "LOCO")]
+))
+lev  <- c("OLS (no K)", "MLM Q+K", "LOCO")
+labs <- setNames(vapply(lev, function(m) sprintf("%s, λ=%.2f", m, lambda_gc(three[method == m, P])), ""), lev)
+three[, mlab := factor(labs[method], levels = labs[lev])]
+pal  <- setNames(c("firebrick", "steelblue4", "darkorange"), labs[lev])
+```
+
+## Genomic inflation: OLS → MLM → LOCO
+
+```{r lambda-table}
+knitr::kable(
+  three[, .(markers = .N, lambda_GC = lambda_gc(P), max_logP = round(max(-log10(P)), 2)), by = method],
+  caption = "Three models on the same 47,750 interpolated markers (only the structure correction differs)."
+)
+```
+
+The Q + K correction pulls $\lambda_{GC}$ from **2.48 (OLS) → 1.36 (MLM)** and the
+global peak from 17.3 → 8.5. **LOCO** (leave-one-chromosome-out kinship — the
+diagnostic detailed [below](#loco-test-is-the-loss-over-correction)) trades global
+control for local power, so its $\lambda_{GC}$ runs *high* (≈3.4) while it revives the
+true peaks. Residual $\lambda>1$ under the MLM is interpolation ties (pseudo-replication)
+plus structure not fully captured by 5 PCs.
+
+## QQ — OLS · MLM (Q+K) · LOCO (one panel)
+
+```{r qq, fig.width=9, fig.height=4.8}
+qd <- three[, {
+  p <- P[is.finite(P) & P > 0 & P <= 1]; o <- -log10(sort(p)); e <- -log10(ppoints(length(p)))
+  k <- c(which(o > 2), sample(which(o <= 2), min(sum(o <= 2), 6000)))
+  .(exp = e[k], obs = o[k])
+}, by = mlab]
+ggplot(qd, aes(exp, obs, colour = mlab)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey40", linetype = "dashed") +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_colour_manual(values = pal, name = NULL) +
+  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1))) +
+  labs(x = expression(Expected~-log[10](italic(P))), y = expression(Observed~-log[10](italic(P))),
+       title = "STAM GWAS QQ: OLS vs MLM (Q+K) vs LOCO") +
+  theme(legend.position = c(0.02, 0.98), legend.justification = c(0, 1),
+        legend.background = element_rect(fill = scales::alpha("white", 0.7), colour = NA))
+```
+
+MLM (blue) hugs the null through the bulk; OLS (red) is inflated everywhere; LOCO
+(orange) restores the true tail but at a globally inflated baseline.
+
+## Manhattan — OLS · MLM (Q+K) · LOCO (one facet plot)
+
+```{r manhattan-3, fig.width=9, fig.height=7.6}
+off <- three[method == "OLS (no K)", .(mx = max(BP)), by = CHR][order(CHR)]
+off[, base := cumsum(as.numeric(shift(mx, fill = 0)))]
+m3 <- merge(three, off[, .(CHR, base)], by = "CHR")
+m3[, `:=`(x = as.numeric(BP) + base, logP = -log10(P))]
+axis <- m3[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)]
+ggplot(m3[order(CHR, BP)], aes(x, logP, colour = factor(CHR %% 2))) +
+  geom_point(size = 0.4) +
+  geom_hline(yintercept = LOD, linetype = "dotted") +
+  facet_wrap(~mlab, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = c("grey60", "black"), guide = "none") +
+  scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
+  labs(x = "chromosome", y = expression(-log[10](italic(P))),
+       title = "STAM GWAS, interpolated matrix: OLS → MLM (Q+K) → LOCO")
+```
+
+(*LOCO* is the leave-one-chromosome-out diagnostic detailed in the
+[LOCO section](#loco-test-is-the-loss-over-correction).)
+
+## Candidate-gene peaks: what the correction removes
+
+The MLM deflates the whole genome; several JLM candidate genes that clear LOD 5
+under OLS drop **below** threshold under the mixed model — including *tb1*, *tsh4*,
+and *zmm16*. The LOCO test below confirms this is **over-correction** (proximal
+contamination — the peaks return when kinship excludes their own chromosome), not
+evidence against the genes.
+
+```{r gene-table}
+ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv"))   # symbol, chr, start (v5)
+peakfn <- function(scan, ch, ps) {
+  w <- scan[CHR == ch & abs(BP - ps) <= 5e5]
+  if (nrow(w)) round(max(-log10(w$P)), 2) else NA_real_
+}
+gt <- data.table(
+  gene = ov$symbol, chr = ov$chr,
+  OLS = mapply(function(c, p) peakfn(ols, c, p), ov$chr, ov$start),
+  MLM = mapply(function(c, p) peakfn(mlm, c, p), ov$chr, ov$start)
+)
+gt[, `OLS>5` := ifelse(is.finite(OLS) & OLS >= LOD, "yes", "no")]
+gt[, `MLM>5` := ifelse(is.finite(MLM) & MLM >= LOD, "yes", "no")]
+knitr::kable(gt[order(-OLS)], caption = "Candidate-gene peak -log10P (±500 kb): OLS vs MLM, and LOD-5 survival.")
+```
+
+## LOCO test — is the loss over-correction? {#loco-test-is-the-loss-over-correction}
+
+Is the MLM's loss of *tb1*/*tsh4*/*zmm16* genuine deflation or **proximal
+contamination** — the kinship absorbing each QTL's own-chromosome signal? The standard
+diagnostic is **LOCO**: build the kinship from all markers *except the tested marker's
+chromosome*. Implemented as an EMMAX in R (`agent/teonam_mlm_loco.R`) that uses
+**TASSEL's model exactly** — additive + dominance, 2-df joint *F*, P3D — and **reproduces
+the full-K TASSEL MLM** (λ ≈ 1.36 vs 1.363; per-gene peaks within ~0.1): a full-K pass
+(validation) and the LOCO pass.
+
+```{r loco}
+lc <- fread(here("results/sim/teonam/mlm_loco_scan.csv"))     # marker, chr, bp, p_full, p_loco
+peak2 <- function(pv, ch, ps) {
+  w <- lc[chr == ch & abs(bp - ps) <= 5e5]; v <- -log10(w[[pv]]); v <- v[is.finite(v)]
+  if (length(v)) round(max(v), 2) else NA_real_
+}
+loco <- data.table(
+  gene = ov$symbol, chr = ov$chr,
+  OLS  = gt$OLS[match(ov$symbol, gt$gene)],
+  MLM  = gt$MLM[match(ov$symbol, gt$gene)],
+  `EMMAX full-K` = mapply(function(c, s) peak2("p_full", c, s), ov$chr, ov$start),
+  LOCO = mapply(function(c, s) peak2("p_loco", c, s), ov$chr, ov$start)
+)
+knitr::kable(loco[order(-OLS)], caption = sprintf(
+  "Candidate-gene peak -log10P — LOCO restores the peaks (λ_GC: full-K %.2f, LOCO %.2f).",
+  lambda_gc(lc$p_full), lambda_gc(lc$p_loco)))
+```
+
+(The full-K-vs-LOCO contrast is the middle vs bottom facet of the Manhattan above.)
+
+**Reading.** The peaks **return under LOCO** (*tb1* 4.4→11.2, *zmm16* 4.1→9.4, *tru1*
+5.9→11.8, *an1* 4.5→7.2, *tsh4* 2.8→5.1) — only possible if the full-K MLM was absorbing
+each QTL's own-chromosome signal. So the loss is **over-correction (proximal
+contamination)**, not evidence against the genes. (*ts2* stays low even under LOCO — its
+OLS signal was genuinely mostly confounding, echoing the original ~9-vs-15 concern.)
+
+**Two notes.** (1) **This R-EMMAX is faithful, not an approximation:** it uses TASSEL's
+exact model (add+dom, 2-df joint *F*, P3D) and its full-K pass reproduces the TASSEL MLM
+(λ_GC = `r lambda_gc(lc$p_full)` vs 1.363; peaks within ~0.1). Kinship flavor is
+irrelevant — VanRaden and TASSEL's Centered-IBS gave identical results. It's also
+**~15× faster** (R's native Accelerate BLAS ≈30 s vs TASSEL's pure-Java EJML ≈7 min), so
+it's the engine of choice for the coverage sweep. (2) LOCO's own genome-wide λ_GC
+(`r lambda_gc(lc$p_loco)`) is **inflated** — it trades global control for local power on
+this heavily-structured interpolated panel, so LOCO here is a **diagnostic, not a fix to
+deploy**. The real fix remains `chen2019_GWAS` (118K directly-typed).
+
+## Notes
+
+- **Canonical, tracked source** for the MLM scan: `agent/teonam_mlm_interp.R`
+  (build → K → Q → MLM) + `agent/teonam_mlm_lambda.R` (λ_GC / QQ). Outputs:
+  `data/teonam/tassel/mlm_interp2.txt`, `results/sim/teonam/mlm_interp_timings.csv`.
+- **Matrix:** interpolated-complete (`teonam_map_v5_gwas_nr`) — required because the
+  MLM needs a complete matrix (the sparse observed set stalls: per-marker missing
+  defeats P3D reuse). Cost: block plateaus, no scatter.
+- **Faithful GWAS** (scatter + correct absolute peaks) needs `chen2019_GWAS` (118,838
+  directly-typed SNPs); see `DATA.md` and the outreach in `agent/outreach_teonam_118k.md`.
+
+## Model-specification caveats & suggestions
+
+This MLM reproduces TASSEL faithfully, but it is **not the best-specified model for this
+population** — the QQ shows no correction reaches $\lambda_{GC}\approx1$. Four issues,
+roughly in order of importance, and how to address each:
+
+1. **Common marker effect in a NAM (most important).** The five teosinte founders
+   (TIL01/03/11/14/25) carry *different* alleles, so a single additive slope on the 0/1/2
+   dosage pools them as if identical. The correctly-specified model **nests the marker
+   within family** (`family + family:marker`) — which is exactly why Chen's *primary*
+   method was the **JLM**, with the common-effect GWAS only a complementary approximation.
+   Fix: use the nested model; don't treat the common-effect MLM as the target.
+
+2. **Additive + dominance on a ~homozygous RIL panel.** The dominance term is here only to
+   match TASSEL's default — but with ~8% heterozygosity it is barely estimable and mostly
+   injects noise (it is what pushes $\lambda_{GC}$ from 0.95 to 1.36). Additive-only (1 df)
+   is the defensible spec for RILs.
+
+3. **Structure term.** We use $\mathbf{Q}$ = 5 PCs (Chen's GWAS choice); the natural
+   cofactor for a five-family NAM is the **Family factor** (4 df). Note the inconsistency:
+   the OLS scan used Family, this MLM uses PCs.
+
+4. **Infinitesimal-$\mathbf{K}$ vs the actual architecture.** The MLM assumes many small
+   polygenic effects; STAM is a few large domestication QTL, and the interpolated genotypes
+   are block-correlated (pseudo-replication). Those violations are why $\lambda_{GC}$ stays
+   off 1 regardless of the correction — no kinship trick fixes a fundamentally mis-modeled
+   null.

@@ -107,12 +107,19 @@
         </div>
         <p class="card-sub">Empirical-truth validation: reproduce Chen 2019 Fig 4C on real TeoNAM genotypes, plus the GL+HWE / nNIL / RTIGER coverage-degradation sweep.</p>
       </a>
-      <a class="card" href="analysis/teonam-stam-ols-gwas-unimputed.html">
+      <a class="card" href="analysis/teonam-stam-ols-gwas-imputed.html">
         <div class="card-head">
-          <span class="card-title">TeoNAM STAM — unimputed GWAS scan</span>
+          <span class="card-title">TeoNAM STAM — OLS GWAS (imputed map panel)</span>
           <span class="badge ready">rendered</span>
         </div>
-        <p class="card-sub">The tracked computation behind the faithful Fig 4C: per-marker across-family fixed GLM (STAM ~ Family + marker, 1-df F) on the raw genotypes, with model, QC, and top hits. Reproduces the canonical scan CSV byte-for-byte.</p>
+        <p class="card-sub">The tracked computation behind the Fig 4C scan: per-marker across-family OLS (STAM ~ Family + marker, 1-df F) on the FSFHap-imputed map panel, with model, QC, and top hits. Reproduces the canonical scan CSV byte-for-byte.</p>
+      </a>
+      <a class="card" href="analysis/teonam-stam-mlm-gwas-imputed.html">
+        <div class="card-head">
+          <span class="card-title">TeoNAM STAM — MLM (Q+K) GWAS</span>
+          <span class="badge ready">rendered</span>
+        </div>
+        <p class="card-sub">Chen's actual GWAS model — mixed model with Q (5 PCs) + K (Centered IBS), P3D, in TASSEL5 — on the interpolated matrix. Model equations, the OLS→MLM inflation drop (λ 2.48→1.36), single-panel QQ, Manhattan, and which candidate genes survive the correction.</p>
       </a>
       <a class="card" href="analysis/marker-thinning.html">
         <div class="card-head">
