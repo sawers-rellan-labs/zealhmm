@@ -25,7 +25,7 @@
 #
 # Writes results/sim/teonam/stam_gwas_control_lambda<L>.csv (per lambda), the
 # combined long table stam_gwas_control_sweep.csv (adds `coverage`; includes the
-# lambda=Inf baseline rows copied from data/teonam/stam_gwas_scan.csv), and
+# lambda=Inf baseline rows copied from data/teonam/stam_gwas_scan_interpolated.csv), and
 # stam_control_het_fraction.csv (per-lambda HET-call fraction + call rate).
 #
 # KEY DECISIONS (recorded per plan):
@@ -276,7 +276,7 @@ for (li in seq_along(LAMBDAS)) {
 }
 
 # --- combined sweep + lambda=Inf baseline ------------------------------------
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan.csv"))
+baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_interpolated.csv"))
 baseline[, coverage := Inf]
 message(sprintf(
   "  lambda=Inf  : %d markers, tb1 peak -log10P = %s (baseline, panel C)",

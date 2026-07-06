@@ -1,6 +1,6 @@
 ---
-title: "TeoNAM STAM — OLS GWAS on the imputed map panel (Fig 4C)"
-subtitle: "Per-marker across-family OLS on the FSFHap-imputed map-panel genotypes — computation, model & QC"
+title: "TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)"
+subtitle: "Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model & QC"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,18 +16,19 @@ execute:
   freeze: auto
 ---
 
-**What this is.** The *computation* behind the STAM OLS GWAS scan on the imputed map
-panel (`data/teonam/stam_gwas_scan_unimputed.csv`), tracked in its own right. It ports
-the throwaway `agent/teonam_stam_gwas_unimputed.R` into a rendered notebook so the
-scan — not just its Manhattan — is reproducible from primary data. The annotated
+**What this is.** The *computation* behind the STAM OLS GWAS scan on the family-imputed
+map panel (`data/teonam/stam_gwas_scan_family_imputed.csv`), tracked in its own right. It
+ports the throwaway `agent/teonam_stam_gwas_family_imputed.R` into a rendered notebook so
+the scan — not just its Manhattan — is reproducible from primary data. The annotated
 Fig-4C Manhattan that *consumes* this CSV lives in
 [`teonam-qtl-recovery`](teonam-qtl-recovery.html); this notebook **produces** it.
 
-The genotypes are **FSFHap-imputed** (`teonam_map_v5_gwas`, 51,004 markers — Chen's map
-construction, complete within family). Each marker is tested only on the families that
-typed it (cross-family gaps left as NA, **not** densified), giving the natural GWAS
-scatter with no step-interpolation plateau artifact. (The plain-`unimputed` in the CSV
-filename means "not cross-family-densified", *not* "raw genotypes".)
+The genotypes are **FSFHap family-imputed** (`teonam_map_v5_gwas`, 51,004 markers — Chen's
+map construction, complete *within family*). Each marker is tested only on the families
+that typed it (cross-family gaps left as NA, **not** densified), giving the natural GWAS
+scatter with no step-interpolation plateau artifact. (`family_imputed` names exactly this
+state: FSFHap within-family imputation only, *without* cross-family step-interpolation —
+contrast the `interpolated` matrix used by the MLM notebook.)
 
 ```{r setup}
 library(here)
@@ -138,7 +139,7 @@ scan <- data.table(
   BP = as.integer(pos_by[mk]), P = P,
   n = as.integer(N)
 )[order(CHR, BP)]
-fwrite(scan, here("data/teonam/stam_gwas_scan_unimputed.csv")) # canonical output
+fwrite(scan, here("data/teonam/stam_gwas_scan_family_imputed.csv")) # canonical output
 ```
 
 ## QC and results
@@ -160,7 +161,7 @@ data.table(
 
 ```{r top-hits}
 top <- fin[order(P)][1:10, .(SNP, CHR, BP, n, logP = round(-log10(P), 2))]
-knitr::kable(top, caption = "Top 10 STAM associations (unimputed scan)")
+knitr::kable(top, caption = "Top 10 STAM associations (family-imputed scan)")
 ```
 
 ```{r per-marker-n, fig.width=7, fig.height=2.8}
@@ -187,15 +188,15 @@ ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
   scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
   labs(
     x = "chromosome", y = expression(-log[10](italic(P))),
-    title = "STAM unimputed GWAS (OLS: STAM ~ Family + marker)"
+    title = "STAM family-imputed GWAS (OLS: STAM ~ Family + marker)"
   )
 ```
 
 ## Notes
 
 - This notebook is the **canonical, tracked source** for
-  `stam_gwas_scan_unimputed.csv`; it supersedes the untracked
-  `agent/teonam_stam_gwas_unimputed.R` (identical model, ported verbatim).
+  `stam_gwas_scan_family_imputed.csv`; it supersedes the untracked
+  `agent/teonam_stam_gwas_family_imputed.R` (identical model, ported verbatim).
 - Model is **OLS (a fixed-effects linear model) with no kinship term** —
   deliberately faithful to the throwaway script, *not* to Chen's MLM. The peak-height
   / $\lambda_{GC}$ comparison against Chen's `Q + K` mixed model is deferred to a

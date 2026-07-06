@@ -154,34 +154,43 @@ downstream. Counts verified 2026-07-05.
 
 **Naming system — `teonam_<panel>_<assembly>_<role>`.** `panel` = `map` (all our data
 derives from the composite MAP panel); `assembly` = `v2` (marker-name coords) | `v5`
-(lifted); `role` = `imputed` (the base FSFHap-imputed calls) | `markers` (annotation) |
-`gwas` (GWAS base) | `gwas_nr` (non-redundant, unique-cM — a JLM intermediate) | `jlm` (JLM base).
-**All map sets share the same base calls, which are FSFHap-imputed** (Chen's map
-construction — complete within family; verified 0% partial-missing). So "imputed" is the
-base state, not a distinguishing step; the later suffixes describe downstream *selection*.
-Our cross-family step-interpolation (for `gwas_nr`) is a transient in-memory op, not named.
+(lifted); `role` = `family_imputed` (the base FSFHap within-family imputed calls) |
+`markers` (annotation) | `gwas` (GWAS base) | `jlm` (JLM base — thinned directly from `gwas`).
+(`gwas_nr` is a **retired** label, not a pipeline role: it does **not** feed JLM; kept only
+as the duplicate-cM record — see the table note below.)
+**All map sets share the same base calls, which are FSFHap family-imputed** (Chen's map
+construction — complete *within family*; verified 0% partial-missing). So `family_imputed` is
+the base state, not a distinguishing step; the later suffixes describe downstream *selection*.
+The `family_imputed` label is deliberate: FSFHap imputes **within each family**, leaving
+cross-family gaps NA — distinct from the `interpolated` matrix, where our cross-family
+step-interpolation (Tian 2011 / Chen densifier) fills those gaps to supply the complete
+genotypes for `jlm` (and the interpolated GWAS matrix). Interpolation is a step, not a named panel.
 
 | name | markers | assembly | role / provenance |
 |---|---|---|---|
-| `teonam_map_v2_imputed` | 51,482 | v2 | **FSFHap-imputed** recoded dosages (Chen map construction; complete within family — verified 0% partial-missing); EasiGP `TeoNAM_genotype_clean.csv`; coords in marker names |
+| `teonam_map_v2_family_imputed` | 51,482 | v2 | **FSFHap family-imputed** recoded dosages (Chen map construction; complete *within family* — verified 0% partial-missing); EasiGP `TeoNAM_genotype_clean.csv`; coords in marker names |
 | `teonam_map_v5_markers` | 51,065 | v5 | annotation (lift v2→v5 + consensus cM); `marker_info_v5_cm.tsv` (`R/teonam_liftover.R`) |
-| `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_unimputed.csv` |
-| `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Intermediate → JLM only; NOT an analysis base.** |
-| `teonam_map_v5_jlm` | 6,059 | v5 | **JLM base** — FastIndep on **cM-distance** @0.1 of `_gwas_nr`; `data/teonam/tassel/geno.hmp.txt` |
+| `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_family_imputed.csv` |
+| `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Retained only as the record of the duplicate-cM markers (`agent/notes-redundant-markers.md`); NOT in any active path.** |
+| `teonam_map_v5_jlm` | 6,049 | v5 | **JLM base** — FastIndep (**cM-distance** @0.1) directly on `_gwas` (51,004); genotypes step-interpolated; `data/teonam/tassel/geno.hmp.txt` (`agent/teonam_jlm_build.R`) |
 
 Notes:
 - **`teonam_map_v5_jlm` thinning is a cM-distance thin, not an r² LD prune.**
-  `select_independent` (FastIndep, deterministic greedy) was fed the cM-distance matrix, so
-  it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. Reproduced
-  **bit-for-bit** (Jaccard = 1.000) in `analysis/marker-thinning.qmd`; the generating script
-  was lost (ran inline), so that notebook is now the canonical record.
-- **6,059 (`teonam_map_v5_jlm`) vs `chen2019_JLM` 4,578** = map length (1781 vs 1540 cM,
-  ×1.156) × 0.1-cM-bin saturation (×1.144) = ×1.32. Not a thinning-algorithm artifact.
+  `select_independent` (FastIndep, deterministic greedy) is fed the per-chr cM-distance matrix, so
+  it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. The full pipeline is now
+  reconstructed as a traceable script — `agent/teonam_jlm_build.R` (FastIndep on the 51K pool +
+  step-interpolated genotypes). `agent/teonam_jlm_verify_source.R` reproduces the prior
+  47,750-pool hapmap **0-mismatch** (6,059 markers × 1,237 taxa), confirming the method.
+  `analysis/marker-thinning.qmd` (written against the old 47,750 pool → 6,059) needs
+  re-rendering to the 51K-pool set (6,049).
+- **6,049 (`teonam_map_v5_jlm`) vs `chen2019_JLM` 4,578** = map length (1781 vs 1540 cM,
+  ×1.156) × 0.1-cM-bin saturation (×1.14) = ×1.32. Not a thinning-algorithm artifact.
   See `analysis/marker-thinning.qmd`.
-- **`teonam_map_v5_gwas_nr`** dedups markers sharing a cM (→ 47,750 < 51,004; −3,315
-  collapsed, mostly centromeric). It exists only as the FastIndep pool → `_jlm`; the
-  step-interpolation onto this grid is transient/in-memory and never persisted. **Not a
-  GWAS analysis base.**
+- **`teonam_map_v5_gwas_nr`** dedups markers sharing a cM (unique-cM grid, 47,750). It is
+  **no longer in any active path** — JLM now thins directly from the 51K `_gwas` pool
+  (cM-distance @0.1 subsumes the dedup: tied markers are 0 cM apart → one survivor per cluster).
+  Retained only as the record of the duplicate-cM markers (~3,307 on the 51,004 base, centromeric
+  low-recombination); see `agent/notes-redundant-markers.md`.
 
 ### What Chen 2019 has vs what we managed (reproduction status, 2026-07-05)
 
@@ -194,13 +203,13 @@ SNPs, different filter chain); we keep working on the 50K and will fold in the 1
 | pipeline stage | `chen2019_*` (published) | `teonam_*` (this work) | status |
 |---|---|---|---|
 | raw GBS calls | 955,690 SNPs (ZeaGBSv2.7, AGPv2, HapMap) | not held (EasiGP ships post-filter 0/1/2 dosages) | to obtain |
-| **map panel** | `chen2019_map` 51,544 — MAF<5% + 64-bp thin → FSFHap → composite | `teonam_map_v2_imputed` 51,482 / `teonam_map_v5_markers` 51,065 | ✓ have |
+| **map panel** | `chen2019_map` 51,544 — MAF<5% + 64-bp thin → FSFHap → composite | `teonam_map_v2_family_imputed` 51,482 / `teonam_map_v5_markers` 51,065 | ✓ have |
 | genetic map | R/qtl `est.map`, 1540 cM, AGPv2 order | consensus Marey cM (Ed Coe composite), 1781 cM | different map |
 | coordinates | AGPv2 → AGPv4 (CrossMap) | AGPv2 → AGPv5 (liftover) | v5 vs v4 |
-| **JLM markers** | `chen2019_JLM` 4,578 (0.1 cM thin of map set) | `teonam_map_v5_jlm` 6,059 (FastIndep on cM-dist @0.1) | ✓ same op, denser/longer map |
+| **JLM markers** | `chen2019_JLM` 4,578 (0.1 cM thin of map set) | `teonam_map_v5_jlm` 6,049 (FastIndep on cM-dist @0.1, 51K pool) | ✓ same op, denser/longer map |
 | JLM engine | SAS `PROC GLMSELECT`, marker nested-in-family, permutation threshold | TASSEL5 StepwiseOLS, nested-in-family, default threshold | perm threshold TODO |
 | JLM result | STAM 5 QTL, DTA 19 QTL | recovers STAM QTL (more enter w/o perm cutoff) | reproducing |
-| **GWAS markers** | `chen2019_GWAS` 118,838 (MAF>0.01, unthinned → FSFHap) | `teonam_map_v5_gwas` 51,004 (`_gwas_nr` 47,750 is a JLM intermediate, not a GWAS base) | 118K to obtain |
+| **GWAS markers** | `chen2019_GWAS` 118,838 (MAF>0.01, unthinned → FSFHap) | `teonam_map_v5_gwas` 51,004 (full set; also the JLM thinning pool) | 118K to obtain |
 | GWAS model | MLM: Q (5 PCs) + K (IBS) | OLS: Family + marker, 1-df F | MLM upgrade TODO |
 | GWAS threshold | P < 1e-5 (LOD 5) | LOD 5 | ✓ |
 

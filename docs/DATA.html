@@ -263,7 +263,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="teonam-marker-sets-the-thinningdensification-hierarchy" class="level2">
 <h2 class="anchored" data-anchor-id="teonam-marker-sets-the-thinningdensification-hierarchy">TeoNAM marker sets (the thinning/densification hierarchy)</h2>
 <p>All derive from the same cleaned genotypes; each row is a distinct marker count used downstream. Counts verified 2026-07-05.</p>
-<p><strong>Naming system — <code>teonam_&lt;panel&gt;_&lt;assembly&gt;_&lt;role&gt;</code>.</strong> <code>panel</code> = <code>map</code> (all our data derives from the composite MAP panel); <code>assembly</code> = <code>v2</code> (marker-name coords) | <code>v5</code> (lifted); <code>role</code> = <code>unimputed</code> (raw dosages) | <code>markers</code> (annotation) | <code>gwas</code> (GWAS base) | <code>gwas_nr</code> (non-redundant, unique-cM — a JLM intermediate) | <code>jlm</code> (JLM base). Interpolation is a transient in-memory step, NOT part of a set’s identity, so it is not named.</p>
+<p><strong>Naming system — <code>teonam_&lt;panel&gt;_&lt;assembly&gt;_&lt;role&gt;</code>.</strong> <code>panel</code> = <code>map</code> (all our data derives from the composite MAP panel); <code>assembly</code> = <code>v2</code> (marker-name coords) | <code>v5</code> (lifted); <code>role</code> = <code>family_imputed</code> (the base FSFHap within-family imputed calls) | <code>markers</code> (annotation) | <code>gwas</code> (GWAS base) | <code>jlm</code> (JLM base — thinned directly from <code>gwas</code>). (<code>gwas_nr</code> is a <strong>retired</strong> label, not a pipeline role: it does <strong>not</strong> feed JLM; kept only as the duplicate-cM record — see the table note below.) <strong>All map sets share the same base calls, which are FSFHap family-imputed</strong> (Chen’s map construction — complete <em>within family</em>; verified 0% partial-missing). So <code>family_imputed</code> is the base state, not a distinguishing step; the later suffixes describe downstream <em>selection</em>. The <code>family_imputed</code> label is deliberate: FSFHap imputes <strong>within each family</strong>, leaving cross-family gaps NA — distinct from the <code>interpolated</code> matrix, where our cross-family step-interpolation (Tian 2011 / Chen densifier) fills those gaps to supply the complete genotypes for <code>jlm</code> (and the interpolated GWAS matrix). Interpolation is a step, not a named panel.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -281,10 +281,10 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>teonam_map_v2_unimputed</code></td>
+<td><code>teonam_map_v2_family_imputed</code></td>
 <td>51,482</td>
 <td>v2</td>
-<td>raw recoded dosages (EasiGP <code>TeoNAM_genotype_clean.csv</code>); coords live in marker names</td>
+<td><strong>FSFHap family-imputed</strong> recoded dosages (Chen map construction; complete <em>within family</em> — verified 0% partial-missing); EasiGP <code>TeoNAM_genotype_clean.csv</code>; coords in marker names</td>
 </tr>
 <tr class="even">
 <td><code>teonam_map_v5_markers</code></td>
@@ -296,23 +296,23 @@ ul.task-list li input[type="checkbox"] {
 <td><code>teonam_map_v5_gwas</code></td>
 <td>51,004</td>
 <td>v5</td>
-<td><strong>GWAS base</strong> — per-marker, typed lines only; <code>stam_gwas_scan_unimputed.csv</code></td>
+<td><strong>GWAS base</strong> — per-marker, typed lines only; <code>stam_gwas_scan_family_imputed.csv</code></td>
 </tr>
 <tr class="even">
 <td><code>teonam_map_v5_gwas_nr</code></td>
 <td>47,750</td>
 <td>v5</td>
-<td>non-redundant (one marker per unique cM). <strong>Intermediate → JLM only; NOT an analysis base.</strong></td>
+<td>non-redundant (one marker per unique cM). <strong>Retained only as the record of the duplicate-cM markers (<code>agent/notes-redundant-markers.md</code>); NOT in any active path.</strong></td>
 </tr>
 <tr class="odd">
 <td><code>teonam_map_v5_jlm</code></td>
-<td>6,059</td>
+<td>6,049</td>
 <td>v5</td>
-<td><strong>JLM base</strong> — FastIndep on <strong>cM-distance</strong> <span class="citation" data-cites="0.1">@0.1</span> of <code>_gwas_nr</code>; <code>data/teonam/tassel/geno.hmp.txt</code></td>
+<td><strong>JLM base</strong> — FastIndep (<strong>cM-distance</strong> <span class="citation" data-cites="0.1">@0.1</span>) directly on <code>_gwas</code> (51,004); genotypes step-interpolated; <code>data/teonam/tassel/geno.hmp.txt</code> (<code>agent/teonam_jlm_build.R</code>)</td>
 </tr>
 </tbody>
 </table>
-<p>Notes: - <strong><code>teonam_map_v5_jlm</code> thinning is a cM-distance thin, not an r² LD prune.</strong> <code>select_independent</code> (FastIndep, deterministic greedy) was fed the cM-distance matrix, so it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. Reproduced <strong>bit-for-bit</strong> (Jaccard = 1.000) in <code>analysis/marker-thinning.qmd</code>; the generating script was lost (ran inline), so that notebook is now the canonical record. - <strong>6,059 (<code>teonam_map_v5_jlm</code>) vs <code>chen2019_JLM</code> 4,578</strong> = map length (1781 vs 1540 cM, ×1.156) × 0.1-cM-bin saturation (×1.144) = ×1.32. Not a thinning-algorithm artifact. See <code>analysis/marker-thinning.qmd</code>. - <strong><code>teonam_map_v5_gwas_nr</code></strong> dedups markers sharing a cM (→ 47,750 &lt; 51,004; −3,315 collapsed, mostly centromeric). It exists only as the FastIndep pool → <code>_jlm</code>; the step-interpolation onto this grid is transient/in-memory and never persisted. <strong>Not a GWAS analysis base.</strong></p>
+<p>Notes: - <strong><code>teonam_map_v5_jlm</code> thinning is a cM-distance thin, not an r² LD prune.</strong> <code>select_independent</code> (FastIndep, deterministic greedy) is fed the per-chr cM-distance matrix, so it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. The full pipeline is now reconstructed as a traceable script — <code>agent/teonam_jlm_build.R</code> (FastIndep on the 51K pool + step-interpolated genotypes). <code>agent/teonam_jlm_verify_source.R</code> reproduces the prior 47,750-pool hapmap <strong>0-mismatch</strong> (6,059 markers × 1,237 taxa), confirming the method. <code>analysis/marker-thinning.qmd</code> (written against the old 47,750 pool → 6,059) needs re-rendering to the 51K-pool set (6,049). - <strong>6,049 (<code>teonam_map_v5_jlm</code>) vs <code>chen2019_JLM</code> 4,578</strong> = map length (1781 vs 1540 cM, ×1.156) × 0.1-cM-bin saturation (×1.14) = ×1.32. Not a thinning-algorithm artifact. See <code>analysis/marker-thinning.qmd</code>. - <strong><code>teonam_map_v5_gwas_nr</code></strong> dedups markers sharing a cM (unique-cM grid, 47,750). It is <strong>no longer in any active path</strong> — JLM now thins directly from the 51K <code>_gwas</code> pool (cM-distance <span class="citation" data-cites="0.1">@0.1</span> subsumes the dedup: tied markers are 0 cM apart → one survivor per cluster). Retained only as the record of the duplicate-cM markers (~3,307 on the 51,004 base, centromeric low-recombination); see <code>agent/notes-redundant-markers.md</code>.</p>
 <section id="what-chen-2019-has-vs-what-we-managed-reproduction-status-2026-07-05" class="level3">
 <h3 class="anchored" data-anchor-id="what-chen-2019-has-vs-what-we-managed-reproduction-status-2026-07-05">What Chen 2019 has vs what we managed (reproduction status, 2026-07-05)</h3>
 <p>We are reproducing Chen 2019 on the <strong>51,544-marker composite MAP panel</strong> (obtained via EasiGP; verified map-set-only). It’s a strong basis and the JLM anchors reproduce on it. Chen’s separate <strong>118,838-SNP GWAS set</strong> is not yet in hand (sibling of the map set — same raw 955,690 ZeaGBSv2.7 SNPs, different filter chain); we keep working on the 50K and will fold in the 118K once obtained (outreach: <code>agent/outreach_teonam_118k.md</code>).</p>
@@ -341,7 +341,7 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td><strong>map panel</strong></td>
 <td><code>chen2019_map</code> 51,544 — MAF&lt;5% + 64-bp thin → FSFHap → composite</td>
-<td><code>teonam_map_v2_unimputed</code> 51,482 / <code>teonam_map_v5_markers</code> 51,065</td>
+<td><code>teonam_map_v2_family_imputed</code> 51,482 / <code>teonam_map_v5_markers</code> 51,065</td>
 <td>✓ have</td>
 </tr>
 <tr class="odd">
@@ -359,7 +359,7 @@ ul.task-list li input[type="checkbox"] {
 <tr class="odd">
 <td><strong>JLM markers</strong></td>
 <td><code>chen2019_JLM</code> 4,578 (0.1 cM thin of map set)</td>
-<td><code>teonam_map_v5_jlm</code> 6,059 (FastIndep on cM-dist <span class="citation" data-cites="0.1">@0.1</span>)</td>
+<td><code>teonam_map_v5_jlm</code> 6,049 (FastIndep on cM-dist <span class="citation" data-cites="0.1">@0.1</span>, 51K pool)</td>
 <td>✓ same op, denser/longer map</td>
 </tr>
 <tr class="even">
@@ -377,13 +377,13 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td><strong>GWAS markers</strong></td>
 <td><code>chen2019_GWAS</code> 118,838 (MAF&gt;0.01, unthinned → FSFHap)</td>
-<td><code>teonam_map_v5_gwas</code> 51,004 (<code>_gwas_nr</code> 47,750 is a JLM intermediate, not a GWAS base)</td>
+<td><code>teonam_map_v5_gwas</code> 51,004 (full set; also the JLM thinning pool)</td>
 <td>118K to obtain</td>
 </tr>
 <tr class="odd">
 <td>GWAS model</td>
 <td>MLM: Q (5 PCs) + K (IBS)</td>
-<td>fixed GLM: Family + marker, 1-df F</td>
+<td>OLS: Family + marker, 1-df F</td>
 <td>MLM upgrade TODO</td>
 </tr>
 <tr class="even">
@@ -394,7 +394,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<p>Consequences to keep closing (not blockers): the GWAS Manhattan on <code>teonam_map_v5_gwas</code> is sparser than <code>chen2019_GWAS</code> (some gaps, esp.&nbsp;low-recombination regions) and runs hotter (fixed GLM vs Q+K MLM → peak inflation; λ_GC analysis pending). JLM QTL recovery is the primary empirical-truth anchor and is unaffected by the GWAS-set gap.</p>
+<p>Consequences to keep closing (not blockers): the GWAS Manhattan on <code>teonam_map_v5_gwas</code> is sparser than <code>chen2019_GWAS</code> (some gaps, esp.&nbsp;low-recombination regions) and runs hotter (fixed OLS vs Q+K MLM → peak inflation; λ_GC analysis pending). JLM QTL recovery is the primary empirical-truth anchor and is unaffected by the GWAS-set gap.</p>
 </section>
 </section>
 <section id="still-to-freeze-plan-b5-blocks-b2.3-b2.4" class="level2">

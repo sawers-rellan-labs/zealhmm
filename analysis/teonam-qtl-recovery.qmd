@@ -21,8 +21,8 @@ at each gene's genomic position, and the LOD = 5 dotted significance line.
 
 This notebook **loads pre-computed CSVs and plots** (compute lives in the `agent/`
 scripts): the per-marker GWAS scans (`teonam_stam_gwas_scan.R` interpolated /
-`teonam_stam_gwas_unimputed.R` raw) and the candidate-gene overlap
-(`teonam_candidate_overlap.R`). We show both the **unimputed** scan (natural
+`teonam_stam_gwas_family_imputed.R` family-imputed) and the candidate-gene overlap
+(`teonam_candidate_overlap.R`). We show both the **family-imputed** scan (natural
 scatter) and the **interpolated/densified** scan (block-terraced — the artifact of
 step-interpolated genotypes, see below).
 
@@ -250,46 +250,45 @@ above the corresponding QTL. Reproduces Chen 2019 Fig 4A.
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_stam_lollipop(
   here("data/teonam/tassel/stam_jlm_1.txt"),
-  here("data/teonam/stam_gwas_scan_unimputed.csv"),
+  here("data/teonam/stam_gwas_scan_family_imputed.csv"),
   "STAM — JLM QTL genomic distribution (TeoNAM)",
   here("results/sim/teonam/stam_jlm_lollipop.png")
 )
 p_lolli
 ```
 
-## Unimputed genotypes (the faithful Fig 4C)
+## Family-imputed genotypes (the faithful Fig 4C)
 
 Each marker tested only on its actually-typed lines — natural GWAS scatter.
 
-```{r manhattan-unimputed, fig.width=9, fig.height=4.4}
+```{r manhattan-family-imputed, fig.width=9, fig.height=4.4}
 p_unimp <- plot_stam_manhattan(
-  here("data/teonam/stam_gwas_scan_unimputed.csv"),
-  "STAM — GWAS (TeoNAM, unimputed), candidate genes at v5 positions",
+  here("data/teonam/stam_gwas_scan_family_imputed.csv"),
+  "STAM — GWAS (TeoNAM, family-imputed), candidate genes at v5 positions",
   here("results/sim/teonam/stam_gwas_manhattan_annotated.png")
 )
 p_unimp
 ```
 
-## Non-redundant intermediate (`teonam_map_v5_gwas_nr`) — artifact only
+## Step-interpolated grid — artifact only
 
-The same scan on the step-interpolated **`teonam_map_v5_gwas_nr`** grid (47,750
-markers, one per unique cM). This set is **not a GWAS analysis output** — it exists
-only as the non-redundant pool that FastIndep thins to the JLM framework
-(`teonam_map_v5_jlm`); it is shown here purely to document an artifact. Ancestry is a
-piecewise-constant block signal, so step interpolation makes contiguous markers
-identical → identical p-values → **terraced plateaus** (peaks still correctly
-located). The GWAS figure uses the unimputed base (`teonam_map_v5_gwas`) above.
+The same scan on the step-interpolated full GWAS set (`teonam_map_v5_gwas`, 51,004
+markers, cross-family gaps densified). This is shown purely to document the
+interpolation artifact. Ancestry is a piecewise-constant block signal, so step
+interpolation makes contiguous markers identical → identical p-values → **terraced
+plateaus** (peaks still correctly located). The GWAS figure above uses the same
+markers *without* densification (family-imputed, per-marker).
 
 ```{r manhattan-interpolated, fig.width=9, fig.height=4.4}
 p_interp <- plot_stam_manhattan(
-  here("data/teonam/stam_gwas_scan.csv"),
+  here("data/teonam/stam_gwas_scan_interpolated.csv"),
   "STAM — GWAS (TeoNAM, interpolated), candidate genes at v5 positions",
   here("results/sim/teonam/stam_gwas_manhattan_interpolated_annotated.png")
 )
 p_interp
 ```
 
-## Composite (Fig 4A lollipop + Fig 4C unimputed + interpolated)
+## Composite (Fig 4A lollipop + Fig 4C family-imputed + interpolated)
 
 ```{r composite, fig.width=9, fig.height=13}
 composite <- cowplot::plot_grid(

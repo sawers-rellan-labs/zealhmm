@@ -1,5 +1,5 @@
 ---
-title: "TeoNAM STAM — MLM (Q+K) GWAS on the imputed map panel"
+title: "TeoNAM STAM — MLM (Q+K) GWAS on the interpolated map panel"
 subtitle: "The correct mixed model: Q = 5 PCs + K = Centered-IBS (P3D), with the OLS→MLM genomic-inflation comparison"
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -18,9 +18,9 @@ execute:
 **What this is.** The GWAS model Chen 2019 actually used for Fig 4C — a **linear
 mixed model** with population structure (Q) and kinship (K) — run in TASSEL5
 (native arm64), and contrasted with the fixed-effect **OLS** scan
-([`teonam-stam-ols-gwas-imputed`](teonam-stam-ols-gwas-imputed.html)). A mixed model
+([`teonam-stam-ols-gwas-family-imputed`](teonam-stam-ols-gwas-family-imputed.html)). A mixed model
 needs a **complete** genotype matrix, so this runs on the step-interpolated complete
-matrix (`teonam_map_v5_gwas_nr`, 47,750 markers × 1,237 lines), **not** the sparse
+matrix (`teonam_map_v5_gwas`, 51,004 markers × 1,237 lines), **not** the sparse
 observed set. Compute lives in `agent/teonam_mlm_interp.R`; this notebook loads,
 documents, and plots.
 
@@ -47,7 +47,7 @@ lambda_gc <- function(p) {
   round(median(qchisq(p, df = 1, lower.tail = FALSE)) / qchisq(0.5, df = 1), 3)
 }
 
-# Manhattan in the teonam-stam-ols-gwas-imputed style (odd chr grey60 / even black,
+# Manhattan in the teonam-stam-ols-gwas-family-imputed style (odd chr grey60 / even black,
 # LOD dotted, chromosome axis). Input: data.table(CHR, BP, logP).
 manhattan <- function(d, title) {
   d <- d[order(CHR, BP)]
@@ -107,8 +107,8 @@ exactly the correction; the effect is quantified below as the drop in $\lambda_{
 ## Pipeline (`agent/teonam_mlm_interp.R`, native arm64 TASSEL5)
 
 ```{r pipeline-doc, eval=FALSE}
-# 1. densify the unique-cM union per chr by step-interpolation (nilHMM) -> complete
-#    47,750 x 1,237 matrix (no missing) -> hapmap geno_gwas_interp.hmp.txt
+# 1. densify the full 51,004 GWAS set per chr by step-interpolation (nilHMM) -> complete
+#    51,004 x 1,237 matrix (no missing) -> hapmap geno_gwas_interp.hmp.txt
 # 2. K: TASSEL Centered_IBS on the complete matrix
 run_pipeline.pl -importGuess geno_gwas_interp.hmp.txt \
   -KinshipPlugin -method Centered_IBS -endPlugin -export kinship_cIBS_interp.txt -exportType SqrMatrix
@@ -127,13 +127,13 @@ knitr::kable(tim, caption = "TASSEL5 step timings (native arm64, Temurin 17; MLM
 ## Load results
 
 ```{r load}
-ols <- fread(here("data/teonam/stam_gwas_scan.csv"))            # OLS on the interpolated 47,750
+ols <- fread(here("data/teonam/stam_gwas_scan_interpolated.csv"))            # OLS on the interpolated 51,004
 ols <- ols[is.finite(P) & P > 0, .(CHR = as.integer(CHR), BP = as.integer(BP), P)]
 mlm <- fread(here("data/teonam/tassel/mlm_interp2.txt"))        # TASSEL MLM (for the gene table)
 mlm <- mlm[Marker != "None", .(CHR = as.integer(Chr), BP = as.integer(Pos), P = as.numeric(p))][is.finite(P) & P > 0]
 lc  <- fread(here("results/sim/teonam/mlm_loco_scan.csv"))      # p_full = MLM Q+K (faithful, = TASSEL), p_loco = LOCO
 
-# the three models on the same interpolated 47,750-marker matrix
+# the three models on the same interpolated 51,004-marker matrix
 three <- rbindlist(list(
   ols[, .(CHR, BP, P, method = "OLS (no K)")],
   lc[is.finite(p_full) & p_full > 0, .(CHR = chr, BP = bp, P = p_full, method = "MLM Q+K")],
@@ -150,12 +150,12 @@ pal  <- setNames(c("firebrick", "steelblue4", "darkorange"), labs[lev])
 ```{r lambda-table}
 knitr::kable(
   three[, .(markers = .N, lambda_GC = lambda_gc(P), max_logP = round(max(-log10(P)), 2)), by = method],
-  caption = "Three models on the same 47,750 interpolated markers (only the structure correction differs)."
+  caption = "Three models on the same 51,004 interpolated markers (only the structure correction differs)."
 )
 ```
 
-The Q + K correction pulls $\lambda_{GC}$ from **2.48 (OLS) → 1.36 (MLM)** and the
-global peak from 17.3 → 8.5. **LOCO** (leave-one-chromosome-out kinship — the
+The Q + K correction pulls $\lambda_{GC}$ from **2.55 (OLS) → 1.37 (MLM)** and the
+global peak from 17.3 → 8.7. **LOCO** (leave-one-chromosome-out kinship — the
 diagnostic detailed [below](#loco-test-is-the-loss-over-correction)) trades global
 control for local power, so its $\lambda_{GC}$ runs *high* (≈3.4) while it revives the
 true peaks. Residual $\lambda>1$ under the MLM is interpolation ties (pseudo-replication)
@@ -258,8 +258,8 @@ knitr::kable(loco[order(-OLS)], caption = sprintf(
 
 (The full-K-vs-LOCO contrast is the middle vs bottom facet of the Manhattan above.)
 
-**Reading.** The peaks **return under LOCO** (*tb1* 4.4→11.2, *zmm16* 4.1→9.4, *tru1*
-5.9→11.8, *an1* 4.5→7.2, *tsh4* 2.8→5.1) — only possible if the full-K MLM was absorbing
+**Reading.** The peaks **return under LOCO** (*tb1* 4.2→11.0, *zmm16* 4.0→10.0, *tru1*
+5.7→12.5, *an1* 4.4→7.1, *tsh4* 2.7→5.0) — only possible if the full-K MLM was absorbing
 each QTL's own-chromosome signal. So the loss is **over-correction (proximal
 contamination)**, not evidence against the genes. (*ts2* stays low even under LOCO — its
 OLS signal was genuinely mostly confounding, echoing the original ~9-vs-15 concern.)
@@ -279,7 +279,7 @@ deploy**. The real fix remains `chen2019_GWAS` (118K directly-typed).
 - **Canonical, tracked source** for the MLM scan: `agent/teonam_mlm_interp.R`
   (build → K → Q → MLM) + `agent/teonam_mlm_lambda.R` (λ_GC / QQ). Outputs:
   `data/teonam/tassel/mlm_interp2.txt`, `results/sim/teonam/mlm_interp_timings.csv`.
-- **Matrix:** interpolated-complete (`teonam_map_v5_gwas_nr`) — required because the
+- **Matrix:** interpolated-complete (`teonam_map_v5_gwas`, 51,004) — required because the
   MLM needs a complete matrix (the sparse observed set stalls: per-marker missing
   defeats P3D reuse). Cost: block plateaus, no scatter.
 - **Faithful GWAS** (scatter + correct absolute peaks) needs `chen2019_GWAS` (118,838

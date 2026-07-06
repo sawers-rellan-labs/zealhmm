@@ -17,7 +17,7 @@
 #
 # Writes results/sim/teonam/stam_gwas_nnil_lambda<L>.csv (per lambda) and the
 # combined long table stam_gwas_nnil_sweep.csv (adds `coverage`; includes the
-# lambda=Inf baseline rows copied from data/teonam/stam_gwas_scan.csv).
+# lambda=Inf baseline rows copied from data/teonam/stam_gwas_scan_interpolated.csv).
 #
 # KEY DECISIONS:
 #  - Coverage grid: {0.1, 0.2, 0.5, 1, 5, 10, 20} (+ lambda=Inf baseline = panel C).
@@ -256,7 +256,7 @@ for (li in seq_along(LAMBDAS)) {
 }
 
 # --- combined sweep + lambda=Inf baseline ------------------------------------
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan.csv"))
+baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_interpolated.csv"))
 baseline[, coverage := Inf]
 message(sprintf(
   "  lambda=Inf  : %d markers, tb1 peak -log10P = %s (baseline, panel C)",
