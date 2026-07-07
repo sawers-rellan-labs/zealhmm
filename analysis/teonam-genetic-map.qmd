@@ -1,0 +1,86 @@
+---
+title: "TeoNAM composite genetic map (bcsft(1,4), B73 v5)"
+subtitle: "Native per-marker cM (cm_qtl) — results view"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** A *results* view of the composite TeoNAM genetic map — the native
+per-marker cM (`cm_qtl`) built by `scripts/teonam_qtl_permap.R` → `scripts/teonam_qtl_map.R`
+(per-family maps → union → Chen-2019 flanking imputation → `bcsft(1,4)` `est.map`,
+markers ordered on **B73 v5**). That build takes **5+ hours**, so **this notebook only
+loads the finished map and renders it — it runs no `est.map`.**
+
+The map is **island-free on chr7**: the v2→v5 displaced block (6 markers isolated by
+~5 cM gaps) was caught by the connected-component quirky finder (`scripts/map_tools.R`)
+and removed, collapsing that gap **10.22 → 0.76 cM** and chr7 **154.5 → 144.85 cM**
+(diagnosis in the [QTL-recovery notebook](teonam-qtl-recovery.html)).
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+```
+
+```{r load}
+d <- fread(here("data/teonam/marker_info_v5_cm_qtl.tsv"))
+d <- d[!is.na(cm_qtl) & !is.na(chr_v5)][order(chr_v5, cm_qtl)]
+
+# R/qtl `map` object: one per-chromosome cM vector, origin shifted to 0
+chrs <- sort(unique(d$chr_v5))
+map <- lapply(chrs, function(ch) {
+  z <- d[chr_v5 == ch]
+  v <- z$cm_qtl - min(z$cm_qtl)
+  names(v) <- z$marker
+  v
+})
+names(map) <- as.character(chrs)
+class(map) <- "map"
+```
+
+## Map size
+
+```{r size-table}
+tab <- d[, .(markers = .N, length_cM = round(max(cm_qtl) - min(cm_qtl), 1)),
+  by = .(chr = chr_v5)
+][order(chr)]
+tot <- data.table(chr = "total", markers = sum(tab$markers), length_cM = round(sum(tab$length_cM), 1))
+knitr::kable(
+  rbind(tab[, .(chr = as.character(chr), markers, length_cM)], tot),
+  col.names = c("chr (v5)", "markers", "length (cM)"),
+  caption = "Composite bcsft(1,4) map per chromosome (Chen 2019: avg 1461 cM/subpopulation)."
+)
+```
+
+## Genetic map — marker density
+
+R/qtl `plot.map`: each chromosome is a vertical bar with a tick per marker; solid
+black is dense coverage, white bands are low-recombination regions (pericentromeres).
+
+```{r plotmap, fig.width=10, fig.height=7}
+plot.map(map, main = "TeoNAM composite bcsft(1,4) genetic map")
+```
+
+## Chromosome lengths
+
+```{r cm-bars, fig.width=9, fig.height=6}
+mk <- rbindlist(lapply(chrs, function(ch) data.table(chr = ch, cm = map[[as.character(ch)]])))
+ggplot(mk, aes(x = factor(chr), y = cm)) +
+  geom_segment(aes(xend = factor(chr), y = 0, yend = cm), linewidth = 6, colour = "grey85") +
+  geom_segment(aes(xend = factor(chr), y = cm - 0.15, yend = cm + 0.15),
+    linewidth = 6, colour = "grey30", alpha = 0.20
+  ) + # marker ticks
+  scale_y_reverse(expand = expansion(mult = c(0.02, 0.04))) +
+  labs(x = "chromosome (v5)", y = "position (cM)") +
+  theme_classic(base_size = 14)
+```
