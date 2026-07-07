@@ -28,7 +28,6 @@ and removed, collapsing that gap **10.22 → 0.76 cM** and chr7 **154.5 → 144.
 ```{r setup}
 library(here)
 library(data.table)
-library(qtl)
 library(ggplot2)
 ```
 
@@ -60,15 +59,6 @@ knitr::kable(
   col.names = c("chr (v5)", "markers", "length (cM)"),
   caption = "Composite bcsft(1,4) map per chromosome (Chen 2019: avg 1461 cM/subpopulation)."
 )
-```
-
-## Genetic map — marker density
-
-R/qtl `plot.map`: each chromosome is a vertical bar with a tick per marker; solid
-black is dense coverage, white bands are low-recombination regions (pericentromeres).
-
-```{r plotmap, fig.width=10, fig.height=7}
-plot.map(map, main = "TeoNAM composite bcsft(1,4) genetic map")
 ```
 
 ## Chromosome lengths
