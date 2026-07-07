@@ -2219,7 +2219,7 @@ vertical-align: -.125em;
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">TeoNAM composite genetic map (bcsft(1,4), B73 v5)</h1>
-<p class="subtitle lead">Native per-marker cM (cm_qtl) — results view</p>
+<p class="subtitle lead">Native per-marker cM (cm) — results view</p>
 </div>
 
 
@@ -2248,7 +2248,7 @@ vertical-align: -.125em;
 </header>
 
 
-<p><strong>What this is.</strong> A <em>results</em> view of the composite TeoNAM genetic map — the native per-marker cM (<code>cm_qtl</code>) built by <code>scripts/teonam_qtl_permap.R</code> → <code>scripts/teonam_qtl_map.R</code> (per-family maps → union → Chen-2019 flanking imputation → <code>bcsft(1,4)</code> <code>est.map</code>, markers ordered on <strong>B73 v5</strong>). That build takes <strong>5+ hours</strong>, so <strong>this notebook only loads the finished map and renders it — it runs no <code>est.map</code>.</strong></p>
+<p><strong>What this is.</strong> A <em>results</em> view of the composite TeoNAM genetic map — the native per-marker cM (<code>cm</code>) built by <code>scripts/teonam_qtl_permap.R</code> → <code>scripts/teonam_qtl_map.R</code> (per-family maps → union → Chen-2019 flanking imputation → <code>bcsft(1,4)</code> <code>est.map</code>, markers ordered on <strong>B73 v5</strong>). That build takes <strong>5+ hours</strong>, so <strong>this notebook only loads the finished map and renders it — it runs no <code>est.map</code>.</strong></p>
 <p>The map is <strong>island-free on chr7</strong>: the v2→v5 displaced block (6 markers isolated by ~5 cM gaps) was caught by the connected-component quirky finder (<code>scripts/map_tools.R</code>) and removed, collapsing that gap <strong>10.22 → 0.76 cM</strong> and chr7 <strong>154.5 → 144.85 cM</strong> (diagnosis in the <a href="teonam-qtl-recovery.html">QTL-recovery notebook</a>).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
@@ -2256,14 +2256,14 @@ vertical-align: -.125em;
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/marker_info_v5_cm_qtl.tsv&quot;</span>))</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span><span class="fu">is.na</span>(cm_qtl) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(chr_v5)][<span class="fu">order</span>(chr_v5, cm_qtl)]</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/teonam_v5_native.tsv&quot;</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span><span class="fu">is.na</span>(cm) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(chr_v5)][<span class="fu">order</span>(chr_v5, cm)]</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># R/qtl `map` object: one per-chromosome cM vector, origin shifted to 0</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>chrs <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(d<span class="sc">$</span>chr_v5))</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>map <span class="ot">&lt;-</span> <span class="fu">lapply</span>(chrs, <span class="cf">function</span>(ch) {</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> d[chr_v5 <span class="sc">==</span> ch]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> z<span class="sc">$</span>cm_qtl <span class="sc">-</span> <span class="fu">min</span>(z<span class="sc">$</span>cm_qtl)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> z<span class="sc">$</span>cm <span class="sc">-</span> <span class="fu">min</span>(z<span class="sc">$</span>cm)</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(v) <span class="ot">&lt;-</span> z<span class="sc">$</span>marker</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  v</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>})</span>
@@ -2273,7 +2273,7 @@ vertical-align: -.125em;
 <section id="map-size" class="level2">
 <h2 class="anchored" data-anchor-id="map-size">Map size</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> d[, .(<span class="at">markers =</span> .N, <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">max</span>(cm_qtl) <span class="sc">-</span> <span class="fu">min</span>(cm_qtl), <span class="dv">1</span>)),</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> d[, .(<span class="at">markers =</span> .N, <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">max</span>(cm) <span class="sc">-</span> <span class="fu">min</span>(cm), <span class="dv">1</span>)),</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  by <span class="ot">=</span> .(<span class="at">chr =</span> chr_v5)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>][<span class="fu">order</span>(chr)]</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>tot <span class="ot">&lt;-</span> <span class="fu">data.table</span>(<span class="at">chr =</span> <span class="st">&quot;total&quot;</span>, <span class="at">markers =</span> <span class="fu">sum</span>(tab<span class="sc">$</span>markers), <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">sum</span>(tab<span class="sc">$</span>length_cM), <span class="dv">1</span>))</span>

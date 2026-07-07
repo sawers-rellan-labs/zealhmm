@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-05">
+<meta name="dcterms.date" content="2026-07-07">
 
 <title>TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)</title>
 <style>
@@ -2378,7 +2378,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 5, 2026</p>
+      <p class="date">July 7, 2026</p>
     </div>
   </div>
   
@@ -2419,8 +2419,8 @@ window.Quarto = {
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(ph)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;line&quot;</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.numeric</span>(<span class="fu">setNames</span>(ph<span class="sc">$</span>STAM, ph<span class="sc">$</span>line)[key]))</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># v5 coordinates + consensus cM; restrict the scan to markers that lifted to v5</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>mc <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/marker_info_v5_cm.tsv&quot;</span>))</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># v5 coordinates; restrict the scan to markers that lifted to v5</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>mc <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/markers_v5.tsv&quot;</span>))</span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>chr_by <span class="ot">&lt;-</span> <span class="fu">setNames</span>(mc<span class="sc">$</span>chr_v5, mc<span class="sc">$</span>marker)</span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>pos_by <span class="ot">&lt;-</span> <span class="fu">setNames</span>(mc<span class="sc">$</span>pos_v5, mc<span class="sc">$</span>marker)</span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>mk <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(geno)[<span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)], mc<span class="sc">$</span>marker)</span>
