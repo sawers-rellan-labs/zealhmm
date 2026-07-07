@@ -254,6 +254,13 @@ for (li in seq_along(LAMBDAS)) {
   blocks <- lapply(idx, function(i) cells[[i]]$block) # one per family
   G <- do.call(cbind, blocks)
   rownames(G) <- union_markers
+  if ("--save-matrix" %in% commandArgs(TRUE)) { # opt-in: emit the union matrix for downstream MLM/LOCO
+    dir.create(file.path(OUTDIR, "cache"), recursive = TRUE, showWarnings = FALSE)
+    saveRDS(
+      list(G = G, markers = union_markers, chr = union_chr, bp = union_pos),
+      file.path(OUTDIR, "cache", sprintf("geno_lb%s.rds", lambda))
+    )
+  }
   scan <- gwas_scan(G)[order(CHR, BP)]
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
