@@ -70,17 +70,32 @@ THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 
 # --- marker map + union target grid -----------------------------------------
-# NATIVE TeoNAM est.map (cm = native cM); replaces the Ed Coe consensus. The
-# exporter now drops discarded (NA-cm) markers, so the map is clean; the
-# defensive !is.na(cm) below matches the sibling qtl scripts (no-op on a clean map).
-mc <- fread(file.path(ROOT, DEFAULT_TEONAM_MAP))
+# GWAS grid = the FULL genotype set (51,004 markers) — the map swap changes the
+# cM COORDINATE, never which markers are scanned (this is a blind test). The
+# NATIVE TeoNAM est.map supplies cM (marker order + genetic distance);
+# map_v5_coe2008.tsv is read ONLY as the full marker roster + v5 physical
+# positions (pos_v5 is map-independent). The est.map places 49,798 of the 51,004;
+# the ~1,206 it did not place (quirky/non-Mendelian/unplaced) get a native-scale
+# cM by bp-interpolating from flanking placed markers per chr — exactly as the
+# consensus map carried a cM for every marker regardless of distortion/CNV.
+mc <- fread(file.path(ROOT, "data/teonam/map_v5_coe2008.tsv")) # full roster + v5 bp
 setnames(mc, "chr_v5", "chr")
-mc <- mc[!is.na(cm)]
+nat_cm <- fread(file.path(ROOT, DEFAULT_TEONAM_MAP)) # native est.map: cM for placed markers
+mc[, cm := nat_cm$cm[match(marker, nat_cm$marker)]] # native cM; NA where est.map didn't place it
+mc[, cm := {
+  ok <- !is.na(cm)
+  if (any(!ok) && sum(ok) >= 2L) cm[!ok] <- approx(pos_v5[ok], cm[ok], xout = pos_v5[!ok], rule = 2)$y
+  cm
+}, by = chr] # bp-interpolate native cM onto the unplaced markers (native scale kept)
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 
 gcols <- names(fread(file.path(ROOT, "data/teonam/TeoNAM_genotype_clean.csv"), nrows = 0))[-(1:3)]
-GWAS_MK <- intersect(gcols, mc$marker) # native map: 49,798 placed markers (was 51,004 on consensus)
+GWAS_MK <- intersect(gcols, mc$marker) # FULL 51,004 GWAS set (unchanged by the map swap)
+message(sprintf(
+  "native cM coordinate: %d placed + %d bp-interpolated = %d full GWAS markers",
+  sum(GWAS_MK %in% nat_cm$marker), sum(!(GWAS_MK %in% nat_cm$marker)), length(GWAS_MK)
+))
 u <- mc[marker %in% GWAS_MK] # FULL GWAS set (51K) — duplicate cM kept as terraced target rows
 setorder(u, chr, cm)
 target_df <- data.frame(chr = as.integer(u$chr), cm = as.numeric(u$cm))
