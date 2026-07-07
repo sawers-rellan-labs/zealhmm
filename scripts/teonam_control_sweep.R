@@ -66,7 +66,7 @@ THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 
 # --- marker map + union target grid (identical to the RTIGER sweep) ----------
-mc <- fread(file.path(ROOT, "data/teonam/marker_info_v5_cm.tsv"))
+mc <- fread(file.path(ROOT, "data/teonam/map_v5_coe2008.tsv"))
 setnames(mc, "chr_v5", "chr")
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)

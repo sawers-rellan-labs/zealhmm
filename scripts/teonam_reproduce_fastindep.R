@@ -28,7 +28,7 @@ hmp <- fread("data/teonam/tassel/geno.hmp.txt", select = "rs#")
 target <- hmp[["rs#"]]
 cat(sprintf("target (geno.hmp.txt): %d markers\n", length(target)))
 
-mc <- fread("data/teonam/marker_info_v5_cm.tsv") # candidate pool: all markers w/ cM
+mc <- fread("data/teonam/map_v5_coe2008.tsv") # candidate pool: all markers w/ cM
 setnames(mc, "chr_v5", "chr")
 cat(sprintf(
   "candidate pool (marker_info_v5_cm): %d markers, %d chromosomes\n\n",

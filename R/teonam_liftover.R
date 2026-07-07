@@ -22,7 +22,7 @@ lift_unique <- function(gr, chain_path) {
 
 #' Liftover TeoNAM AGPv2 markers to B73 NAM v5 (v2 -> v4 -> v5)
 #'
-#' @param marker_info_path `marker_info.csv` (chromosome, name = `S<chr>_<pos>`
+#' @param marker_info_path `markers_v2.csv` (chromosome, name = `S<chr>_<pos>`
 #'   in AGPv2, start, end).
 #' @param chain_dir Directory holding the two tab-delimited chains.
 #' @return data.frame(marker, chr_v2, pos_v2, chr_v5, pos_v5) for markers that

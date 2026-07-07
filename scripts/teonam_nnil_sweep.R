@@ -65,7 +65,7 @@ READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 message(sprintf("nNIL: rrate_star = %.5g (calib_params.csv), f_1 = %.2f, f_2 = %.2f", RRATE, F1, F2))
 
 # --- marker map + union target grid (identical to the other sweeps) ----------
-mc <- fread(file.path(ROOT, "data/teonam/marker_info_v5_cm.tsv"))
+mc <- fread(file.path(ROOT, "data/teonam/map_v5_coe2008.tsv"))
 setnames(mc, "chr_v5", "chr")
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)

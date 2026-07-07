@@ -1,6 +1,14 @@
 # map_tools.R — shared helpers for the TeoNAM genetic-map build
 # (sourced by teonam_qtl_permap.R and teonam_qtl_map.R).
 
+# --- Canonical TeoNAM map ------------------------------------------------------
+# Default genetic map for downstream analyses = the NATIVE TeoNAM v5 est.map
+# (replaces the Ed Coe consensus `map_v5_coe2008.tsv`, which was the old default).
+# NOTE: in this file the native cM is column `cm`; the Ed Coe consensus cM is
+# retained alongside it as `cm_coe2008` for comparison. (The standalone consensus
+# map `map_v5_coe2008.tsv` keeps its own column `cm` — the filename disambiguates.)
+DEFAULT_TEONAM_MAP <- "data/teonam/teonam_v5_native.tsv"
+
 #' Flag "quirky" markers as isolated small connected-components on an ordered map.
 #'
 #' Generalizes the singleton both-adjacent-gap test to isolated CLUSTERS. On a

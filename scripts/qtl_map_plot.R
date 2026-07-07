@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# PNG of the composite bcsft(1,4) genetic map (cm_qtl) built by teonam_qtl_map.R.
+# PNG of the composite bcsft(1,4) genetic map (cm) built by teonam_qtl_map.R.
 # Builds an R/qtl `map` object (per-chr cM vectors, origin shifted to 0) and plots
 # it two ways: qtl::plot.map (marker-density bars) + a ggplot cM-length panel.
 suppressMessages({
@@ -9,14 +9,14 @@ suppressMessages({
 })
 setwd("/Users/fvrodriguez/repos/zealhmm")
 
-d <- fread("data/teonam/marker_info_v5_cm_qtl.tsv")
-d <- d[!is.na(cm_qtl) & !is.na(chr_v5)][order(chr_v5, cm_qtl)]
+d <- fread("data/teonam/teonam_v5_native.tsv")
+d <- d[!is.na(cm) & !is.na(chr_v5)][order(chr_v5, cm)]
 
 # R/qtl map object: named list of per-chromosome cM vectors, each origin at 0
 chrs <- sort(unique(d$chr_v5))
 map <- lapply(chrs, function(ch) {
   z <- d[chr_v5 == ch]
-  v <- z$cm_qtl - min(z$cm_qtl) # shift origin to 0 (your plotting fix)
+  v <- z$cm - min(z$cm) # shift origin to 0 (your plotting fix)
   names(v) <- z$marker
   v
 })
@@ -34,7 +34,7 @@ cat(sprintf(
 ))
 
 # ---- 1. R/qtl plot.map (the plot(consensus_map) look) -----------------------
-png("results/sim/teonam/qtl_map_plot.png", width = 1400, height = 1000, res = 150)
+png("results/sim/teonam/teonam_v5_native_plot.png", width = 1400, height = 1000, res = 150)
 plot.map(map, main = sprintf("TeoNAM composite bcsft(1,4) map — %d markers, %.0f cM", nrow(d), tot))
 dev.off()
 
@@ -54,5 +54,5 @@ p <- ggplot(mk, aes(x = factor(chr), y = cm)) +
     title = sprintf("TeoNAM composite bcsft(1,4) genetic map — %d markers, %.0f cM", nrow(d), tot)
   ) +
   theme_classic(base_size = 14)
-ggsave("results/sim/teonam/qtl_map_cm_bars.png", p, width = 9, height = 6, dpi = 200, bg = "white")
-cat("wrote results/sim/teonam/qtl_map_plot.png and qtl_map_cm_bars.png\n")
+ggsave("results/sim/teonam/teonam_v5_native_cm_bars.png", p, width = 9, height = 6, dpi = 200, bg = "white")
+cat("wrote results/sim/teonam/teonam_v5_native_plot.png and teonam_v5_native_cm_bars.png\n")

@@ -59,7 +59,7 @@ names(ph)[1] <- "line"
 y <- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[key]))
 
 # v5 coordinates + consensus cM; restrict the scan to markers that lifted to v5
-mc <- fread(here("data/teonam/marker_info_v5_cm.tsv"))
+mc <- fread(here("data/teonam/map_v5_coe2008.tsv"))
 chr_by <- setNames(mc$chr_v5, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 mk <- intersect(names(geno)[-(1:3)], mc$marker)

@@ -83,7 +83,7 @@ data/teonam/
   TeoNAM_genotype.csv        2,434 lines x ~51,483 markers; 0/1/2 coding
                              (0 = W22 hom, 1 = het, 2 = teosinte hom — paper's coding)
   TeoNAM_phenotype.csv       2,434 lines; traits DTA, ASI only (2 of the paper's 22)
-  marker_info.csv            51,544 markers; chromosome,name,start,end
+  markers_v2.csv            51,544 markers; chromosome,name,start,end
                              names like S1_10045 = chr1 / AGPv2 position 10045 (start/end are 0)
   chrom.csv                  per-family chromosome spans
   gene_info.csv              flowering-gene markers (Dong 2012, Wisser 2019)
@@ -169,7 +169,7 @@ genotypes for `jlm` (and the interpolated GWAS matrix). Interpolation is a step,
 | name | markers | assembly | role / provenance |
 |---|---|---|---|
 | `teonam_map_v2_family_imputed` | 51,482 | v2 | **FSFHap family-imputed** recoded dosages (Chen map construction; complete *within family* — verified 0% partial-missing); EasiGP `TeoNAM_genotype_clean.csv`; coords in marker names |
-| `teonam_map_v5_markers` | 51,065 | v5 | annotation (lift v2→v5 + consensus cM); `marker_info_v5_cm.tsv` (`R/teonam_liftover.R`) |
+| `teonam_map_v5_markers` | 51,065 | v5 | annotation (lift v2→v5 + consensus cM); `map_v5_coe2008.tsv` (`R/teonam_liftover.R`) |
 | `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_family_imputed.csv` |
 | `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Retained only as the record of the duplicate-cM markers (`agent/notes-redundant-markers.md`); NOT in any active path.** |
 | `teonam_map_v5_jlm` | 6,049 | v5 | **JLM base** — FastIndep (**cM-distance** @0.1) directly on `_gwas` (51,004); genotypes step-interpolated; `data/teonam/tassel/geno.hmp.txt` (`scripts/teonam_jlm_build.R`) |

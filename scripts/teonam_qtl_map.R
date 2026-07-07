@@ -1,15 +1,15 @@
 #!/usr/bin/env Rscript
 # =============================================================================
 # Native TeoNAM COMPOSITE genetic map on B73 v5 marker order (R/qtl) -- the
-# DELIVERABLE: a native cM per marker (`cm_qtl`) to replace the borrowed Ed Coe
-# consensus cM in data/teonam/marker_info_v5_cm.tsv.
+# DELIVERABLE: a native cM per marker (`cm`) to replace the borrowed Ed Coe
+# consensus cM in data/teonam/map_v5_coe2008.tsv.
 # Plan: agent/teonam-v5-genetic-map-plan.md  Handover: agent/teonam-map-handover.md
 # -----------------------------------------------------------------------------
 # FAITHFUL to Chen 2019 (Methods, "Genetic map construction and marker
 # imputation", line 76). Depends on the per-family run (teonam_qtl_permap.R):
 #
 #   1. UNION = union of the per-family KEPT (post distortion+quirky filter)
-#      markers, read from results/sim/teonam/qtl_map_per_family.csv -- Chen's
+#      markers, read from results/sim/teonam/teonam_v5_native_perfam.csv -- Chen's
 #      "51,544 high-quality SNPs" analog, NOT the raw union.
 #   2. FLANKING-MARKER IMPUTATION exactly per Chen: "If the flanking markers had
 #      same genotypes, the missing genotype was imputed as the same with flanking
@@ -24,10 +24,10 @@
 #      imputed union -> PRELIMINARY composite map.
 #   4. JOINT QUIRKY pass (same data-driven gap-outlier rule as teonam_qtl_permap.R)
 #      on the preliminary map; drop quirky markers; re-est.map -> REFINED composite
-#      map = the final cm_qtl.
-#   5. Write data/teonam/marker_info_v5_cm_qtl.tsv (+ results/sim/teonam/qtl_map_qc.csv).
+#      map = the final cm.
+#   5. Write data/teonam/teonam_v5_native.tsv (+ results/sim/teonam/teonam_v5_native_qc.csv).
 #
-# NON-DESTRUCTIVE: does not overwrite marker_info_v5_cm.tsv; touches no sweep/JLM/
+# NON-DESTRUCTIVE: does not overwrite map_v5_coe2008.tsv; touches no sweep/JLM/
 # notebook/calibrate code. Does not commit.
 #
 # Run:  Rscript scripts/teonam_qtl_map.R   (after teonam_qtl_permap.R has finished)
@@ -56,8 +56,8 @@ log_threshold(INFO)
 
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-INFO_PATH <- file.path(GENO_DIR, "marker_info_v5_cm.tsv")
-PERFAM_CSV <- "results/sim/teonam/qtl_map_per_family.csv"
+INFO_PATH <- file.path(GENO_DIR, "map_v5_coe2008.tsv")
+PERFAM_CSV <- "results/sim/teonam/teonam_v5_native_perfam.csv"
 N_CLUSTER <- min(10L, parallel::detectCores())
 ISLAND_MAX_N <- 20L # quirky finder: max markers in an isolated cluster to flag
 ISLAND_GAP_CM <- 2 # quirky finder: coarse isolation gap (cM) for clusters (99.99%ile gap ~1 cM)
@@ -90,6 +90,7 @@ is_outlier <- function(x) {
 
 # ---- marker annotation, ordered on v5 --------------------------------------
 info <- fread(INFO_PATH)
+setnames(info, "cm", "cm_coe2008") # consensus (Ed Coe 2008) cM; native est.map cM is `cm`
 setorder(info, chr_v5, pos_v5)
 info[, rank_v5 := seq_len(.N)]
 CHRS <- sort(unique(info$chr_v5))
@@ -265,7 +266,7 @@ gc()
 cm2 <- unlist(lapply(m2, function(v) v - min(v)))
 names(cm2) <- unlist(lapply(m2, names))
 Lc <- setNames(chr_len(m2)[as.character(CHRS)], as.character(CHRS))
-union_mk[, cm_qtl := unname(cm2[union_mk$marker])]
+union_mk[, cm := unname(cm2[union_mk$marker])]
 log_info("ROUND 2 (REFINED) done - %d markers, %.1f cM (%.1f min)", sum(keep2), sum(Lc), s2 / 60)
 if (sum(Lc) < 1400 || sum(Lc) > 1700) {
   log_warn("composite length %.1f cM far from Chen's 1540 cM", sum(Lc))
@@ -278,7 +279,7 @@ pv <- pchisq(rowSums((cnt - Exp)^2 / Exp), df = 2, lower.tail = FALSE)
 bonf <- 0.05 / nrow(cnt)
 union_mk[, seg_distort := as.integer(is.finite(pv) & pv < bonf)]
 union_mk[, quirky_drop := as.integer(marker %in% quirky)]
-union_mk[, gap_prev := c(NA_real_, diff(cm_qtl)), by = chr_v5]
+union_mk[, gap_prev := c(NA_real_, diff(cm)), by = chr_v5]
 gap_thr_report <- if (is.finite(gap_out_thr)) gap_out_thr else 30
 union_mk[, big_gap := as.integer(!is.na(gap_prev) & gap_prev > gap_thr_report)]
 log_info(
@@ -288,34 +289,35 @@ log_info(
 )
 
 # ---- outputs ----------------------------------------------------------------
-qc <- merge(info[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm, rank_v5, chr_change, inversion)],
-  union_mk[, .(marker, n_fam, cm_qtl, gap_prev, big_gap, seg_distort, quirky_drop)],
+# Output schema: `cm` = native est.map cM; `cm_coe2008` = Ed Coe consensus cM.
+qc <- merge(info[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm_coe2008, rank_v5, chr_change, inversion)],
+  union_mk[, .(marker, n_fam, cm, gap_prev, big_gap, seg_distort, quirky_drop)],
   by = "marker", all.x = TRUE
 )
 setorder(qc, chr_v5, pos_v5)
-info_out <- copy(info)[, cm_qtl := union_mk[match(info$marker, marker), cm_qtl]]
-info_out <- info_out[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm, cm_qtl)]
-fwrite(qc, "results/sim/teonam/qtl_map_qc.csv")
-fwrite(info_out, "data/teonam/marker_info_v5_cm_qtl.tsv", sep = "\t")
+info_out <- copy(info)[, cm := union_mk[match(info$marker, marker), cm]]
+info_out <- info_out[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm, cm_coe2008)]
+fwrite(qc, "results/sim/teonam/teonam_v5_native_qc.csv")
+fwrite(info_out, "data/teonam/teonam_v5_native.tsv", sep = "\t")
 
-sp <- cor(info_out$cm, info_out$cm_qtl, method = "spearman", use = "complete.obs")
+sp <- cor(info_out$cm, info_out$cm_coe2008, method = "spearman", use = "complete.obs")
 cat("\n==================== COMPOSITE SUMMARY ====================\n")
 cat(sprintf("Native composite map: %.1f cM  (vs Chen 1540 / Ed Coe consensus ~1781)\n", sum(Lc)))
-print(data.table(chr = names(Lc), cM_qtl = round(Lc, 2)))
+print(data.table(chr = names(Lc), cM = round(Lc, 2)))
 cat(sprintf(
-  "union markers: %d | with cm_qtl (post-quirky): %d | quirky-dropped: %d\n",
-  nrow(union_mk), sum(!is.na(union_mk$cm_qtl)), length(quirky)
+  "union markers: %d | with cm (post-quirky): %d | quirky-dropped: %d\n",
+  nrow(union_mk), sum(!is.na(union_mk$cm)), length(quirky)
 ))
 cat(sprintf(
   "shared (>=2 fam): %d | private (1 fam): %d\n",
   sum(union_mk$n_fam >= 2L), sum(union_mk$n_fam == 1L)
 ))
-cat(sprintf("Spearman cor(cm_qtl, old consensus cm): %.4f\n", sp))
+cat(sprintf("Spearman cor(cm [native], cm_coe2008 [consensus]): %.4f\n", sp))
 cat(sprintf(
   "QC: chr-changers=%d, inversions=%d, seg-distorted=%d, big-gaps(>%.2f)=%d\n",
   sum(qc$chr_change), sum(qc$inversion), sum(qc$seg_distort, na.rm = TRUE),
   gap_thr_report, sum(qc$big_gap, na.rm = TRUE)
 ))
 cat("Chen composite: 51,544 SNPs, 1540 cM\n")
-cat("Wrote: data/teonam/marker_info_v5_cm_qtl.tsv, results/sim/teonam/qtl_map_qc.csv\n")
+cat("Wrote: data/teonam/teonam_v5_native.tsv, results/sim/teonam/teonam_v5_native_qc.csv\n")
 cat(sprintf("Elapsed: %.1f min\n", as.numeric(difftime(Sys.time(), t0, units = "mins"))))

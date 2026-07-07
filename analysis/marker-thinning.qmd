@@ -61,7 +61,7 @@ is longer — that difference is the whole story of the count, as we show below.
 The pipeline (`scripts/teonam_reproduce_fastindep.R`, and originally the lost inline
 prep this notebook now replaces) does:
 
-1. take every marker with a consensus-map cM (`marker_info_v5_cm.tsv`);
+1. take every marker with a consensus-map cM (`map_v5_coe2008.tsv`);
 2. **dedup to unique cM per chromosome** (the densify grid: `!duplicated(cm)`);
 3. run **`select_independent`** on the per-chromosome **cM-distance** matrix
    (`|cm_i − cm_j|`), with `sense = "distance"`, `threshold = 0.1`, `n_runs = 1`
@@ -76,7 +76,7 @@ it prunes on genetic distance instead. That choice is what we verify and dissect
 target <- fread(here("data/teonam/tassel/geno.hmp.txt"), select = "rs#")[["rs#"]]
 
 # candidate pool: unique-cM dedup per chromosome
-mc <- fread(here("data/teonam/marker_info_v5_cm.tsv"))
+mc <- fread(here("data/teonam/map_v5_coe2008.tsv"))
 setnames(mc, "chr_v5", "chr")
 pool <- mc[order(chr, cm)][, .SD[!duplicated(cm)], by = chr]
 

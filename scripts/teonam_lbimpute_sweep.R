@@ -78,7 +78,7 @@ READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 message(sprintf("LB-Impute: recombdist_star = %.4g cM, drp = %s (calib_params.csv)", RECOMBDIST, DRP))
 
 # --- marker map + FULL 51,004 GWAS union target grid -------------------------
-mc <- fread(file.path(ROOT, "data/teonam/marker_info_v5_cm.tsv"))
+mc <- fread(file.path(ROOT, "data/teonam/map_v5_coe2008.tsv"))
 setnames(mc, "chr_v5", "chr")
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)

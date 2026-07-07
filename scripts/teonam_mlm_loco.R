@@ -16,7 +16,7 @@ setwd("/Users/fvrodriguez/repos/zealhmm")
 d <- readRDS("data/teonam/tassel/geno_gwas_interp.rds") # G (markers x lines), markers(marker,chr,cm)
 G <- d$G
 mk <- as.data.table(d$markers)
-mc <- fread("data/teonam/marker_info_v5_cm.tsv")
+mc <- fread("data/teonam/map_v5_coe2008.tsv")
 pos_by <- setNames(mc$pos_v5, mc$marker)
 mk[, bp := as.integer(pos_by[marker])]
 M <- t(G) # lines x markers, 0/1/2, complete

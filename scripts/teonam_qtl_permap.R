@@ -39,7 +39,7 @@ log_threshold(INFO)
 source("scripts/map_tools.R") # find_quirky_islands (isolated-cluster quirky finder)
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-INFO <- fread(file.path(GENO_DIR, "marker_info_v5_cm.tsv"))
+INFO <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
 N_CLUSTER <- min(10L, parallel::detectCores())
 ISLAND_MAX_N <- 20L # quirky finder: max markers in an isolated cluster to flag
 ISLAND_GAP_CM <- 2 # quirky finder: coarse isolation gap (cM) for clusters (99.99%ile gap ~1 cM)
@@ -230,8 +230,8 @@ for (i in seq_along(FAMILIES)) {
 }
 per_family <- rbindlist(lapply(rows, `[[`, "long"))
 fam_tab <- rbindlist(lapply(rows, `[[`, "summ"))
-fwrite(per_family, "results/sim/teonam/qtl_map_per_family.csv")
-fwrite(fam_tab, "results/sim/teonam/qtl_map_family_summary.csv")
+fwrite(per_family, "results/sim/teonam/teonam_v5_native_perfam.csv")
+fwrite(fam_tab, "results/sim/teonam/teonam_v5_native_family_summary.csv")
 
 cat("\n==================== PER-FAMILY SUMMARY ====================\n")
 print(fam_tab)

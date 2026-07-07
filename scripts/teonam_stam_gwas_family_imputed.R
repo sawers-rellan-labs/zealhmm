@@ -21,7 +21,7 @@ ph <- as.data.frame(read_excel("data/teonam/9250682/TeoNAM_1257RILs_22traits_phe
 names(ph)[1] <- "line"
 y <- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[key]))
 
-mc <- fread("data/teonam/marker_info_v5_cm.tsv")
+mc <- fread("data/teonam/map_v5_coe2008.tsv")
 chr_by <- setNames(mc$chr_v5, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 mk <- intersect(names(geno)[-(1:3)], mc$marker) # lifted markers only

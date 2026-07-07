@@ -22,7 +22,7 @@ log_threshold(INFO)
 
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-PERFAM <- "results/sim/teonam/qtl_map_per_family.csv"
+PERFAM <- "results/sim/teonam/teonam_v5_native_perfam.csv"
 ISLAND_MAX_N <- 20L
 ISLAND_GAP_CM <- 2
 CH <- 7L
@@ -46,9 +46,9 @@ is_outlier <- function(x) {
 }
 
 # ---- detect islands GENERICALLY on the existing composite map ---------------
-mp <- fread("data/teonam/marker_info_v5_cm_qtl.tsv")[!is.na(cm_qtl)]
+mp <- fread("data/teonam/teonam_v5_native.tsv")[!is.na(cm)]
 gaps_all <- unlist(lapply(split(mp, mp$chr_v5), function(d) {
-  v <- sort(d$cm_qtl)
+  v <- sort(d$cm)
   diff(v)
 }), use.names = FALSE)
 gap_out_thr <- {
@@ -57,13 +57,13 @@ gap_out_thr <- {
 }
 per_chr <- split(mp, mp$chr_v5)
 islands_all <- unlist(lapply(per_chr, function(d) {
-  find_quirky(setNames(d$cm_qtl, d$marker),
+  find_quirky(setNames(d$cm, d$marker),
     fine_thr = gap_out_thr,
     island_thr = ISLAND_GAP_CM, island_max_n = ISLAND_MAX_N
   )
 }), use.names = FALSE)
 d7 <- per_chr[["7"]]
-isl7 <- find_quirky(setNames(d7$cm_qtl, d7$marker),
+isl7 <- find_quirky(setNames(d7$cm, d7$marker),
   fine_thr = gap_out_thr,
   island_thr = ISLAND_GAP_CM, island_max_n = ISLAND_MAX_N
 )
@@ -74,7 +74,7 @@ log_info(
 log_info("chr7 island markers: %s", paste(isl7, collapse = ", "))
 
 # ---- rebuild chr7 union WITHOUT the detected island, re-est.map -------------
-info <- fread(file.path(GENO_DIR, "marker_info_v5_cm.tsv"))
+info <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
 setorder(info, chr_v5, pos_v5)
 perfam <- fread(PERFAM)
 kept_by_fam <- lapply(FAMILIES, function(f) perfam[family == f, marker])
@@ -139,5 +139,5 @@ out <- merge(data.table(marker = names(m7), cm_noisland = as.numeric(m7)),
   union_mk[, .(marker, pos_v5)],
   by = "marker"
 )[order(cm_noisland)]
-fwrite(out, "results/sim/teonam/qtl_map_chr7_island_removed.csv")
-cat("wrote results/sim/teonam/qtl_map_chr7_island_removed.csv\n")
+fwrite(out, "results/sim/teonam/teonam_v5_native_dropped.csv")
+cat("wrote results/sim/teonam/teonam_v5_native_dropped.csv\n")

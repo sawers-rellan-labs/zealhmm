@@ -1,6 +1,6 @@
 ---
 title: "TeoNAM composite genetic map (bcsft(1,4), B73 v5)"
-subtitle: "Native per-marker cM (cm_qtl) — results view"
+subtitle: "Native per-marker cM (cm) — results view"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -15,7 +15,7 @@ execute:
 ---
 
 **What this is.** A *results* view of the composite TeoNAM genetic map — the native
-per-marker cM (`cm_qtl`) built by `scripts/teonam_qtl_permap.R` → `scripts/teonam_qtl_map.R`
+per-marker cM (`cm`) built by `scripts/teonam_qtl_permap.R` → `scripts/teonam_qtl_map.R`
 (per-family maps → union → Chen-2019 flanking imputation → `bcsft(1,4)` `est.map`,
 markers ordered on **B73 v5**). That build takes **5+ hours**, so **this notebook only
 loads the finished map and renders it — it runs no `est.map`.**
@@ -32,14 +32,14 @@ library(ggplot2)
 ```
 
 ```{r load}
-d <- fread(here("data/teonam/marker_info_v5_cm_qtl.tsv"))
-d <- d[!is.na(cm_qtl) & !is.na(chr_v5)][order(chr_v5, cm_qtl)]
+d <- fread(here("data/teonam/teonam_v5_native.tsv"))
+d <- d[!is.na(cm) & !is.na(chr_v5)][order(chr_v5, cm)]
 
 # R/qtl `map` object: one per-chromosome cM vector, origin shifted to 0
 chrs <- sort(unique(d$chr_v5))
 map <- lapply(chrs, function(ch) {
   z <- d[chr_v5 == ch]
-  v <- z$cm_qtl - min(z$cm_qtl)
+  v <- z$cm - min(z$cm)
   names(v) <- z$marker
   v
 })
@@ -50,7 +50,7 @@ class(map) <- "map"
 ## Map size
 
 ```{r size-table}
-tab <- d[, .(markers = .N, length_cM = round(max(cm_qtl) - min(cm_qtl), 1)),
+tab <- d[, .(markers = .N, length_cM = round(max(cm) - min(cm), 1)),
   by = .(chr = chr_v5)
 ][order(chr)]
 tot <- data.table(chr = "total", markers = sum(tab$markers), length_cM = round(sum(tab$length_cM), 1))

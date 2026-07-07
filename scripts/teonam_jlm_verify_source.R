@@ -13,7 +13,7 @@ hmp <- fread("data/teonam/tassel/geno.hmp.txt")
 jlm_mk <- hmp[["rs#"]]
 taxa <- names(hmp)[-(1:11)]
 
-mc <- fread("data/teonam/marker_info_v5_cm.tsv")
+mc <- fread("data/teonam/map_v5_coe2008.tsv")
 setnames(mc, "chr_v5", "chr")
 cm_by <- setNames(mc$cm, mc$marker)
 

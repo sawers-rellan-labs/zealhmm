@@ -21,7 +21,7 @@ log_formatter(formatter_sprintf)
 log_threshold(INFO)
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-PERFAM <- "results/sim/teonam/qtl_map_per_family.csv"
+PERFAM <- "results/sim/teonam/teonam_v5_native_perfam.csv"
 ISLAND_MAX_N <- 20L
 ISLAND_GAP_CM <- 2
 CH <- 7L
@@ -44,20 +44,20 @@ is_outlier <- function(x) {
   !is.na(z) & z > 1.96
 }
 
-mp <- fread("data/teonam/marker_info_v5_cm_qtl.tsv")[!is.na(cm_qtl)]
+mp <- fread("data/teonam/teonam_v5_native.tsv")[!is.na(cm)]
 per <- split(mp, mp$chr_v5)
 gaps_all <- unlist(lapply(per, function(d) {
-  v <- sort(d$cm_qtl)
+  v <- sort(d$cm)
   diff(v)
 }), use.names = FALSE)
 gap_out_thr <- {
   o <- is_outlier(gaps_all)
   if (any(o)) min(gaps_all[o]) else Inf
 }
-isl7 <- find_quirky(setNames(per[["7"]]$cm_qtl, per[["7"]]$marker),
+isl7 <- find_quirky(setNames(per[["7"]]$cm, per[["7"]]$marker),
   fine_thr = gap_out_thr, island_thr = ISLAND_GAP_CM, island_max_n = ISLAND_MAX_N
 )
-win <- per[["7"]][cm_qtl >= WIN[1] & cm_qtl <= WIN[2]]
+win <- per[["7"]][cm >= WIN[1] & cm <= WIN[2]]
 bp_lo <- min(win$pos_v5)
 bp_hi <- max(win$pos_v5)
 log_info(
@@ -65,7 +65,7 @@ log_info(
   bp_lo / 1e6, bp_hi / 1e6, length(isl7)
 )
 
-info <- fread(file.path(GENO_DIR, "marker_info_v5_cm.tsv"))
+info <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
 setorder(info, chr_v5, pos_v5)
 perfam <- fread(PERFAM)
 kept_by_fam <- lapply(FAMILIES, function(f) perfam[family == f, marker])
@@ -124,5 +124,5 @@ log_info(
   mw[above$marker] - mw[below$marker]
 )
 out <- merge(data.table(marker = names(mw), cm_window = as.numeric(mw)), union_mk[, .(marker, pos_v5)], by = "marker")[order(cm_window)]
-fwrite(out, "results/sim/teonam/qtl_map_chr7_window.csv")
-cat("wrote results/sim/teonam/qtl_map_chr7_window.csv\n")
+fwrite(out, "results/sim/teonam/teonam_v5_native_chr7_window.csv")
+cat("wrote results/sim/teonam/teonam_v5_native_chr7_window.csv\n")

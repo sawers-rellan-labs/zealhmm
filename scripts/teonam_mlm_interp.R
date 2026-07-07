@@ -32,7 +32,7 @@ timings <- list()
 # ---- build the interpolated complete matrix -> hapmap ----------------------
 if (stage %in% c("build", "all") || !file.exists(HMP)) {
   message("densify (step-interpolate) to complete union matrix ...")
-  mc <- fread("data/teonam/marker_info_v5_cm.tsv")
+  mc <- fread("data/teonam/map_v5_coe2008.tsv")
   setnames(mc, "chr_v5", "chr")
   cm_by <- setNames(mc$cm, mc$marker)
   pos_by <- setNames(mc$pos_v5, mc$marker)
