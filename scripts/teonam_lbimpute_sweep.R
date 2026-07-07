@@ -55,6 +55,7 @@ suppressMessages({
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
 source(file.path(ROOT, "R/simulate.R")) # .draw_counts()
+source(file.path(ROOT, "scripts/map_tools.R")) # DEFAULT_TEONAM_MAP (native est.map)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
 dir.create(OUTDIR, recursive = TRUE, showWarnings = FALSE)
 
@@ -77,14 +78,18 @@ THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 message(sprintf("LB-Impute: recombdist_star = %.4g cM, drp = %s (calib_params.csv)", RECOMBDIST, DRP))
 
-# --- marker map + FULL 51,004 GWAS union target grid -------------------------
-mc <- fread(file.path(ROOT, "data/teonam/map_v5_coe2008.tsv"))
+# --- marker map + native GWAS union target grid ------------------------------
+# NATIVE TeoNAM est.map (cm = native cM); replaces the Ed Coe consensus. The
+# exporter now drops discarded (NA-cm) markers, so the map is clean; the
+# defensive !is.na(cm) below matches the sibling qtl scripts (no-op on a clean map).
+mc <- fread(file.path(ROOT, DEFAULT_TEONAM_MAP))
 setnames(mc, "chr_v5", "chr")
+mc <- mc[!is.na(cm)]
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 
 gcols <- names(fread(file.path(ROOT, "data/teonam/TeoNAM_genotype_clean.csv"), nrows = 0))[-(1:3)]
-GWAS_MK <- intersect(gcols, mc$marker) # 51,004 (teonam_map_v5_gwas)
+GWAS_MK <- intersect(gcols, mc$marker) # native map: 49,798 placed markers (was 51,004 on consensus)
 u <- mc[marker %in% GWAS_MK] # FULL GWAS set — duplicate cM kept
 setorder(u, chr, cm)
 target_df <- data.frame(chr = as.integer(u$chr), cm = as.numeric(u$cm))
@@ -258,11 +263,11 @@ for (li in seq_along(LAMBDAS)) {
     dir.create(file.path(OUTDIR, "cache"), recursive = TRUE, showWarnings = FALSE)
     saveRDS(
       list(G = G, markers = union_markers, chr = union_chr, bp = union_pos),
-      file.path(OUTDIR, "cache", sprintf("geno_lb%s.rds", lambda))
+      file.path(OUTDIR, "cache", sprintf("geno_lb_native%s.rds", lambda))
     )
   }
   scan <- gwas_scan(G)[order(CHR, BP)]
-  fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_lambda%s.csv", lambda)))
+  fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_native_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
   message(sprintf(
@@ -281,9 +286,9 @@ message(sprintf(
 ))
 
 sweep <- rbindlist(c(sweep_list, list(baseline)), use.names = TRUE)
-fwrite(sweep, file.path(OUTDIR, "stam_gwas_lbimpute_sweep.csv"))
+fwrite(sweep, file.path(OUTDIR, "stam_gwas_lbimpute_native_sweep.csv"))
 message(sprintf(
   "wrote %s (%d rows, %d coverage levels)",
-  file.path(OUTDIR, "stam_gwas_lbimpute_sweep.csv"),
+  file.path(OUTDIR, "stam_gwas_lbimpute_native_sweep.csv"),
   nrow(sweep), uniqueN(sweep$coverage)
 ))

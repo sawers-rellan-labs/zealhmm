@@ -297,6 +297,12 @@ qc <- merge(info[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm_coe2008, rank_v5
 setorder(qc, chr_v5, pos_v5)
 info_out <- copy(info)[, cm := union_mk[match(info$marker, marker), cm]]
 info_out <- info_out[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm, cm_coe2008)]
+# Drop the discarded markers (quirky/non-Mendelian islands + unplaced) before
+# export: they carry NA native cm and are NOT part of the map. Their drop status
+# is retained (with reasons) in the QC table below (`quirky_drop`, `seg_distort`).
+n_dropped <- sum(is.na(info_out$cm))
+info_out <- info_out[!is.na(cm)]
+log_info("export: dropped %d NA-cm (discarded) markers; wrote %d placed markers", n_dropped, nrow(info_out))
 fwrite(qc, "results/sim/teonam/teonam_v5_native_qc.csv")
 fwrite(info_out, "data/teonam/teonam_v5_native.tsv", sep = "\t")
 
