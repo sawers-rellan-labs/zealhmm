@@ -172,14 +172,14 @@ genotypes for `jlm` (and the interpolated GWAS matrix). Interpolation is a step,
 | `teonam_map_v5_markers` | 51,065 | v5 | annotation (lift v2→v5 + consensus cM); `marker_info_v5_cm.tsv` (`R/teonam_liftover.R`) |
 | `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_family_imputed.csv` |
 | `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Retained only as the record of the duplicate-cM markers (`agent/notes-redundant-markers.md`); NOT in any active path.** |
-| `teonam_map_v5_jlm` | 6,049 | v5 | **JLM base** — FastIndep (**cM-distance** @0.1) directly on `_gwas` (51,004); genotypes step-interpolated; `data/teonam/tassel/geno.hmp.txt` (`agent/teonam_jlm_build.R`) |
+| `teonam_map_v5_jlm` | 6,049 | v5 | **JLM base** — FastIndep (**cM-distance** @0.1) directly on `_gwas` (51,004); genotypes step-interpolated; `data/teonam/tassel/geno.hmp.txt` (`scripts/teonam_jlm_build.R`) |
 
 Notes:
 - **`teonam_map_v5_jlm` thinning is a cM-distance thin, not an r² LD prune.**
   `select_independent` (FastIndep, deterministic greedy) is fed the per-chr cM-distance matrix, so
   it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. The full pipeline is now
-  reconstructed as a traceable script — `agent/teonam_jlm_build.R` (FastIndep on the 51K pool +
-  step-interpolated genotypes). `agent/teonam_jlm_verify_source.R` reproduces the prior
+  reconstructed as a traceable script — `scripts/teonam_jlm_build.R` (FastIndep on the 51K pool +
+  step-interpolated genotypes). `scripts/teonam_jlm_verify_source.R` reproduces the prior
   47,750-pool hapmap **0-mismatch** (6,059 markers × 1,237 taxa), confirming the method.
   `analysis/marker-thinning.qmd` (written against the old 47,750 pool → 6,059) needs
   re-rendering to the 51K-pool set (6,049).

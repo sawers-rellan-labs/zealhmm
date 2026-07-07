@@ -58,7 +58,7 @@ is longer — that difference is the whole story of the count, as we show below.
 
 ## The thinning as implemented here
 
-The pipeline (`agent/teonam_reproduce_fastindep.R`, and originally the lost inline
+The pipeline (`scripts/teonam_reproduce_fastindep.R`, and originally the lost inline
 prep this notebook now replaces) does:
 
 1. take every marker with a consensus-map cM (`marker_info_v5_cm.tsv`);
@@ -157,7 +157,7 @@ fingerprint of a cM-distance thin, not r².
 To show the *consequence* of feeding FastIndep cM distances instead of genotype
 r², we run **both** on the same chromosome-1 window and compare the sets they keep.
 The genotypes are **densified live here from the raw family files** by
-step-interpolation — the same operation as `agent/teonam_stam_gwas_scan.R::densify_chr`
+step-interpolation — the same operation as `scripts/teonam_stam_gwas_scan.R::densify_chr`
 — so this notebook depends on **no pre-saved intermediate** (`.rds`) of unknown
 provenance; only primary data (`W22TIL*_genotype.csv` + the consensus map).
 

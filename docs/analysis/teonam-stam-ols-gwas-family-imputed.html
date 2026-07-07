@@ -2390,7 +2390,7 @@ window.Quarto = {
 </header>
 
 
-<p><strong>What this is.</strong> The <em>computation</em> behind the STAM OLS GWAS scan on the family-imputed map panel (<code>data/teonam/stam_gwas_scan_family_imputed.csv</code>), tracked in its own right. It ports the throwaway <code>agent/teonam_stam_gwas_family_imputed.R</code> into a rendered notebook so the scan — not just its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that <em>consumes</em> this CSV lives in <a href="teonam-qtl-recovery.html"><code>teonam-qtl-recovery</code></a>; this notebook <strong>produces</strong> it.</p>
+<p><strong>What this is.</strong> The <em>computation</em> behind the STAM OLS GWAS scan on the family-imputed map panel (<code>data/teonam/stam_gwas_scan_family_imputed.csv</code>), tracked in its own right. It ports the throwaway <code>scripts/teonam_stam_gwas_family_imputed.R</code> into a rendered notebook so the scan — not just its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that <em>consumes</em> this CSV lives in <a href="teonam-qtl-recovery.html"><code>teonam-qtl-recovery</code></a>; this notebook <strong>produces</strong> it.</p>
 <p>The genotypes are <strong>FSFHap family-imputed</strong> (<code>teonam_map_v5_gwas</code>, 51,004 markers — Chen’s map construction, complete <em>within family</em>). Each marker is tested only on the families that typed it (cross-family gaps left as NA, <strong>not</strong> densified), giving the natural GWAS scatter with no step-interpolation plateau artifact. (<code>family_imputed</code> names exactly this state: FSFHap within-family imputation only, <em>without</em> cross-family step-interpolation — contrast the <code>interpolated</code> matrix used by the MLM notebook.)</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
@@ -2658,7 +2658,7 @@ F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank}
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <ul>
-<li>This notebook is the <strong>canonical, tracked source</strong> for <code>stam_gwas_scan_family_imputed.csv</code>; it supersedes the untracked <code>agent/teonam_stam_gwas_family_imputed.R</code> (identical model, ported verbatim).</li>
+<li>This notebook is the <strong>canonical, tracked source</strong> for <code>stam_gwas_scan_family_imputed.csv</code>; it supersedes the untracked <code>scripts/teonam_stam_gwas_family_imputed.R</code> (identical model, ported verbatim).</li>
 <li>Model is <strong>OLS (a fixed-effects linear model) with no kinship term</strong> — deliberately faithful to the throwaway script, <em>not</em> to Chen’s MLM. The peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook. ```</li>
 </ul>
 </section>

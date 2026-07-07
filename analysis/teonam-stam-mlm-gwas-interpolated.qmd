@@ -26,7 +26,7 @@ family-imputed OLS scan (cross-family gaps densified rather than left NA) — so
 OLS↔MLM comparison is like-for-like on one marker set. The ~3,300 markers that share a
 consensus-map cM interpolate to **identical** genotype rows (and identical *p*-values);
 they keep their real bp, so they appear as short terraces on the Manhattan rather than
-being dropped. Compute lives in `agent/teonam_mlm_interp.R`; this notebook loads,
+being dropped. Compute lives in `scripts/teonam_mlm_interp.R`; this notebook loads,
 documents, and plots.
 
 > **Read this first — two caveats that bound every number below.** (1) The
@@ -109,7 +109,7 @@ $\lambda_{GC}\approx0.97$ vs 1.37 for the joint test.)
 test statistics inflate under structure/relatedness. The MLM's $\mathbf K$ term is
 exactly the correction; the effect is quantified below as the drop in $\lambda_{GC}$.
 
-## Pipeline (`agent/teonam_mlm_interp.R`, native arm64 TASSEL5)
+## Pipeline (`scripts/teonam_mlm_interp.R`, native arm64 TASSEL5)
 
 ```{r pipeline-doc, eval=FALSE}
 # 1. densify the full 51,004 GWAS set per chr by step-interpolation (nilHMM) -> complete
@@ -238,7 +238,7 @@ knitr::kable(gt[order(-OLS)], caption = "Candidate-gene peak -log10P (±500 kb):
 Is the MLM's loss of *tb1*/*tsh4*/*zmm16* genuine deflation or **proximal
 contamination** — the kinship absorbing each QTL's own-chromosome signal? The standard
 diagnostic is **LOCO**: build the kinship from all markers *except the tested marker's
-chromosome*. Implemented as an EMMAX in R (`agent/teonam_mlm_loco.R`) that uses
+chromosome*. Implemented as an EMMAX in R (`scripts/teonam_mlm_loco.R`) that uses
 **TASSEL's model exactly** — additive + dominance, 2-df joint *F*, P3D — and **reproduces
 the full-K TASSEL MLM** (λ ≈ 1.366 vs 1.365; per-gene peaks within ~0.1): a full-K pass
 (validation) and the LOCO pass.
@@ -281,8 +281,8 @@ deploy**. The real fix remains `chen2019_GWAS` (118K directly-typed).
 
 ## Notes
 
-- **Canonical, tracked source** for the MLM scan: `agent/teonam_mlm_interp.R`
-  (build → K → Q → MLM) + `agent/teonam_mlm_lambda.R` (λ_GC / QQ). Outputs:
+- **Canonical, tracked source** for the MLM scan: `scripts/teonam_mlm_interp.R`
+  (build → K → Q → MLM) + `scripts/teonam_mlm_lambda.R` (λ_GC / QQ). Outputs:
   `data/teonam/tassel/mlm_interp2.txt`, `results/sim/teonam/mlm_interp_timings.csv`.
 - **Matrix:** interpolated-complete (`teonam_map_v5_gwas`, 51,004) — required because the
   MLM needs a complete matrix (the sparse observed set stalls: per-marker missing

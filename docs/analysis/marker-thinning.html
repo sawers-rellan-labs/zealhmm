@@ -2282,7 +2282,7 @@ vertical-align: -.125em;
 </section>
 <section id="the-thinning-as-implemented-here" class="level2">
 <h2 class="anchored" data-anchor-id="the-thinning-as-implemented-here">The thinning as implemented here</h2>
-<p>The pipeline (<code>agent/teonam_reproduce_fastindep.R</code>, and originally the lost inline prep this notebook now replaces) does:</p>
+<p>The pipeline (<code>scripts/teonam_reproduce_fastindep.R</code>, and originally the lost inline prep this notebook now replaces) does:</p>
 <ol type="1">
 <li>take every marker with a consensus-map cM (<code>marker_info_v5_cm.tsv</code>);</li>
 <li><strong>dedup to unique cM per chromosome</strong> (the densify grid: <code>!duplicated(cm)</code>);</li>
@@ -2433,7 +2433,7 @@ vertical-align: -.125em;
 </section>
 <section id="diagnostic-2-distance-r²-proven-not-asserted" class="level2">
 <h2 class="anchored" data-anchor-id="diagnostic-2-distance-r²-proven-not-asserted">Diagnostic 2 — distance ≠ r²: proven, not asserted</h2>
-<p>To show the <em>consequence</em> of feeding FastIndep cM distances instead of genotype r², we run <strong>both</strong> on the same chromosome-1 window and compare the sets they keep. The genotypes are <strong>densified live here from the raw family files</strong> by step-interpolation — the same operation as <code>agent/teonam_stam_gwas_scan.R::densify_chr</code> — so this notebook depends on <strong>no pre-saved intermediate</strong> (<code>.rds</code>) of unknown provenance; only primary data (<code>W22TIL*_genotype.csv</code> + the consensus map).</p>
+<p>To show the <em>consequence</em> of feeding FastIndep cM distances instead of genotype r², we run <strong>both</strong> on the same chromosome-1 window and compare the sets they keep. The genotypes are <strong>densified live here from the raw family files</strong> by step-interpolation — the same operation as <code>scripts/teonam_stam_gwas_scan.R::densify_chr</code> — so this notebook depends on <strong>no pre-saved intermediate</strong> (<code>.rds</code>) of unknown provenance; only primary data (<code>W22TIL*_genotype.csv</code> + the consensus map).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- densify a chr1 window from the RAW family genotypes (step-interpolation) ---</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fams <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">TIL01 =</span> <span class="st">&quot;W22TIL01_genotype.csv&quot;</span>, <span class="at">TIL03 =</span> <span class="st">&quot;W22TIL03_genotype.csv&quot;</span>,</span>

@@ -18,7 +18,7 @@ execute:
 
 **What this is.** The *computation* behind the STAM OLS GWAS scan on the family-imputed
 map panel (`data/teonam/stam_gwas_scan_family_imputed.csv`), tracked in its own right. It
-ports the throwaway `agent/teonam_stam_gwas_family_imputed.R` into a rendered notebook so
+ports the throwaway `scripts/teonam_stam_gwas_family_imputed.R` into a rendered notebook so
 the scan — not just its Manhattan — is reproducible from primary data. The annotated
 Fig-4C Manhattan that *consumes* this CSV lives in
 [`teonam-qtl-recovery`](teonam-qtl-recovery.html); this notebook **produces** it.
@@ -196,7 +196,7 @@ ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
 
 - This notebook is the **canonical, tracked source** for
   `stam_gwas_scan_family_imputed.csv`; it supersedes the untracked
-  `agent/teonam_stam_gwas_family_imputed.R` (identical model, ported verbatim).
+  `scripts/teonam_stam_gwas_family_imputed.R` (identical model, ported verbatim).
 - Model is **OLS (a fixed-effects linear model) with no kinship term** —
   deliberately faithful to the throwaway script, *not* to Chen's MLM. The peak-height
   / $\lambda_{GC}$ comparison against Chen's `Q + K` mixed model is deferred to a
