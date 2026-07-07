@@ -53,15 +53,15 @@ mapping methods. Quoting the Methods verbatim:
 > matrix (K)…"* — (GWAS marker set, a different pipeline)
 
 This notebook concerns the **JLM** set only (the 4578-marker analogue). The paper's
-composite genetic map is **1540 cM**; ours (v5-anchored consensus, Marey-spline cM)
-is longer — that difference is the whole story of the count, as we show below.
+composite genetic map is **1540 cM**; ours (native TeoNAM est.map cM) is ~1561 cM
+— that difference is the whole story of the count, as we show below.
 
 ## The thinning as implemented here
 
 The pipeline (`scripts/teonam_reproduce_fastindep.R`, and originally the lost inline
 prep this notebook now replaces) does:
 
-1. take every marker with a consensus-map cM (`map_v5_coe2008.tsv`);
+1. take every marker in the native TeoNAM map (`teonam_v5_native.tsv`, native est.map cM);
 2. **dedup to unique cM per chromosome** (the densify grid: `!duplicated(cm)`);
 3. run **`select_independent`** on the per-chromosome **cM-distance** matrix
    (`|cm_i − cm_j|`), with `sense = "distance"`, `threshold = 0.1`, `n_runs = 1`
@@ -75,8 +75,8 @@ it prunes on genetic distance instead. That choice is what we verify and dissect
 # target: the markers actually in the JLM input on disk
 target <- fread(here("data/teonam/tassel/geno.hmp.txt"), select = "rs#")[["rs#"]]
 
-# candidate pool: unique-cM dedup per chromosome
-mc <- fread(here("data/teonam/map_v5_coe2008.tsv"))
+# candidate pool: native map (placed markers), unique-cM dedup per chromosome
+mc <- fread(here("data/teonam/teonam_v5_native.tsv"))[!is.na(cm)]
 setnames(mc, "chr_v5", "chr")
 pool <- mc[order(chr, cm)][, .SD[!duplicated(cm)], by = chr]
 

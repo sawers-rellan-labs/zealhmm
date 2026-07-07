@@ -28,8 +28,9 @@ hmp <- fread("data/teonam/tassel/geno.hmp.txt", select = "rs#")
 target <- hmp[["rs#"]]
 cat(sprintf("target (geno.hmp.txt): %d markers\n", length(target)))
 
-mc <- fread("data/teonam/map_v5_coe2008.tsv") # candidate pool: all markers w/ cM
+mc <- fread("data/teonam/teonam_v5_native.tsv") # candidate pool: native est.map placed markers (cm = native)
 setnames(mc, "chr_v5", "chr")
+mc <- mc[!is.na(cm)] # JLM input = only the markers that remained in the native map
 cat(sprintf(
   "candidate pool (marker_info_v5_cm): %d markers, %d chromosomes\n\n",
   nrow(mc), uniqueN(mc$chr)

@@ -74,7 +74,7 @@ log_info(
 log_info("chr7 island markers: %s", paste(isl7, collapse = ", "))
 
 # ---- rebuild chr7 union WITHOUT the detected island, re-est.map -------------
-info <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
+info <- fread(file.path(GENO_DIR, "markers_v5.tsv")) # map-neutral v2->v5 liftover: roster + v5 positions
 setorder(info, chr_v5, pos_v5)
 perfam <- fread(PERFAM)
 kept_by_fam <- lapply(FAMILIES, function(f) perfam[family == f, marker])

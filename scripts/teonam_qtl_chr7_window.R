@@ -65,7 +65,7 @@ log_info(
   bp_lo / 1e6, bp_hi / 1e6, length(isl7)
 )
 
-info <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
+info <- fread(file.path(GENO_DIR, "markers_v5.tsv")) # map-neutral v2->v5 liftover: roster + v5 positions
 setorder(info, chr_v5, pos_v5)
 perfam <- fread(PERFAM)
 kept_by_fam <- lapply(FAMILIES, function(f) perfam[family == f, marker])

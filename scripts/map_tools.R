@@ -2,11 +2,11 @@
 # (sourced by teonam_qtl_permap.R and teonam_qtl_map.R).
 
 # --- Canonical TeoNAM map ------------------------------------------------------
-# Default genetic map for downstream analyses = the NATIVE TeoNAM v5 est.map
-# (replaces the Ed Coe consensus `map_v5_coe2008.tsv`, which was the old default).
-# NOTE: in this file the native cM is column `cm`; the Ed Coe consensus cM is
-# retained alongside it as `cm_coe2008` for comparison. (The standalone consensus
-# map `map_v5_coe2008.tsv` keeps its own column `cm` — the filename disambiguates.)
+# Default genetic map for ALL downstream analyses in this repo = the NATIVE TeoNAM
+# v5 est.map (column `cm` = native cM). It SUPERSEDES the Ed Coe consensus entirely
+# here; the native map holds only the markers the est.map placed. The map-neutral
+# marker roster + v5 physical positions live in data/teonam/markers_v5.tsv (marker,
+# chr_v2, pos_v2, chr_v5, pos_v5; no cM) — that is the position source, not any map.
 DEFAULT_TEONAM_MAP <- "data/teonam/teonam_v5_native.tsv"
 
 #' Flag "quirky" markers as isolated small connected-components on an ordered map.

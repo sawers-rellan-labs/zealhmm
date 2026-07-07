@@ -39,7 +39,7 @@ log_threshold(INFO)
 source("scripts/map_tools.R") # find_quirky_islands (isolated-cluster quirky finder)
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-INFO <- fread(file.path(GENO_DIR, "map_v5_coe2008.tsv"))
+INFO <- fread(file.path(GENO_DIR, "markers_v5.tsv")) # map-neutral v2->v5 liftover: roster + v5 positions
 N_CLUSTER <- min(10L, parallel::detectCores())
 ISLAND_MAX_N <- 20L # quirky finder: max markers in an isolated cluster to flag
 ISLAND_GAP_CM <- 2 # quirky finder: coarse isolation gap (cM) for clusters (99.99%ile gap ~1 cM)

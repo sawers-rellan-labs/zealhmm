@@ -24,8 +24,9 @@ THR <- 0.1
 HMP <- "data/teonam/tassel/geno.hmp.txt"
 HMP_OLD <- "data/teonam/tassel/geno_gwas_nr.hmp.txt.bak" # backup of the 47,750-pool JLM
 
-mc <- fread("data/teonam/map_v5_coe2008.tsv")
+mc <- fread("data/teonam/teonam_v5_native.tsv") # native est.map (cm = native); JLM pool = placed markers only
 setnames(mc, "chr_v5", "chr")
+mc <- mc[!is.na(cm)] # JLM input = only the markers that remained in the native map
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 

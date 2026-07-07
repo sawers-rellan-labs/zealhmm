@@ -13,8 +13,9 @@ hmp <- fread("data/teonam/tassel/geno.hmp.txt")
 jlm_mk <- hmp[["rs#"]]
 taxa <- names(hmp)[-(1:11)]
 
-mc <- fread("data/teonam/map_v5_coe2008.tsv")
+mc <- fread("data/teonam/teonam_v5_native.tsv") # native est.map (cm = native); placed markers only
 setnames(mc, "chr_v5", "chr")
+mc <- mc[!is.na(cm)] # JLM input = only the markers that remained in the native map
 cm_by <- setNames(mc$cm, mc$marker)
 
 fams <- c(

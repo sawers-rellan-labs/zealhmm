@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 # =============================================================================
 # Native TeoNAM COMPOSITE genetic map on B73 v5 marker order (R/qtl) -- the
-# DELIVERABLE: a native cM per marker (`cm`) to replace the borrowed Ed Coe
-# consensus cM in data/teonam/map_v5_coe2008.tsv.
+# DELIVERABLE: a native cM per marker (`cm`). Supersedes the borrowed Ed Coe
+# consensus cM; marker positions come from the map-neutral liftover markers_v5.tsv.
 # Plan: agent/teonam-v5-genetic-map-plan.md  Handover: agent/teonam-map-handover.md
 # -----------------------------------------------------------------------------
 # FAITHFUL to Chen 2019 (Methods, "Genetic map construction and marker
@@ -27,7 +27,7 @@
 #      map = the final cm.
 #   5. Write data/teonam/teonam_v5_native.tsv (+ results/sim/teonam/teonam_v5_native_qc.csv).
 #
-# NON-DESTRUCTIVE: does not overwrite map_v5_coe2008.tsv; touches no sweep/JLM/
+# NON-DESTRUCTIVE: reads only the map-neutral markers_v5.tsv; touches no sweep/JLM/
 # notebook/calibrate code. Does not commit.
 #
 # Run:  Rscript scripts/teonam_qtl_map.R   (after teonam_qtl_permap.R has finished)
@@ -56,7 +56,7 @@ log_threshold(INFO)
 
 FAMILIES <- c("W22TIL01", "W22TIL03", "W22TIL11", "W22TIL14", "W22TIL25")
 GENO_DIR <- "data/teonam"
-INFO_PATH <- file.path(GENO_DIR, "map_v5_coe2008.tsv")
+INFO_PATH <- file.path(GENO_DIR, "markers_v5.tsv") # map-neutral v2->v5 liftover (roster + positions; no cM)
 PERFAM_CSV <- "results/sim/teonam/teonam_v5_native_perfam.csv"
 N_CLUSTER <- min(10L, parallel::detectCores())
 ISLAND_MAX_N <- 20L # quirky finder: max markers in an isolated cluster to flag
@@ -90,7 +90,6 @@ is_outlier <- function(x) {
 
 # ---- marker annotation, ordered on v5 --------------------------------------
 info <- fread(INFO_PATH)
-setnames(info, "cm", "cm_coe2008") # consensus (Ed Coe 2008) cM; native est.map cM is `cm`
 setorder(info, chr_v5, pos_v5)
 info[, rank_v5 := seq_len(.N)]
 CHRS <- sort(unique(info$chr_v5))
@@ -289,14 +288,14 @@ log_info(
 )
 
 # ---- outputs ----------------------------------------------------------------
-# Output schema: `cm` = native est.map cM; `cm_coe2008` = Ed Coe consensus cM.
-qc <- merge(info[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm_coe2008, rank_v5, chr_change, inversion)],
+# Output schema: `cm` = native est.map cM.
+qc <- merge(info[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, rank_v5, chr_change, inversion)],
   union_mk[, .(marker, n_fam, cm, gap_prev, big_gap, seg_distort, quirky_drop)],
   by = "marker", all.x = TRUE
 )
 setorder(qc, chr_v5, pos_v5)
 info_out <- copy(info)[, cm := union_mk[match(info$marker, marker), cm]]
-info_out <- info_out[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm, cm_coe2008)]
+info_out <- info_out[, .(marker, chr_v2, pos_v2, chr_v5, pos_v5, cm)]
 # Drop the discarded markers (quirky/non-Mendelian islands + unplaced) before
 # export: they carry NA native cm and are NOT part of the map. Their drop status
 # is retained (with reasons) in the QC table below (`quirky_drop`, `seg_distort`).
@@ -306,7 +305,6 @@ log_info("export: dropped %d NA-cm (discarded) markers; wrote %d placed markers"
 fwrite(qc, "results/sim/teonam/teonam_v5_native_qc.csv")
 fwrite(info_out, "data/teonam/teonam_v5_native.tsv", sep = "\t")
 
-sp <- cor(info_out$cm, info_out$cm_coe2008, method = "spearman", use = "complete.obs")
 cat("\n==================== COMPOSITE SUMMARY ====================\n")
 cat(sprintf("Native composite map: %.1f cM  (vs Chen 1540 / Ed Coe consensus ~1781)\n", sum(Lc)))
 print(data.table(chr = names(Lc), cM = round(Lc, 2)))
@@ -318,7 +316,6 @@ cat(sprintf(
   "shared (>=2 fam): %d | private (1 fam): %d\n",
   sum(union_mk$n_fam >= 2L), sum(union_mk$n_fam == 1L)
 ))
-cat(sprintf("Spearman cor(cm [native], cm_coe2008 [consensus]): %.4f\n", sp))
 cat(sprintf(
   "QC: chr-changers=%d, inversions=%d, seg-distorted=%d, big-gaps(>%.2f)=%d\n",
   sum(qc$chr_change), sum(qc$inversion), sum(qc$seg_distort, na.rm = TRUE),
