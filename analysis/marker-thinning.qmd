@@ -1,6 +1,6 @@
 ---
 title: "Marker thinning for joint-linkage mapping — provenance & proof"
-subtitle: "What produced the TeoNAM JLM marker framework, and why it has 6059 markers where Chen 2019 had 4578"
+subtitle: "What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -17,7 +17,7 @@ execute:
 
 **What this is.** A self-contained, *hard-proven* record of the marker-thinning
 step that builds the JLM marker framework (`data/teonam/tassel/geno.hmp.txt`,
-6059 markers). Every claim below is reproduced live from the primary data — no
+9063 markers). Every claim below is reproduced live from the primary data — no
 approximations, no "close enough." The three things this notebook nails down:
 
 1. **What the thinning actually was** — `nilHMM::select_independent` (FastIndep,
@@ -27,8 +27,9 @@ approximations, no "close enough." The three things this notebook nails down:
 2. **What that means** — feeding FastIndep cM distances reduces it to a 0.1 cM
    minimum-spacing ruler; LD plays no role. We prove the distinction by running
    *both* variants on the same chromosome and showing they disagree.
-3. **Why 6059 and not Chen's 4578** — a deterministic consequence of a longer,
-   denser genetic map, decomposed to the marker.
+3. **Why 9063 and not Chen's 4578** — a deterministic consequence of the native
+   map's finer per-marker resolution (bin saturation) at essentially Chen's map
+   length, decomposed to the marker.
 
 ```{r setup}
 library(here)
@@ -54,7 +55,8 @@ mapping methods. Quoting the Methods verbatim:
 
 This notebook concerns the **JLM** set only (the 4578-marker analogue). The paper's
 composite genetic map is **1540 cM**; ours (native TeoNAM est.map cM) is ~1561 cM
-— that difference is the whole story of the count, as we show below.
+— so map *length* is essentially Chen's, and the count difference is instead driven
+by how finely the native map resolves markers into 0.1-cM bins, as we show below.
 
 ## The thinning as implemented here
 
@@ -159,7 +161,7 @@ r², we run **both** on the same chromosome-1 window and compare the sets they k
 The genotypes are **densified live here from the raw family files** by
 step-interpolation — the same operation as `scripts/teonam_stam_gwas_scan.R::densify_chr`
 — so this notebook depends on **no pre-saved intermediate** (`.rds`) of unknown
-provenance; only primary data (`W22TIL*_genotype.csv` + the consensus map).
+provenance; only primary data (`W22TIL*_genotype.csv` + the native map).
 
 ```{r rsq-contrast, fig.width=8, fig.height=4}
 # --- densify a chr1 window from the RAW family genotypes (step-interpolation) ---
@@ -256,12 +258,13 @@ matrix — the JLM framework guarantees genetic spacing but does **no** LD
 decorrelation, so many retained neighbours remain in near-perfect LD (collinear,
 redundant columns for the stepwise model).
 
-## The count: 6059 vs 4578, decomposed to the marker
+## The count: 9063 vs 4578, decomposed to the marker
 
 Both we and Chen ran a 0.1 cM thin, so the algorithm is not the source of the
-difference. `6059 / 4578 = 1.323` decomposes into two near-equal multiplicative
-factors — **map length** and **bin saturation** (the fraction of 0.1-cM bins that
-contain ≥1 marker):
+difference. `9063 / 4578 ≈ 1.98` decomposes into **map length** and **bin
+saturation** (the fraction of 0.1-cM bins that contain ≥1 marker) — but the two
+factors are now far from equal: length is ~1.0 (native ≈ Chen), so bin saturation
+(~2.0) carries essentially the whole difference:
 
 ```{r count-decomp}
 maplen_ours <- mc[, max(cm) - min(cm), by = chr][, sum(V1)]
@@ -297,9 +300,10 @@ knitr::kable(decomp,
 )
 ```
 
-The predicted product matches the observed `6059/4578` ratio: the extra markers are
-**entirely** map length (our v5 consensus map is longer) and marker density (it
-fills a higher fraction of 0.1-cM bins) — not a thinning-method artifact.
+The predicted product matches the observed `9063/4578` ratio: with the native map
+at ~Chen's length, the extra markers come **almost entirely** from bin saturation —
+the native est.map resolves ~2× the fraction of 0.1-cM bins that Chen's map did —
+not from map length and not a thinning-method artifact.
 
 ## Conclusions
 
@@ -309,8 +313,9 @@ fills a higher fraction of 0.1-cM bins) — not a thinning-method artifact.
 - Feeding FastIndep cM distances turns it into a **0.1 cM minimum-spacing ruler**;
   it performs **no LD pruning**. Diagnostic 2 proves the distance and r² thinnings
   keep materially different marker sets.
-- The **6059 vs 4578** difference is a deterministic property of a **longer, denser
-  genetic map** (length × saturation), fully decomposed above — nothing unexplained.
+- The **9063 vs 4578** difference is a deterministic property of the native map's
+  **higher bin saturation** at essentially Chen's map length (length × saturation),
+  fully decomposed above — nothing unexplained.
 
 **Implication for the design.** The r² path is the LD-aware option in principle,
 but Diagnostic 2 shows it is **not a drop-in** here: because ancestry LD is
