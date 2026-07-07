@@ -138,7 +138,7 @@ plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL) {
 #' Full 10-chromosome axis is obtained by passing the dense scan to fastman_gg
 #' with fully transparent points (col = transparent); the JLM QTL are overlaid as
 #' blue stems + points, candidate genes labeled bold-italic above.
-#' @param jlm_txt  TASSEL StepwiseOLSModelFitter output (stam_jlm_1.txt): Name,
+#' @param jlm_txt  TASSEL StepwiseOLSModelFitter output (stam_jlm_native1.txt): Name,
 #'   Locus, Position (v5 bp), `pr>F`
 #' @param scan_csv dense per-marker scan, only used (transparent) to lay out the axis
 plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
@@ -270,7 +270,7 @@ above the corresponding QTL. Reproduces Chen 2019 Fig 4A.
 
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_stam_lollipop(
-  here("data/teonam/tassel/stam_jlm_1.txt"),
+  here("data/teonam/tassel/stam_jlm_native1.txt"),
   here("data/teonam/stam_gwas_scan_family_imputed.csv"),
   "STAM — JLM QTL genomic distribution (TeoNAM)",
   here("results/sim/teonam/stam_jlm_lollipop.png")
@@ -403,7 +403,7 @@ the chromosome. It is a **false positive**: the λ = ∞ baseline has no peak th
 (≈8.5), whereas the 0.1× line rises to ≈12.4 (excess ≈+3.9 over baseline). The
 ghost sits on the proximal shoulder of the chr3 **pericentromere** — the
 restricted-recombination zone reported at ≈80–90 Mb in B73 v5 (pan-genome cenhap
-boundaries) and independently visible in this study's own consensus cM map, where
+boundaries) and independently visible in this study's own native cM map, where
 the recombination rate collapses to ≈0.06 cM/Mb across ≈80–100 Mb (~40× below the
 ≈2 cM/Mb near the telomeres). Recombination is so suppressed there that cM barely
 advances across tens of Mb, so with the map-aware cM transition adjacent markers
