@@ -4,10 +4,12 @@
 # 118K variant of scripts/teonam_rtiger_sweep.R -- same simulate -> RTIGER ->
 # interpolate -> GWAS pipeline, but:
 #   * TRUTH = the 118K GWAS panel, W22<->teosinte polarized and DENSE for every
-#     family (teonam_gwas118k_dosage_polar.rds), instead of the 51K family-sparse
+#     family (teonam_gwas118k_dosage_fsfhap.rds), instead of the 51K family-sparse
 #     map blocks. Reads are simulated from this dense truth.
 #   * GRID = the full 118,514-marker v5 set on the native cM (markers_v5_gwas118k_cm.tsv).
-#   * BASELINE (lambda=Inf) = the authentic 118K scan (stam_gwas_scan_118k.csv).
+#   * BASELINE (lambda=Inf) = GWAS on the COMPLETE truth matrix (dense truth
+#     interpolated onto the union grid), from scripts/teonam_sweep_baseline_118k.R
+#     -- NOT the authentic per-marker scan (whose scatter breaks the geom_line).
 #
 # Run:  Rscript scripts/teonam_rtiger_sweep_118k.R --generate      # full 35-cell grid
 #       Rscript scripts/teonam_rtiger_sweep_118k.R --smoke         # 1 family x 1 lambda, timed
@@ -59,7 +61,7 @@ message(sprintf(
 ))
 
 # --- dense polarized 118K truth, split by family ------------------------------
-g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds"))
+g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_fsfhap.rds"))
 dos <- g118$dos # markers x lines, 0/1/2 (0=W22,2=teo), ~2.7% NA
 FAMS <- c("TIL01", "TIL03", "TIL11", "TIL14", "TIL25")
 
@@ -178,10 +180,10 @@ if (SMOKE) {
   quit(save = "no", status = 0)
 }
 
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k.csv"))[, .(SNP, CHR, BP, P)]
+baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k_complete_baseline.csv"))[, .(SNP, CHR, BP, P)] # complete-truth n=inf baseline (scripts/teonam_sweep_baseline_118k.R)
 baseline[, coverage := Inf]
 message(sprintf(
-  "  lambda=Inf  : %d markers, tb1 peak -log10P = %s (authentic 118K baseline)",
+  "  lambda=Inf  : %d markers, tb1 peak -log10P = %s (complete-truth n=inf baseline)",
   nrow(baseline), tb1_peak(baseline)
 ))
 sweep <- rbindlist(c(sweep_list, list(baseline)), use.names = TRUE)

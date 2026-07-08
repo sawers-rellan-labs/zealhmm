@@ -55,7 +55,7 @@ union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 message(sprintf("118K grid: %d union markers | %d strictly-increasing-cM target rows", nrow(u), nrow(mt_all)))
 
-g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds"))
+g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_fsfhap.rds"))
 dos <- g118$dos
 FAMS <- c("TIL01", "TIL03", "TIL11", "TIL14", "TIL25")
 
@@ -164,6 +164,13 @@ for (li in seq_along(LAMBDAS)) {
   idx <- which(grid$li == li)
   G <- do.call(cbind, lapply(idx, function(i) cells[[i]]$block))
   rownames(G) <- union_markers
+  if ("--save-matrix" %in% ARGS) { # opt-in: emit the union matrix for downstream MLM/LOCO
+    dir.create(file.path(OUTDIR, "cache"), recursive = TRUE, showWarnings = FALSE)
+    saveRDS(
+      list(G = G, markers = union_markers, chr = union_chr, bp = union_pos),
+      file.path(OUTDIR, "cache", sprintf("geno_lb%s_118k.rds", lambda))
+    )
+  }
   scan <- gwas_scan(G)[order(CHR, BP)]
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
@@ -179,9 +186,9 @@ if (SMOKE) {
   quit(save = "no", status = 0)
 }
 
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k.csv"))[, .(SNP, CHR, BP, P)]
+baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k_complete_baseline.csv"))[, .(SNP, CHR, BP, P)] # complete-truth n=inf baseline (scripts/teonam_sweep_baseline_118k.R)
 baseline[, coverage := Inf]
-message(sprintf("  lambda=Inf  : %d markers, tb1 peak -log10P = %s (authentic 118K baseline)", nrow(baseline), tb1_peak(baseline)))
+message(sprintf("  lambda=Inf  : %d markers, tb1 peak -log10P = %s (complete-truth n=inf baseline)", nrow(baseline), tb1_peak(baseline)))
 sweep <- rbindlist(c(sweep_list, list(baseline)), use.names = TRUE)
 fwrite(sweep, file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"))
 message(sprintf("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)))

@@ -283,7 +283,7 @@ plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
 ## Candidate genes: closest marker vs most-significant marker (v5)
 
 For each STAM candidate gene (B73 v5), two different "nearby marker" choices from
-the pre-JLM marker set (the 51,004-marker family-imputed GWAS scan): the
+the authentic 118,514-marker 118K GWAS scan (OLS): the
 **closest** marker (smallest bp distance to the gene body) and the **window-max**
 marker (highest −log₁₀P within ±500 kb — a 1 Mb window centered on the gene). They
 are **not the same marker** at any gene: the closest marker sits essentially on
@@ -346,38 +346,44 @@ p_lolli <- plot_stam_lollipop(
 p_lolli
 ```
 
-## Authentic 118K panel (the faithful Fig 4C)
+## Authentic 118K panel — OLS scan (Fig 4C)
 
-Chen 2019's directly-typed/imputed 118,838-SNP GWAS HapMap — natural GWAS scatter.
+Chen 2019's imputed 118,838-SNP GWAS panel, scanned here with **OLS**
+(`STAM ~ Family + marker`, 1-df F) — *not* Chen's Fig-4C model. Chen used a **mixed
+model (Q = 5 PCs + K = kinship)**; without that structure/kinship correction this OLS
+scan runs inflated (hotter, broader peaks), so it does **not** reproduce Fig 4C.
+Chen's Fig-4C model — the same 118K panel run through the MLM (Q+K) — is in
+[`teonam-stam-mlm-gwas-118k`](teonam-stam-mlm-gwas-118k.html).
 
 ```{r manhattan-family-imputed, fig.width=9, fig.height=4.4}
 p_unimp <- plot_stam_manhattan(
   here("data/teonam/stam_gwas_scan_118k.csv"),
-  "STAM — GWAS (TeoNAM, authentic 118K panel), candidate genes at v5 positions",
+  "STAM — GWAS OLS (Family + marker), authentic 118K panel, candidate genes at v5 positions",
   here("results/sim/teonam/stam_gwas_manhattan_annotated_118k.png")
 )
 p_unimp
 ```
 
-## (Interpolation-artifact panel — N/A for the authentic panel)
+## Ancestry-imputed panel (FSFHap block-smoothed) — OLS scan
 
-On the 51K map panel this section documented the step-interpolation terraced-plateau
-artifact (cross-family gaps densified). The **authentic 118K HapMap is directly
-imputed by Chen's pipeline — there is no cross-family step-interpolation**, so no
-terracing artifact applies. This panel therefore re-plots the same authentic 118K
-scan (identical to the panel above); it is retained only so the internal composite
-below keeps its three-panel layout. Not a distinct result.
+The same OLS model (`STAM ~ Family + marker`), but on the **ancestry-imputed** 118K
+truth: the panel block-smoothed with TASSEL5 **FSFHap** (Chen's params; parental A/C
+output, ~9 breakpoints/chr) into a clean W22↔teosinte mosaic, then scanned. Because
+ancestry is piecewise-constant, contiguous markers share a call → identical p-values
+→ **block-terraced** profile (peaks still correctly located). Contrast with the
+per-SNP raw panel above: same peaks, but the scatter collapses to ancestry blocks.
+This is the n=∞ complete-truth reference the coverage sweeps degrade from.
 
 ```{r manhattan-interpolated, fig.width=9, fig.height=4.4}
 p_interp <- plot_stam_manhattan(
-  here("data/teonam/stam_gwas_scan_118k.csv"),
-  "STAM — GWAS (TeoNAM, authentic 118K panel; = panel above)",
-  here("results/sim/teonam/stam_gwas_manhattan_118k_annotated.png")
+  here("data/teonam/stam_gwas_scan_118k_complete_baseline.csv"),
+  "STAM — GWAS OLS (Family + marker), ancestry-imputed (FSFHap) 118K panel",
+  here("results/sim/teonam/stam_gwas_manhattan_118k_fsfhap.png")
 )
 p_interp
 ```
 
-## Composite (Fig 4A lollipop + Fig 4C family-imputed + interpolated)
+## Composite (A: JLM lollipop · B: OLS raw 118K · C: OLS ancestry-imputed 118K)
 
 ```{r composite, fig.width=9, fig.height=13}
 composite <- cowplot::plot_grid(
@@ -393,16 +399,16 @@ composite
 ## RTIGER ancestry vs sequencing coverage (degradation sweep)
 
 The panel-C baseline above is the **λ = ∞, perfect-caller** curve (GWAS on the
-interpolated *truth* genotypes). All sweeps below run on the same full
-**51,004**-marker GWAS grid as the Fig-4C panels above. Here we ask
+complete FSFHap-truth genotypes). All sweeps below run on the same full
+**118,514**-marker GWAS grid as the Fig-4C panels above. Here we ask
 how low-coverage sequencing degrades
 that signal **through the RTIGER ancestry caller**: for each family × coverage
-`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the real genotypes
-(`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
+`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the FSFHap clean-block
+truth (`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
 `call_ancestry(caller = "rtiger", rigidity = 2)` (the calibrated `rigidity_star`),
 step-interpolate the recovered block onto the same union grid, and rerun the same
 `STAM ~ Family + marker` scan. Compute lives in
-`scripts/teonam_rtiger_sweep.R --generate`; this chunk only **loads** the combined
+`scripts/teonam_rtiger_sweep_118k.R --generate`; this chunk only **loads** the combined
 sweep CSV and plots.
 
 The read as a **line-Manhattan** (`geom_line`, one line per coverage; chromosomes
@@ -410,9 +416,9 @@ never connect because `group = interaction(CHR, coverage)`): coverage on a virid
 ramp, the λ = ∞ truth baseline in **black** as the reference curve, LOD = 5 dotted.
 The striking result is how **robust** RTIGER is — ancestry is a long-block signal,
 so even 0.1× (~9.5 % of markers carrying a read) reconstructs the blocks well
-enough that the *tb1* peak only slips from ≈17.3 (baseline) to ≈16.1. Degradation
-is real but lives mostly in HET recovery (het-recall 0.77 at 0.1× → 1.00 at ≥20×),
-not in the additive QTL peaks.
+enough that the *tb1* peak only slips from **16.5** (baseline) to **16.0**.
+Degradation is real but modest and lives mostly in het recovery, not in the
+additive QTL peaks.
 
 ```{r line-manhattan, fig.width=9, fig.height=4.6}
 p_sweep <- plot_sweep_line(
@@ -430,20 +436,20 @@ p_sweep
 ## Coverage-degradation composite: interpolation control / nNIL / RTIGER / LB-Impute
 
 The four-panel contrast (`agent/teonam-control-sweep-plan.md`). All four degrade
-the **identical** truth mosaics over the same coverage grid
-`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ interpolated-truth baseline) and
+the **identical** FSFHap clean-block truth mosaics over the same coverage grid
+`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ complete-truth FSFHap baseline) and
 feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs:
 
 - **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
-  step-interpolation; `scripts/teonam_control_sweep.R`): the deliberately het-prone
+  step-interpolation; `scripts/teonam_control_sweep_118k.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
 - **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
-  `f_1 = 0.08`, `f_2 = 0.15`; `scripts/teonam_nnil_sweep.R`): count emission + geometric
+  `f_1 = 0.08`, `f_2 = 0.15`; `scripts/teonam_nnil_sweep_118k.R`): count emission + geometric
   duration.
-- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep.R`):
+- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep_118k.R`):
   count emission + rigidity duration.
 - **D — LB-Impute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = recombdist_star ≈ 5.5)`;
-  `scripts/teonam_lbimpute_sweep.R`): coverage-aware emission + distance-dependent
+  `scripts/teonam_lbimpute_sweep_118k.R`): coverage-aware emission + distance-dependent
   (map-aware cM) transition with a double-recombination penalty, full-chromosome
   Viterbi (nilHMM native port of Fragoso et al. 2014). `recombdist` is the
   donor-fragment-Dice-optimal `recombdist_star` from the BC1S4 calibration
@@ -451,45 +457,29 @@ feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs
 
 The **contrast is het handling**. The three duration/distance-aware HMMs (B, C, D) tie
 neighbouring markers into ancestry blocks, so a lone ALT read cannot open a het call —
-het-call fraction stays near the ~8 % truth level and the STAM peaks hold near the
-baseline down to 0.1×. LB-Impute (D), at the calibrated `recombdist_star ≈ 5.5 cM`,
-degrades gracefully like B and C rather than over-smoothing: its *tb1* peak holds
-near the baseline across the grid (≈16.3 at 0.1× vs ≈17.3 baseline), never
-over-shooting. (The tighter calibrated distance scale allows more transitions than
-the earlier hardcoded `recombdist = 50`, which had produced over-long imputed
-homozygous blocks and an over-shot peak.) The control (A) decides each site independently, so at low
-coverage the HWE prior inflates het to ~20 % (het **excess**) and the *tb1* peak
-degrades the other way (≈13.4 at 0.1× vs ≈17.3 baseline). `geom_line`, colored by
-coverage, no gene labels, LOD = 5, chromosomes never connect
+het-call fraction stays near the ~8 % truth level (nNIL ≈0.08, flat across the grid)
+and the STAM peaks hold near the baseline down to 0.1×. All three hold the *tb1* peak
+near the ∞ baseline (**16.5**) across the whole grid: at 0.1× RTIGER **16.0**, nNIL
+**17.1**, LB-Impute **16.1** — none collapses, none badly over-shoots. The control (A)
+decides each site independently, so at low coverage the HWE prior inflates het to
+**~20 % (0.197 at 0.1×)** — a het **excess** — and its *tb1* peak degrades the other
+way (**13.3 at 0.1×** vs 16.5 baseline), recovering to baseline only by ~20×. `geom_line`,
+colored by coverage, no gene labels, LOD = 5, chromosomes never connect
 (`group = interaction(CHR, coverage)`).
 
-**A pericentromeric block-imputation "ghost" on chromosome 3 at 0.1×.** At the
-lowest coverage a spurious peak appears near the **middle of chr3 (≈110–115 Mb, on
-the chromosome axis label)** — *proximal to* both chr3 STAM candidates, *tru1*
-(STAM3.1, ≈152 Mb) and *zmm16* (STAM3.2, ≈176 Mb), which sit in the right half of
-the chromosome. It is a **false positive**: the λ = ∞ baseline has no peak there
-(≈8.5), whereas the 0.1× line rises to ≈12.4 (excess ≈+3.9 over baseline). The
-ghost sits on the proximal shoulder of the chr3 **pericentromere** — the
-restricted-recombination zone reported at ≈80–90 Mb in B73 v5 (pan-genome cenhap
-boundaries) and independently visible in this study's own native cM map, where
-the recombination rate collapses to ≈0.06 cM/Mb across ≈80–100 Mb (~40× below the
-≈2 cM/Mb near the telomeres). Recombination is so suppressed there that cM barely
-advances across tens of Mb, so with the map-aware cM transition adjacent markers
-are separated by ~zero cM and the state stays highly persistent; at 0.1× (only
-~9.5 % of markers carrying a read) LB-Impute lays down a long spurious homozygous
-block through this low-recombination valley that tracks the phenotype. It is a **block-caller**
-effect: the no-HMM interpolation control (A) shows **no** central ghost (excess
-≈0), nNIL (B) and RTIGER (C) show milder versions (excess ≈+2.3–2.6), and
-**LB-Impute (D) is the most affected** (≈+3.9).
-
-Note this ghost is a genuine consequence of the **calibrated** `recombdist_star`
-(≈5.5 cM): with the earlier hardcoded `recombdist = 50` the chr3 middle stayed near
-baseline (excess ≈+1) and the over-imputation instead landed on the *right*,
-inflating the real *zmm16* region (≈16.7 vs ≈14.8 baseline). The tighter calibrated
-distance scale represents the real peaks more faithfully but, interacting with
-pericentromeric cM compression that the BC1S4 calibration sim does not model,
-produces this central false block at extreme low coverage. Treat the 0.1× chr3-mid
-peak as a coverage-limit artifact, not signal.
+**No low-coverage chr3 ghost on the clean-truth panel.** Earlier (51K / pre-FSFHap)
+runs showed a spurious peak appearing *only at 0.1×* in the chr3 pericentromere
+(~110–115 Mb), most severe under LB-Impute. On the FSFHap clean-block truth this does
+**not** reproduce: in the pericentromere (80–120 Mb) the ∞ baseline already carries a
+modest signal (**≈11.2**), and the 0.1× lines sit *at or below* it — control 10.6,
+nNIL 10.0, RTIGER 10.0, LB-Impute 9.8 (**negative excess, −0.6 to −1.4**). So there is
+no low-coverage inflation here. The pericentromere signal is a **coverage-independent
+OLS structure/LD confound** (this composite is OLS `STAM ~ Family + marker`, which
+models neither kinship nor structure), present at every coverage — full-K MLM removes
+it (9.8 → 1.4; see the MLM-LOCO section below), and it is *not* a block-imputation
+artifact of low coverage. The real distal chr3 QTL — *tru1* (STAM3.1, ≈152 Mb) and
+*zmm16* (STAM3.2, ≈176 Mb) — sit at baseline ≈14.4 and ≈15.8 and are held across the
+grid (LB-Impute 0.1× *zmm16* ≈15.2).
 
 ```{r het-fraction-table}
 het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction_118k.csv"))[, .(coverage, control = round(het_frac, 3))]
@@ -538,21 +528,24 @@ genotypes** three ways (compute in `scripts/teonam_mlm_loco_lb01_118k.R` — an 
 VanRaden K + 5 PCs + REML δ + P3D GLS; genotype matrix from
 `scripts/teonam_lbimpute_sweep_118k.R --generate --save-matrix`):
 
-- **A — OLS (Family):** the composite's model. Ghost present (chr3-mid ≈12.4).
-- **B — MLM (Q + K):** kinship + structure controlled (λ_GC = 1.10). The ghost
-  **collapses to ≈4.7**, back below the LOD-5 line — the signature of a structure/LD
-  confound, not a QTL. (The real *tru1*/*zmm16* peaks are pulled down here too — the
-  known MLM proximal over-correction on their own chromosome.)
-- **C — LOCO:** kinship built excluding the tested chromosome. The real QTL return
-  (*tru1*/159/*zmm16* ≈ 9.6–12.6) — **but so does the ghost (≈10.7)**, because
-  dropping chr3 from the kinship removes the correction for its own pericentromeric
-  structure. At 0.1× the ghost becomes indistinguishable from a real QTL under LOCO.
+- **A — OLS (Family):** the composite's model. Ghost present (chr3-mid ≈9.8, above LOD 5).
+- **B — MLM (Q + K):** kinship + structure controlled (λ_GC = 1.28). The ghost
+  **collapses to ≈1.4**, far below the LOD-5 line — the signature of a structure/LD
+  confound, not a QTL. (The real *tru1*/*zmm16* peaks are pulled down too — ≈4.7/≈3.7,
+  the known MLM proximal over-correction on their own chromosome.)
+- **C — LOCO:** kinship built excluding the tested chromosome (λ_GC = 3.09 — heavily
+  inflated, since dropping chr3 from K removes the correction for its own
+  pericentromeric structure). The real distal QTL return well above LOD (*tru1* ≈10.8,
+  159-mid ≈14.1, *zmm16* ≈10.4) — **while the ghost stays sub-significant (≈4.4, below
+  LOD 5)**: unlike the earlier 51K result, the 118K ghost does *not* resurface as a
+  false-positive peak under LOCO.
 
 Red dashed line = the chr3 pericentromere ghost (~112 Mb); the *tru1*/*zmm16* stars
 mark the real distal QTL. **Takeaway:** the ghost is a structure/LD confound that
-full-K MLM controls even at 0.1×, but low-coverage block imputation inflates it
-enough to nearly survive Q + K and to fully resurface under LOCO — so LOCO peaks in
-low-recombination regions cannot be trusted at low coverage.
+full-K MLM removes even at 0.1× (9.8 → 1.4). LOCO recovers the real distal chr3 QTL
+but is globally inflated (λ_GC 3.09) from dropping chr3's own structure from K, so
+LOCO peaks in low-recombination regions still cannot be trusted at low coverage —
+even though here the ghost itself does not clear LOD under LOCO.
 
 ```{r ghost-mlm-loco, fig.width=9, fig.height=13}
 lb01 <- fread(here("results/sim/teonam/stam_gwas_lbimpute_118k_lambda0.1.csv")) # OLS, Family only

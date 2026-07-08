@@ -54,7 +54,7 @@ union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 message(sprintf("118K grid: %d union markers | %d strictly-increasing-cM target rows", nrow(u), nrow(mt_all)))
 
-g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds"))
+g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_fsfhap.rds"))
 dos <- g118$dos
 FAMS <- c("TIL01", "TIL03", "TIL11", "TIL14", "TIL25")
 
@@ -107,7 +107,7 @@ recover_block <- function(fam, li) {
   storage.mode(R) <- "double"
   block <- interpolate_genotype(R, data.frame(chr = mt$chr, cm = mt$cm), target_df, mode = "step")
   colnames(block) <- keys
-  list(lambda = lambda, fam = fam, block = block)
+  list(lambda = lambda, fam = fam, block = block, n_het = sum(R == 1L), n_cells = length(R))
 }
 
 grid <- expand.grid(fam = if (SMOKE) FAMS[1] else FAMS, li = seq_along(LAMBDAS), stringsAsFactors = FALSE)
@@ -152,6 +152,7 @@ tb1_peak <- function(scan) {
 }
 
 sweep_list <- vector("list", length(LAMBDAS))
+het_list <- vector("list", length(LAMBDAS))
 for (li in seq_along(LAMBDAS)) {
   lambda <- LAMBDAS[li]
   idx <- which(grid$li == li)
@@ -161,9 +162,12 @@ for (li in seq_along(LAMBDAS)) {
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_nnil_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
+  nh <- sum(vapply(idx, function(i) cells[[i]]$n_het, numeric(1)))
+  ncl <- sum(vapply(idx, function(i) cells[[i]]$n_cells, numeric(1)))
+  het_list[[li]] <- data.table(coverage = lambda, het_frac = nh / ncl, n_het = nh, n_cells = ncl)
   message(sprintf(
-    "  lambda=%-4g : %d markers, tb1 peak -log10P = %s, global max = %.1f",
-    lambda, nrow(scan), tb1_peak(scan), max(-log10(scan[is.finite(P) & P > 0, P]))
+    "  lambda=%-4g : %d markers, tb1 peak -log10P = %s, global max = %.1f (het %.3f)",
+    lambda, nrow(scan), tb1_peak(scan), max(-log10(scan[is.finite(P) & P > 0, P])), nh / ncl
   ))
 }
 
@@ -172,9 +176,12 @@ if (SMOKE) {
   quit(save = "no", status = 0)
 }
 
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k.csv"))[, .(SNP, CHR, BP, P)]
+fwrite(rbindlist(het_list), file.path(OUTDIR, "stam_nnil_het_fraction_118k.csv"))
+message("wrote stam_nnil_het_fraction_118k.csv")
+
+baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k_complete_baseline.csv"))[, .(SNP, CHR, BP, P)] # complete-truth n=inf baseline (scripts/teonam_sweep_baseline_118k.R)
 baseline[, coverage := Inf]
-message(sprintf("  lambda=Inf  : %d markers, tb1 peak -log10P = %s (authentic 118K baseline)", nrow(baseline), tb1_peak(baseline)))
+message(sprintf("  lambda=Inf  : %d markers, tb1 peak -log10P = %s (complete-truth n=inf baseline)", nrow(baseline), tb1_peak(baseline)))
 sweep <- rbindlist(c(sweep_list, list(baseline)), use.names = TRUE)
 fwrite(sweep, file.path(OUTDIR, "stam_gwas_nnil_118k_sweep.csv"))
 message(sprintf("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_nnil_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)))
