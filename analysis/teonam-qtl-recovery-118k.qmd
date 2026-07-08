@@ -504,3 +504,46 @@ ggsave(here("results/sim/teonam/stam_sweep_composite_118k.png"), composite,
 )
 composite
 ```
+
+## Caller noisiness (band-limited spectral power)
+
+How much *spurious fine-scale structure* each caller injects, as spectral power in a
+physically-defined **noise band**. Each Manhattan track is a 1-D signal −log10P(bp):
+real ancestry structure is long-wavelength (≥ introgression-fragment size),
+sub-resolution structure is not recoverable, so power *in between* is
+over-fragmentation. The band is **(R, P10)**: R = the 0.1 cM inference-grid resolution
+(median adjacent-marker bp gap), P10 = the 10th-percentile *resolvable* teosinte
+introgression-tract length (from the FSFHap mosaic; the raw P10 is sub-resolution
+because ~a third of "tracts" are single-marker het blips, so it is taken over tracts
+≥ R). Thinning that band to a max distance-*d* independent set is the same
+interval-graph argument used for the inference grid ([`teonam_gwas118k_thin01.R`]).
+Headline = **FFT band-power fraction** (Hann-tapered periodogram, per chromosome,
+uniform bp grid); corroborated by **Haar-wavelet detail energy** in the same octaves.
+Compute: `scripts/teonam_sweep_noisiness.R`.
+
+```{r noisiness-band}
+bp <- fread(here("results/sim/teonam/sweep_noisiness_band_118k.csv"))
+knitr::kable(bp, caption = sprintf(
+  "Noise band: resolution R = %d kb, P10 resolvable introgression = %d kb (median tract %.2f Mb).",
+  bp$R_kb, bp$P10_kb, bp$median_frag_Mb
+))
+```
+
+```{r noisiness-headline}
+nz <- fread(here("results/sim/teonam/sweep_noisiness_118k.csv"))
+knitr::kable(nz, caption = paste(
+  "Noise-band power fraction at λ=∞ (each caller's ceiling), sorted least→most noisy.",
+  "RTIGER ≈ LB-Impute run ~9× cleaner than control ≈ nNIL; the FFT (headline) and",
+  "Haar-wavelet measures agree on the ranking."
+))
+```
+
+```{r noisiness-vscov}
+vz <- fread(here("results/sim/teonam/sweep_noisiness_vscov_118k.csv"))
+knitr::kable(vz, caption = paste(
+  "FFT noise-band power fraction vs coverage. RTIGER/LB-Impute stay low at every depth;",
+  "control and nNIL are clean at low coverage but grow noisy as depth rises — at high",
+  "depth they are forced to honour the authentic per-SNP het scatter that the",
+  "stronger-smoothing callers suppress."
+))
+```
