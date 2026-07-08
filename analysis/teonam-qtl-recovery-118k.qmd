@@ -397,27 +397,23 @@ composite
 
 ## RTIGER ancestry vs sequencing coverage (degradation sweep)
 
-The panel-C baseline above is the **λ = ∞, perfect-caller** curve (GWAS on the
-complete FSFHap-truth genotypes). All sweeps below run on the same full
-**118,514**-marker GWAS grid as the Fig-4C panels above. Here we ask
-how low-coverage sequencing degrades
-that signal **through the RTIGER ancestry caller**: for each family × coverage
-`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the FSFHap clean-block
-truth (`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
-`call_ancestry(caller = "rtiger", rigidity = 2)` (the calibrated `rigidity_star`),
-step-interpolate the recovered block onto the same union grid, and rerun the same
-`STAM ~ Family + marker` scan. Compute lives in
-`scripts/teonam_rtiger_sweep_118k.R --generate`; this chunk only **loads** the combined
-sweep CSV and plots.
+How low-coverage sequencing degrades the STAM signal **through the RTIGER ancestry
+caller**: for each family × coverage `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20, ∞}×` we
+Poisson-sample reads from the **authentic 118K per-SNP genotypes** (`.draw_counts`,
+`pi_floor=0, k_decay=1, error=0.01`), infer ancestry with
+`call_ancestry(caller = "rtiger", rigidity = 2)` (calibrated `rigidity_star`) on the
+**0.1 cM inference grid**, back-project the segments onto the full 118,514-marker union,
+and run the `STAM ~ Family + marker` scan. λ = ∞ is RTIGER at perfect coverage (its
+own ceiling). Compute: `scripts/teonam_rtiger_sweep_118k.R --generate`; this chunk
+loads and plots.
 
-The read as a **line-Manhattan** (`geom_line`, one line per coverage; chromosomes
-never connect because `group = interaction(CHR, coverage)`): coverage on a viridis
-ramp, the λ = ∞ truth baseline in **black** as the reference curve, LOD = 5 dotted.
-The striking result is how **robust** RTIGER is — ancestry is a long-block signal,
-so even 0.1× (~9.5 % of markers carrying a read) reconstructs the blocks well
-enough that the *tb1* peak only slips from **16.5** (baseline) to **16.0**.
-Degradation is real but modest and lives mostly in het recovery, not in the
-additive QTL peaks.
+Line-Manhattan (`geom_line`, one line per coverage; chromosomes never connect via
+`group = interaction(CHR, coverage)`): coverage on a viridis ramp, λ = ∞ in **black**,
+LOD = 5 dotted. RTIGER holds the *tb1* / chr3 signal well down to low coverage, but on
+the real per-SNP truth the peak height is **not** monotone in coverage — RTIGER's fixed
+rigidity smooths differently as read depth changes, so moderate coverage can look
+cleaner than perfect coverage. Read *where signal survives*, not exact peak heights;
+one replicate per cell.
 
 ```{r line-manhattan, fig.width=9, fig.height=4.6}
 p_sweep <- plot_sweep_line(
@@ -434,10 +430,16 @@ p_sweep
 
 ## Coverage-degradation composite: interpolation control / nNIL / RTIGER / LB-Impute
 
-The four-panel contrast (`agent/teonam-control-sweep-plan.md`). All four degrade
-the **identical** FSFHap clean-block truth mosaics over the same coverage grid
-`λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ complete-truth FSFHap baseline) and
-feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs:
+The four-panel contrast (`agent/teonam-control-sweep-plan.md`). Reads are Poisson-
+sampled per SNP from the **authentic 118K per-SNP genotypes**
+(`teonam_gwas118k_dosage_polar.rds`) — the real genotypes, *not* an ancestry-smoothed
+mosaic — over `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20, ∞}×`. Each caller infers ancestry on
+the cached **0.1 cM grid** (`markers_v5_gwas118k_cm_thin01.tsv`; the exact
+distance-*d* independent set, [`teonam_gwas118k_thin01.R`](../scripts)) and its
+segments are **back-projected onto the full 118K union** for the same
+`STAM ~ Family + marker` GWAS — only the caller differs. **λ = ∞ is that caller at
+perfect coverage** (deterministic decisive counts) — its own ceiling, computed
+in-pipeline, so each panel's ∞ line is caller-specific (no shared baseline).
 
 - **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
   step-interpolation; `scripts/teonam_control_sweep_118k.R`): the deliberately het-prone
@@ -454,16 +456,17 @@ feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs
   donor-fragment-Dice-optimal `recombdist_star` from the BC1S4 calibration
   (`scripts/02_calibrate.R`), read from `calib_params.csv` — not hardcoded.
 
-The **contrast is het handling**. The three duration/distance-aware HMMs (B, C, D) tie
-neighbouring markers into ancestry blocks, so a lone ALT read cannot open a het call —
-het-call fraction stays near the ~8 % truth level (nNIL ≈0.08, flat across the grid)
-and the STAM peaks hold near the baseline down to 0.1×. All three hold the *tb1* peak
-near the ∞ baseline (**16.5**) across the whole grid: at 0.1× RTIGER **16.0**, nNIL
-**17.1**, LB-Impute **16.1** — none collapses, none badly over-shoots. The control (A)
-decides each site independently, so at low coverage the HWE prior inflates het to
-**~20 % (0.197 at 0.1×)** — a het **excess** — and its *tb1* peak degrades the other
-way (**13.3 at 0.1×** vs 16.5 baseline), recovering to baseline only by ~20×. `geom_line`,
-colored by coverage, no gene labels, LOD = 5, chromosomes never connect
+The panels differ in **het handling** (het-call fraction table below): the no-HMM
+control (A) opens het at a lone ALT read via its per-site HWE prior, while the
+duration/distance HMMs (B–D) tie neighbouring markers into blocks. **Because the truth
+is now the real per-SNP panel** (not an ancestry mosaic), each caller's smoothing
+interacts with genuine per-SNP het, so the *tb1* peak height is **not** a clean
+monotone function of coverage — it reflects how each caller trades noise-smoothing
+against faithfully honouring the data (e.g. at high depth a caller is forced to honour
+scattered het that at moderate depth it would smooth away), and is confounded
+accordingly. Read the panels for *where signal survives*, not exact peak heights.
+**One replicate per (family, λ) cell** — trends, not point values. `geom_line`,
+coloured by coverage, LOD = 5, chromosomes never connect
 (`group = interaction(CHR, coverage)`).
 
 ```{r het-fraction-table}

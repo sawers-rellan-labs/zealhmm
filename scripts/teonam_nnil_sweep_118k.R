@@ -30,7 +30,7 @@ if (!SMOKE && !("--generate" %in% ARGS)) {
   quit(save = "no", status = 0)
 }
 
-LAMBDAS <- if (SMOKE) c(1) else c(0.1, 0.2, 0.5, 1, 5, 10, 20)
+LAMBDAS <- if (SMOKE) c(1, Inf) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf) # Inf = perfect coverage
 cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
 RRATE <- as.numeric(cp$value[cp$key == "rrate_star"]) # calibrated nNIL rrate
 if (!is.finite(RRATE)) stop("rrate_star not in results/sim/calib_params.csv")
@@ -52,15 +52,17 @@ target_df <- data.frame(chr = as.integer(u$chr), cm = as.numeric(u$cm))
 union_markers <- u$marker
 union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
-message(sprintf("118K grid: %d union markers | %d strictly-increasing-cM target rows", nrow(u), nrow(mt_all)))
+mt_thin <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm_thin01.tsv")) # cached 0.1 cM inference grid
+setnames(mt_thin, "pos_v5", "pos")
+message(sprintf("118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM", nrow(u), nrow(mt_thin)))
 
-g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_fsfhap.rds"))
+g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds")) # AUTHENTIC per-SNP genotypes
 dos <- g118$dos
 FAMS <- c("TIL01", "TIL03", "TIL11", "TIL14", "TIL25")
 
 load_family <- function(fam) {
   keys <- colnames(dos)[substr(colnames(dos), 1, 5) == fam]
-  D <- dos[mt_all$marker, keys, drop = FALSE]
+  D <- dos[mt_thin$marker, keys, drop = FALSE] # truth at the 0.1 cM inference grid
   storage.mode(D) <- "double"
   if (anyNA(D)) {
     rm <- apply(D, 1, function(z) {
@@ -72,9 +74,9 @@ load_family <- function(fam) {
       if (any(na)) D[na, j] <- rm[na]
     }
   }
-  list(mt = mt_all, D = D, keys = keys)
+  list(mt = mt_thin, D = D, keys = keys)
 }
-message("loading families (dense 118K truth) ...")
+message("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
 fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
 for (f in FAMS) message(sprintf("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys)))
@@ -89,13 +91,23 @@ recover_block <- function(fam, li) {
   M <- nrow(mt)
   N <- length(keys)
   set.seed(1000L + 100L * fi + li)
-  ac <- .draw_counts(as.vector(D),
-    lambda = lambda,
-    pi_floor = READ_PARS$pi_floor, k_decay = READ_PARS$k_decay, error = READ_PARS$error
-  )
+  if (is.infinite(lambda)) {
+    DINF <- 100L
+    p_alt <- c(0, 0.5, 1)[as.vector(D) + 1L]
+    p_eff <- p_alt * (1 - READ_PARS$error) + (1 - p_alt) * READ_PARS$error
+    n_alt <- as.integer(round(DINF * p_eff))
+    n_ref <- DINF - n_alt
+  } else {
+    ac <- .draw_counts(as.vector(D),
+      lambda = lambda,
+      pi_floor = READ_PARS$pi_floor, k_decay = READ_PARS$k_decay, error = READ_PARS$error
+    )
+    n_ref <- as.integer(ac$ref)
+    n_alt <- as.integer(ac$alt)
+  }
   long <- data.table(
     name = rep(keys, each = M), chr = rep(mt$chr, N),
-    pos = rep(mt$pos, N), n_ref = as.integer(ac$ref), n_alt = as.integer(ac$alt)
+    pos = rep(mt$pos, N), n_ref = n_ref, n_alt = n_alt
   )
   st <- call_states(long,
     caller = "nnil", f_1 = F1, f_2 = F2, rrate = RRATE,
@@ -179,9 +191,6 @@ if (SMOKE) {
 fwrite(rbindlist(het_list), file.path(OUTDIR, "stam_nnil_het_fraction_118k.csv"))
 message("wrote stam_nnil_het_fraction_118k.csv")
 
-baseline <- fread(file.path(ROOT, "data/teonam/stam_gwas_scan_118k_complete_baseline.csv"))[, .(SNP, CHR, BP, P)] # complete-truth n=inf baseline (scripts/teonam_sweep_baseline_118k.R)
-baseline[, coverage := Inf]
-message(sprintf("  lambda=Inf  : %d markers, tb1 peak -log10P = %s (complete-truth n=inf baseline)", nrow(baseline), tb1_peak(baseline)))
-sweep <- rbindlist(c(sweep_list, list(baseline)), use.names = TRUE)
+sweep <- rbindlist(sweep_list, use.names = TRUE) # lambda=Inf ceiling already in sweep_list
 fwrite(sweep, file.path(OUTDIR, "stam_gwas_nnil_118k_sweep.csv"))
 message(sprintf("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_nnil_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)))
