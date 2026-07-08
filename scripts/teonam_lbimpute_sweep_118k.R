@@ -6,7 +6,7 @@
 # 118K panel (see scripts/teonam_rtiger_sweep_118k.R for the shared design).
 #   caller: call_states(caller="lbimpute", unit="cm", recombdist=recombdist_star,
 #           genotypeerr=0.05, drp=lbimpute_drp) -- coverage-aware emission +
-#           distance-dependent transition, full-chr Viterbi. min_cov=0L.
+#           distance-dependent transition, full-chr Viterbi. min_reads=0L.
 #
 # Run:  Rscript scripts/teonam_lbimpute_sweep_118k.R --generate   # full 35-cell grid
 #       Rscript scripts/teonam_lbimpute_sweep_118k.R --smoke      # 1 family x 1 lambda
@@ -19,15 +19,18 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
+source(file.path(ROOT, "scripts/logging.R"))
+t0 <- Sys.time()
 source(file.path(ROOT, "R/simulate.R"))
 source(file.path(ROOT, "scripts/map_tools.R"))
+source(file.path(ROOT, "scripts/emmax_qk.R")) # emmax_qk_scan (MLM Q+K, Chen Fig-4C)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
 dir.create(OUTDIR, recursive = TRUE, showWarnings = FALSE)
 
 ARGS <- commandArgs(TRUE)
 SMOKE <- "--smoke" %in% ARGS
 if (!SMOKE && !("--generate" %in% ARGS)) {
-  message("pass --generate (full grid) or --smoke (1 cell).")
+  log_info("pass --generate (full grid) or --smoke (1 cell).")
   quit(save = "no", status = 0)
 }
 
@@ -39,7 +42,7 @@ DRP <- isTRUE(toupper(cp$value[cp$key == "lbimpute_drp"]) == "TRUE") # double-re
 GENOERR <- 0.05 # LB-Impute genotypeerr default
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
-message(sprintf("LB-Impute-118K: recombdist_star = %.4g cM, drp = %s", RECOMBDIST, DRP))
+log_info("LB-Impute-118K: recombdist_star = %.4g cM, drp = %s", RECOMBDIST, DRP)
 
 # --- 118K cM grid + dense polarized truth (shared with rtiger_118k) ----------
 mc <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm.tsv"))
@@ -55,7 +58,7 @@ union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 mt_thin <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm_thin01.tsv")) # cached 0.1 cM inference grid
 setnames(mt_thin, "pos_v5", "pos")
-message(sprintf("118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM", nrow(u), nrow(mt_thin)))
+log_info("118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM", nrow(u), nrow(mt_thin))
 
 g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds")) # AUTHENTIC per-SNP genotypes
 dos <- g118$dos
@@ -77,10 +80,10 @@ load_family <- function(fam) {
   }
   list(mt = mt_thin, D = D, keys = keys)
 }
-message("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
+log_info("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
 fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
-for (f in FAMS) message(sprintf("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys)))
+for (f in FAMS) log_info("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys))
 
 recover_block <- function(fam, li) {
   lambda <- LAMBDAS[li]
@@ -114,7 +117,7 @@ recover_block <- function(fam, li) {
   st <- call_states(long,
     caller = "lbimpute", unit = "cm", recombdist = RECOMBDIST,
     err = READ_PARS$error, genotypeerr = GENOERR, drp = DRP,
-    min_cov = 0L, threads = 1L
+    min_reads = 0L, threads = 1L
   )
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
   W <- W[mt[, .(chr, pos)], on = c("chr", "pos")]
@@ -126,16 +129,17 @@ recover_block <- function(fam, li) {
     mode = "step"
   )
   colnames(block) <- keys
+  storage.mode(block) <- "integer" # halve the cells cache (0/1/2)
   list(lambda = lambda, fam = fam, block = block)
 }
 
 grid <- expand.grid(fam = if (SMOKE) FAMS[1] else FAMS, li = seq_along(LAMBDAS), stringsAsFactors = FALSE)
-message(sprintf("LB-Impute-118K sweep: %d cells, %d threads ...", nrow(grid), THREADS))
+log_info("LB-Impute-118K sweep: %d cells, %d threads ...", nrow(grid), THREADS)
 t0 <- Sys.time()
 cells <- mclapply(seq_len(nrow(grid)), function(i) recover_block(grid$fam[i], grid$li[i]), mc.cores = THREADS)
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) stop("cell(s) failed: ", paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]])
-message(sprintf("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins")))
+log_info("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins"))
 
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
 names(ph)[1] <- "line"
@@ -170,7 +174,7 @@ tb1_peak <- function(scan) {
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
 }
 
-sweep_list <- vector("list", length(LAMBDAS))
+sweep_list <- mlm_list <- vector("list", length(LAMBDAS))
 for (li in seq_along(LAMBDAS)) {
   lambda <- LAMBDAS[li]
   idx <- which(grid$li == li)
@@ -187,17 +191,24 @@ for (li in seq_along(LAMBDAS)) {
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
-  message(sprintf(
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
+  mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Q+K)
+  mlm[, coverage := lambda]
+  mlm_list[[li]] <- mlm
+  log_info(
     "  lambda=%-4g : %d markers, tb1 peak -log10P = %s, global max = %.1f",
     lambda, nrow(scan), tb1_peak(scan), max(-log10(scan[is.finite(P) & P > 0, P]))
-  ))
+  )
+  el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+  log_info(">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining", li, length(LAMBDAS), el, el / li, (el / li) * (length(LAMBDAS) - li))
 }
 
 if (SMOKE) {
-  message("smoke ok.")
+  log_info("smoke ok.")
   quit(save = "no", status = 0)
 }
 
 sweep <- rbindlist(sweep_list, use.names = TRUE) # lambda=Inf ceiling already in sweep_list
 fwrite(sweep, file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"))
-message(sprintf("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)))
+fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_lbimpute_118k_mlm_sweep.csv"))
+log_info("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage))

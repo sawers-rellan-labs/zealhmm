@@ -31,7 +31,7 @@
 #  - recombdist + drp: CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
 #    scripts/02_calibrate.R) and read from calib_params.csv (drp=TRUE for RILs).
 #  - err = 0.01 (read/allele error, = the read-sim error), genotypeerr = 0.05
-#    (LB-Impute default), min_cov = 0L
+#    (LB-Impute default), min_reads = 0L
 #    (decode every family marker; zero-coverage markers carry a flat emission and
 #    are filled by the distance transition -> complete rectangular block).
 #  - Flat start (no design prior): LB-Impute has no state-frequency prior in its
@@ -185,7 +185,7 @@ recover_block <- function(fam, li) {
   st <- call_states(long,
     caller = "lbimpute", unit = "cm", recombdist = RECOMBDIST,
     err = READ_PARS$error, genotypeerr = GENOERR, drp = DRP,
-    min_cov = 0L, threads = 1L
+    min_reads = 0L, threads = 1L
   )
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
   W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align rows to mt (bp order)

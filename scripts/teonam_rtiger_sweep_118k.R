@@ -23,22 +23,30 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
+source(file.path(ROOT, "scripts/logging.R"))
+t0 <- Sys.time()
 source(file.path(ROOT, "R/simulate.R")) # .draw_counts()
 source(file.path(ROOT, "scripts/map_tools.R"))
+source(file.path(ROOT, "scripts/emmax_qk.R")) # emmax_qk_scan (MLM Q+K, Chen Fig-4C)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
 dir.create(OUTDIR, recursive = TRUE, showWarnings = FALSE)
 
 ARGS <- commandArgs(TRUE)
 SMOKE <- "--smoke" %in% ARGS
 if (!SMOKE && !("--generate" %in% ARGS)) {
-  message("pass --generate (full grid) or --smoke (1 cell, timed).")
+  log_info("pass --generate (full grid) or --smoke (1 cell, timed).")
   quit(save = "no", status = 0)
 }
 
 LAMBDAS <- if (SMOKE) c(1, Inf) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf) # Inf = perfect-coverage ceiling
-cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
-RIGIDITY <- as.integer(cp$value[cp$key == "rigidity_star"])
-stopifnot(is.finite(RIGIDITY))
+# PER-COVERAGE rigidity from the simulation calibration (scripts/teonam_rtiger_calib_bycov.R):
+# BC1S4 ground truth on this 118K grid, rigidity chosen by MIN donor-fragment FDR (err-long),
+# min_reads=1. rigidity* rises with coverage (16 -> 128) -- deep coverage exposes more
+# per-marker detail, so a longer minimum run is needed to stay stable. Because it was tuned
+# with min_reads=1 (rigidity counts COVERED markers), the sweep below also uses min_reads=1
+# and fills uncovered markers back to the full grid by within-chromosome carry-forward.
+calib <- fread(file.path(ROOT, "results/sim/teonam/rtiger_calib_bycov.csv"))
+RIG_BY_COV <- setNames(as.integer(calib$rigidity), as.character(calib$coverage))
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 
@@ -57,15 +65,16 @@ union_markers <- u$marker
 union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 
-# --- ancestry-inference grid: the cached 0.1 cM thin (scripts/teonam_gwas118k_thin01.R).
-# The HMM infers segments on this thin grid; they are back-projected onto the full
-# 118K union (target_df) for the GWAS -- ~20x faster HMM, same segments.
-mt_thin <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm_thin01.tsv"))
-setnames(mt_thin, "pos_v5", "pos")
-message(sprintf(
-  "118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM",
-  nrow(u), nrow(mt_thin)
-))
+# --- ancestry-inference grid: the FULL 118K marker set, per chromosome (NO thinning,
+# NO back-projection). RTIGER runs the HMM directly on every marker; the recovered
+# states ARE the union genotypes for the GWAS. Slower than the 0.1 cM thin grid but
+# removes the thin->union interpolation and the grid-density rigidity coupling.
+mt_thin <- copy(mc)[, .(marker, chr, pos, cm)] # full union = inference grid
+stopifnot(all(is.finite(RIG_BY_COV)))
+log_info(
+  "118K grid: RTIGER on the FULL %d markers/genome, per chromosome, min_reads=1; per-coverage rigidity = %s",
+  nrow(mt_thin), paste(sprintf("%s:%d", names(RIG_BY_COV), RIG_BY_COV), collapse = " ")
+)
 
 # --- dense polarized 118K truth, split by family ------------------------------
 g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds"))
@@ -91,10 +100,10 @@ load_family <- function(fam) {
   }
   list(mt = mt_thin, D = D, keys = keys)
 }
-message("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
+log_info("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
 fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
-for (f in FAMS) message(sprintf("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys)))
+for (f in FAMS) log_info("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys))
 
 recover_block <- function(fam, li) {
   lambda <- LAMBDAS[li]
@@ -125,23 +134,30 @@ recover_block <- function(fam, li) {
     name = rep(keys, each = M), chr = rep(mt$chr, N),
     pos = rep(mt$pos, N), n_ref = n_ref, n_alt = n_alt
   )
-  st <- call_states(long, caller = "rtiger", rigidity = RIGIDITY, min_cov = 0L, threads = 1L)
+  covlab <- if (is.infinite(lambda)) "Inf" else as.character(lambda)
+  rig <- RIG_BY_COV[[covlab]] # per-coverage tuned rigidity (min_reads=1 covered-marker units)
+  st <- call_states(long, caller = "rtiger", rigidity = rig, min_reads = 1L, threads = 1L)
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
-  W <- W[mt[, .(chr, pos)], on = c("chr", "pos")]
-  R <- as.matrix(W[, keys, with = FALSE])
-  storage.mode(R) <- "double"
-  block <- interpolate_genotype(R, data.frame(chr = mt$chr, cm = mt$cm), target_df, mode = "step")
+  W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align to the full union grid (NA at uncovered markers)
+  block <- as.matrix(W[, keys, with = FALSE])
+  # min_reads=1 dropped uncovered markers -> fill each back to its segment's state by
+  # within-chromosome carry-forward (LOCF then NOCB for leading gaps), per RIL.
+  for (ch in unique(mt$chr)) {
+    idx <- which(mt$chr == ch)
+    block[idx, ] <- apply(block[idx, , drop = FALSE], 2L, function(v) nafill(nafill(v, "locf"), "nocb"))
+  }
   colnames(block) <- keys
+  storage.mode(block) <- "integer" # 0/1/2
   list(lambda = lambda, fam = fam, block = block)
 }
 
 grid <- expand.grid(fam = if (SMOKE) FAMS[1] else FAMS, li = seq_along(LAMBDAS), stringsAsFactors = FALSE)
-message(sprintf("RTIGER-118K sweep: %d (family,lambda) cells, %d threads ...", nrow(grid), THREADS))
+log_info("RTIGER-118K sweep: %d (family,lambda) cells, %d threads ...", nrow(grid), THREADS)
 t0 <- Sys.time()
 cells <- mclapply(seq_len(nrow(grid)), function(i) recover_block(grid$fam[i], grid$li[i]), mc.cores = THREADS)
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) stop("cell(s) failed: ", paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]])
-message(sprintf("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins")))
+log_info("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins"))
 
 # --- phenotype + GWAS scan (STAM ~ Family + marker, 1 df) --------------------
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
@@ -177,30 +193,33 @@ tb1_peak <- function(scan) {
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
 }
 
-sweep_list <- vector("list", length(LAMBDAS))
+sweep_list <- mlm_list <- vector("list", length(LAMBDAS))
 for (li in seq_along(LAMBDAS)) {
   lambda <- LAMBDAS[li]
   idx <- which(grid$li == li)
   G <- do.call(cbind, lapply(idx, function(i) cells[[i]]$block))
   rownames(G) <- union_markers
-  scan <- gwas_scan(G)[order(CHR, BP)]
+  scan <- gwas_scan(G)[order(CHR, BP)] # OLS (Family + marker)
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_rtiger_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
-  message(sprintf(
-    "  lambda=%-4g : %d markers, tb1 peak -log10P = %s, global max = %.1f",
-    lambda, nrow(scan), tb1_peak(scan), max(-log10(scan[is.finite(P) & P > 0, P]))
-  ))
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
+  mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Q+K)
+  mlm[, coverage := lambda]
+  mlm_list[[li]] <- mlm
+  log_info(
+    "  lambda=%-4g : OLS tb1 %s / MLM tb1 %s (OLS global max %.1f)",
+    lambda, tb1_peak(scan), tb1_peak(mlm), max(-log10(scan[is.finite(P) & P > 0, P]))
+  )
+  el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+  log_info(">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining", li, length(LAMBDAS), el, el / li, (el / li) * (length(LAMBDAS) - li))
 }
 
 if (SMOKE) {
-  message("smoke ok.")
+  log_info("smoke ok.")
   quit(save = "no", status = 0)
 }
 
-sweep <- rbindlist(sweep_list, use.names = TRUE) # lambda=Inf ceiling is already in sweep_list
-fwrite(sweep, file.path(OUTDIR, "stam_gwas_rtiger_118k_sweep.csv"))
-message(sprintf(
-  "wrote %s (%d rows, %d coverage levels)",
-  file.path(OUTDIR, "stam_gwas_rtiger_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)
-))
+fwrite(rbindlist(sweep_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_rtiger_118k_sweep.csv"))
+fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_rtiger_118k_mlm_sweep.csv"))
+log_info("%s", paste0("wrote OLS + MLM(Q+K) sweeps, ", uniqueN(rbindlist(sweep_list)$coverage), " coverage levels"))

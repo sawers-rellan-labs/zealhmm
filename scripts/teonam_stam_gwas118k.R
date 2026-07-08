@@ -12,6 +12,7 @@ suppressMessages({
   library(parallel)
   library(readxl)
 })
+source("/Users/fvrodriguez/repos/zealhmm/scripts/logging.R")
 
 g118 <- readRDS("data/teonam/teonam_gwas118k_dosage.rds")
 dos <- g118$dos # integer matrix [markers x lines], NA where untyped
@@ -27,7 +28,7 @@ chr_by <- setNames(mc$chr_v5, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 mk <- intersect(rownames(dos), mc$marker) # lifted markers only
 mk_idx <- match(mk, rownames(dos))
-cat("lines:", length(lines), " markers (lifted):", length(mk), " STAM non-NA:", sum(!is.na(y)), "\n")
+log_info("%s", paste("lines:", length(lines), " markers (lifted):", length(mk), " STAM non-NA:", sum(!is.na(y))))
 
 scan1 <- function(i) {
   g <- dos[i, ] # dosage across lines, NA where untyped
@@ -62,9 +63,9 @@ scan <- data.table(
   P = P, n = as.integer(N)
 )[order(CHR, BP)]
 fwrite(scan, "data/teonam/stam_gwas_scan_118k.csv")
-cat(
+log_info("%s", paste(
   "scan markers:", nrow(scan), " tested:", sum(!is.na(scan$P)),
   " max -log10P:", round(-log10(min(scan$P, na.rm = TRUE)), 1),
-  " median n/marker:", median(scan$n), "\n"
-)
+  " median n/marker:", median(scan$n)
+))
 print(head(scan[order(P)], 10))

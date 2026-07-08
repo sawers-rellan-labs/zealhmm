@@ -20,15 +20,18 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
+source(file.path(ROOT, "scripts/logging.R"))
+t0 <- Sys.time()
 source(file.path(ROOT, "R/simulate.R"))
 source(file.path(ROOT, "scripts/map_tools.R"))
+source(file.path(ROOT, "scripts/emmax_qk.R")) # emmax_qk_scan (MLM Q+K, Chen Fig-4C)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
 dir.create(OUTDIR, recursive = TRUE, showWarnings = FALSE)
 
 ARGS <- commandArgs(TRUE)
 SMOKE <- "--smoke" %in% ARGS
 if (!SMOKE && !("--generate" %in% ARGS)) {
-  message("pass --generate (full grid) or --smoke (1 cell).")
+  log_info("pass --generate (full grid) or --smoke (1 cell).")
   quit(save = "no", status = 0)
 }
 
@@ -51,7 +54,7 @@ union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 mt_thin <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm_thin01.tsv")) # cached 0.1 cM inference grid
 setnames(mt_thin, "pos_v5", "pos")
-message(sprintf("118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM", nrow(u), nrow(mt_thin)))
+log_info("118K grid: %d union markers (back-projection target) | inference grid %d markers @0.1 cM", nrow(u), nrow(mt_thin))
 
 g118 <- readRDS(file.path(ROOT, "data/teonam/teonam_gwas118k_dosage_polar.rds")) # AUTHENTIC per-SNP genotypes
 dos <- g118$dos
@@ -74,10 +77,10 @@ load_family <- function(fam) {
   af <- rowMeans(D) / 2 # per-marker truth teosinte AF (polarized: 2 = teosinte)
   list(mt = mt_thin, D = D, keys = keys, af = af)
 }
-message("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
+log_info("loading families (authentic per-SNP truth on the 0.1 cM inference grid) ...")
 fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
-for (f in FAMS) message(sprintf("  %s: %d markers x %d RILs (mean truth teosinte AF = %.3f)", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys), mean(fam_data[[f]]$af)))
+for (f in FAMS) log_info("  %s: %d markers x %d RILs (mean truth teosinte AF = %.3f)", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys), mean(fam_data[[f]]$af))
 
 recover_block <- function(fam, li) {
   lambda <- LAMBDAS[li]
@@ -119,18 +122,19 @@ recover_block <- function(fam, li) {
     tsel <- target_df$chr %in% ok_chr
     block[tsel, j] <- interpolate_genotype(geno, obs_df, target_df[tsel, , drop = FALSE], mode = "step")[, 1L]
   }
+  storage.mode(block) <- "integer" # halve the cells cache (0/1/2)
   n_het <- sum(calls == 1L, na.rm = TRUE) # het CALLS (pre-interpolation)
   n_called <- sum(covered)
   list(lambda = lambda, fam = fam, block = block, n_het = n_het, n_called = n_called, n_cells = M * N)
 }
 
 grid <- expand.grid(fam = if (SMOKE) FAMS[1] else FAMS, li = seq_along(LAMBDAS), stringsAsFactors = FALSE)
-message(sprintf("GL+HWE-118K control sweep: %d cells, %d threads ...", nrow(grid), THREADS))
+log_info("GL+HWE-118K control sweep: %d cells, %d threads ...", nrow(grid), THREADS)
 t0 <- Sys.time()
 cells <- mclapply(seq_len(nrow(grid)), function(i) recover_block(grid$fam[i], grid$li[i]), mc.cores = THREADS)
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) stop("cell(s) failed: ", paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]])
-message(sprintf("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins")))
+log_info("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins"))
 
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
 names(ph)[1] <- "line"
@@ -171,7 +175,7 @@ tb1_peak <- function(scan) {
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
 }
 
-sweep_list <- vector("list", length(LAMBDAS))
+sweep_list <- mlm_list <- vector("list", length(LAMBDAS))
 het_list <- vector("list", length(LAMBDAS))
 for (li in seq_along(LAMBDAS)) {
   lambda <- LAMBDAS[li]
@@ -182,26 +186,33 @@ for (li in seq_along(LAMBDAS)) {
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_control_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
+  mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Q+K)
+  mlm[, coverage := lambda]
+  mlm_list[[li]] <- mlm
   nh <- sum(vapply(idx, function(i) cells[[i]]$n_het, numeric(1)))
   nca <- sum(vapply(idx, function(i) cells[[i]]$n_called, numeric(1)))
   ncl <- sum(vapply(idx, function(i) cells[[i]]$n_cells, numeric(1)))
   het_list[[li]] <- data.table(
     coverage = lambda, het_frac = nh / nca, call_rate = nca / ncl, n_het = nh, n_called = nca
   )
-  message(sprintf(
+  log_info(
     "  lambda=%-4g : %d markers, tb1 peak -log10P = %s, global max = %.1f (het/called %.3f)",
     lambda, nrow(scan), tb1_peak(scan), max(-log10(scan[is.finite(P) & P > 0, P]), na.rm = TRUE), nh / nca
-  ))
+  )
+  el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+  log_info(">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining", li, length(LAMBDAS), el, el / li, (el / li) * (length(LAMBDAS) - li))
 }
 
 if (SMOKE) {
-  message("smoke ok.")
+  log_info("smoke ok.")
   quit(save = "no", status = 0)
 }
 
 fwrite(rbindlist(het_list), file.path(OUTDIR, "stam_control_het_fraction_118k.csv"))
-message("wrote stam_control_het_fraction_118k.csv")
+log_info("wrote stam_control_het_fraction_118k.csv")
 
 sweep <- rbindlist(sweep_list, use.names = TRUE) # lambda=Inf ceiling already in sweep_list
 fwrite(sweep, file.path(OUTDIR, "stam_gwas_control_118k_sweep.csv"))
-message(sprintf("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_control_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage)))
+fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_control_118k_mlm_sweep.csv"))
+log_info("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_control_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage))

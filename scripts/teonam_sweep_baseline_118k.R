@@ -20,8 +20,10 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
+source(file.path(ROOT, "scripts/logging.R"))
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
 THREADS <- max(1L, detectCores() - 2L)
+t0 <- Sys.time()
 
 # --- 118K cM grid + dense polarized truth (identical to the sweeps) -----------
 mc <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm.tsv"))
@@ -56,7 +58,7 @@ load_family <- function(fam) {
   }
   list(mt = mt_all, D = D, keys = keys)
 }
-message("assembling complete truth matrix ...")
+log_info("assembling complete truth matrix ...")
 Gtruth <- do.call(cbind, lapply(FAMS, function(fam) {
   fd <- load_family(fam)
   b <- interpolate_genotype(fd$D, data.frame(chr = fd$mt$chr, cm = fd$mt$cm), target_df, mode = "step")
@@ -94,22 +96,29 @@ BL_PATH <- file.path(ROOT, "data/teonam/stam_gwas_scan_118k_complete_baseline.cs
 fwrite(baseline, BL_PATH)
 tb1 <- 272330564L
 w <- baseline[CHR == 1 & abs(BP - tb1) <= 5e5 & is.finite(P) & P > 0]
-message(sprintf(
+log_info(
   "complete-truth baseline: %d markers, tb1 peak -log10P = %.2f -> %s",
   nrow(baseline), max(-log10(w$P)), BL_PATH
-))
+)
 
 # --- patch the coverage==Inf rows of each sweep CSV in place ------------------
 bl_inf <- copy(baseline)[, coverage := Inf]
-for (caller in c("rtiger", "nnil", "lbimpute", "control")) {
+callers <- c("rtiger", "nnil", "lbimpute", "control")
+for (ci in seq_along(callers)) {
+  caller <- callers[ci]
   f <- file.path(OUTDIR, sprintf("stam_gwas_%s_118k_sweep.csv", caller))
   if (!file.exists(f)) {
-    message("  (skip, not found: ", basename(f), ")")
+    log_info("%s", paste0("  (skip, not found: ", basename(f), ")"))
     next
   }
   sw <- fread(f)
   sw <- sw[is.finite(coverage)] # drop old (scattery) Inf rows
   sw <- rbindlist(list(sw, bl_inf), use.names = TRUE)
   fwrite(sw, f)
-  message(sprintf("  patched %s (%d rows)", basename(f), nrow(sw)))
+  log_info("  patched %s (%d rows)", basename(f), nrow(sw))
+  el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+  log_info(
+    ">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining",
+    ci, length(callers), el, el / ci, (el / ci) * (length(callers) - ci)
+  )
 }

@@ -26,7 +26,7 @@
 #    f_2~=0.15, f_1~=0.08 had a prior-consuming caller been used.)
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (deterministic per cell).
-#  - min_cov = 0L for the RTIGER call: decode EVERY family marker (uncovered
+#  - min_reads = 0L for the RTIGER call: decode EVERY family marker (uncovered
 #    markers carry a flat emission and are filled by the rigidity HMM from
 #    neighbours). This yields a COMPLETE rectangular per-family block for step-
 #    interpolation and avoids the 2*rigidity per-(sample,chr) coverage floor
@@ -171,7 +171,7 @@ recover_block <- function(fam, li) {
 
   st <- call_states(long,
     caller = "rtiger", rigidity = RIGIDITY,
-    min_cov = 0L, threads = 1L
+    min_reads = 0L, threads = 1L
   ) # RTIGER ignores priors
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
   W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align rows to mt (cm order)

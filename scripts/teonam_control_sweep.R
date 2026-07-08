@@ -36,7 +36,7 @@
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (same scheme as the RTIGER
 #    sweep, so both sweeps degrade the identical truth mosaics).
-#  - Zero-depth markers -> NA (call_gl); "covered" = non-NA. No min_cov floor:
+#  - Zero-depth markers -> NA (call_gl); "covered" = non-NA. No min_reads floor:
 #    interpolation fills uncovered union markers from each RIL's flanking calls.
 #
 # Run:  Rscript scripts/teonam_control_sweep.R --generate

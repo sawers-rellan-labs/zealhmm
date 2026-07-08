@@ -29,7 +29,7 @@
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (identical scheme to the
 #    RTIGER + control sweeps, so all three degrade the same truth mosaics).
-#  - min_cov = 0L: decode EVERY family marker -> a COMPLETE rectangular per-family
+#  - min_reads = 0L: decode EVERY family marker -> a COMPLETE rectangular per-family
 #    block for step-interpolation (uncovered markers carry a flat count emission and
 #    are filled by the geometric HMM from neighbours), matching the RTIGER sweep.
 #
@@ -168,7 +168,7 @@ recover_block <- function(fam, li) {
   st <- call_states(long,
     caller = "nnil", f_1 = F1, f_2 = F2,
     rrate = RRATE, err = READ_PARS$error,
-    min_cov = 0L, threads = 1L
+    min_reads = 0L, threads = 1L
   )
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
   W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align rows to mt (cm order)

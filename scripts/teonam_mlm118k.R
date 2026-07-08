@@ -28,6 +28,7 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
+source(file.path(ROOT, "scripts/logging.R"))
 TASSEL <- "/Applications/TASSEL 5/run_pipeline.pl"
 TDIR <- file.path(ROOT, "data/teonam/tassel")
 OUT <- file.path(ROOT, "results/sim/teonam")
@@ -44,7 +45,7 @@ timings <- list()
 
 # ---- build the 118K hapmap (NO interpolation) + phenotype with 5 PCs --------
 if (stage %in% c("build", "all") || !file.exists(HMP)) {
-  message("build 118K hapmap (raw, N at missing; no densification) ...")
+  log_info("build 118K hapmap (raw, N at missing; no densification) ...")
   g118 <- readRDS("data/teonam/teonam_gwas118k_dosage.rds")
   dos <- g118$dos # markers x lines, NA = untyped
   mc <- fread("data/teonam/markers_v5_gwas118k.tsv")
@@ -53,10 +54,10 @@ if (stage %in% c("build", "all") || !file.exists(HMP)) {
   mk <- intersect(rownames(dos), mc$marker) # lifted markers only
   G <- dos[mk, , drop = FALSE] # markers x lines, integer 0/1/2, NA
   lines <- colnames(G)
-  message(sprintf(
+  log_info(
     "  %d lifted markers x %d lines; missing %.2f%%",
     nrow(G), ncol(G), 100 * mean(is.na(G))
-  ))
+  )
 
   # recode 0/1/2 -> A/M/C, NA -> N (TASSEL handles N per site)
   cn <- matrix("N", nrow(G), ncol(G))
@@ -72,7 +73,7 @@ if (stage %in% c("build", "all") || !file.exists(HMP)) {
   setnames(hmp, c(names(hd), lines))
   setorder(hmp, chrom, pos)
   fwrite(hmp, HMP, sep = "\t", quote = FALSE, na = "N")
-  message(sprintf("  wrote %s", basename(HMP)))
+  log_info("  wrote %s", basename(HMP))
 
   # Q = 5 PCs: prcomp needs complete data -> mean-impute a copy (PCA only).
   Xm <- t(G) # lines x markers
@@ -99,19 +100,19 @@ if (stage %in% c("build", "all") || !file.exists(HMP)) {
     paste(c("Taxa", "STAM", paste0("PC", 1:5)), collapse = "\t")
   ), PHENO)
   fwrite(pt, PHENO, sep = "\t", quote = FALSE, col.names = FALSE, append = TRUE)
-  message(sprintf("  wrote %s (%d taxa)", basename(PHENO), nrow(pt)))
+  log_info("  wrote %s (%d taxa)", basename(PHENO), nrow(pt))
 }
 
 if (stage %in% c("kinship", "all")) {
-  message("kinship (Centered_IBS on the raw 118K panel) ...")
+  log_info("kinship (Centered_IBS on the raw 118K panel) ...")
   r <- tass(sprintf('-importGuess "%s" -KinshipPlugin -method Centered_IBS -endPlugin -export "%s" -exportType SqrMatrix', HMP, KIN))
-  message(sprintf("  kinship rc=%d, %.1f s", r$rc, r$sec))
+  log_info("  kinship rc=%d, %.1f s", r$rc, r$sec)
   timings[["kinship"]] <- r$sec
 }
 if (stage %in% c("mlm", "all")) {
-  message("MLM (P3D, Q+K) on the raw 118K panel ...")
+  log_info("MLM (P3D, Q+K) on the raw 118K panel ...")
   r <- tass(sprintf('-fork1 -h "%s" -fork2 -r "%s" -fork3 -k "%s" -combine4 -input1 -input2 -intersect -combine5 -input4 -input3 -mlm -mlmVarCompEst P3D -mlmCompressionLevel None -export "%s" -runfork1 -runfork2 -runfork3', HMP, PHENO, KIN, MLMOUT))
-  message(sprintf("  MLM rc=%d, %.1f s; files: %s", r$rc, r$sec, paste(list.files(TDIR, pattern = "mlm_118k"), collapse = ", ")))
+  log_info("  MLM rc=%d, %.1f s; files: %s", r$rc, r$sec, paste(list.files(TDIR, pattern = "mlm_118k"), collapse = ", "))
   timings[["mlm"]] <- r$sec
 }
 if (length(timings)) {
