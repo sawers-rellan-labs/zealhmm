@@ -1,0 +1,538 @@
+---
+title: "TeoNAM STAM — MLM (Family + K) GWAS with candidate genes + coverage sweep [118K panel]"
+subtitle: "The OLS model (Family + marker) plus a K random effect, on the authentic 118,838-SNP panel, and the five-caller coverage-degradation sweep under MLM"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The MLM counterpart of
+[`teonam-qtl-recovery-118k`](teonam-qtl-recovery-118k.html): the same figures — JLM
+lollipop (Fig 4A), the authentic 118K GWAS Manhattan, the coverage-degradation
+composite, caller noisiness — but the GWAS model is a **mixed model** instead of OLS.
+The fixed structure is the **5-family factor** (the OLS/JLM structure), so this is
+literally "**OLS (`Family + marker`) + a K random effect**" and the OLS↔MLM contrast is
+the K term alone. In TeoNAM the structure *is* the five families, so this matches Chen's
+Q = 5 PCs (Q ≈ Family; interchangeable — `scripts/teonam_mlm_family_118k.R`). Chen's
+**exact** Fig-4C (TASSEL Q = 5 PCs + Centered_IBS K) and the QQ/λ_GC head-to-head are
+the sibling notebook [`teonam-stam-mlm-gwas-118k`](teonam-stam-mlm-gwas-118k.html).
+
+::: {.callout-important}
+## Kinship: full-data vs per-coverage
+- **Panels B & C** (authentic per-SNP and FSFHap ancestry-imputed) use K (VanRaden)
+  estimated on the *full* panel — the single-experiment correction (R-EMMAX,
+  `scripts/teonam_mlm_family_118k.R`, `teonam_mlm_fsfhap_118k.R`).
+- **The coverage sweeps** keep the **Family** fixed term (known a priori, coverage-
+  independent) but cannot use a full-panel K — at low coverage you only have shallow
+  reads. So each coverage λ gets its **honest K homologue**: K (VanRaden) from the **GL
+  dosage of the downsampled reads, *before* ancestry calling** (`scripts/teonam_mlm_null_bycov_118k.R`).
+  K is caller-independent (one null per coverage), so only the *tested* recovered
+  genotypes differ per caller. Per-marker test: `scripts/emmax_qk.R` (R-EMMAX, P3D,
+  joint 2-df).
+:::
+
+The central MLM result is a **confound, not a bug**: for the domestication traits
+K = teosinte-ancestry relatedness is nearly collinear with the QTL (a RIL is
+"teosinte-like" genome-wide *because* it carries teosinte alleles at *tb1* etc.), so
+the mixed model **absorbs the very signal it is meant to protect** — worst where K is
+best estimated (high coverage / full panel). This is why Chen used **JLM** (Fig 4A),
+not MLM, for the STAM QTL, and why the degradation sweep runs *backwards* under MLM.
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+```
+
+```{r helpers}
+# Coordinate transformer replicating fastman_gg's internal x layout (shared verbatim
+# with the OLS recovery notebook), so gene labels / lines land at arbitrary (chr, bp).
+get_transformer <- function(m) {
+  cmat <- do.call(rbind, lapply(
+    split(m[order(m$CHR, m$BP), ], m$CHR[order(m$CHR, m$BP)]),
+    function(d) {
+      data.frame(
+        CHR = d$CHR[1], min_bp = min(d$BP),
+        width = max(d$BP) - min(d$BP),
+        medgap = if (nrow(d) > 1) median(diff(sort(d$BP))) else 1
+      )
+    }
+  ))
+  cmat <- cmat[order(cmat$CHR), ]
+  maxgap <- max(cmat$medgap, na.rm = TRUE)
+  numc <- nrow(cmat)
+  cmat$base <- 0
+  cmat$midp <- 0
+  cmat$midp[1] <- cmat$width[1] / 2
+  for (i in 2:numc) {
+    cmat$base[i] <- cmat$base[i - 1] + cmat$width[i - 1] + maxgap
+    cmat$midp[i] <- cmat$base[i] + cmat$width[i] / 2
+  }
+  fac <- numc / cmat$midp[numc]
+  cmat$basef <- fac * cmat$base
+  function(chr, bp) {
+    i <- match(chr, cmat$CHR)
+    fac * (bp - cmat$min_bp[i]) + cmat$basef[i]
+  }
+}
+
+LOD <- 5 # Chen 2019: P < 1e-5 (LOD = 5)
+
+# genomic inflation factor: median(chi^2_obs) / median(chi^2_null), 1-df scale
+lambda_gc <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, df = 1, lower.tail = FALSE)) / qchisq(0.5, df = 1), 3)
+}
+
+#' Read TASSEL MLM output (mlm_118k2.txt) into a scan (SNP, CHR, BP[v5], P) using the
+#' joint 2-df additive+dominance p-value (column `p`), dropping the mean ("None") row.
+read_mlm_tassel <- function(txt) {
+  d <- fread(txt)
+  d <- d[Marker != "None" & !is.na(Chr) & is.finite(p)]
+  data.table(SNP = d$Marker, CHR = as.integer(d$Chr), BP = as.integer(d$Pos), P = as.numeric(d$p))
+}
+
+#' STAM Manhattan with candidate genes at their true v5 positions (shared with the OLS
+#' notebook; accepts a data.frame scan so it works on the parsed TASSEL table).
+plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL) {
+  scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
+  scan <- scan[is.finite(scan$P) & scan$P > 0, ]
+  m <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
+
+  ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv")) # symbol, chr, start (v5)
+  ov[, y := vapply(seq_len(.N), function(i) {
+    w <- m$P[m$CHR == chr[i] & abs(m$BP - start[i]) <= 5e5]
+    if (length(w)) -log10(min(w)) else NA_real_
+  }, numeric(1))]
+  tr <- get_transformer(m)
+  ov[, BPn := tr(chr, start)]
+  ov <- ov[is.finite(y)]
+
+  mp <- -log10(min(m$P))
+  ticks <- pretty(c(0, mp))
+  unit <- diff(ticks)[1]
+  ytop <- max(ticks) + unit
+
+  p <- fastman_gg(
+    m = m, snp = "SNP", col = c("black", "gray75"), maxP = mp,
+    genomewideline = NULL, suggestiveline = NULL,
+    ylab = expression(-log[10](italic(P))), xlab = ""
+  ) +
+    geom_hline(yintercept = LOD, linetype = "dotted", linewidth = 0.7, color = "black") +
+    geom_point(data = ov, aes(x = BPn, y = y), inherit.aes = FALSE, shape = 8, size = 3, stroke = 1, color = "red") +
+    ggrepel::geom_text_repel(
+      data = ov, aes(x = BPn, y = y, label = symbol), inherit.aes = FALSE,
+      fontface = "italic", size = 5, segment.color = "grey50", min.segment.length = 0,
+      box.padding = 0.5, max.overlaps = Inf, ylim = c(mp + 0.3 * unit, ytop)
+    ) +
+    ggtitle(title) +
+    theme_classic(base_size = 18) +
+    scale_y_continuous(breaks = ticks, limits = c(0, ytop), expand = expansion(mult = c(0.01, 0))) +
+    theme(
+      plot.title = element_markdown(hjust = 1, size = 15, face = "bold"),
+      legend.position = "none",
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2)
+    )
+  if (!is.null(mark)) {
+    xm <- tr(mark$chr, mark$bp)
+    p <- p + geom_vline(xintercept = xm, linetype = "dashed", color = "red", linewidth = 0.5)
+  }
+  if (!is.null(out_png)) ggsave(out_png, p, width = 9, height = 4.6, dpi = 200, bg = "white")
+  p
+}
+
+#' Chen 2019 Fig 4A: JLM QTL genomic distribution as a lollipop (shared verbatim with
+#' the OLS recovery notebook). JLM is a separate stepwise arm; identical in both.
+plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
+  scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
+  scan <- scan[is.finite(scan$P) & scan$P > 0, ]
+  maxis <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
+
+  j <- fread(jlm_txt)
+  j <- j[!(Name %in% c("mean", "Family", "Error"))]
+  q <- data.table(SNP = j$Name, CHR = as.integer(j$Locus), BP = as.integer(j$Position), logP = -log10(as.numeric(j$`pr>F`)))
+  q <- q[logP >= LOD]
+  ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv"))
+  ov <- ov[symbol %in% c("ts2", "tb1", "tru1", "zmm16", "tsh4")]
+  q[, gene := ""]
+  for (i in seq_len(nrow(ov))) {
+    idx <- which(q$CHR == ov$chr[i])
+    if (length(idx)) {
+      k <- idx[which.min(abs(q$BP[idx] - ov$start[i]))]
+      q$gene[k] <- ov$symbol[i]
+    }
+  }
+  tr <- get_transformer(maxis)
+  q[, BPn := tr(CHR, BP)]
+  maxlogP <- max(q$logP)
+  brks <- seq(0, floor(maxlogP / 10) * 10, by = 10)
+  ytop <- maxlogP * 1.18
+
+  p <- fastman_gg(
+    m = maxis, snp = "SNP", col = c("#00000000", "#00000000"), maxP = maxlogP,
+    genomewideline = NULL, suggestiveline = NULL,
+    ylab = expression(-log[10](italic(P))), xlab = ""
+  ) +
+    geom_segment(data = q, aes(x = BPn, xend = BPn, y = 0, yend = logP), inherit.aes = FALSE, color = "blue", linewidth = 0.5) +
+    geom_point(data = q, aes(x = BPn, y = logP), inherit.aes = FALSE, color = "blue", size = 2.5) +
+    ggrepel::geom_text_repel(
+      data = q[gene != ""], aes(x = BPn, y = logP, label = gene), inherit.aes = FALSE,
+      fontface = "bold.italic", size = 5, segment.color = NA, box.padding = 0.4,
+      point.padding = 0.3, nudge_y = 0.05 * maxlogP, seed = 1, max.overlaps = Inf
+    ) +
+    ggtitle(title) + theme_classic(base_size = 18) +
+    scale_y_continuous(breaks = brks, limits = c(0, ytop), expand = expansion(mult = c(0.01, 0))) +
+    theme(
+      plot.title = element_markdown(hjust = 1, size = 15, face = "bold"),
+      legend.position = "none",
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2)
+    )
+  if (!is.null(out_png)) ggsave(out_png, p, width = 9, height = 4, dpi = 200, bg = "white")
+  p
+}
+
+#' Coverage-sweep line-Manhattan (geom_line, one line per coverage). Shared verbatim
+#' with the OLS recovery notebook.
+plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
+  sw <- as.data.table(fread(sweep_csv))
+  sw <- sw[is.finite(P) & P > 0]
+  sw[, logP := -log10(P)]
+  tr <- get_transformer(as.data.frame(sw[coverage == sw$coverage[1], .(CHR, BP)]))
+  sw[, BPn := tr(CHR, BP)]
+  cov_levels <- c("∞", "20", "10", "5", "1", "0.5", "0.2", "0.1")
+  sw[, cov_lab := factor(ifelse(is.finite(coverage), formatC(coverage), "∞"), levels = cov_levels)]
+  cov_asc <- c("0.1", "0.2", "0.5", "1", "5", "10", "20")
+  pal <- setNames(grDevices::hcl.colors(7, "viridis"), cov_asc)
+  pal["∞"] <- "black"
+  axis_df <- sw[, .(mid = (min(BPn) + max(BPn)) / 2), by = CHR][order(CHR)]
+  ytop <- 20
+  sw[, dord := ifelse(is.finite(coverage), -coverage, Inf)]
+
+  # LOD-5 peak loci (above-threshold markers clumped within 1 Mb -> top marker per
+  # clump): infinity = black up-triangles just below the axis (caller ceiling), 0.5x =
+  # down-triangles in the 0.5x legend colour near the top. Matches
+  # scripts/teonam_sweep_manhattan_png.R.
+  peak_loci <- function(cvsub, gap = 1e6) {
+    s <- cvsub[logP > LOD]
+    if (!nrow(s)) {
+      return(s[0])
+    }
+    setorder(s, CHR, BP)
+    s[, pk := cumsum(CHR != shift(CHR, fill = -1L) | BP - shift(BP, fill = -1L) > gap)]
+    s[, .SD[which.max(logP)], by = pk]
+  }
+  pk_inf <- peak_loci(sw[!is.finite(coverage)])
+  pk_05 <- peak_loci(sw[coverage == 0.5])
+
+  ggplot(sw[order(dord, CHR, BP)], aes(x = BPn, y = logP, color = cov_lab, group = interaction(CHR, coverage))) +
+    geom_line(linewidth = 0.4) +
+    geom_hline(yintercept = LOD, linetype = "dotted", linewidth = 0.7, color = "grey30") +
+    geom_point(
+      data = pk_inf, aes(x = BPn, y = -0.045 * ytop), inherit.aes = FALSE,
+      shape = 24, fill = "black", colour = "black", size = 2.4
+    ) + # infinity LOD-5 loci: black up-triangles BELOW the x-axis (shape 24 mirrors 25)
+    geom_point(
+      data = pk_05, aes(x = BPn, y = 0.98 * ytop), inherit.aes = FALSE,
+      shape = 25, fill = pal[["0.5"]], colour = pal[["0.5"]], size = 2.4
+    ) + # 0.5x LOD-5 loci: down-triangles in the 0.5x legend colour, at the top
+    scale_color_manual(values = pal, name = "coverage (×)", drop = FALSE) +
+    scale_x_continuous(breaks = axis_df$mid, labels = axis_df$CHR, expand = c(0.01, 0)) +
+    scale_y_continuous(expand = expansion(mult = c(0.01, 0))) +
+    coord_cartesian(ylim = c(0, ytop), clip = "off") + # allow the below-axis infinity triangles to render in the margin
+    labs(x = "chromosome", y = expression(-log[10](italic(P))), title = title) +
+    theme_classic(base_size = base_size) +
+    theme(
+      plot.margin = margin(t = 5, r = 6, b = 16, l = 6), # room below the axis for the infinity triangles
+      plot.title = element_markdown(hjust = 0, size = base_size, face = "bold"),
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2),
+      legend.position = if (legend) c(0.995, 0.97) else "none",
+      legend.justification = c(1, 1),
+      legend.background = element_rect(fill = scales::alpha("white", 0.7), colour = NA),
+      legend.key.size = unit(0.85, "lines"),
+      legend.title = element_text(size = base_size - 3),
+      legend.text = element_text(size = base_size - 4),
+      legend.margin = margin(1, 3, 1, 3)
+    ) +
+    guides(color = guide_legend(override.aes = list(linewidth = 1.2)))
+}
+
+# Panel B = MLM (Family + K) on the authentic per-SNP panel (R-EMMAX; scripts/
+# teonam_mlm_family_118k.R). Family (not 5 PCs) so B and C share the OLS structure and
+# the OLS<->MLM contrast is the K term alone. The faithful TASSEL Q+K Fig-4C (Chen's
+# exact model) is the sibling notebook teonam-stam-mlm-gwas-118k.html; read_mlm_tassel()
+# below still parses it if needed.
+mlm <- fread(here("data/teonam/stam_gwas_mlm_family_118k.csv"))
+```
+
+## Candidate genes: closest marker vs most-significant marker (v5)
+
+For each STAM candidate gene (B73 v5), the **closest** marker (smallest bp distance to
+the gene body) vs the **window-max** marker (highest −log₁₀P within ±500 kb) in the
+authentic 118K **MLM (Family+K)** scan. As under OLS they are not the same marker: the
+closest marker sits on the gene but carries little signal; the local peak is a nearby
+but distinct marker.
+
+```{r candidate-markers}
+sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)]
+cand <- c(ts2 = "STAM1.1", tb1 = "STAM1.2", tru1 = "STAM3.1", zmm16 = "STAM3.2", tsh4 = "STAM7.1", an1 = "GWAS(chr1)")
+sym <- fread(here("data/ref/maize_v5_gene_symbols.tsv"))
+setnames(sym, c("gene_id", "symbol"))
+coord <- fread(here("data/ref/b73_gene_coords.tsv"), header = FALSE, col.names = c("gene_id", "chr", "start", "end"))
+gg <- merge(sym[symbol %in% names(cand)], coord, by = "gene_id")
+gg[, chr := as.integer(sub("^chr", "", chr))][, qtl := cand[symbol]]
+WIN <- 5e5
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d)
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- which.max(w$logP)
+  data.table(
+    gene = gg$symbol[i], QTL = gg$qtl[i], chr = ch, `gene start (v5)` = s,
+    `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
+    `window-max Δstart (bp)` = w$BP[kw] - s, `window-max -log10P` = round(w$logP[kw], 2)
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab, format.args = list(big.mark = ","), caption = paste(
+  "STAM candidate genes (B73 v5): CLOSEST marker vs highest -log10P marker within +/-500 kb",
+  "(authentic 118K MLM Family+K scan). Δstart = marker bp - gene start (v5), signed."
+))
+```
+
+## JLM QTL genomic distribution (Fig 4A)
+
+The STAM QTL from JLM (TASSEL stepwise, nested-in-family), candidate genes bold-italic
+above their nearest QTL. **This arm is model-independent** — JLM, not MLM — so the
+lollipop is identical to the OLS notebook; it is Chen's *primary* STAM analysis and
+the correct home for these domestication QTL (see the MLM confound below).
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- plot_stam_lollipop(
+  here("data/teonam/tassel/stam_jlm_native1.txt"),
+  mlm,
+  "STAM — JLM QTL genomic distribution (TeoNAM)",
+  here("results/sim/teonam/stam_jlm_lollipop_mlm118k.png")
+)
+p_lolli
+```
+
+## Authentic 118K panel — MLM (Family + K) scan
+
+The mixed model with the **OLS structure** — fixed = the 5-family factor, random = K
+(VanRaden), joint 2-df additive+dominance *F* (R-EMMAX; `scripts/teonam_mlm_family_118k.R`)
+— run on the authentic per-SNP 118K panel (~2.7% missing, per-marker mean-imputed; the
+real per-SNP scatter is preserved). Family instead of 5 PCs so this is exactly the OLS
+model (`Family + marker`) **plus K**, making the OLS↔MLM contrast the K term alone; in
+TeoNAM the structure *is* the five families, so Q ≈ Family (interchangeable — candidate
+peaks within 0.2, λ_GC 1.09 vs 1.12; `teonam_mlm_family_118k.R`). Chen's **exact**
+Fig-4C model (TASSEL Q = 5 PCs + Centered_IBS K) is the sibling notebook
+[`teonam-stam-mlm-gwas-118k`](teonam-stam-mlm-gwas-118k.html).
+
+```{r manhattan-mlm, fig.width=9, fig.height=4.4}
+p_mlm <- plot_stam_manhattan(
+  mlm,
+  "STAM — GWAS MLM (Family + K), authentic 118K panel, candidate genes at v5 positions",
+  here("results/sim/teonam/stam_gwas_mlm_manhattan_annotated_118k.png")
+)
+p_mlm
+```
+
+## OLS → MLM on the same panel: the *tb1* confound
+
+The fixed-effect OLS scan (`Family + marker`, no K) vs the MLM (`Family + K`) on the
+identical 118K panel — **same fixed part, K the only addition**. The MLM **deflates λ_GC
+toward 1** *and* **collapses the domestication peaks**: *tb1* (chr1) and *tru1/zmm16*
+(chr3) that dominate OLS are flattened, because teosinte ancestry there is collinear
+with K.
+
+```{r ols-vs-mlm}
+ols <- fread(here("data/teonam/stam_gwas_scan_118k.csv"))[is.finite(P) & P > 0, .(SNP, CHR = as.integer(CHR), BP = as.integer(BP), P)]
+lam_tab <- data.table(
+  model = c("OLS (Family + marker, no K)", "MLM (Family + K)"),
+  markers = c(nrow(ols), nrow(mlm)),
+  lambda_GC = c(lambda_gc(ols$P), lambda_gc(mlm$P)),
+  max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
+)
+knitr::kable(lam_tab, caption = "OLS vs MLM on the authentic 118K panel, same Family fixed part: adding K deflates genomic inflation and the top peak.")
+```
+
+```{r ols-vs-mlm-peaks}
+ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv"))
+peak_at <- function(scan, ch, s) {
+  w <- scan[CHR == ch & abs(BP - s) <= 5e5 & is.finite(P) & P > 0]
+  if (!nrow(w)) {
+    return(NA_real_)
+  }
+  round(max(-log10(w$P)), 2)
+}
+cmp <- ov[, .(
+  gene = symbol, chr,
+  `OLS peak` = mapply(peak_at, list(ols), chr, start),
+  `MLM peak` = mapply(peak_at, list(mlm), chr, start)
+)]
+cmp[, `drop (OLS−MLM)` := round(`OLS peak` - `MLM peak`, 2)]
+setorder(cmp, -`OLS peak`)
+knitr::kable(cmp, caption = "Local peak -log10P (+/-500 kb) per candidate: OLS vs MLM. K collapses the domestication peaks (tb1 the most) — the ancestry-QTL confound.")
+```
+
+## Composite (A: JLM lollipop · B: MLM authentic 118K · C: MLM FSFHap ancestry-imputed)
+
+Panel C is the direct MLM analog of the OLS notebook's ancestry-imputed panel: the same
+**FSFHap W22↔teosinte block mosaic** (Chen's own ancestry inference,
+`teonam_gwas118k_dosage_fsfhap`), scanned as **`Family + K`** — the OLS panel's fixed
+part (the 5-family factor) plus a K random effect, so the OLS↔MLM contrast is the K term
+alone. Family is used instead of 5 PCs because in TeoNAM the structure *is* the five
+families (Q ≈ Family; on this mosaic Family+K is the better-calibrated of the two,
+λ_GC 1.13 vs 1.26 for 5 PCs — `scripts/teonam_mlm_family_118k.R`). K is estimated from
+the FSFHap genotypes themselves. Compute: `scripts/teonam_mlm_fsfhap_118k.R`. So B and C
+contrast the **per-SNP** panel against the **ancestry-imputed mosaic**: peaks at the same
+loci but C block-terraced, and the mixed model suppresses the domestication peaks in both
+(K absorbs the ancestry-collinear QTL — the confound).
+
+```{r composite, fig.width=9, fig.height=13}
+fsf <- fread(here("data/teonam/stam_gwas_mlm_fsfhap_118k.csv"))
+lgc_fsf <- lambda_gc(fsf$P)
+p_anc <- plot_stam_manhattan(
+  fsf,
+  sprintf("STAM — MLM (Family + K), FSFHap ancestry-imputed 118K panel (λ_GC = %.2f)", lgc_fsf),
+  here("results/sim/teonam/stam_gwas_mlm_fsfhap_manhattan_118k.png")
+)
+composite <- cowplot::plot_grid(
+  p_lolli, p_mlm, p_anc,
+  ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr"
+)
+ggsave(here("results/sim/teonam/stam_composite_mlm_118k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
+composite
+```
+
+## RTIGER ancestry × coverage under MLM (degradation sweep)
+
+The RTIGER coverage sweep under the MLM (Family+K). Reads are Poisson-sampled from the
+**authentic 118K per-SNP genotypes** over `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20, ∞}×`;
+RTIGER infers ancestry **directly on all 118K markers, per chromosome** (no thinning, no
+back-projection), and the per-coverage GL-dosage null (its honest Family+K at that
+depth) is applied. λ = ∞ is RTIGER's deterministic ceiling. Compute:
+`scripts/teonam_rtiger_sweep_118k.R` (writes the OLS and `_mlm` sweep CSVs); this chunk plots.
+
+**Rigidity.** RTIGER's `rigidity` is a *marker-count* minimum-segment length. The
+calibrated `rigidity_star = 2` over-segments ~5–6× on this dense grid; a cM-distance rule
+fails too because the interpolated cM map is heavily tied (median gap ≈ 0). So rigidity
+is calibrated **empirically on the full grid** — chr1, one family, λ=∞, swept against the
+FSFHap truth breakpoint density (`agent/rtiger_rigsweep_chr1.R`): **rigidity = 60**
+reproduces FSFHap's ~10.4 breakpoints/chr1 (recovered 10.6). That truth-matched
+segmentation is what makes the profile below smooth rather than the earlier over-segmented
+sawtooth.
+
+The coverage order is **inverted** relative to OLS: low coverage rides *highest*, ∞
+*lowest*. At shallow depth the GL-dosage K is too noisy to correct structure, so the
+ancestry-confounded QTL leaks through; at ∞ the kinship is well-estimated and crushes
+it. The chr3 broad 0.1× elevation is a low-coverage MLM artifact (poor K + block
+recovery in the pericentromere). One replicate per cell.
+
+```{r line-manhattan, fig.width=9, fig.height=4.6}
+p_sweep <- plot_sweep_line(
+  here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"),
+  "STAM — RTIGER ancestry, MLM (Family+K) −log10P vs coverage",
+  base_size = 15
+)
+ggsave(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep_manhattan.png"), p_sweep, width = 9, height = 4.6, dpi = 200, bg = "white")
+p_sweep
+```
+
+## MLM coverage-degradation composite: control / nNIL / RTIGER / LB-Impute / binhmm
+
+The five-caller contrast under MLM. Same pipeline as the OLS composite (authentic
+per-SNP truth → per-caller ancestry on the 0.1 cM grid → back-project → GWAS), scanned
+with the per-coverage GL-dosage Family+K null instead of OLS. λ = ∞ is each caller's own
+deterministic ceiling (caller-specific, no shared baseline).
+
+Because MLM removes the (confounded) *tb1* signal from **every** caller, the panels no
+longer differentiate on QTL power — they differentiate on **false-positive
+suppression**, which follows the caller-noisiness ordering below (a property of the
+recovered ancestry *geometry*):
+
+- **A — interpolation control** (GL + HWE, no HMM): noisiest — dense false peaks
+  genome-wide (to ~15), driven by mid coverages; no smoothing for K to work with.
+- **B — nNIL**: cleaner but still busy — scattered false peaks, chr3 elevated.
+- **C — RTIGER**: cleanest — little survives LOD; only the chr3 0.1× artifact and a modest *tb1*.
+- **D — LB-Impute**: also clean — *tb1* to ~10–11 at 0.1×, flat elsewhere.
+- **E — binhmm** (1 Mb bins): clean, like C/D — the coarse bin resolution suppresses
+  fine-scale false peaks; a chr1 *tb1* cluster (to ~8, strongest at low coverage) and a
+  modest chr3, otherwise flat.
+
+Read the panels for *false-positive control*, not QTL power (which MLM deliberately
+removes). One replicate per (family, λ) cell.
+
+```{r sweep-composite, fig.width=9, fig.height=20}
+pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — interpolation control (GL + HWE)", legend = TRUE)
+pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — nNIL ancestry", legend = FALSE)
+pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — RTIGER ancestry", legend = FALSE)
+pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — LB-Impute ancestry (map-aware cM)", legend = FALSE)
+pE <- plot_sweep_line(here("results/sim/teonam/stam_gwas_binhmm_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — binhmm ancestry (1 Mb bins)", legend = FALSE)
+composite <- cowplot::plot_grid(pA, pB, pC, pD, pE, ncol = 1, align = "v", axis = "lr", labels = c("A", "B", "C", "D", "E"), label_size = 18)
+ggsave(here("results/sim/teonam/stam_sweep_composite_mlm_118k.png"), composite, width = 9, height = 20, dpi = 200, bg = "white")
+composite
+```
+
+## *tb1* peak height vs coverage (the inverted trend)
+
+Quantifying the reversal: the *tb1* local peak (max −log₁₀P within ±500 kb) by caller
+and coverage under MLM. Height *falls* as coverage rises — the opposite of a normal
+power curve — because a sharper GL-dosage K at high depth more completely absorbs the
+ancestry-confounded QTL.
+
+```{r tb1-vs-cov}
+tb1 <- ov[symbol == "tb1"]
+callers <- c(control = "control", nNIL = "nnil", RTIGER = "rtiger", `LB-Impute` = "lbimpute", binhmm = "binhmm")
+rows <- rbindlist(lapply(names(callers), function(nm) {
+  sw <- fread(here(sprintf("results/sim/teonam/stam_gwas_%s_118k_mlm_sweep.csv", callers[nm])))
+  sw[CHR == tb1$chr & abs(BP - tb1$start) <= 5e5 & is.finite(P) & P > 0,
+    .(caller = nm, tb1_logP = round(max(-log10(P)), 2)),
+    by = coverage
+  ]
+}))
+wide <- dcast(rows, coverage ~ caller, value.var = "tb1_logP")
+wide[, covlab := ifelse(is.finite(coverage), formatC(coverage), "Inf")]
+setorder(wide, -coverage)
+knitr::kable(wide[, .(coverage = covlab, control, nNIL, RTIGER, `LB-Impute`, binhmm)],
+  caption = "tb1 peak -log10P (+/-500 kb) by caller x coverage under MLM (Family+K). Height decreases with coverage (Inf lowest): sharper K absorbs the ancestry-confounded QTL more fully at high depth."
+)
+```
+
+## Caller noisiness (band-limited spectral power)
+
+Spurious fine-scale structure each caller injects, as spectral power in a physically-
+defined noise band **(R, P10)** — R = 0.1 cM grid resolution, P10 = 10th-percentile
+*resolvable* teosinte introgression tract. This is a property of the recovered
+ancestry **geometry** (the back-projected block structure), which is identical between
+OLS and MLM — only the downstream GWAS model differs — so the ranking below (measured
+on the tracks in the OLS notebook, `scripts/teonam_sweep_noisiness.R`) carries over:
+**RTIGER ≈ LB-Impute run ~9× cleaner than control ≈ nNIL**, which is exactly the
+false-positive ordering seen in the MLM composite above.
+
+```{r noisiness-band}
+bp <- fread(here("results/sim/teonam/sweep_noisiness_band_118k.csv"))
+knitr::kable(bp, caption = sprintf("Noise band: resolution R = %d kb, P10 resolvable introgression = %d kb (median tract %.2f Mb).", bp$R_kb, bp$P10_kb, bp$median_frag_Mb))
+```
+
+```{r noisiness-headline}
+nz <- fread(here("results/sim/teonam/sweep_noisiness_118k.csv"))
+knitr::kable(nz, caption = "Noise-band power fraction at lambda=Inf (each caller's ceiling), least->most noisy. FFT (headline) and Haar-wavelet measures agree.")
+```

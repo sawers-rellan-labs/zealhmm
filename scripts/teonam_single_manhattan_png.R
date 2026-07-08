@@ -14,6 +14,8 @@ variant <- if (length(a) >= 2) a[2] else "mlm"
 lam <- if (length(a) >= 3) as.numeric(a[3]) else 1
 sfx <- if (variant == "mlm") "_mlm" else ""
 mlab <- if (variant == "mlm") "MLM (Family+K)" else "OLS"
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # sweep-CSV / output trait tag (stam/dta)
 LOD <- 5
 
 get_transformer <- function(m) {
@@ -28,7 +30,7 @@ get_transformer <- function(m) {
   function(chr, bp) cmat$base[match(chr, cmat$CHR)] + (bp - cmat$min_bp[match(chr, cmat$CHR)])
 }
 
-sw <- fread(sprintf("results/sim/teonam/stam_gwas_%s_118k%s_sweep.csv", caller, sfx))
+sw <- fread(sprintf("results/sim/teonam/%s_gwas_%s_118k%s_sweep.csv", TTAG, caller, sfx))
 s <- sw[coverage == lam & is.finite(P) & P > 0]
 s[, logP := -log10(P)]
 setorder(s, CHR, BP)
@@ -47,11 +49,11 @@ p <- ggplot(s, aes(x, logP, color = oddeven)) +
   scale_y_continuous(limits = c(0, ytop), expand = expansion(mult = c(0.01, 0))) +
   labs(
     x = "chromosome", y = expression(-log[10](italic(P))),
-    title = sprintf("STAM — %s ancestry, %s GWAS, coverage = %s× (authentic 118K truth)", toupper(caller), mlab, covlab)
+    title = sprintf("%s — %s ancestry, %s GWAS, coverage = %s× (authentic 118K truth)", TRAIT, toupper(caller), mlab, covlab)
   ) +
   theme_classic(base_size = 15) +
   theme(plot.title = element_markdown(size = 13, face = "bold"), panel.grid.major.y = element_line(color = "grey92", linewidth = 0.2))
 
-out <- sprintf("results/sim/teonam/stam_gwas_%s_118k%s_lambda%s_manhattan.png", caller, sfx, lam)
+out <- sprintf("results/sim/teonam/%s_gwas_%s_118k%s_lambda%s_manhattan.png", TTAG, caller, sfx, lam)
 ggsave(out, p, width = 9, height = 4.4, dpi = 200, bg = "white")
 cat("wrote", out, "| ytop =", ytop, "| markers =", nrow(s), "\n")

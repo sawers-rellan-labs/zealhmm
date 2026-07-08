@@ -165,7 +165,11 @@ recover_family <- function(fam, li) {
 # --- phenotype + GWAS scan (STAM ~ Family + marker, 1 df) --------------------
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
 names(ph)[1] <- "line"
-stam_by <- setNames(ph$STAM, ph$line)
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype col; STAM default, e.g. DTA
+NTAG <- if (TRAIT == "STAM") "" else paste0("_", TTAG) # mlm-null trait tag ("" keeps STAM paths)
+if (!TRAIT %in% names(ph)) stop("TRAIT '", TRAIT, "' is not a phenotype column")
+stam_by <- setNames(ph[[TRAIT]], ph$line)
 gwas_scan <- function(G) {
   y <- suppressWarnings(as.numeric(stam_by[colnames(G)]))
   fam <- factor(substr(colnames(G), 1, 5))
@@ -210,10 +214,10 @@ for (li in seq_along(LAMBDAS)) {
   G <- do.call(cbind, lapply(FAM_USE, function(fam) recover_family(fam, li))) # families sequential
   rownames(G) <- union_markers
   scan <- gwas_scan(G)[order(CHR, BP)] # OLS (Family + marker)
-  fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_lbimpute_118k_lambda%s.csv", lambda)))
+  fwrite(scan, file.path(OUTDIR, sprintf("%s_gwas_lbimpute_118k_lambda%s.csv", TTAG, lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
-  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched Family+K
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null%s_118k_l%s.rds", NTAG, lambda))) # coverage-matched Family+K
   mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Family+K)
   mlm[, coverage := lambda]
   mlm_list[[li]] <- mlm
@@ -233,6 +237,6 @@ if (SMOKE) {
   quit(save = "no", status = 0)
 }
 
-fwrite(rbindlist(sweep_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_lbimpute_118k_sweep.csv"))
-fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_lbimpute_118k_mlm_sweep.csv"))
+fwrite(rbindlist(sweep_list, use.names = TRUE), file.path(OUTDIR, sprintf("%s_gwas_lbimpute_118k_sweep.csv", TTAG)))
+fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, sprintf("%s_gwas_lbimpute_118k_mlm_sweep.csv", TTAG)))
 log_info("%s", paste0("wrote OLS + MLM(Q+K) sweeps, ", uniqueN(rbindlist(sweep_list)$coverage), " coverage levels"))

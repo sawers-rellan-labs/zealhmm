@@ -17,6 +17,8 @@ variant <- commandArgs(TRUE)[2]
 if (is.na(variant)) variant <- "ols" # "ols" or "mlm"
 sfx <- if (variant == "mlm") "_mlm" else ""
 mlab <- if (variant == "mlm") "MLM (Family+K)" else "OLS"
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # sweep-CSV / output trait tag (stam/dta)
 LOD <- 5
 
 get_transformer <- function(m) {
@@ -47,7 +49,7 @@ get_transformer <- function(m) {
   }
 }
 
-sw <- as.data.table(fread(sprintf("results/sim/teonam/stam_gwas_%s_118k%s_sweep.csv", caller, sfx)))
+sw <- as.data.table(fread(sprintf("results/sim/teonam/%s_gwas_%s_118k%s_sweep.csv", TTAG, caller, sfx)))
 sw <- sw[is.finite(P) & P > 0]
 sw[, logP := -log10(P)]
 tr <- get_transformer(as.data.frame(sw[coverage == sw$coverage[1], .(CHR, BP)]))
@@ -93,7 +95,7 @@ p <- ggplot(sw[order(dord, CHR, BP)], aes(x = BPn, y = logP, color = cov_lab, gr
   coord_cartesian(ylim = c(0, ytop), clip = "off") + # allow the below-axis triangles to render in the margin
   labs(
     x = "chromosome", y = expression(-log[10](italic(P))),
-    title = sprintf("STAM — %s ancestry, %s GWAS −log10P vs coverage (authentic 118K truth)", toupper(caller), mlab)
+    title = sprintf("%s — %s ancestry, %s GWAS −log10P vs coverage (authentic 118K truth)", TRAIT, toupper(caller), mlab)
   ) +
   theme_classic(base_size = 15) +
   theme(
@@ -107,6 +109,6 @@ p <- ggplot(sw[order(dord, CHR, BP)], aes(x = BPn, y = logP, color = cov_lab, gr
   ) +
   guides(color = guide_legend(override.aes = list(linewidth = 1.2)))
 
-out <- sprintf("results/sim/teonam/stam_gwas_%s_118k%s_sweep_manhattan.png", caller, sfx)
+out <- sprintf("results/sim/teonam/%s_gwas_%s_118k%s_sweep_manhattan.png", TTAG, caller, sfx)
 ggsave(out, p, width = 9, height = 4.6, dpi = 200, bg = "white")
 cat("wrote", out, "| ytop =", ytop, "\n")

@@ -45,7 +45,10 @@ mk <- mk[o]
 # --- phenotype (STAM) ---------------------------------------------------------
 ph <- as.data.frame(read_excel("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx"))
 names(ph)[1] <- "line"
-stam <- suppressWarnings(as.numeric(ph$STAM))
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype col; STAM default
+if (!TRAIT %in% names(ph)) stop("TRAIT '", TRAIT, "' is not a phenotype column")
+stam <- suppressWarnings(as.numeric(ph[[TRAIT]]))
 names(stam) <- ph$line
 lines <- intersect(colnames(G), names(stam)[is.finite(stam)])
 G <- G[, lines, drop = FALSE]
@@ -97,7 +100,7 @@ log_info("  Family+K null: n=%d, p=%d (family levels + int), delta=%.3g", n, p, 
 
 scan <- emmax_qk_scan(G, null, CHR, BP)[order(CHR, BP)]
 lgc <- with(scan[is.finite(P) & P > 0], median(qchisq(P, 1, lower.tail = FALSE)) / qchisq(0.5, 1))
-fwrite(scan, "data/teonam/stam_gwas_mlm_fsfhap_118k.csv")
+fwrite(scan, sprintf("data/teonam/%s_gwas_mlm_fsfhap_118k.csv", TTAG))
 log_info(
   "wrote data/teonam/stam_gwas_mlm_fsfhap_118k.csv  (%d markers, lambda_GC=%.3f, max -log10P=%.2f)",
   nrow(scan), lgc, max(-log10(scan[is.finite(P) & P > 0, P]))

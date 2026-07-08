@@ -138,7 +138,11 @@ log_info("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins
 
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
 names(ph)[1] <- "line"
-stam_by <- setNames(ph$STAM, ph$line)
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype col; STAM default, e.g. DTA
+NTAG <- if (TRAIT == "STAM") "" else paste0("_", TTAG) # mlm-null trait tag ("" keeps STAM paths)
+if (!TRAIT %in% names(ph)) stop("TRAIT '", TRAIT, "' is not a phenotype column")
+stam_by <- setNames(ph[[TRAIT]], ph$line)
 gwas_scan <- function(G) {
   y <- suppressWarnings(as.numeric(stam_by[colnames(G)]))
   fam <- factor(substr(colnames(G), 1, 5))
@@ -183,10 +187,10 @@ for (li in seq_along(LAMBDAS)) {
   G <- do.call(cbind, lapply(idx, function(i) cells[[i]]$block))
   rownames(G) <- union_markers
   scan <- gwas_scan(G)[order(CHR, BP)]
-  fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_control_118k_lambda%s.csv", lambda)))
+  fwrite(scan, file.path(OUTDIR, sprintf("%s_gwas_control_118k_lambda%s.csv", TTAG, lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
-  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null%s_118k_l%s.rds", NTAG, lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
   mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Q+K)
   mlm[, coverage := lambda]
   mlm_list[[li]] <- mlm
@@ -213,6 +217,6 @@ fwrite(rbindlist(het_list), file.path(OUTDIR, "stam_control_het_fraction_118k.cs
 log_info("wrote stam_control_het_fraction_118k.csv")
 
 sweep <- rbindlist(sweep_list, use.names = TRUE) # lambda=Inf ceiling already in sweep_list
-fwrite(sweep, file.path(OUTDIR, "stam_gwas_control_118k_sweep.csv"))
-fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, "stam_gwas_control_118k_mlm_sweep.csv"))
-log_info("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, "stam_gwas_control_118k_sweep.csv"), nrow(sweep), uniqueN(sweep$coverage))
+fwrite(sweep, file.path(OUTDIR, sprintf("%s_gwas_control_118k_sweep.csv", TTAG)))
+fwrite(rbindlist(mlm_list, use.names = TRUE), file.path(OUTDIR, sprintf("%s_gwas_control_118k_mlm_sweep.csv", TTAG)))
+log_info("wrote %s (%d rows, %d coverage levels)", file.path(OUTDIR, sprintf("%s_gwas_control_118k_sweep.csv", TTAG)), nrow(sweep), uniqueN(sweep$coverage))

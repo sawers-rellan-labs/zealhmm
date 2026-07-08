@@ -18,7 +18,10 @@
 # Run: Rscript scripts/teonam_sweep_noisiness.R
 suppressMessages(library(data.table))
 setwd("/Users/fvrodriguez/repos/zealhmm")
-CALLERS <- c("control", "nnil", "rtiger", "lbimpute")
+CALLERS <- c("control", "nnil", "rtiger", "lbimpute", "binhmm")
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # sweep-CSV trait tag (stam/dta)
+NTAG <- if (TRAIT == "STAM") "" else paste0("_", TTAG) # output trait tag ("" keeps STAM paths)
 
 # --- 1. resolution R (bp) from the inference grid ----------------------------
 thin <- fread("data/teonam/markers_v5_gwas118k_cm_thin01.tsv")
@@ -118,7 +121,7 @@ wav_band <- function(sw, cov) {
   round(num / den, 4)
 }
 
-sweeps <- lapply(CALLERS, function(c) fread(sprintf("results/sim/teonam/stam_gwas_%s_118k_sweep.csv", c)))
+sweeps <- lapply(CALLERS, function(c) fread(sprintf("results/sim/teonam/%s_gwas_%s_118k_sweep.csv", TTAG, c)))
 names(sweeps) <- CALLERS
 covs <- sort(unique(sweeps[[1]]$coverage))
 
@@ -135,10 +138,10 @@ setnames(grid_tab, c("caller", paste0("l", covs)))
 cat("\n=== FFT band-power fraction vs coverage ===\n")
 print(grid_tab)
 
-fwrite(head_tab, "results/sim/teonam/sweep_noisiness_118k.csv")
-fwrite(grid_tab, "results/sim/teonam/sweep_noisiness_vscov_118k.csv")
+fwrite(head_tab, sprintf("results/sim/teonam/sweep_noisiness%s_118k.csv", NTAG))
+fwrite(grid_tab, sprintf("results/sim/teonam/sweep_noisiness%s_vscov_118k.csv", NTAG))
 fwrite(
   data.table(R_kb = round(R / 1e3), P10_kb = round(P10 / 1e3), median_frag_Mb = round(median(tracts[tracts >= R]) / 1e6, 2)),
-  "results/sim/teonam/sweep_noisiness_band_118k.csv"
+  sprintf("results/sim/teonam/sweep_noisiness%s_band_118k.csv", NTAG)
 )
-cat("\nwrote sweep_noisiness_118k.csv + _vscov_118k.csv + _band_118k.csv\n")
+cat(sprintf("\nwrote sweep_noisiness%s_118k.csv + _vscov + _band (trait=%s)\n", NTAG, TRAIT))

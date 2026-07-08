@@ -37,7 +37,10 @@ BP <- BP[o]
 
 ph <- as.data.frame(read_excel("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx"))
 names(ph)[1] <- "line"
-stam <- suppressWarnings(as.numeric(ph$STAM))
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype col; STAM default, e.g. DTA
+if (!TRAIT %in% names(ph)) stop("TRAIT '", TRAIT, "' is not a phenotype column")
+stam <- suppressWarnings(as.numeric(ph[[TRAIT]]))
 names(stam) <- ph$line
 lines <- intersect(colnames(G), names(stam)[is.finite(stam)])
 G <- G[, lines, drop = FALSE]
@@ -94,7 +97,7 @@ scan_q <- emmax_qk_scan(G, build_null(X_q), CHR, BP)
 scan_fam <- emmax_qk_scan(G, build_null(X_fam), CHR, BP)[order(CHR, BP)]
 
 # candidate-gene peaks for both
-ov <- fread("results/sim/teonam/stam_candidate_overlap.csv")
+ov <- fread(sprintf("results/sim/teonam/%s_candidate_overlap.csv", TTAG))
 peak <- function(s, ch, st) {
   w <- s[CHR == ch & abs(BP - st) <= 5e5 & is.finite(P) & P > 0]
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
@@ -109,5 +112,5 @@ log_info("lambda_GC:  Q+K = %.3f   Family+K = %.3f", lambda_gc(scan_q$P), lambda
 log_info("candidate peak -log10P (+/-500 kb):")
 print(cmp)
 
-fwrite(scan_fam, "data/teonam/stam_gwas_mlm_family_118k.csv")
-log_info("wrote data/teonam/stam_gwas_mlm_family_118k.csv (max -log10P = %.2f)", max(-log10(scan_fam[is.finite(P) & P > 0, P])))
+fwrite(scan_fam, sprintf("data/teonam/%s_gwas_mlm_family_118k.csv", TTAG))
+log_info("wrote data/teonam/%s_gwas_mlm_family_118k.csv (max -log10P = %.2f)", TTAG, max(-log10(scan_fam[is.finite(P) & P > 0, P])))

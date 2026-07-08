@@ -33,7 +33,10 @@ g <- readRDS("data/teonam/teonam_gwas118k_dosage_polar.rds")
 dos <- g$dos
 ph <- as.data.frame(read_excel("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx"))
 names(ph)[1] <- "line"
-stam <- suppressWarnings(as.numeric(ph$STAM))
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM")) # phenotype column; STAM default, e.g. DTA
+if (!TRAIT %in% names(ph)) stop("TRAIT '", TRAIT, "' is not a phenotype column")
+NTAG <- if (TRAIT == "STAM") "" else paste0("_", tolower(TRAIT)) # null-file trait tag ("" keeps STAM paths)
+stam <- suppressWarnings(as.numeric(ph[[TRAIT]])) # trait vector (name kept for minimal diff)
 names(stam) <- ph$line
 
 # per-family truth on the thin grid (+ per-marker teosinte AF for the GL prior)
@@ -128,10 +131,10 @@ for (li in seq_along(LAMBDAS)) {
   ry <- as.numeric(ys - Xs %*% (XtXinv %*% crossprod(Xs, ys)))
   saveRDS(
     list(lines = keep, U = U, ws = ws, Xs = Xs, XtXinv = XtXinv, ry = ry, n = n, p = p, delta = delta, lambda = lambda),
-    sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda)
+    sprintf("data/teonam/mlm_null%s_118k_l%s.rds", NTAG, lambda)
   )
   log_info("  lambda=%-4g null: n=%d, thin markers=%d, delta=%.3g", lambda, n, ncol(M), delta)
   el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
   log_info(">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining", li, length(LAMBDAS), el, el / li, (el / li) * (length(LAMBDAS) - li))
 }
-log_info("wrote per-coverage MLM nulls: data/teonam/mlm_null_118k_l*.rds")
+log_info("wrote per-coverage MLM nulls (trait=%s): data/teonam/mlm_null%s_118k_l*.rds", TRAIT, NTAG)

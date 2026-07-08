@@ -21,7 +21,9 @@ fam <- factor(substr(lines, 1, 5)) # TIL01A001 -> TIL01
 
 ph <- as.data.frame(read_excel("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx"))
 names(ph)[1] <- "line"
-y <- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[lines]))
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype col; STAM default, e.g. DTA
+y <- suppressWarnings(as.numeric(setNames(ph[[TRAIT]], ph$line)[lines]))
 
 mc <- fread("data/teonam/markers_v5_gwas118k.tsv") # 118K v2->v5 liftover roster
 chr_by <- setNames(mc$chr_v5, mc$marker)
@@ -62,7 +64,7 @@ scan <- data.table(
   SNP = mk, CHR = as.integer(chr_by[mk]), BP = as.integer(pos_by[mk]),
   P = P, n = as.integer(N)
 )[order(CHR, BP)]
-fwrite(scan, "data/teonam/stam_gwas_scan_118k.csv")
+fwrite(scan, sprintf("data/teonam/%s_gwas_scan_118k.csv", TTAG))
 log_info("%s", paste(
   "scan markers:", nrow(scan), " tested:", sum(!is.na(scan$P)),
   " max -log10P:", round(-log10(min(scan$P, na.rm = TRUE)), 1),

@@ -30,8 +30,10 @@ setwd("/Users/fvrodriguez/repos/zealhmm")
 TASSEL <- "/Applications/TASSEL 5/run_pipeline.pl"
 TDIR <- "data/teonam/tassel"
 HMP <- file.path(TDIR, "geno.hmp.txt") # native 9,063-marker JLM pool
-PHENO <- file.path(TDIR, "pheno_stam_all.txt") # STAM (data) + Family (factor)
-OUTBASE <- file.path(TDIR, "stam_jlm_native")
+TRAIT <- toupper(Sys.getenv("TRAIT", "STAM"))
+TTAG <- tolower(TRAIT) # phenotype; STAM default, e.g. DTA
+PHENO <- file.path(TDIR, sprintf("pheno_%s_all.txt", TTAG)) # <TRAIT> (data) + Family (factor)
+OUTBASE <- file.path(TDIR, sprintf("%s_jlm_native", TTAG))
 ENTER <- "0.00001" # LOD 5 == P 1e-5 (Chen 2019 convention: LOD = -log10 P)
 EXIT <- "0.00001"
 MAXMK <- "100" # safety cap only; the P-value cutoff is the real gate (STAM ~ 5 QTL)
@@ -55,5 +57,5 @@ rc <- system(cmd)
 cat(sprintf(
   "\nStepwiseOLS rc=%d, %.1f s\noutputs: %s\n", rc,
   as.numeric(Sys.time() - t0, units = "secs"),
-  paste(list.files(TDIR, pattern = "^stam_jlm_native"), collapse = ", ")
+  paste(list.files(TDIR, pattern = sprintf("^%s_jlm_native", TTAG)), collapse = ", ")
 ))
