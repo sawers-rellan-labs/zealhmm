@@ -1,0 +1,209 @@
+---
+title: "TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C)"
+subtitle: "Per-marker across-family OLS on Chen 2019's 118,838-SNP GWAS panel (v5) — computation, model & QC"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+  echo: true
+  freeze: auto
+---
+
+**What this is.** The *computation* behind the STAM OLS GWAS scan on the **authentic
+118,838-SNP Chen 2019 GWAS panel** (Qiuyue Chen's Drive release), lifted to B73 v5
+(`data/teonam/stam_gwas_scan_118k.csv`), tracked in its own right. It ports the
+`scripts/teonam_stam_gwas118k.R` scan into a rendered notebook so the scan — not just
+its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that
+*consumes* this CSV lives in [`teonam-qtl-recovery`](teonam-qtl-recovery.html); this
+notebook **produces** it.
+
+This is the **faithful** Fig 4C marker set: Chen's GWAS SNPs (GBS filtered at MAF > 0.01,
+missing rate < 0.75, then FSFHap-imputed per subpopulation, combined, and re-filtered to
+MAF > 0.05 / missing < 0.2 → 118,838 SNPs), lifted v2 → v5 (118,514 lifted). It **replaces
+the 51K map-panel approximation** used by
+[`teonam-stam-ols-gwas-family-imputed`](teonam-stam-ols-gwas-family-imputed.html); the
+model is **identical** (`STAM ~ Family + marker`, 1-df F), so the two are directly
+comparable — only the marker set differs (118K GWAS panel vs 51K map panel). As there,
+each marker is tested only on the families that typed it (cross-family gaps left as NA,
+**not** densified), giving natural GWAS scatter.
+
+```{r setup}
+library(here)
+library(data.table)
+library(parallel)
+library(readxl)
+library(ggplot2)
+theme_set(theme_bw(base_size = 12))
+THREADS <- max(1L, detectCores() - 2L)
+LOD <- 5 # Chen 2019 significance line: P < 1e-5
+```
+
+## Inputs (primary 118K dosage + phenotype + v5 liftover)
+
+```{r inputs}
+# 118K GWAS-panel dosage: integer matrix [markers x lines], NA = untyped (0/1/2)
+g118 <- readRDS(here("data/teonam/teonam_gwas118k_dosage.rds"))
+dos <- g118$dos
+lines <- colnames(dos)
+fam <- factor(substr(lines, 1, 5)) # TIL01A001 -> TIL01
+
+# phenotype: STAM (staminate spikelet), joined by line key
+ph <- as.data.frame(read_excel(
+  here("data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")
+))
+names(ph)[1] <- "line"
+y <- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[lines]))
+
+# v5 coordinates; restrict the scan to 118K markers that lifted to v5
+mc <- fread(here("data/teonam/markers_v5_gwas118k.tsv"))
+chr_by <- setNames(mc$chr_v5, mc$marker)
+pos_by <- setNames(mc$pos_v5, mc$marker)
+mk <- intersect(rownames(dos), mc$marker)
+mk_idx <- match(mk, rownames(dos))
+
+data.table(
+  quantity = c(
+    "lines", "markers (panel)", "markers (lifted, scanned)",
+    "STAM phenotyped", "families"
+  ),
+  value = c(
+    length(lines), nrow(dos), length(mk),
+    sum(!is.na(y)), nlevels(fam)
+  )
+)
+```
+
+## The model
+
+Identical to the family-imputed 51K notebook. For each marker $m$, restrict to the
+lines $i$ with a non-missing dosage $g_{im}\in\{0,1,2\}$ **and** a non-missing STAM
+value $y_i$, then compare two nested least-squares fits:
+
+$$
+\textbf{Null:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \varepsilon_i
+$$
+$$
+\textbf{Full:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \gamma\, g_{im} + \varepsilon_i
+$$
+
+The marker enters as a **single additive dosage effect $\gamma$ shared across families**
+(1 numerator df). Significance is the marginal $F$-test of $\gamma$:
+
+$$
+F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank})},
+\qquad P = \Pr\big(F_{1,\,n-\mathrm{rank}} > F\big).
+$$
+
+Family is a fixed categorical covariate (levels dropped to those present for that
+marker). **This is OLS: no kinship/polygenic random effect $K$** — deliberately the
+same fixed-effects model as the 51K notebook, *not* Chen's `Q(5 PCs) + SNP + K(IBS)`
+mixed model, so peak heights run hotter (the $\lambda_{GC}$/QQ comparison is a
+separate analysis).
+
+## The scan
+
+```{r scan}
+scan1 <- function(i) {
+  g <- dos[i, ] # dosage across lines, NA where untyped
+  ok <- !is.na(g) & !is.na(y)
+  n <- sum(ok)
+  if (n < 20) {
+    return(c(NA_real_, n))
+  }
+  gg <- as.numeric(g[ok])
+  if (stats::sd(gg) == 0) {
+    return(c(NA_real_, n))
+  }
+  yy <- y[ok]
+  ff <- droplevels(fam[ok])
+  Xr <- if (nlevels(ff) > 1) model.matrix(~ff) else matrix(1, n, 1)
+  RSS0 <- sum(lm.fit(Xr, yy)$residuals^2)
+  fit <- lm.fit(cbind(Xr, gg), yy)
+  RSS1 <- sum(fit$residuals^2)
+  df2 <- n - fit$rank
+  if (df2 <= 0 || RSS1 <= 0) {
+    return(c(NA_real_, n))
+  }
+  c(pf(((RSS0 - RSS1) / 1) / (RSS1 / df2), 1, df2, lower.tail = FALSE), n)
+}
+out <- mclapply(mk_idx, scan1, mc.cores = THREADS)
+P <- vapply(out, `[`, numeric(1), 1)
+N <- vapply(out, `[`, numeric(1), 2)
+
+scan <- data.table(
+  SNP = mk, CHR = as.integer(chr_by[mk]),
+  BP = as.integer(pos_by[mk]), P = P,
+  n = as.integer(N)
+)[order(CHR, BP)]
+fwrite(scan, here("data/teonam/stam_gwas_scan_118k.csv")) # canonical output
+```
+
+## QC and results
+
+```{r results}
+fin <- scan[is.finite(P) & P > 0]
+data.table(
+  metric = c(
+    "markers scanned", "markers tested (finite P)",
+    "median lines / marker", "max -log10P",
+    sprintf("genome-wide sig. (P < 1e-%d)", LOD)
+  ),
+  value = c(
+    nrow(scan), nrow(fin), median(scan$n),
+    round(max(-log10(fin$P)), 2), sum(fin$P < 10^(-LOD))
+  )
+)
+```
+
+```{r top-hits}
+top <- fin[order(P)][1:10, .(SNP, CHR, BP, n, logP = round(-log10(P), 2))]
+knitr::kable(top, caption = "Top 10 STAM associations (118K GWAS panel)")
+```
+
+```{r per-marker-n, fig.width=7, fig.height=2.8}
+ggplot(scan, aes(n)) +
+  geom_histogram(bins = 60, fill = "grey30") +
+  labs(
+    x = "lines tested per marker (families typing that marker)",
+    y = "markers", title = "Per-marker sample size — the source of the natural scatter"
+  )
+```
+
+```{r manhattan, fig.width=9, fig.height=3.4}
+# lightweight Manhattan (the annotated Fig-4C version lives in teonam-qtl-recovery)
+m <- fin[order(CHR, BP)]
+off <- m[, .(mx = max(BP)), by = CHR][order(CHR)]
+off[, base := cumsum(shift(mx, fill = 0))]
+m <- merge(m, off[, .(CHR, base)], by = "CHR")
+m[, x := BP + base]
+axis <- m[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)]
+ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
+  geom_point(size = 0.4) +
+  geom_hline(yintercept = LOD, linetype = "dotted") +
+  scale_colour_manual(values = c("grey60", "black"), guide = "none") +
+  scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
+  labs(
+    x = "chromosome", y = expression(-log[10](italic(P))),
+    title = "STAM 118K GWAS (OLS: STAM ~ Family + marker)"
+  )
+```
+
+## Notes
+
+- This notebook is the **canonical, tracked source** for
+  `stam_gwas_scan_118k.csv`; it ports `scripts/teonam_stam_gwas118k.R` verbatim
+  (same OLS model as the 51K family-imputed notebook).
+- The marker set is the **authentic Chen 2019 GWAS panel** (118,838 SNPs → 118,514
+  lifted to v5), *not* the 51K map panel. Same model, different markers → the two OLS
+  notebooks are directly comparable.
+- Model is **OLS (fixed effects), no kinship term** — the peak-height / $\lambda_{GC}$
+  comparison against Chen's `Q + K` mixed model is deferred to a dedicated inflation
+  notebook (the 118K MLM analog is not yet built).
+```
