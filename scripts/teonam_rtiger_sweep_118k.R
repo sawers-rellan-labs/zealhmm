@@ -105,18 +105,27 @@ fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
 for (f in FAMS) log_info("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys))
 
-recover_block <- function(fam, li) {
+# Memory-safe recovery: fit the joint per-family RTIGER emission ONCE, then decode
+# each chromosome in a separate low-memory worker (fit_rtiger + rtiger_fit=). RTIGER's
+# HMM is per-chromosome, so this is identical to a whole-family call (verified,
+# agent/verify_fit_reuse.R) at ~1/10 the peak memory. Families run SEQUENTIALLY (the
+# fit is the memory-heavy step); chromosomes decode in parallel.
+DECODE_CORES <- max(1L, min(detectCores() - 1L, 8L)) # per-chromosome workers (each ~1 GB)
+CHRS <- sort(unique(mt_thin$chr))
+
+# covered-marker reads (n>=1) for one family at coverage li -- same read model + seeds
+# as before; filtering to covered markers gives the fit and the per-chr decode the
+# identical min_reads=1 support.
+build_reads <- function(fam, li) {
   lambda <- LAMBDAS[li]
   fi <- match(fam, FAMS)
   fd <- fam_data[[fam]]
-  mt <- fd$mt
   D <- fd$D
   keys <- fd$keys
-  M <- nrow(mt)
+  M <- nrow(fd$mt)
   N <- length(keys)
   set.seed(1000L + 100L * fi + li)
   if (is.infinite(lambda)) {
-    # perfect-coverage ceiling: deterministic decisive counts (depth DINF), error modeled
     DINF <- 100L
     p_alt <- c(0, 0.5, 1)[as.vector(D) + 1L]
     p_eff <- p_alt * (1 - READ_PARS$error) + (1 - p_alt) * READ_PARS$error
@@ -131,33 +140,35 @@ recover_block <- function(fam, li) {
     n_alt <- as.integer(ac$alt)
   }
   long <- data.table(
-    name = rep(keys, each = M), chr = rep(mt$chr, N),
-    pos = rep(mt$pos, N), n_ref = n_ref, n_alt = n_alt
+    name = rep(keys, each = M), chr = rep(fd$mt$chr, N),
+    pos = rep(fd$mt$pos, N), n_ref = n_ref, n_alt = n_alt
   )
-  covlab <- if (is.infinite(lambda)) "Inf" else as.character(lambda)
-  rig <- RIG_BY_COV[[covlab]] # per-coverage tuned rigidity (min_reads=1 covered-marker units)
-  st <- call_states(long, caller = "rtiger", rigidity = rig, min_reads = 1L, threads = 1L)
-  W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
-  W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align to the full union grid (NA at uncovered markers)
-  block <- as.matrix(W[, keys, with = FALSE])
-  # min_reads=1 dropped uncovered markers -> fill each back to its segment's state by
-  # within-chromosome carry-forward (LOCF then NOCB for leading gaps), per RIL.
-  for (ch in unique(mt$chr)) {
-    idx <- which(mt$chr == ch)
-    block[idx, ] <- apply(block[idx, , drop = FALSE], 2L, function(v) nafill(nafill(v, "locf"), "nocb"))
-  }
-  colnames(block) <- keys
-  storage.mode(block) <- "integer" # 0/1/2
-  list(lambda = lambda, fam = fam, block = block)
+  long[n_ref + n_alt > 0L] # covered markers only (shared min_reads=1 support: fit + decode)
 }
 
-grid <- expand.grid(fam = if (SMOKE) FAMS[1] else FAMS, li = seq_along(LAMBDAS), stringsAsFactors = FALSE)
-log_info("RTIGER-118K sweep: %d (family,lambda) cells, %d threads ...", nrow(grid), THREADS)
-t0 <- Sys.time()
-cells <- mclapply(seq_len(nrow(grid)), function(i) recover_block(grid$fam[i], grid$li[i]), mc.cores = THREADS)
-bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
-if (any(bad)) stop("cell(s) failed: ", paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]])
-log_info("  recover done in %.1f min", as.numeric(Sys.time() - t0, units = "mins"))
+# one family -> full-grid recovered genotype block (markers x family RILs), integer.
+recover_family <- function(fam, li) {
+  keys <- fam_data[[fam]]$keys
+  rig <- RIG_BY_COV[[if (is.infinite(LAMBDAS[li])) "Inf" else as.character(LAMBDAS[li])]]
+  reads <- build_reads(fam, li)
+  fit <- fit_rtiger(reads, rig, threads = 1L, seed = 1L) # joint emission, once per family
+  blocks <- mclapply(CHRS, function(ch) {
+    st <- call_states(reads[chr == ch],
+      caller = "rtiger", rigidity = rig, rtiger_fit = fit, min_reads = 1L, threads = 1L
+    )
+    mtc <- mt_thin[chr == ch]
+    W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
+    W <- W[mtc[, .(chr, pos)], on = c("chr", "pos")] # full chr grid, NA at uncovered markers
+    b <- as.matrix(W[, keys, with = FALSE])
+    apply(b, 2L, function(v) nafill(nafill(v, "locf"), "nocb")) # carry-forward fill within chr
+  }, mc.cores = DECODE_CORES)
+  if (any(vapply(blocks, function(x) inherits(x, "try-error") || is.null(x), logical(1)))) {
+    stop(sprintf("recover_family(%s, lambda=%s): a chromosome decode failed", fam, LAMBDAS[li]))
+  }
+  block <- do.call(rbind, blocks) # CHRS-ordered -> union (chr, cM) order
+  storage.mode(block) <- "integer"
+  block
+}
 
 # --- phenotype + GWAS scan (STAM ~ Family + marker, 1 df) --------------------
 ph <- as.data.frame(read_excel(file.path(ROOT, "data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx")))
@@ -193,23 +204,33 @@ tb1_peak <- function(scan) {
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
 }
 
+FAM_USE <- if (SMOKE) FAMS[1] else FAMS
+log_info(
+  "RTIGER-118K sweep: %d coverages x %d families; fit-once-per-family, per-chromosome decode (%d cores)",
+  length(LAMBDAS), length(FAM_USE), DECODE_CORES
+)
+t0 <- Sys.time()
 sweep_list <- mlm_list <- vector("list", length(LAMBDAS))
 for (li in seq_along(LAMBDAS)) {
   lambda <- LAMBDAS[li]
-  idx <- which(grid$li == li)
-  G <- do.call(cbind, lapply(idx, function(i) cells[[i]]$block))
+  covlab <- if (is.infinite(lambda)) "Inf" else as.character(lambda)
+  tl <- Sys.time()
+  G <- do.call(cbind, lapply(FAM_USE, function(fam) recover_family(fam, li))) # families sequential
   rownames(G) <- union_markers
   scan <- gwas_scan(G)[order(CHR, BP)] # OLS (Family + marker)
   fwrite(scan, file.path(OUTDIR, sprintf("stam_gwas_rtiger_118k_lambda%s.csv", lambda)))
   scan[, coverage := lambda]
   sweep_list[[li]] <- scan
-  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched fixed Q+K (GL-dosage of downsampled reads)
-  mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Q+K)
+  null_li <- readRDS(file.path(ROOT, sprintf("data/teonam/mlm_null_118k_l%s.rds", lambda))) # coverage-matched Family+K (GL-dosage of downsampled reads)
+  mlm <- emmax_qk_scan(G, null_li, union_chr, union_pos)[order(CHR, BP)] # MLM (Family+K)
   mlm[, coverage := lambda]
   mlm_list[[li]] <- mlm
+  rm(G)
+  invisible(gc())
   log_info(
-    "  lambda=%-4g : OLS tb1 %s / MLM tb1 %s (OLS global max %.1f)",
-    lambda, tb1_peak(scan), tb1_peak(mlm), max(-log10(scan[is.finite(P) & P > 0, P]))
+    "  [%d/%d] lambda=%-4s (rig=%d, %.1f min): OLS tb1 %s / MLM tb1 %s (OLS max %.1f)",
+    li, length(LAMBDAS), covlab, RIG_BY_COV[[covlab]], as.numeric(difftime(Sys.time(), tl, units = "mins")),
+    tb1_peak(scan), tb1_peak(mlm), max(-log10(scan[is.finite(P) & P > 0, P]))
   )
   el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
   log_info(">>> %d/%d done | elapsed %.1f min | avg %.1f min | ETA ~%.1f min remaining", li, length(LAMBDAS), el, el / li, (el / li) * (length(LAMBDAS) - li))
