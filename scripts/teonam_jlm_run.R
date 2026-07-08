@@ -11,10 +11,11 @@
 # drop-one refit. TASSEL5's StepwiseOLSModelFitter implements this NAM stepwise.
 #
 # Significance cutoff — from the paper, NO permutation here (-nperm 0):
-#   Chen 2019 report "an approximate LOD score of 4.0 at P < 0.05" from 1000
-#   permutations, and state their own LOD/P convention for GWAS as
-#   "P < 0.00001 (LOD = 5)", i.e. LOD = -log10(P). Hence LOD 4.0 == P = 1e-4,
-#   used as the stepwise enter/exit marginal-F cutoff.
+#   Chen 2019 state the LOD/P convention "P < 0.00001 (LOD = 5)", i.e.
+#   LOD = -log10(P). We use LOD 5 == P = 1e-5 as the stepwise enter/exit
+#   marginal-F cutoff, matching the -log10P >= 5 filter applied to the Fig 4A JLM
+#   QTL display (owner decision: unify the JLM search and display at LOD 5). Note
+#   this is stricter than Chen's own JLM permutation cutoff (~LOD 4.0 at P<0.05).
 #
 # Inputs : data/teonam/tassel/geno.hmp.txt        (native JLM pool, built by
 #                                                  scripts/teonam_jlm_build.R)
@@ -31,8 +32,8 @@ TDIR <- "data/teonam/tassel"
 HMP <- file.path(TDIR, "geno.hmp.txt") # native 9,063-marker JLM pool
 PHENO <- file.path(TDIR, "pheno_stam_all.txt") # STAM (data) + Family (factor)
 OUTBASE <- file.path(TDIR, "stam_jlm_native")
-ENTER <- "0.0001" # LOD 4.0 == P 1e-4 (Chen 2019 convention: LOD = -log10 P)
-EXIT <- "0.0001"
+ENTER <- "0.00001" # LOD 5 == P 1e-5 (Chen 2019 convention: LOD = -log10 P)
+EXIT <- "0.00001"
 MAXMK <- "100" # safety cap only; the P-value cutoff is the real gate (STAM ~ 5 QTL)
 stopifnot(file.exists(HMP), file.exists(PHENO), file.exists(TASSEL))
 
