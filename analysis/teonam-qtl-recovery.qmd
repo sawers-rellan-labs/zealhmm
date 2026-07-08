@@ -262,6 +262,59 @@ plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
 }
 ```
 
+## Candidate genes: closest marker vs most-significant marker (v5)
+
+For each STAM candidate gene (B73 v5), two different "nearby marker" choices from
+the pre-JLM marker set (the 51,004-marker family-imputed GWAS scan): the
+**closest** marker (smallest bp distance to the gene body) and the **window-max**
+marker (highest −log₁₀P within ±500 kb — a 1 Mb window centered on the gene). They
+are **not the same marker** at any gene: the closest marker sits essentially on
+the gene but carries little signal, while the significant local signal is a
+nearby but distinct marker. This is the reference for what "near the gene" means
+in the Fig 4A lollipop below (which labels each gene onto its nearest JLM QTL).
+
+```{r candidate-markers}
+sc <- fread(here("data/teonam/stam_gwas_scan_family_imputed.csv"))
+sc <- sc[is.finite(P) & P > 0][, logP := -log10(P)]
+cand <- c(
+  ts2 = "STAM1.1", tb1 = "STAM1.2", tru1 = "STAM3.1",
+  zmm16 = "STAM3.2", tsh4 = "STAM7.1", an1 = "GWAS(chr1)"
+)
+sym <- fread(here("data/ref/maize_v5_gene_symbols.tsv"))
+setnames(sym, c("gene_id", "symbol"))
+coord <- fread(here("data/ref/b73_gene_coords.tsv"),
+  header = FALSE,
+  col.names = c("gene_id", "chr", "start", "end")
+)
+gg <- merge(sym[symbol %in% names(cand)], coord, by = "gene_id")
+gg[, chr := as.integer(sub("^chr", "", chr))][, qtl := cand[symbol]]
+WIN <- 5e5 # +/-500 kb around the gene body (1 Mb window)
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d) # closest to gene body
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- which.max(w$logP) # max signal in window
+  data.table(
+    gene = gg$symbol[i], QTL = gg$qtl[i], chr = ch, `gene start (v5)` = s,
+    `closest marker` = m$SNP[kc], `closest bp (v5)` = m$BP[kc],
+    `closest dist (bp)` = d[kc], `closest -log10P` = round(m$logP[kc], 2),
+    `window-max marker` = w$SNP[kw], `window-max bp (v5)` = w$BP[kw],
+    `window-max dist (bp)` = pmax(0L, pmax(s - w$BP[kw], w$BP[kw] - e)),
+    `window-max -log10P` = round(w$logP[kw], 2)
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab, caption = paste(
+  "STAM candidate genes (B73 v5): the CLOSEST marker vs the highest -log10P marker",
+  "within +/-500 kb (family-imputed GWAS scan, 51,004 markers). The two are",
+  "distinct at every gene."
+))
+```
+
 ## JLM QTL genomic distribution (Fig 4A)
 
 The STAM QTL detected by JLM as a lollipop plot across all 10 chromosomes
