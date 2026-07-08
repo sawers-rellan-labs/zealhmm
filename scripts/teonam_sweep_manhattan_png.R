@@ -62,7 +62,7 @@ ytop <- ceiling(max(sw$logP)) # automatic y-limit (fit to the data)
 sw[, dord := ifelse(is.finite(coverage), -coverage, Inf)]
 
 # LOD-5 peak loci (above-threshold markers clumped within 1 Mb -> top marker per clump)
-# to annotate: infinity = black up-triangles just above the axis; 0.5x = blue
+# to annotate: infinity = black up-triangles just below the axis; 0.5x = blue
 # down-triangles just below the top (mirror image).
 peak_loci <- function(cvsub, gap = 1e6) {
   s <- cvsub[logP > LOD]
@@ -70,7 +70,7 @@ peak_loci <- function(cvsub, gap = 1e6) {
     return(s[0])
   }
   setorder(s, CHR, BP)
-  s[, pk := cumsum(CHR != shift(CHR, fill = -1L) | BP - shift(BP, fill = -Inf) > gap)]
+  s[, pk := cumsum(CHR != shift(CHR, fill = -1L) | BP - shift(BP, fill = -1L) > gap)]
   s[, .SD[which.max(logP)], by = pk]
 }
 pk_inf <- peak_loci(sw[!is.finite(coverage)])

@@ -9,6 +9,14 @@
 # the QTL). See scripts/teonam_mlm_null_bycov_118k.R. This function only runs the
 # per-marker test on the coverage-recovered (ancestry) genotypes.
 #
+# NOTE on the "Q" / "q+K" name: emmax_qk_scan is null-agnostic -- it runs whatever
+# fixed effect X the null carries. Chen's ORIGINAL Fig-4C null uses Q = 5 PCs (above),
+# but the 118K COVERAGE-SWEEP null (teonam_mlm_null_bycov_118k.R) instead uses the
+# 5-FAMILY FACTOR as X (PCs degrade with depth; the family structure is known a priori
+# and coverage-independent). So wherever the 118K sweeps say "MLM (Q+K)", the "Q" IS
+# the family factor -- it is exactly MLM (Family + K). The q+K name is kept for
+# continuity across the codebase; read it as Family+K in the 118K coverage sweeps.
+#
 # emmax_qk_scan(G, null, CHR, BP): G = markers x lines recovered genotypes (0/1/2);
 #   null = readRDS(mlm_null_118k_l<lambda>.rds); CHR/BP aligned to rows of G.
 suppressWarnings(try(if (mem.maxVSize() < 22000) mem.maxVSize(22000), silent = TRUE))
