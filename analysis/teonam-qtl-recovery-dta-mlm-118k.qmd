@@ -219,7 +219,7 @@ plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
   pal <- setNames(grDevices::hcl.colors(7, "viridis"), cov_asc)
   pal["∞"] <- "black"
   axis_df <- sw[, .(mid = (min(BPn) + max(BPn)) / 2), by = CHR][order(CHR)]
-  ytop <- 20
+  ytop <- ceiling(max(sw$logP, na.rm = TRUE) * 1.02) # fit the data (DTA peaks reach ~55; a fixed 20 clipped them)
   sw[, dord := ifelse(is.finite(coverage), -coverage, Inf)]
 
   # LOD-5 peak loci (above-threshold markers clumped within 1 Mb -> top marker per
@@ -259,8 +259,8 @@ plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14) {
       plot.margin = margin(t = 5, r = 6, b = 16, l = 6), # room below the axis for the infinity triangles
       plot.title = element_markdown(hjust = 0, size = base_size, face = "bold"),
       panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2),
-      legend.position = if (legend) c(0.995, 0.97) else "none",
-      legend.justification = c(1, 1),
+      legend.position = if (legend) c(0.005, 0.97) else "none",
+      legend.justification = c(0, 1),
       legend.background = element_rect(fill = scales::alpha("white", 0.7), colour = NA),
       legend.key.size = unit(0.85, "lines"),
       legend.title = element_text(size = base_size - 3),
