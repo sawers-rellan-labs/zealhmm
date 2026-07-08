@@ -300,18 +300,18 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
   kw <- which.max(w$logP) # max signal in window
   data.table(
     gene = gg$symbol[i], QTL = gg$qtl[i], chr = ch, `gene start (v5)` = s,
-    `closest marker` = m$SNP[kc], `closest bp (v5)` = m$BP[kc],
-    `closest dist (bp)` = d[kc], `closest -log10P` = round(m$logP[kc], 2),
-    `window-max marker` = w$SNP[kw], `window-max bp (v5)` = w$BP[kw],
+    `closest bp (v5)` = m$BP[kc], `closest dist (bp)` = d[kc],
+    `closest -log10P` = round(m$logP[kc], 2),
+    `window-max bp (v5)` = w$BP[kw],
     `window-max dist (bp)` = pmax(0L, pmax(s - w$BP[kw], w$BP[kw] - e)),
     `window-max -log10P` = round(w$logP[kw], 2)
   )
 }))
 setorder(ctab, chr, `gene start (v5)`)
-knitr::kable(ctab, caption = paste(
+knitr::kable(ctab, format.args = list(big.mark = ","), caption = paste(
   "STAM candidate genes (B73 v5): the CLOSEST marker vs the highest -log10P marker",
-  "within +/-500 kb (family-imputed GWAS scan, 51,004 markers). The two are",
-  "distinct at every gene."
+  "within +/-500 kb (family-imputed GWAS scan, 51,004 markers). Positions/distances",
+  "in v5 bp; the two markers are distinct at every gene."
 ))
 ```
 
