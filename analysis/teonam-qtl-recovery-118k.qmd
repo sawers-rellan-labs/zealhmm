@@ -25,15 +25,14 @@ This is the `-118k` edition: every **figure and table** is regenerated on the
 **authentic 118,838-SNP Chen 2019 GWAS panel** (Qiuyue Chen's Drive release,
 lifted AGPv2→v5), not the earlier 51K map-panel approximation. Data paths point to
 the `*_118k*` artifacts (GWAS scan `stam_gwas_scan_118k.csv`; the four
-`stam_gwas_<caller>_118k_sweep.csv`; `mlm_loco_scan_lb01_118k.csv`; 118K
-het-fraction tables). The **JLM QTL-recovery arm** (Fig 4A lollipop,
-candidate-overlap) deliberately keeps its own inputs — JLM runs on the 6K JLM
-panel, a *separate* reproduction unaffected by the GWAS marker set.
+`stam_gwas_<caller>_118k_sweep.csv`; 118K het-fraction tables). The **JLM
+QTL-recovery arm** (Fig 4A lollipop, candidate-overlap) deliberately keeps its own
+inputs — JLM runs on the 6K JLM panel, a *separate* reproduction unaffected by the
+GWAS marker set.
 
-**Caveat — prose vs figures:** the interpretive text was written against the 51K
-sweep; specific inline numbers (e.g. tb1-peak −log10P, chr3-ghost excesses) may
-lag the regenerated 118K figures/tables shown here, which are authoritative. A
-prose-reconciliation pass is a follow-up.
+**Truth for the coverage sweeps** is the 118K panel block-smoothed with FSFHap
+(Chen's params; parental ancestry mosaic, ~9 breakpoints/chr) — see DATA.md
+(`teonam_gwas118k_v5_dosage_fsfhap`).
 :::
 
 This notebook **loads pre-computed CSVs and plots** (compute lives in the `scripts/`
@@ -143,7 +142,7 @@ plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL) {
       panel.grid.major.y = element_line(color = "grey90", linewidth = 0.2)
     )
 
-  if (!is.null(mark)) { # dashed marker at an arbitrary locus (e.g. the chr3 ghost)
+  if (!is.null(mark)) { # optional dashed marker at an arbitrary locus
     xm <- tr(mark$chr, mark$bp)
     p <- p + geom_vline(xintercept = xm, linetype = "dashed", color = "red", linewidth = 0.5)
   }
@@ -467,20 +466,6 @@ way (**13.3 at 0.1×** vs 16.5 baseline), recovering to baseline only by ~20×. 
 colored by coverage, no gene labels, LOD = 5, chromosomes never connect
 (`group = interaction(CHR, coverage)`).
 
-**No low-coverage chr3 ghost on the clean-truth panel.** Earlier (51K / pre-FSFHap)
-runs showed a spurious peak appearing *only at 0.1×* in the chr3 pericentromere
-(~110–115 Mb), most severe under LB-Impute. On the FSFHap clean-block truth this does
-**not** reproduce: in the pericentromere (80–120 Mb) the ∞ baseline already carries a
-modest signal (**≈11.2**), and the 0.1× lines sit *at or below* it — control 10.6,
-nNIL 10.0, RTIGER 10.0, LB-Impute 9.8 (**negative excess, −0.6 to −1.4**). So there is
-no low-coverage inflation here. The pericentromere signal is a **coverage-independent
-OLS structure/LD confound** (this composite is OLS `STAM ~ Family + marker`, which
-models neither kinship nor structure), present at every coverage — full-K MLM removes
-it (9.8 → 1.4; see the MLM-LOCO section below), and it is *not* a block-imputation
-artifact of low coverage. The real distal chr3 QTL — *tru1* (STAM3.1, ≈152 Mb) and
-*zmm16* (STAM3.2, ≈176 Mb) — sit at baseline ≈14.4 and ≈15.8 and are held across the
-grid (LB-Impute 0.1× *zmm16* ≈15.2).
-
 ```{r het-fraction-table}
 het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction_118k.csv"))[, .(coverage, control = round(het_frac, 3))]
 het_nnil <- fread(here("results/sim/teonam/stam_nnil_het_fraction_118k.csv"))[, .(coverage, nnil = round(het_frac, 3))]
@@ -515,77 +500,4 @@ ggsave(here("results/sim/teonam/stam_sweep_composite_118k.png"), composite,
   width = 9, height = 16, dpi = 200, bg = "white"
 )
 composite
-```
-
-## Is the chr3-mid ghost a real QTL? Structure/kinship control at 0.1× (MLM Q + K, LOCO)
-
-The composite above is an OLS scan (`STAM ~ Family + marker`), which models neither
-kinship nor fine population structure — exactly what inflates broad signals in
-low-recombination regions. Chen 2019's GWAS instead used a **mixed model with
-Q = 5 PCs + K = kinship**. To test whether the 0.1× chr3-pericentromere ghost is a
-real QTL or a structure/LD confound, we re-scan the **same 0.1× LB-Impute
-genotypes** three ways (compute in `scripts/teonam_mlm_loco_lb01_118k.R` — an EMMAX port:
-VanRaden K + 5 PCs + REML δ + P3D GLS; genotype matrix from
-`scripts/teonam_lbimpute_sweep_118k.R --generate --save-matrix`):
-
-- **A — OLS (Family):** the composite's model. Ghost present (chr3-mid ≈9.8, above LOD 5).
-- **B — MLM (Q + K):** kinship + structure controlled (λ_GC = 1.28). The ghost
-  **collapses to ≈1.4**, far below the LOD-5 line — the signature of a structure/LD
-  confound, not a QTL. (The real *tru1*/*zmm16* peaks are pulled down too — ≈4.7/≈3.7,
-  the known MLM proximal over-correction on their own chromosome.)
-- **C — LOCO:** kinship built excluding the tested chromosome (λ_GC = 3.09 — heavily
-  inflated, since dropping chr3 from K removes the correction for its own
-  pericentromeric structure). The real distal QTL return well above LOD (*tru1* ≈10.8,
-  159-mid ≈14.1, *zmm16* ≈10.4) — **while the ghost stays sub-significant (≈4.4, below
-  LOD 5)**: unlike the earlier 51K result, the 118K ghost does *not* resurface as a
-  false-positive peak under LOCO.
-
-Red dashed line = the chr3 pericentromere ghost (~112 Mb); the *tru1*/*zmm16* stars
-mark the real distal QTL. **Takeaway:** the ghost is a structure/LD confound that
-full-K MLM removes even at 0.1× (9.8 → 1.4). LOCO recovers the real distal chr3 QTL
-but is globally inflated (λ_GC 3.09) from dropping chr3's own structure from K, so
-LOCO peaks in low-recombination regions still cannot be trusted at low coverage —
-even though here the ghost itself does not clear LOD under LOCO.
-
-```{r ghost-mlm-loco, fig.width=9, fig.height=13}
-lb01 <- fread(here("results/sim/teonam/stam_gwas_lbimpute_118k_lambda0.1.csv")) # OLS, Family only
-ml <- fread(here("results/sim/teonam/mlm_loco_scan_lb01_118k.csv")) # MLM Q+K (p_full) + LOCO (p_loco)
-
-ols_s <- lb01[is.finite(P) & P > 0, .(SNP, CHR, BP, P)]
-full_s <- ml[is.finite(p_full) & p_full > 0, .(SNP = marker, CHR = chr, BP = bp, P = p_full)]
-loco_s <- ml[is.finite(p_loco) & p_loco > 0, .(SNP = marker, CHR = chr, BP = bp, P = p_loco)]
-
-ghost <- list(chr = 3, bp = 112e6) # chr3 pericentromere ghost locus
-pO <- plot_stam_manhattan(ols_s, "STAM — LB-Impute 0.1×, OLS (Family)", mark = ghost)
-pF <- plot_stam_manhattan(full_s, "STAM — LB-Impute 0.1×, MLM (Q + K)", mark = ghost)
-pL <- plot_stam_manhattan(loco_s, "STAM — LB-Impute 0.1×, LOCO", mark = ghost)
-
-ghost_grid <- cowplot::plot_grid(pO, pF, pL,
-  ncol = 1, align = "v", axis = "lr",
-  labels = c("A", "B", "C"), label_size = 18
-)
-ggsave(here("results/sim/teonam/stam_ghost_mlm_loco_118k.png"), ghost_grid,
-  width = 9, height = 13, dpi = 200, bg = "white"
-)
-ghost_grid
-```
-
-```{r ghost-region-table}
-regmax <- function(dt, pcol, lo, hi) {
-  z <- dt[chr == 3 & bp >= lo * 1e6 & bp <= hi * 1e6]
-  pv <- z[[pcol]][is.finite(z[[pcol]]) & z[[pcol]] > 0]
-  if (length(pv)) round(max(-log10(pv)), 1) else NA_real_
-}
-olsdt <- copy(lb01)
-setnames(olsdt, c("CHR", "BP", "P"), c("chr", "bp", "p_ols"))
-gtab <- data.table(
-  region = c("pericentromere 80–120 (ghost)", "tru1 ~152", "159-mid", "zmm16 ~176"),
-  lo = c(80, 150, 157, 174), hi = c(120, 154, 162, 178)
-)
-gtab[, `:=`(
-  OLS = mapply(function(a, b) regmax(olsdt, "p_ols", a, b), lo, hi),
-  `MLM (Q+K)` = mapply(function(a, b) regmax(ml, "p_full", a, b), lo, hi),
-  LOCO = mapply(function(a, b) regmax(ml, "p_loco", a, b), lo, hi)
-)]
-gtab[, .(region, OLS, `MLM (Q+K)`, LOCO)] # chr3 max -log10P at 0.1x; LOD = 5
 ```
