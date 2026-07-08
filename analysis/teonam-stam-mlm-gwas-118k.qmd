@@ -1,0 +1,196 @@
+---
+title: "TeoNAM STAM — MLM (Q+K) GWAS on the authentic 118K panel (Fig 4C)"
+subtitle: "Chen's actual Fig-4C mixed model (Q = 5 PCs + K = Centered-IBS, P3D) on the 118,838-SNP panel — scatter preserved, no densification"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+  echo: true
+  freeze: auto
+---
+
+**What this is.** The GWAS model Chen 2019 actually used for **Fig 4C** — a linear
+**mixed model** with population structure (Q) and kinship (K) — run in TASSEL5 on the
+**authentic 118,838-SNP GWAS panel** (Qiuyue Chen's Drive release, lifted to v5,
+118,514 markers), and contrasted with the fixed-effect **OLS** scan
+([`teonam-stam-ols-gwas-118k`](teonam-stam-ols-gwas-118k.html)).
+
+Crucially, this panel is only **~2.7% missing** (Chen's MR < 0.2 GWAS SNPs), so the
+MLM runs **directly on it — no densification / step-interpolation**. That preserves
+the natural per-SNP **scatter** of a real GWAS Manhattan. This is the faithful Fig-4C
+reproduction that the interpolated 51K MLM notebook
+([`teonam-stam-mlm-gwas-interpolated`](teonam-stam-mlm-gwas-interpolated.html)) could
+not be: there, the 73%-missing 51K **map** panel had to be step-interpolated to a
+complete matrix, which made genotypes block-constant → a **terraced/plateau** Manhattan
+and a spurious **over-correction** (kinship absorbing each QTL's own-chromosome signal).
+Here, with the real GWAS panel, neither artifact applies. Compute lives in
+`scripts/teonam_mlm118k.R`; this notebook loads, documents, and plots.
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+theme_set(theme_bw(base_size = 13))
+LOD <- 5 # Chen 2019 significance line: P < 1e-5
+
+# genomic inflation factor: median(chi^2_obs) / median(chi^2_null)
+lambda_gc <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, df = 1, lower.tail = FALSE)) / qchisq(0.5, df = 1), 3)
+}
+```
+
+## The model
+
+The OLS notebook fit fixed effects only:
+$y_i = \mu + \sum_f \beta_f\,\mathbb{1}[\text{family}_i=f] + \gamma\,g_{im} + \varepsilon_i$.
+Chen's GWAS adds a polygenic **random** term with covariance $\mathbf K$ (Yu et al. 2006):
+
+$$
+\mathbf{y} = \mathbf{1}\mu + \mathbf{Q}\boldsymbol{\alpha}
++ \mathbf{g}_a\,\gamma_a + \mathbf{g}_d\,\gamma_d
++ \mathbf{Z}\mathbf{u} + \boldsymbol{\varepsilon},
+\qquad
+\mathbf{u}\sim N(\mathbf 0,\,\mathbf K\sigma^2_g),\;
+\boldsymbol{\varepsilon}\sim N(\mathbf 0,\,\mathbf I\sigma^2_e).
+$$
+
+- $\mathbf Q$ = first **5 PCs** (fixed; from a mean-imputed copy of the 118K dosage — PCA only).
+- $\mathbf g_a$ additive dosage, $\mathbf g_d$ dominance indicator; TASSEL tests the **joint 2-df** $H_0:\gamma_a=\gamma_d=0$.
+- $\mathbf K$ = **Centered-IBS** kinship, computed on the raw 118K panel (observed allele freq; per-site missing handled).
+- **P3D**: variance components fit once under the null (REML/EMMA), reused per marker (GLS $F$-test with $\mathbf V^{-1}$).
+
+The MLM's $\mathbf K$ term is the structure/relatedness correction OLS lacks; its
+effect is the drop in $\lambda_{GC}$ below.
+
+## Pipeline (`scripts/teonam_mlm118k.R`, native arm64 TASSEL5) — NO densification
+
+```{r pipeline-doc, eval=FALSE}
+# 1. build: 118K dosage (markers x lines, ~2.7% NA) -> hapmap DIRECTLY (N at missing;
+#    NO interpolation). Q = 5 PCs from a mean-imputed copy (PCA only). pheno = STAM + PC1..5.
+# 2. K: TASSEL Centered_IBS on the raw (2.7%-missing) 118K hapmap
+run_pipeline.pl -importGuess geno_gwas_118k.hmp.txt \
+  -KinshipPlugin -method Centered_IBS -endPlugin -export kinship_cIBS_118k.txt -exportType SqrMatrix
+# 3. MLM (P3D): genotype + phenotype(+Q) + K; TASSEL drops missing taxa per site
+run_pipeline.pl -fork1 -h geno_gwas_118k.hmp.txt -fork2 -r pheno_stam_pc_118k.txt \
+  -fork3 -k kinship_cIBS_118k.txt -combine4 -input1 -input2 -intersect \
+  -combine5 -input4 -input3 -mlm -mlmVarCompEst P3D -mlmCompressionLevel None -export mlm_118k
+```
+
+```{r timings}
+tim <- fread(here("results/sim/teonam/mlm_118k_timings.csv"))
+knitr::kable(tim, caption = "TASSEL5 step timings (native arm64; MLM uses pure-Java EJML)")
+```
+
+## Load results (OLS vs MLM on the same 118K panel)
+
+```{r load}
+ols <- fread(here("data/teonam/stam_gwas_scan_118k.csv")) # OLS on the 118K panel
+ols <- ols[is.finite(P) & P > 0, .(CHR = as.integer(CHR), BP = as.integer(BP), P)]
+mlm <- fread(here("data/teonam/tassel/mlm_118k2.txt")) # TASSEL MLM (joint 2-df p)
+mlm <- mlm[Marker != "None", .(CHR = as.integer(Chr), BP = as.integer(Pos), P = as.numeric(p))][is.finite(P) & P > 0]
+
+two <- rbindlist(list(
+  ols[, .(CHR, BP, P, method = "OLS (no K)")],
+  mlm[, .(CHR, BP, P, method = "MLM Q+K")]
+))
+lev <- c("OLS (no K)", "MLM Q+K")
+labs <- setNames(vapply(lev, function(m) sprintf("%s, λ=%.2f", m, lambda_gc(two[method == m, P])), ""), lev)
+two[, mlab := factor(labs[method], levels = labs[lev])]
+pal <- setNames(c("firebrick", "steelblue4"), labs[lev])
+```
+
+## Genomic inflation: OLS → MLM
+
+```{r lambda-table}
+knitr::kable(
+  two[, .(markers = .N, lambda_GC = lambda_gc(P), max_logP = round(max(-log10(P)), 2)), by = method],
+  caption = "OLS vs MLM (Q+K) on the same authentic 118K panel — only the structure correction differs."
+)
+```
+
+## QQ — OLS vs MLM (Q+K)
+
+```{r qq, fig.width=8, fig.height=4.6}
+qd <- two[, {
+  p <- P[is.finite(P) & P > 0 & P <= 1]
+  o <- -log10(sort(p))
+  e <- -log10(ppoints(length(p)))
+  k <- c(which(o > 2), sample(which(o <= 2), min(sum(o <= 2), 8000)))
+  .(exp = e[k], obs = o[k])
+}, by = mlab]
+ggplot(qd, aes(exp, obs, colour = mlab)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey40", linetype = "dashed") +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_colour_manual(values = pal, name = NULL) +
+  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1))) +
+  labs(
+    x = expression(Expected ~ -log[10](italic(P))), y = expression(Observed ~ -log[10](italic(P))),
+    title = "STAM 118K GWAS QQ: OLS vs MLM (Q+K)"
+  ) +
+  theme(
+    legend.position = c(0.02, 0.98), legend.justification = c(0, 1),
+    legend.background = element_rect(fill = scales::alpha("white", 0.7), colour = NA)
+  )
+```
+
+## Manhattan — OLS vs MLM (Q+K), scatter preserved
+
+```{r manhattan-2, fig.width=9, fig.height=6}
+off <- two[method == "OLS (no K)", .(mx = max(BP)), by = CHR][order(CHR)]
+off[, base := cumsum(as.numeric(shift(mx, fill = 0)))]
+m2 <- merge(two, off[, .(CHR, base)], by = "CHR")
+m2[, `:=`(x = as.numeric(BP) + base, logP = -log10(P))]
+axis <- m2[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)]
+ggplot(m2[order(CHR, BP)], aes(x, logP, colour = factor(CHR %% 2))) +
+  geom_point(size = 0.35) +
+  geom_hline(yintercept = LOD, linetype = "dotted") +
+  facet_wrap(~mlab, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = c("grey60", "black"), guide = "none") +
+  scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +
+  labs(
+    x = "chromosome", y = expression(-log[10](italic(P))),
+    title = "STAM 118K GWAS: OLS -> MLM (Q+K), authentic panel (real per-SNP scatter)"
+  )
+```
+
+## Candidate-gene peaks: OLS vs MLM (±500 kb)
+
+```{r gene-table}
+ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv")) # symbol, chr, start (v5)
+peakfn <- function(scan, ch, ps) {
+  w <- scan[CHR == ch & abs(BP - ps) <= 5e5]
+  if (nrow(w)) round(max(-log10(w$P)), 2) else NA_real_
+}
+gt <- data.table(
+  gene = ov$symbol, chr = ov$chr,
+  OLS = mapply(function(c, p) peakfn(ols, c, p), ov$chr, ov$start),
+  MLM = mapply(function(c, p) peakfn(mlm, c, p), ov$chr, ov$start)
+)
+gt[, `OLS>5` := ifelse(is.finite(OLS) & OLS >= LOD, "yes", "no")]
+gt[, `MLM>5` := ifelse(is.finite(MLM) & MLM >= LOD, "yes", "no")]
+knitr::kable(gt[order(-OLS)], caption = "Candidate-gene peak -log10P (±500 kb): OLS vs MLM on the 118K panel, and LOD-5 survival.")
+```
+
+## Notes
+
+- **Canonical, tracked source** for the 118K MLM: `scripts/teonam_mlm118k.R`
+  (build → K → MLM). Outputs: `data/teonam/tassel/mlm_118k2.txt`,
+  `results/sim/teonam/mlm_118k_timings.csv`.
+- **No densification.** The 118K GWAS panel is ~2.7% missing, so the MLM runs on it
+  directly (TASSEL handles per-site missing) — the Manhattan keeps its natural scatter.
+  This is the faithful Fig-4C model that the interpolated 51K MLM notebook explicitly
+  could not provide (it densified the 73%-missing map panel → plateau + over-correction).
+- **Model still OLS-vs-MLM only.** The nested (family:marker) specification — Chen's
+  *primary* JLM — and the additive-only (1-df) vs joint (2-df) choice are the same
+  open model-specification points discussed in the interpolated notebook; a LOCO
+  over-correction diagnostic is not needed here (no interpolation pseudo-replication),
+  and is left as optional future work.
+```
