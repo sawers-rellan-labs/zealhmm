@@ -104,6 +104,38 @@ data/teonam/
 - "Adjusted example data" per EasiGP's `Data/README` — treat as a re-derived convenience
   copy, not the authoritative release. For the authoritative genotypes, request access to
   the CyVerse `panzea` collection from the authors (Qiuyue Chen / John Doebley).
+- **Assembly = AGPv2, documented first-party by Qiuyue Chen (not by EasiGP).** The marker-name
+  positions (`S[chr]_[pos]`) are B73 AGPv2, confirmed by three sources:
+
+  1. **Chen's own genotype-release README** (`data/teonam/9250682/Genotype_files_ReadMe.docx`,
+     shared directly by Qiuyue Chen from her Google Drive) — the authoritative, first-party
+     statement:
+     > "The genetic map was estimated separately for each subpopulation using est.map function
+     > in R/qtl, and the physical position is represented in marker name with **B73 V2 position
+     > (S[chr]_[pos])**."
+  2. **Chen et al. 2019** (Genetics 213:1065):
+     > "The genotypic data were uploaded with **AGPv2 position in the marker name**." (Data Availability)
+     > "The **B73 reference genome v2** was used to determine marker order..." (Methods)
+
+     AGPv4 appears in Chen 2019 **only** for *reporting* QTL positions (CrossMap-lifted from
+     AGPv2); the genotype marker-name coordinates are AGPv2.
+  3. **EasiGP is silent on assembly.** The EasiGP repo and paper (Tomura et al. 2025, *Plant
+     Genome*, doi:10.1002/tpg2.70138) only cite "adjusted example data from the TeoNAM dataset
+     (Chen et al., 2019)" and never mention a genome build — so the version documentation is
+     entirely Chen's.
+
+  **Marker-name identity checks (2026-07-07)** tying EasiGP back to Chen's documented panel:
+  - Chen's `TeoNAM.composite.genetic.map.51544snp.txt` (51,544 names) **== EasiGP `marker_info.csv`
+    (51,544 names)**: identical name sets, 0 unique to either side.
+  - EasiGP `marker_info.csv` is byte-identical to our `markers_v2.csv` (md5 `6b29c715…`).
+  - Our analyzed genotype matrix `TeoNAM_genotype_clean.csv` (51,482 columns) is a clean subset
+    of Chen's names (0 unrecognized columns; 62 Chen markers absent = the known 51,544→51,482 drop).
+  - Independent physical check: per-chromosome max marker position fills the AGPv2 length and
+    falls ~6–7 Mb short of v4/v5 (e.g. chr1 max 301,252,447 < AGPv2 301,354,135 « v4 307,041,717).
+
+  (EasiGP repo clone kept at `agent/EasiGP/`. Chen's Drive release, incl. the README, composite
+  map, phenotypes, and — per the README — the 118,838-SNP GWAS HapMap + raw `.h5`, is under
+  `data/teonam/9250682/`.)
 
 **Genotype-matrix characterization (measured 2026-07-04, full-scan of the raw and
 cleaned files).** Raw `TeoNAM_genotype.csv`: 2,434 rows × 51,482 marker columns
@@ -173,8 +205,27 @@ genotypes for `jlm` (and the interpolated GWAS matrix). Interpolation is a step,
 | `teonam_map_v5_gwas` | 51,004 | v5 | **GWAS base** — per-marker, typed lines only; `stam_gwas_scan_family_imputed.csv` |
 | `teonam_map_v5_gwas_nr` | 47,750 | v5 | non-redundant (one marker per unique cM). **Retained only as the record of the duplicate-cM markers (`agent/notes-redundant-markers.md`); NOT in any active path.** |
 | `teonam_map_v5_jlm` | 6,049 | v5 | **JLM base** — FastIndep (**cM-distance** @0.1) directly on `_gwas` (51,004); genotypes step-interpolated; `data/teonam/tassel/geno.hmp.txt` (`scripts/teonam_jlm_build.R`) |
+| `teonam_gwas118k_v2_hapmap` | 118,838 | v2 name / v4 pos | **authentic Chen 2019 GWAS panel** (the real Fig 4C set) — TASSEL HapMap, single-char IUPAC, 1,257 RILs; from Qiuyue Chen's Drive: `data/teonam/9250682/W22TILXX_Chr1-10.impute_filter_MR0.2_MAF0.05.hmp.txt` |
+| `teonam_gwas118k_v5_markers` | 118,514 | v5 | v2→v5 liftover roster (chr from marker NAME, not the v4 `chrom` col); `markers_v5_gwas118k.tsv` (`scripts/teonam_lift_gwas118k.R`). 32,120/32,120 markers shared with `teonam_map_v5_markers` lift identically. |
+| `teonam_gwas118k_v5_dosage` | 118,838 | v5 | additive dosage matrix [markers×1,257 lines], 2.72% NA; dosage = A2-allele count (TASSEL polarization, arbitrary vs W22/teo — fine for the flip-invariant STAM F-test); `teonam_gwas118k_dosage.rds` (`scripts/teonam_gwas118k_dosage.R`) |
+| `teonam_gwas118k_v5_scan` | 118,514 | v5 | **STAM GWAS scan** on the 118K panel — `STAM ~ Family + marker`, 1-df F (same model as `stam_gwas_scan_family_imputed.csv`); `stam_gwas_scan_118k.csv` (`scripts/teonam_stam_gwas118k.R`) |
+| `teonam_gwas118k_v5_dosage_polar` | 118,838 | v5 | dosage **polarized to W22↔teosinte** (0=W22, 2=teo; teosinte=minor allele, 0 flips needed, 99.6% concordant with 51K W22/teo coding) — **simulation truth** for the coverage sweep; `teonam_gwas118k_dosage_polar.rds` (`scripts/teonam_gwas118k_polarize.R`) |
+| `teonam_gwas118k_v5_cm` | 118,514 | v5 | native-cM grid (31,411 est.map-placed + 87,103 Marey-spline); `markers_v5_gwas118k_cm.tsv` (`scripts/teonam_gwas118k_cm_grid.R`) |
+| `teonam_gwas118k_v5_rtiger_sweep` | 118,514 | v5 | **coverage-degradation sweep on 118K truth** — reads simulated from the dense polarized 118K per family, RTIGER-called, interpolated on the 118K cM grid, STAM-scanned at λ∈{0.1,0.2,0.5,1,5,10,20,Inf}; `results/sim/teonam/stam_gwas_rtiger_118k_sweep.csv` (`scripts/teonam_rtiger_sweep_118k.R`) |
 
 Notes:
+- **`teonam_gwas118k_*` is a NEW panel, a SIBLING of `map` — not derived from it.** Both were
+  filtered from the same raw 955,690 ZeaGBSv2.7 SNPs via different chains (map: MAF<5% + 64-bp thin
+  + FSFHap; GWAS: MAF>1%, MR<0.2, no thin, separate imputation). Name overlap with the 51K map panel
+  is only 32,171 / 118,838 (86,667 GWAS-only, 19,373 map-only). This is the file whose absence
+  made the earlier STAM Manhattan a non-faithful approximation — now resolved.
+- **GWAS reproduction (2026-07-07):** 118K scan gives max −log10P 19.8 (vs 14.3 for the 51K approx)
+  and 8,392 genome-wide-significant hits concentrated on chr1 (4,901; tb1 region, v5 ~270–282 Mb),
+  chr3 (3,428), chr7 (58) — matching Chen 2019's STAM QTL architecture (STAM1.x/tb1, STAM3.x, STAM7.1).
+  Decoding validated: all 32,158 shared markers correlate positively with the 51K coding (mean |r| 0.996).
+- **Also in Chen's Drive release** (`9250682/`, per `Genotype_files_ReadMe.docx`), not yet all pulled:
+  raw `W22TILXX_NoDepth.h5` (GBS in H5), `TeoNAM.filter0.1cM.snpInfor.txt` (4,578-SNP JLM subset),
+  `TeoNAM_phenotype_07022018.txt` (4,578 SNPs + 22 traits for SAS JLM).
 - **`teonam_map_v5_jlm` thinning is a cM-distance thin, not an r² LD prune.**
   `select_independent` (FastIndep, deterministic greedy) is fed the per-chr cM-distance matrix, so
   it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. The full pipeline is now
