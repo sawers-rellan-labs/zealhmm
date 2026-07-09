@@ -18,16 +18,15 @@ source(here("scripts/emmax_qk.R"))
 
 TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
 TTAG <- tolower(TRAIT)
-GENO <- Sys.getenv("GENO", "mosaic") # mosaic = RTIGER ancestry (Panel C) | persnp = per-SNP dosage (Panel B)
+GENO <- Sys.getenv("GENO", "rtiger_mosaic") # <caller>_mosaic = HMM ancestry (Panel C) | persnp = per-SNP genotype dosage (Panel B); see TERMINOLOGY.md
 
 # --- genotype (0/1/2), drop invariant markers ---------------------------------
 inv <- tryCatch(readRDS(here("data/zeal/snp50k_invariant_markers.rds")), error = function(e) character(0))
-if (GENO %in% c("mosaic", "rtiger", "nnil", "lbimpute", "binhmm")) {
-  caller_file <- if (GENO == "mosaic") "rtiger" else GENO # "mosaic" == the RTIGER reference mosaic
-  M0 <- readRDS(here(sprintf("data/zeal/zeal_%s_mosaic.rds", caller_file)))
+if (grepl("_mosaic$", GENO)) { # <caller>_mosaic: an HMM ancestry-state matrix (call_ancestry)
+  M0 <- readRDS(here(sprintf("data/zeal/zeal_%s.rds", GENO)))
   state <- M0$state
   mk <- M0$markers
-} else { # per-SNP authentic: teosinte dosage 2*alt/cov rounded to 0/1/2 (70% missing -> mean-imputed below)
+} else { # genotype layer (persnp for now): per-SNP teosinte dosage 2*alt/cov rounded to 0/1/2 (70% NA -> mean-imputed below)
   D <- readRDS(here("data/zeal/zeal_snp50k_dosage.rds"))
   ss0 <- fread(here("data/zeal/samplesheet_3way.csv"))[gwas_nil == TRUE & !is.na(skim_id)]
   sk <- intersect(ss0$skim_id, colnames(D$n_alt))

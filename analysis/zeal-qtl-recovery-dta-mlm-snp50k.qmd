@@ -52,7 +52,7 @@ source(here("scripts/teonam_notebook_plots.R")) # shared: plot_manhattan/lollipo
 ```
 
 ```{r load}
-mlm <- fread(here("data/zeal/dta_gwas_mlm_mosaic_donor_accession_snp50k.csv")) # Panel C
+mlm <- fread(here("data/zeal/dta_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv")) # Panel C
 persnp <- fread(here("data/zeal/dta_gwas_mlm_persnp_donor_accession_snp50k.csv")) # Panel B
 ols <- fread(here("data/zeal/dta_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
 overlap <- here("results/sim/zeal/dta_candidate_overlap.csv")
@@ -162,7 +162,7 @@ p_lolli
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
   sprintf("ZEAL/BZea DTA — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
-  overlap_csv = overlap, out_png = here("results/sim/zeal/dta_gwas_mlm_mosaic_manhattan_snp50k.png")
+  overlap_csv = overlap, out_png = here("results/sim/zeal/dta_gwas_mlm_rtiger_mosaic_manhattan_snp50k.png")
 )
 p_mlm
 ```
@@ -200,12 +200,12 @@ BzeaSeq), while per-SNP calling (control) and the fresh per-SNP HMM recalls (nNI
 **under-call** and give λ-deflated scans.
 
 ```{r caller-table}
-callers <- c(control = "persnp", nNIL = "nnil", RTIGER = "mosaic", `LB-Impute` = "lbimpute", binhmm = "binhmm")
+callers <- c(control = "persnp", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
 tb1 <- fread(here("data/teonam/dta_candidate_genes.tsv"))[symbol == "zmcct10"]
 ctab2 <- rbindlist(lapply(names(callers), function(nm) {
   g <- callers[[nm]]
   sc <- fread(here(sprintf("data/zeal/dta_gwas_mlm_%s_donor_accession_snp50k.csv", g)))
-  mf <- here(sprintf("data/zeal/zeal_%s_mosaic.rds", if (g == "mosaic") "rtiger" else g))
+  mf <- here(sprintf("data/zeal/zeal_%s.rds", g))
   pres <- if (file.exists(mf)) {
     st <- readRDS(mf)$state
     round(mean(st %in% c(1L, 2L), na.rm = TRUE), 3)

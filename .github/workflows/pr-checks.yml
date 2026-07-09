@@ -1,0 +1,74 @@
+name: PR checks
+
+# Gate PRs into main BEFORE they merge (and before pages.yml deploys the site).
+#
+# What this canNOT do: re-execute the notebooks. data/ and _freeze/ are gitignored,
+# so the science can't run in CI — the author renders locally and commits docs/.
+# So these checks validate STRUCTURE and STYLE only, data-free:
+#   1. render  — `quarto render --no-execute` on changed .qmd/.md: does each doc
+#                compile (YAML front-matter, Quarto syntax, cross-refs)? No R chunks run.
+#   2. style   — styler on changed R/.qmd: is it formatted like the pre-commit hook wants?
+# Both are scoped to files changed vs the base branch, so a PR is never failed for
+# pre-existing debt in files it didn't touch.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    name: Quarto structural render (--no-execute)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                      # full history so we can diff against the base
+      - uses: quarto-dev/quarto-actions/setup@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Install render deps (engine only — no science packages)
+        run: install.packages(c("rmarkdown", "knitr"))
+        shell: Rscript {0}
+      - name: Structurally render changed docs
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          changed=$(git diff --name-only --diff-filter=ACM \
+            "origin/${{ github.base_ref }}...HEAD" -- 'analysis/*.qmd' 'index.qmd' 'DATA.md' || true)
+          if [ -z "$changed" ]; then echo "No .qmd/.md changed — nothing to render."; exit 0; fi
+          echo "Rendering (structure only, no execution):"; echo "$changed"
+          for f in $changed; do
+            echo "::group::render $f"
+            quarto render "$f" --no-execute
+            echo "::endgroup::"
+          done
+
+  style:
+    name: R style (styler)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Install styler
+        run: install.packages("styler")
+        shell: Rscript {0}
+      - name: Check changed R / .qmd are styler-clean
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          changed=$(git diff --name-only --diff-filter=ACM \
+            "origin/${{ github.base_ref }}...HEAD" -- 'R/*.R' 'scripts/*.R' 'analysis/*.qmd' || true)
+          if [ -z "$changed" ]; then echo "No R/.qmd changed — nothing to check."; exit 0; fi
+          echo "Styling (in place, then checking for diffs):"; echo "$changed"
+          Rscript -e 'styler::style_file(commandArgs(TRUE))' $changed
+          git diff --exit-code || {
+            echo "::error::styler would reformat the files above. Run the styler pre-commit hook (git config core.hooksPath .githooks) or 'styler::style_file()' locally, then recommit.";
+            exit 1;
+          }
