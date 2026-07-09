@@ -31,3 +31,6 @@
 **/*.quarto_ipynb
 *_cache/
 *_files/
+
+# stray R plot device output
+Rplots.pdf

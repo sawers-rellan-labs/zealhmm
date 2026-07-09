@@ -2,6 +2,7 @@ project:
   type: default
   output-dir: docs
   render:
+    - index.qmd
     - analysis/*.qmd
     - analysis/*.md
     - DATA.md

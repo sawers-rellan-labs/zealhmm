@@ -1,0 +1,185 @@
+#!/usr/bin/env Rscript
+# ZEAL/BZea Phase 2b — spatially-corrected phenotype BLUEs (BZeaPheno recipe).
+#
+# Per field, per contiguous map grid: SpATS 2-D P-spline surface PSANOVA(Range,Row) with
+# genotype FIXED (-> BLUEs) and B73 as check (statgenHTP engine="SpATS", what="fixed").
+# Genotype BLUE per field = mean over that field's grids; overall = mean across fields
+# (per-field correction, union mean; GxE deferred). Traits: DTA, DTS, PH, StPi, StPu.
+#
+# Inputs : data/zeal/{cly25_b5,cly23_d4}_fieldmap.csv (plot_id, block, range, col)
+#          data/zeal/CLY25-Fieldbook.xlsx :: B5_BZea_eval          (new-form pedigree)
+#          data/zeal/CLY23_D4_FieldBook.xlsx :: UPDATED_... + GENOTYPE-CONVERSION (old->new)
+#          data/zeal/samplesheet_3way.csv    (pedigree -> taxon, gwas_nil)
+# Outputs: data/zeal/pheno_<trait>_blue.csv  (genotype, per-field + mean BLUE)
+#          data/zeal/pheno_blues_all.csv     (wide, all traits)
+#          data/zeal/tassel/pheno_dta_all.txt (TASSEL: Taxa | DTA | Family=taxon, gwas_nil lines)
+
+suppressMessages({
+  library(here)
+  library(data.table)
+  library(readxl)
+  library(SpATS)
+})
+source(here("scripts/logging.R"))
+
+OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit
+
+TRAITS <- c("DTA", "DTS", "PH", "StPi", "StPu")
+EXCEL_1970 <- 25569L # Excel(1900) serial for 1970-01-01
+plant_serial <- function(d) as.integer(as.Date(d)) + EXCEL_1970
+canon_ped <- function(x) sub("\\.B$", "", x)
+
+# ---- per-field standardized manifests: Plot_id, Genotype, Rep, block, range, col, traits ----
+manifest_cly25 <- function() {
+  fm <- fread(here("data/zeal/cly25_b5_fieldmap.csv"))
+  ph <- as.data.table(read_excel(here("data/zeal/CLY25-Fieldbook.xlsx"), sheet = "B5_BZea_eval"))
+  setnames(ph, 1, "plot_id")
+  ph[, plot_id := suppressWarnings(as.integer(plot_id))]
+  p0 <- plant_serial("2025-04-03")
+  ph[, `:=`(
+    DTA = as.numeric(DOA) - p0, DTS = as.numeric(DOS) - p0,
+    PH = as.numeric(PH), StPi = as.numeric(StPi), StPu = as.numeric(StPu),
+    Genotype = canon_ped(Description),
+    Rep = fifelse(grepl("Rep2", `Who/What`), 2L, 1L)
+  )]
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, StPi, StPu)], by = "plot_id")
+}
+
+manifest_cly23 <- function() {
+  fm <- fread(here("data/zeal/cly23_d4_fieldmap.csv"))
+  ph <- as.data.table(read_excel(here("data/zeal/CLY23_D4_FieldBook.xlsx"), sheet = "UPDATED_CLY23_D4_FieldBook"))
+  setnames(ph, "CLY23_D4", "plot_id")
+  ph[, plot_id := suppressWarnings(as.integer(plot_id))]
+  gc <- as.data.table(read_excel(here("data/zeal/CLY23_D4_FieldBook.xlsx"), sheet = "GENOTYPE-CONVERSION"))
+  o2n <- unique(rbind(
+    gc[!is.na(oldold_genotype), .(old = oldold_genotype, new = new_genotype)],
+    gc[!is.na(old_genotype), .(old = old_genotype, new = new_genotype)]
+  ))[, .SD[1], by = old]
+  ph <- merge(ph, o2n, by.x = "old_genotype", by.y = "old", all.x = TRUE)
+  ph[, Genotype := fcase(
+    Species == "B73" | old_genotype == "B73", "B73",
+    Species == "Check", "Purple",
+    !is.na(new), canon_ped(new),
+    default = old_genotype
+  )]
+  ph[, `:=`(
+    DTA = as.numeric(DTA), DTS = as.numeric(DTS), PH = as.numeric(PH),
+    StPi = as.numeric(StPi), StPu = as.numeric(StPu), Rep = as.integer(Rep)
+  )]
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, StPi, StPu)], by = "plot_id")
+}
+
+# ---- fit one grid, one trait -> genotype BLUEs (SpATS, genotype FIXED) -------
+# Iterative outlier removal: drop plots with |studentized residual| > OUT_T, refit.
+fit_grid_trait <- function(dat, trait, tag = "") {
+  d0 <- dat[is.finite(get(trait)) & !is.na(Genotype)]
+  if (uniqueN(d0$Genotype) < 5 || nrow(d0) < 20) {
+    return(NULL)
+  }
+  d <- data.frame(
+    Genotype = factor(as.character(d0$Genotype)), Rep = factor(d0$Rep),
+    Range = as.numeric(d0$range), Row = as.numeric(d0$col), y = as.numeric(d0[[trait]])
+  )
+  d$Rf <- factor(d$Range)
+  d$Cf <- factor(d$Row)
+  fixed <- if (nlevels(d$Rep) > 1) ~Rep else NULL
+  fit_one <- function(dat) {
+    tryCatch(SpATS(
+      response = "y", genotype = "Genotype", genotype.as.random = FALSE,
+      spatial = ~ PSANOVA(Row, Range), fixed = fixed, random = ~ Rf + Cf,
+      data = dat, control = list(monitoring = 0, maxit = 50)
+    ), error = function(e) NULL)
+  }
+
+  n_out <- 0L
+  m <- NULL
+  for (it in 1:5) {
+    m <- fit_one(d)
+    if (is.null(m)) {
+      return(NULL)
+    }
+    r <- m$residuals
+    s <- sd(r, na.rm = TRUE)
+    if (!is.finite(s) || s == 0) break
+    out <- which(abs(r / s) > OUT_T) # studentized-residual outliers
+    if (!length(out)) break
+    n_out <- n_out + length(out)
+    d <- d[-out, , drop = FALSE]
+    if (uniqueN(d$Genotype) < 5) break
+  }
+  if (is.null(m)) {
+    return(NULL)
+  }
+  if (n_out) log_info("    %s %-4s: dropped %d outlier plots (|t|>%g)", tag, trait, n_out, OUT_T)
+  pr <- tryCatch(predict(m, which = "Genotype"), error = function(e) NULL)
+  if (is.null(pr)) {
+    return(NULL)
+  }
+  pr <- as.data.table(pr)
+  vc <- grep("predicted", names(pr), ignore.case = TRUE, value = TRUE)[1]
+  pr[!is.na(get(vc)), .(Genotype = as.character(Genotype), blue = get(vc))]
+}
+
+# ---- run all fields x grids x traits ----------------------------------------
+fields <- list(cly23 = manifest_cly23(), cly25 = manifest_cly25())
+per_field <- list()
+for (fld in names(fields)) {
+  man <- fields[[fld]]
+  log_info(
+    "=== %s: %d plots, %d grids, %d genotypes ===", fld, nrow(man),
+    uniqueN(man$block), uniqueN(man$Genotype)
+  )
+  ftrait <- list()
+  for (tr in TRAITS) {
+    grids <- lapply(unique(man$block), function(b) fit_grid_trait(man[block == b], tr, tag = fld))
+    grids <- rbindlist(Filter(Negate(is.null), grids))
+    if (!nrow(grids)) {
+      log_warn("  %-4s: no fit", tr)
+      next
+    }
+    bl <- grids[, .(blue = mean(blue)), by = Genotype] # mean over grids within field
+    setnames(bl, "blue", tr)
+    ftrait[[tr]] <- bl
+    log_info(
+      "  %-4s: %d genotype BLUEs (mean %.2f, sd %.2f)", tr, nrow(bl),
+      mean(bl[[tr]], na.rm = TRUE), sd(bl[[tr]], na.rm = TRUE)
+    )
+  }
+  per_field[[fld]] <- Reduce(function(a, b) merge(a, b, by = "Genotype", all = TRUE), ftrait)
+}
+
+# ---- combine fields: per-trait per-field cols + union mean ------------------
+alltraits <- data.table(Genotype = character())
+for (tr in TRAITS) {
+  cols <- lapply(names(per_field), function(fld) {
+    x <- per_field[[fld]]
+    if (is.null(x) || !tr %in% names(x)) {
+      return(NULL)
+    }
+    setnames(x[, .(Genotype, get(tr))], c("Genotype", paste0(tr, "_", fld)))
+  })
+  cols <- Filter(Negate(is.null), cols)
+  if (!length(cols)) next
+  m <- Reduce(function(a, b) merge(a, b, by = "Genotype", all = TRUE), cols)
+  fcols <- setdiff(names(m), "Genotype")
+  m[, (paste0(tr, "_mean")) := rowMeans(.SD, na.rm = TRUE), .SDcols = fcols]
+  fwrite(m, here(sprintf("data/zeal/pheno_%s_blue.csv", tolower(tr))))
+  alltraits <- merge(alltraits, m[, .(Genotype, get(paste0(tr, "_mean")))], by = "Genotype", all = TRUE)
+  setnames(alltraits, "V2", paste0(tr, "_mean"))
+}
+fwrite(alltraits, here("data/zeal/pheno_blues_all.csv"))
+log_info("wrote per-trait BLUEs + pheno_blues_all.csv (%d genotypes)", nrow(alltraits))
+
+# ---- TASSEL DTA file (Taxa | DTA | Family=taxon), gwas_nil lines only --------
+ss <- fread(here("data/zeal/samplesheet_3way.csv"))
+dta <- fread(here("data/zeal/pheno_dta_blue.csv"))[, .(pedigree = Genotype, DTA = DTA_mean)]
+tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], dta, by = "pedigree")[is.finite(DTA)]
+log_info(
+  "TASSEL DTA: %d gwas_nil lines with a DTA BLUE (of %d panel lines)",
+  nrow(tass), ss[gwas_nil == TRUE, .N]
+)
+dir.create(here("data/zeal/tassel"), showWarnings = FALSE)
+ph_out <- here("data/zeal/tassel/pheno_dta_all.txt")
+writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tDTA\tFamily"), ph_out)
+fwrite(tass[, .(pedigree, round(DTA, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
+log_info("wrote %s", ph_out)
