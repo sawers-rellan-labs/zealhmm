@@ -441,7 +441,7 @@ segments are **back-projected onto the full 118K union** for the same
 perfect coverage** (deterministic decisive counts) — its own ceiling, computed
 in-pipeline, so each panel's ∞ line is caller-specific (no shared baseline).
 
-- **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
+- **A — interpolation control** (`nilHMM::call_gt(prior = "hwe")` + per-RIL
   step-interpolation; `scripts/teonam_control_sweep_118k.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
 - **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
