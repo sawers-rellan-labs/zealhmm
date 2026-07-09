@@ -5,8 +5,8 @@
 # — no linkage. Replaces the retired ad-hoc "persnp" (round(2*alt/cov)) with the
 # principled call_gt caller. See TERMINOLOGY.md.
 #
-# METHOD env (default gl):
-#   gl       -> call_gt(prior = "flat")            argmax-GL / ML (het-blind; ~ old persnp)
+# METHOD env (default ml):
+#   ml       -> call_gt(prior = "flat")            maximum-likelihood (flat prior; het-blind; ~ old persnp)
 #   gphwe    -> call_gt(prior = "hwe", af = NULL)  MAP, HWE (self-estimated AF; het-excess)
 #   gpdesign -> call_gt(prior = design_prior("BC2S3"))  MAP, Mendelian design prior
 #
@@ -17,7 +17,7 @@ suppressMessages({
 })
 devtools::load_all("/Users/fvrodriguez/repos/nilhmm", quiet = TRUE)
 source(here("scripts/logging.R"))
-METHOD <- Sys.getenv("METHOD", "gl")
+METHOD <- Sys.getenv("METHOD", "ml")
 ERR <- 0.01
 
 D <- readRDS(here("data/zeal/zeal_snp50k_dosage.rds"))
@@ -29,10 +29,10 @@ nref <- D$n_ref[mk$marker, panel]
 nalt <- D$n_alt[mk$marker, panel]
 
 prior <- switch(METHOD,
-  gl = "flat",
+  ml = "flat",
   gphwe = "hwe",
   gpdesign = design_prior("BC2S3"),
-  stop("unknown METHOD '", METHOD, "': expected gl | gphwe | gpdesign")
+  stop("unknown METHOD '", METHOD, "': expected ml | gphwe | gpdesign")
 )
 log_info(
   "method=%s (prior=%s) | %d markers x %d lines",
