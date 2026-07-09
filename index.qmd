@@ -1,6 +1,6 @@
 ---
 title: "zealhmm"
-subtitle: "Teosinte-introgression QTL recovery under low-coverage genotyping — TeoNAM (Chen 2019) and ZEAL/BZea"
+subtitle: "Teosinte-introgression QTL recovery under low-coverage genotyping"
 page-layout: full
 toc: false
 listing:
@@ -9,9 +9,7 @@ listing:
       - analysis/zeal-*.qmd
     type: table
     fields: [title, subtitle, date]
-    field-display-names:
-      title: "Notebook"
-      subtitle: "Description"
+    field-display-names: {title: "Notebook", subtitle: "Description"}
     sort: "title"
     sort-ui: true
     filter-ui: true
@@ -28,33 +26,23 @@ listing:
       - analysis/rtiger_vs_nilhmm_reproduction.qmd
     type: table
     fields: [title, subtitle, date]
-    field-display-names:
-      title: "Notebook"
-      subtitle: "Description"
+    field-display-names: {title: "Notebook", subtitle: "Description"}
     sort: "title"
     sort-ui: true
     filter-ui: true
     date-format: "YYYY-MM-DD"
 ---
 
-Analysis notebooks for recovering QTL from teosinte introgressions under low-coverage
-genotyping, across two maize×teosinte populations. Data provenance: [DATA.html](DATA.html).
+## ZEAL / BZea
 
-## ZEAL / BZea — Zea Exotic Allele Library
-
-B73 × teosinte **BC2S3 near-isogenic lines**; 5 teosinte taxa (Zx *mexicana*, Zv *parviglumis*,
-Zd *diploperennis*, Zl *luxurians*, Zh *huehuetenangensis*); SNP50K panel at ~0.4× skim. Built
-end-to-end from field books + skim counts: samplesheet → SpATS BLUEs → SNP50K dosage → RTIGER
-ancestry mosaic → K → JLM + MLM.
+B73 × teosinte BC2S3 NILs · SNP50K.
 
 ::: {#zeal}
 :::
 
-## TeoNAM — Chen 2019 reproduction
+## TeoNAM
 
-W22 × {TIL01, TIL03, TIL11, TIL14, TIL25}; 1,257 **BC1S4 RILs**; 118K / 51K SNP panels (v5). The
-faithful reproduction plus the low-coverage ancestry-caller benchmarks (nNIL, RTIGER, LB-Impute,
-binhmm, control) and genetic-map / calibration methods.
+W22 × 5 teosinte inbreds, BC1S4 RILs · Chen 2019.
 
 ::: {#teonam}
 :::
