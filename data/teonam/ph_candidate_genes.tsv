@@ -1,0 +1,11 @@
+symbol	gene_id	chr	start	end	qtl_chen2019	v5_canonical_symbol	pathway
+br2	Zm00001eb038710	1	206626938	206634281		br2	auxin transport
+br1	Zm00001eb041450	1	218413248	218416660		br1	internode elongation
+an1	Zm00001eb048020	1	246895757	246904007		an1	GA biosynthesis
+brd1	Zm00001eb050010	1	255223470	255228057		brd1	BR biosynthesis
+d8	Zm00001eb054480	1	272695005	272697912		d8	GA signaling (DELLA)
+d1	Zm00001eb122500	3	10440993	10443340		d1	GA biosynthesis
+d9	Zm00001eb216610	5	12392313	12395324		d9	GA signaling
+na2	Zm00001eb228910	5	67086927	67090775		na2	BR biosynthesis
+gid1	Zm00001eb287800	6	157210719	157213486		gid1	GA receptor
+d3	Zm00001eb379120	9	28778514	28782552		d3	GA biosynthesis

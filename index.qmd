@@ -7,77 +7,84 @@ listing:
   - id: zeal
     type: table
     fields: [title, description]
-    field-display-names: {title: "File", description: "Description"}
+    field-display-names: {title: "Notebook", description: "Description"}
     sort: false
     contents:
-      - title: "zeal-qtl-recovery-dta-mlm-snp50k"
+      - title: "DTA · MLM + JLM"
         path: analysis/zeal-qtl-recovery-dta-mlm-snp50k.qmd
         description: "DTA: JLM + MLM composite, five-caller comparison"
-      - title: "zeal-qtl-recovery-dta-mlm-snp50k-fdr"
+      - title: "DTA · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-dta-mlm-snp50k-fdr.qmd
         description: "DTA: same, FDR ≤ 0.05"
+      - title: "PH · FDR ≤ 0.05"
+        path: analysis/zeal-qtl-recovery-ph-mlm-snp50k-fdr.qmd
+        description: "Plant height: JLM + MLM composite, five-caller comparison, dwarf/GA candidates, FDR ≤ 0.05"
   - id: teonam
     type: table
     fields: [title, description]
-    field-display-names: {title: "File", description: "Description"}
+    field-display-names: {title: "Notebook", description: "Description"}
     sort: false
     contents:
-      - title: "teonam-qtl-recovery"
+      - title: "QTL recovery"
         path: analysis/teonam-qtl-recovery.qmd
-        description: "Core QTL recovery"
-      - title: "teonam-qtl-recovery-118k"
+        description: "Core QTL-recovery reproduction"
+      - title: "QTL recovery · 118K OLS"
         path: analysis/teonam-qtl-recovery-118k.qmd
         description: "118K OLS GWAS + JLM + coverage sweep"
-      - title: "teonam-qtl-recovery-mlm-118k"
+      - title: "QTL recovery · 118K MLM"
         path: analysis/teonam-qtl-recovery-mlm-118k.qmd
-        description: "118K MLM (STAM)"
-      - title: "teonam-qtl-recovery-dta-mlm-118k"
+        description: "118K MLM (Family + K), STAM"
+      - title: "DTA · 118K MLM"
         path: analysis/teonam-qtl-recovery-dta-mlm-118k.qmd
-        description: "DTA MLM composite + five-caller sweep"
-      - title: "teonam-stam-mlm-gwas-118k"
+        description: "DTA MLM composite + five-caller sweep + noisiness"
+      - title: "STAM · MLM (Q + K, Fig 4C)"
         path: analysis/teonam-stam-mlm-gwas-118k.qmd
-        description: "STAM MLM Q+K (Fig 4C)"
-      - title: "teonam-stam-ols-gwas-118k"
+        description: "TASSEL 5-PC + Centered-IBS K, exact Fig-4C model + QQ/λ"
+      - title: "STAM · OLS 118K"
         path: analysis/teonam-stam-ols-gwas-118k.qmd
-        description: "STAM OLS 118K"
-      - title: "teonam-stam-mlm-gwas-interpolated"
+        description: "OLS (Family + marker), 118K panel"
+      - title: "STAM · MLM interpolated"
         path: analysis/teonam-stam-mlm-gwas-interpolated.qmd
-        description: "STAM MLM, interpolated panel"
-      - title: "teonam-stam-ols-gwas-family-imputed"
+        description: "MLM on the interpolated 51K map panel"
+      - title: "STAM · OLS family-imputed"
         path: analysis/teonam-stam-ols-gwas-family-imputed.qmd
-        description: "STAM OLS, family-imputed"
-      - title: "teonam-genetic-map"
+        description: "OLS on the family-imputed panel"
+      - title: "Genetic map"
         path: analysis/teonam-genetic-map.qmd
-        description: "Native v5 genetic map"
-      - title: "marker-thinning"
+        description: "Native v5 R/qtl composite genetic map"
+      - title: "Marker thinning"
         path: analysis/marker-thinning.qmd
-        description: "cM marker thinning (MDdIS)"
-      - title: "callers-and-methods"
+        description: "cM thinning as a Max Distance-d Independent Set"
+      - title: "Ancestry callers"
         path: analysis/callers-and-methods.qmd
-        description: "Ancestry callers"
-      - title: "simulation-calibration"
+        description: "nNIL, RTIGER, LB-Impute, binhmm, control"
+      - title: "Simulation calibration"
         path: analysis/simulation-calibration.qmd
-        description: "Caller calibration on simulated truth"
-      - title: "rtiger_vs_nilhmm_reproduction"
+        description: "Per-coverage caller calibration on simulated truth"
+      - title: "RTIGER vs nilHMM"
         path: analysis/rtiger_vs_nilhmm_reproduction.qmd
-        description: "RTIGER vs nilHMM"
-      - title: "nilhmm_sanity_check_paint"
+        description: "Ancestry-call agreement between callers"
+      - title: "nilHMM painting"
         path: analysis/nilhmm_sanity_check_paint.qmd
-        description: "nilHMM painting sanity check"
-      - title: "source-method-comparison"
+        description: "Ancestry-painting sanity check"
+      - title: "Source/method comparison"
         path: analysis/source-method-comparison.qmd
-        description: "Source/method comparison"
-      - title: "b1-mapping-benchmark"
+        description: "Genotype-source and method comparisons"
+      - title: "Mapping benchmark"
         path: analysis/b1-mapping-benchmark.qmd
         description: "B1 mapping benchmark"
 ---
 
 ## ZEAL / BZea
 
+B73 × teosinte BC2S3 near-isogenic lines; SNP50K panel at ~0.4× skim.
+
 ::: {#zeal}
 :::
 
 ## TeoNAM
+
+W22 × 5 teosinte inbreds; 1,257 BC1S4 RILs (Chen 2019).
 
 ::: {#teonam}
 :::

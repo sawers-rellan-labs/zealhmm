@@ -117,7 +117,9 @@ log_info(
   "lambda_GC (Taxon+K) = %.3f | max -log10P = %.2f", lambda_gc(scan_fam$P),
   max(-log10(scan_fam[is.finite(P) & P > 0, P]))
 )
-gg <- fread(here("data/teonam/dta_candidate_genes.tsv")) # same maize v5 flowering candidates
+cand_file <- here(sprintf("data/teonam/%s_candidate_genes.tsv", TTAG))
+if (!file.exists(cand_file)) cand_file <- here("data/teonam/dta_candidate_genes.tsv")
+gg <- fread(cand_file) # maize v5 candidate genes for this trait
 gg[, chr := as.integer(chr)]
 peak <- function(ch, st) {
   w <- scan_fam[CHR == ch & abs(BP - st) <= 5e5 & is.finite(P) & P > 0]

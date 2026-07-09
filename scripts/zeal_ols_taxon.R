@@ -73,7 +73,9 @@ log_info(
   "OLS lambda_GC = %.3f | max -log10P = %.2f | wrote %s_gwas_ols_%s_snp50k.csv",
   lambda_gc(scan$P), max(-log10(scan[is.finite(P) & P > 0, P])), TTAG, FAMCOL
 )
-gg <- fread(here("data/teonam/dta_candidate_genes.tsv"))
+cand_file <- here(sprintf("data/teonam/%s_candidate_genes.tsv", TTAG))
+if (!file.exists(cand_file)) cand_file <- here("data/teonam/dta_candidate_genes.tsv")
+gg <- fread(cand_file)
 gg[, chr := as.integer(chr)]
 peak <- function(ch, st) {
   w <- scan[CHR == ch & abs(BP - st) <= 5e5 & is.finite(P) & P > 0]

@@ -170,16 +170,21 @@ for (tr in TRAITS) {
 fwrite(alltraits, here("data/zeal/pheno_blues_all.csv"))
 log_info("wrote per-trait BLUEs + pheno_blues_all.csv (%d genotypes)", nrow(alltraits))
 
-# ---- TASSEL DTA file (Taxa | DTA | Family=taxon), gwas_nil lines only --------
+# ---- TASSEL files (Taxa | <trait> | Family=taxon), gwas_nil lines only --------
+# One pheno_<trait>_all.txt per trait — JLM (zeal_jlm_run.R) reads pheno_<TTAG>_all.txt.
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))
-dta <- fread(here("data/zeal/pheno_dta_blue.csv"))[, .(pedigree = Genotype, DTA = DTA_mean)]
-tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], dta, by = "pedigree")[is.finite(DTA)]
-log_info(
-  "TASSEL DTA: %d gwas_nil lines with a DTA BLUE (of %d panel lines)",
-  nrow(tass), ss[gwas_nil == TRUE, .N]
-)
 dir.create(here("data/zeal/tassel"), showWarnings = FALSE)
-ph_out <- here("data/zeal/tassel/pheno_dta_all.txt")
-writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tDTA\tFamily"), ph_out)
-fwrite(tass[, .(pedigree, round(DTA, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
-log_info("wrote %s", ph_out)
+for (tr in TRAITS) {
+  bl <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", tolower(tr))))[
+    , .(pedigree = Genotype, y = get(paste0(tr, "_mean")))
+  ]
+  tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], bl, by = "pedigree")[is.finite(y)]
+  log_info(
+    "TASSEL %s: %d gwas_nil lines with a BLUE (of %d panel lines)",
+    tr, nrow(tass), ss[gwas_nil == TRUE, .N]
+  )
+  ph_out <- here(sprintf("data/zeal/tassel/pheno_%s_all.txt", tolower(tr)))
+  writeLines(c("<Phenotype>", "taxa\tdata\tfactor", sprintf("Taxa\t%s\tFamily", tr)), ph_out)
+  fwrite(tass[, .(pedigree, round(y, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
+  log_info("wrote %s", ph_out)
+}
