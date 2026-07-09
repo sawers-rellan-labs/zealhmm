@@ -303,3 +303,21 @@ The sanity-paint sweep inputs currently read from the zealtiger working repo
 `results/sim_calibration/brbseq_ks_wideseq/counts/`). Only the **validated,
 paper-bound** subsets migrate onto the mount / local `data/`; the `agent/`
 scratch tree is not copied.
+
+## Shareable release bundle (`release/`, gitignored → CyVerse)
+
+`scripts/zeal_export_release.R` assembles the citable BZea genotype release into
+`release/bzea_genotypes/` (bulk, gitignored; destined for the CyVerse Data Store with a
+DOI — Phase E of `SHAREABLE_DATASET_PLAN.md`). Fully reproducible from the tracked script
++ `scripts/release_README.md` template; ~156 MB, 30 files.
+
+Per SNP50K object (B73 v5, 49,002 sites × ~1,400 NILs) — the four ancestry mosaics
+(`rtiger/nnil/binhmm/lbimpute`) + the `ml_gt` genotype — three redundant encodings:
+PLINK `.bed/.bim/.fam` (canonical binary 012), tidy `_012.tsv.gz`, and the native `.rds`.
+Shared `markers/snp50k_markers.tsv` (marker,chr,pos,ref,alt,cM) and
+`lines/snp50k_lines.tsv`. The **250K (previous)** set ships as 2-state
+(`B73`/`Introgression`) segment TSV + rds. `MANIFEST.tsv` carries sha256 per file.
+
+The README states the wall (see `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes
+**ancestry** dosage on the SNP's ref/alt alleles for tooling compatibility — it is not a
+genotype and does not report the true allele at invariant sites; only `ml_gt` does.

@@ -97,7 +97,15 @@ scripts both cite, plus a mechanical rename pass (`GENO=mosaic` → `rtiger`).
 - A3. Normalize spellings (`SNP50K`, `wideseq`, caller names) across `scripts/`, `DATA.md`,
   `analysis/`.
 
-### Phase B — Package the 50K + 250K datasets (G1.1, G1.2)
+### Phase B — Package the 50K + 250K datasets (G1.1, G1.2) — ✅ DONE (2026-07-09)
+Built by `scripts/zeal_export_release.R` → `release/bzea_genotypes/` (gitignored, ~156 MB, 30
+files, fully reproducible; awaits CyVerse upload = Phase E). Per 50K object (`rtiger/nnil/binhmm/
+lbimpute`_mosaic + `ml_gt`): PLINK `.bed/.bim/.fam` + tidy `_012.tsv.gz` + `.rds`; shared
+`markers/` (marker,chr,pos,ref,alt,cM) + `lines/` tables; 250K as 2-state segment TSV + rds;
+`README` (from tracked `scripts/release_README.md`) + `MANIFEST.tsv` (sha256). 49,002 SNP50K sites
+× ~1,400 lines, B73 v5. README carries the mosaic≠genotype wall (PLINK 0/1/2 for a `_mosaic` is
+ancestry dosage, not true alleles).
+
 - B1. Define a **release schema**: per caller, a plain-text 0/1/2 matrix + a marker table
   (`chr,pos,ref,alt,marker,cM`) + a line table (`skim_id,pedigree,taxon,donor_accession`).
   Store canonically as **PLINK binary (`.bed/.bim/.fam`)** for the union set (space-efficient,
