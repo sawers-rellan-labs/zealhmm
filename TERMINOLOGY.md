@@ -48,7 +48,9 @@ Notes:
   `GT`). A continuous **dosage** `E[G|reads]` for GWAS power is derived from the GP array
   (`return="post"`): `gp[,,2]*1 + gp[,,3]*2`. Do **not** use `return="dosage"` for this — it
   returns the hardcall as a double, not the posterior mean.
-- **`persnp` is retired.** The old ad-hoc `2·alt/(ref+alt)` dosage is replaced by the `_gt` scheme.
+- **`persnp` is retired** (replaced by the `_gt` scheme). The old ad-hoc `round(2·alt/cov)` hardcall
+  is now built by `scripts/zeal_gt.R` (`METHOD=gl|gphwe|gpdesign`) via `call_gt` → `zeal_<method>_gt.rds`;
+  `gl_gt` is the canonical per-SNP genotype (GWAS Panel B / the per-SNP control).
 
 ## Ancestry-mosaic layer — `<caller>_mosaic`
 
@@ -103,8 +105,8 @@ accessions. See the `bzea-taxa-naming` memory.
 
 ## Verbs vs nouns (quick reference)
 
-- `call_gt()` — verb, genotype layer → a **genotype** (`_gt`). *(nilhmm: currently `call_gl`,
-  rename in progress — see `agent/nilhmm_call_gt_spec.md`.)*
+- `call_gt()` — verb, genotype layer → a **genotype** (`_gt`); nilhmm ≥ 0.3.0 (the old `call_gl`
+  name was removed, no alias). Builder: `scripts/zeal_gt.R`.
 - `call_ancestry()` / `call_states()` — verb, mosaic layer → an **ancestry mosaic** (`_mosaic`).
 - **caller** = a method (engine + params). **genotype** = input. **mosaic** = output. **GENO** =
   the object name.

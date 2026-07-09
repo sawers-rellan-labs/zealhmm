@@ -18,23 +18,19 @@ source(here("scripts/emmax_qk.R"))
 
 TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
 TTAG <- tolower(TRAIT)
-GENO <- Sys.getenv("GENO", "rtiger_mosaic") # <caller>_mosaic = HMM ancestry (Panel C) | persnp = per-SNP genotype dosage (Panel B); see TERMINOLOGY.md
+GENO <- Sys.getenv("GENO", "rtiger_mosaic") # <caller>_mosaic = HMM ancestry (Panel C) | <method>_gt = per-site genotype (Panel B); see TERMINOLOGY.md
 
-# --- genotype (0/1/2), drop invariant markers ---------------------------------
+# --- state matrix (0/1/2), drop invariant markers -----------------------------
+# Both layers are first-class saved objects zeal_<GENO>.rds (list(markers, state, lines)):
+#   <caller>_mosaic  <- call_ancestry (HMM ancestry)      built by zeal_*_mosaic.R
+#   <method>_gt      <- call_gt       (per-site genotype)  built by zeal_gt.R
 inv <- tryCatch(readRDS(here("data/zeal/snp50k_invariant_markers.rds")), error = function(e) character(0))
-if (grepl("_mosaic$", GENO)) { # <caller>_mosaic: an HMM ancestry-state matrix (call_ancestry)
+if (grepl("_(mosaic|gt)$", GENO)) {
   M0 <- readRDS(here(sprintf("data/zeal/zeal_%s.rds", GENO)))
   state <- M0$state
   mk <- M0$markers
-} else { # genotype layer (persnp for now): per-SNP teosinte dosage 2*alt/cov rounded to 0/1/2 (70% NA -> mean-imputed below)
-  D <- readRDS(here("data/zeal/zeal_snp50k_dosage.rds"))
-  ss0 <- fread(here("data/zeal/samplesheet_3way.csv"))[gwas_nil == TRUE & !is.na(skim_id)]
-  sk <- intersect(ss0$skim_id, colnames(D$n_alt))
-  dose <- 2 * D$n_alt[, sk] / pmax(D$cov[, sk], 1)
-  dose[D$cov[, sk] == 0] <- NA_real_
-  state <- round(dose)
-  colnames(state) <- ss0$pedigree[match(sk, ss0$skim_id)]
-  mk <- copy(D$markers)[, .(marker, chr = as.integer(chr), pos = as.integer(pos))]
+} else {
+  stop("unknown GENO '", GENO, "': expected a <caller>_mosaic or <method>_gt object; build it first (see TERMINOLOGY.md)")
 }
 keep <- !(mk$marker %in% inv)
 state <- state[keep, , drop = FALSE]
