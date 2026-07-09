@@ -18,6 +18,10 @@ format:
       toggle: true
       source: true
 
+# freeze executed results so format-only re-renders don't re-run heavy chunks
+execute:
+  freeze: auto
+
 website:
   title: "zealhmm"
   description: "Teosinte-introgression QTL recovery — TeoNAM & ZEAL/BZea"

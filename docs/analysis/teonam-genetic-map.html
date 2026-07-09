@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-08">
+<meta name="dcterms.date" content="2026-07-09">
 
 <title>TeoNAM composite genetic map (bcsft(1,4), B73 v5) – zealhmm</title>
 <style>
@@ -4084,7 +4084,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">TeoNAM composite genetic map (bcsft(1,4), B73 v5)</h1>
+<div class="quarto-title-block"><div><h1 class="title">TeoNAM composite genetic map (bcsft(1,4), B73 v5)</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
 <p class="subtitle lead">Native per-marker cM (cm) — results view</p>
 </div>
 
@@ -4102,7 +4102,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 8, 2026</p>
+      <p class="date">July 9, 2026</p>
     </div>
   </div>
   
@@ -4117,11 +4117,16 @@ vertical-align: -.125em;
 <p><strong>What this is.</strong> A <em>results</em> view of the composite TeoNAM genetic map — the native per-marker cM (<code>cm</code>) built by <code>scripts/teonam_qtl_permap.R</code> → <code>scripts/teonam_qtl_map.R</code> (per-family maps → union → Chen-2019 flanking imputation → <code>bcsft(1,4)</code> <code>est.map</code>, markers ordered on <strong>B73 v5</strong>). That build takes <strong>5+ hours</strong>, so <strong>this notebook only loads the finished map and renders it — it runs no <code>est.map</code>.</strong></p>
 <p>The map is <strong>island-free on chr7</strong>: the v2→v5 displaced block (6 markers isolated by ~5 cM gaps) was caught by the connected-component quirky finder (<code>scripts/map_tools.R</code>) and removed, collapsing that gap <strong>10.22 → 0.76 cM</strong> and chr7 <strong>154.5 → 144.85 cM</strong> (diagnosis in the <a href="teonam-qtl-recovery.html">QTL-recovery notebook</a>).</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/teonam_v5_native.tsv&quot;</span>))</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span><span class="fu">is.na</span>(cm) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(chr_v5)][<span class="fu">order</span>(chr_v5, cm)]</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4135,10 +4140,13 @@ vertical-align: -.125em;
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(map) <span class="ot">&lt;-</span> <span class="fu">as.character</span>(chrs)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(map) <span class="ot">&lt;-</span> <span class="st">&quot;map&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <section id="map-size" class="level2">
 <h2 class="anchored" data-anchor-id="map-size">Map size</h2>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> d[, .(<span class="at">markers =</span> .N, <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">max</span>(cm) <span class="sc">-</span> <span class="fu">min</span>(cm), <span class="dv">1</span>)),</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  by <span class="ot">=</span> .(<span class="at">chr =</span> chr_v5)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>][<span class="fu">order</span>(chr)]</span>
@@ -4148,6 +4156,7 @@ vertical-align: -.125em;
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;chr (v5)&quot;</span>, <span class="st">&quot;markers&quot;</span>, <span class="st">&quot;length (cM)&quot;</span>),</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Composite bcsft(1,4) map per chromosome (Chen 2019: avg 1461 cM/subpopulation).&quot;</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Composite bcsft(1,4) map per chromosome (Chen 2019: avg 1461 cM/subpopulation).</caption>
@@ -4222,6 +4231,8 @@ vertical-align: -.125em;
 <section id="chromosome-lengths" class="level2">
 <h2 class="anchored" data-anchor-id="chromosome-lengths">Chromosome lengths</h2>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mk <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(chrs, <span class="cf">function</span>(ch) <span class="fu">data.table</span>(<span class="at">chr =</span> ch, <span class="at">cm =</span> map[[<span class="fu">as.character</span>(ch)]])))</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(mk, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(chr), <span class="at">y =</span> cm)) <span class="sc">+</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> <span class="fu">factor</span>(chr), <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> cm), <span class="at">linewidth =</span> <span class="dv">6</span>, <span class="at">colour =</span> <span class="st">&quot;grey85&quot;</span>) <span class="sc">+</span></span>
@@ -4231,6 +4242,7 @@ vertical-align: -.125em;
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_reverse</span>(<span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="fl">0.02</span>, <span class="fl">0.04</span>))) <span class="sc">+</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;chromosome (v5)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;position (cM)&quot;</span>) <span class="sc">+</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">14</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -4240,6 +4252,8 @@ vertical-align: -.125em;
 </div>
 </div>
 
+
+<!-- -->
 
 </section>
 
@@ -4314,6 +4328,57 @@ vertical-align: -.125em;
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -4643,7 +4708,84 @@ vertical-align: -.125em;
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;TeoNAM composite genetic map (bcsft(1,4), B73 v5)&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Native per-marker cM (cm) — results view&quot;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>**What this is.** A *results* view of the composite TeoNAM genetic map — the native</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>per-marker cM (<span class="in">`cm`</span>) built by <span class="in">`scripts/teonam_qtl_permap.R`</span> → <span class="in">`scripts/teonam_qtl_map.R`</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>(per-family maps → union → Chen-2019 flanking imputation → <span class="in">`bcsft(1,4)`</span> <span class="in">`est.map`</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>markers ordered on **B73 v5**). That build takes **5+ hours**, so **this notebook only</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>loads the finished map and renders it — it runs no <span class="in">`est.map`</span>.**</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>The map is **island-free on chr7**: the v2→v5 displaced block (6 markers isolated by</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>~5 cM gaps) was caught by the connected-component quirky finder (<span class="in">`scripts/map_tools.R`</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>and removed, collapsing that gap **10.22 → 0.76 cM** and chr7 **154.5 → 144.85 cM**</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>(diagnosis in the <span class="co">[</span><span class="ot">QTL-recovery notebook</span><span class="co">](teonam-qtl-recovery.html)</span>).</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="in">```{r load}</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/teonam_v5_native.tsv&quot;</span>))</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span><span class="fu">is.na</span>(cm) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(chr_v5)][<span class="fu">order</span>(chr_v5, cm)]</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># R/qtl `map` object: one per-chromosome cM vector, origin shifted to 0</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>chrs <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(d<span class="sc">$</span>chr_v5))</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>map <span class="ot">&lt;-</span> <span class="fu">lapply</span>(chrs, <span class="cf">function</span>(ch) {</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> d[chr_v5 <span class="sc">==</span> ch]</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> z<span class="sc">$</span>cm <span class="sc">-</span> <span class="fu">min</span>(z<span class="sc">$</span>cm)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(v) <span class="ot">&lt;-</span> z<span class="sc">$</span>marker</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  v</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(map) <span class="ot">&lt;-</span> <span class="fu">as.character</span>(chrs)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(map) <span class="ot">&lt;-</span> <span class="st">&quot;map&quot;</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="fu">## Map size</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="in">```{r size-table}</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> d[, .(<span class="at">markers =</span> .N, <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">max</span>(cm) <span class="sc">-</span> <span class="fu">min</span>(cm), <span class="dv">1</span>)),</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>  by <span class="ot">=</span> .(<span class="at">chr =</span> chr_v5)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>][<span class="fu">order</span>(chr)]</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>tot <span class="ot">&lt;-</span> <span class="fu">data.table</span>(<span class="at">chr =</span> <span class="st">&quot;total&quot;</span>, <span class="at">markers =</span> <span class="fu">sum</span>(tab<span class="sc">$</span>markers), <span class="at">length_cM =</span> <span class="fu">round</span>(<span class="fu">sum</span>(tab<span class="sc">$</span>length_cM), <span class="dv">1</span>))</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbind</span>(tab[, .(<span class="at">chr =</span> <span class="fu">as.character</span>(chr), markers, length_cM)], tot),</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>  <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;chr (v5)&quot;</span>, <span class="st">&quot;markers&quot;</span>, <span class="st">&quot;length (cM)&quot;</span>),</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Composite bcsft(1,4) map per chromosome (Chen 2019: avg 1461 cM/subpopulation).&quot;</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Chromosome lengths</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="in">```{r cm-bars, fig.width=9, fig.height=6}</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>mk <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(chrs, <span class="cf">function</span>(ch) <span class="fu">data.table</span>(<span class="at">chr =</span> ch, <span class="at">cm =</span> map[[<span class="fu">as.character</span>(ch)]])))</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(mk, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(chr), <span class="at">y =</span> cm)) <span class="sc">+</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> <span class="fu">factor</span>(chr), <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> cm), <span class="at">linewidth =</span> <span class="dv">6</span>, <span class="at">colour =</span> <span class="st">&quot;grey85&quot;</span>) <span class="sc">+</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">xend =</span> <span class="fu">factor</span>(chr), <span class="at">y =</span> cm <span class="sc">-</span> <span class="fl">0.15</span>, <span class="at">yend =</span> cm <span class="sc">+</span> <span class="fl">0.15</span>),</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">linewidth =</span> <span class="dv">6</span>, <span class="at">colour =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.20</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span> <span class="co"># marker ticks</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_reverse</span>(<span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="fl">0.02</span>, <span class="fl">0.04</span>))) <span class="sc">+</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;chromosome (v5)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;position (cM)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">14</span>)</span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

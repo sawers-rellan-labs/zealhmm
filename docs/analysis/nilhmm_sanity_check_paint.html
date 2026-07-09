@@ -4089,7 +4089,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">nilHMM sanity check paint: source × caller tracks, one engine, no Julia</h1>
+<div class="quarto-title-block"><div><h1 class="title">nilHMM sanity check paint: source × caller tracks, one engine, no Julia</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
 <p class="subtitle lead">Chromosome painting of the vary-skim sweep NILs (+B73 control) — 6 tracks = 2 data sources (Skim, BRB) crossed with nilHMM callers, all through the nilHMM package</p>
 </div>
 
@@ -4214,6 +4214,8 @@ vertical-align: -.125em;
 <section id="setup-engine-paths-samples" class="level1">
 <h1>1. Setup — engine, paths, samples</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
@@ -4246,6 +4248,7 @@ vertical-align: -.125em;
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">skim =</span> skim_name, <span class="at">brb =</span> brb_name, adir</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  )]</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="atlas-competitive-mapping-ancestry-googa-shadow" class="level1">
@@ -4262,6 +4265,8 @@ vertical-align: -.125em;
 <p>Why categorical and not a count model: these are <strong>3′ RNA (BRB-seq) reads</strong>, so a gene’s read depth is driven by <strong>expression</strong>, not coverage, and <strong>allele-specific expression</strong> pushes a true HET’s donor fraction off 0.5 — both confound a count/BetaBinomial emission. Discretizing to a hard genotype <em>first</em> (exactly what GOOGA, itself an eQTL/ASE pipeline, does) makes the emission <strong>expression-agnostic</strong>. Memory: <code>cassini-googa-caller</code>, <code>feedback-reproduce-from-source</code>.</p>
 <p>The code below is the consumer-side staging: read the cassini pangene counts per donor species, apply the GOOGA hard call, map genes to B73 coordinates, and decode each chromosome through the <code>gt</code>-emission geometric-duration HMM.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>g2p <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(REF, <span class="st">&quot;gene_to_pangene.tsv&quot;</span>))[species <span class="sc">==</span> <span class="st">&quot;B73&quot;</span>, .(gene, pan_gene)]</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>co <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(REF, <span class="st">&quot;b73_gene_coords.tsv&quot;</span>),</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">header =</span> <span class="cn">FALSE</span>,</span>
@@ -4287,12 +4292,15 @@ vertical-align: -.125em;
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  ))</span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="binhmm-corrected-on-the-dense-skim-bins" class="level1">
 <h1>3. binhmm (corrected) on the dense skim bins</h1>
 <p>3-state <strong>Gaussian</strong>-emission HMM on per-bin <code>ALT_FREQ</code>, porting the nilhifi <code>chromosome_painting.R</code> fix: REF is <strong>anchored at the baseline floor</strong> (mean fixed, sd from the low bins) so REF noise stays REF; HET/ALT are seeded from the data and refined by hard-EM with REF fixed; sticky transitions + design start priors + collapse guards. This replaces the free K=3 GMM (which always invents a 3rd cluster → HET over-call).</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The anchored 3-state Gaussian HMM is the packaged `binhmm` gauss backend. Our</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># input is the pre-computed per-1 Mb `bin_genotypes.tsv` (ALT_FREQ over the dense</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ~27.6 M set); `call_ancestry(caller = &quot;binhmm&quot;)` accepts a pre-binned table (an</span></span>
@@ -4311,6 +4319,7 @@ vertical-align: -.125em;
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(obs, <span class="at">caller =</span> <span class="st">&quot;binhmm&quot;</span>, <span class="at">design =</span> design))</span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="count-rtiger-via-the-engine" class="level1">
@@ -4319,6 +4328,8 @@ vertical-align: -.125em;
 <p><strong>The duration knob has a distinct name per caller</strong> (no overloaded <code>r</code>): <code>caller = &quot;nnil&quot;</code> takes <strong><code>rrate</code></strong>, the expected per-marker <em>recombination rate</em> of the geometric duration (Holland’s nNIL calibrates it as <code>2·total_cM / (100·n_markers)</code> ≈ <code>30/n_markers</code> for a 1500 cM maize map, and it is tunable from data by KS-vs-sim); <code>caller = &quot;rtiger&quot;</code> takes <strong><code>rigidity</code></strong>, the integer minimum run length (e.g. <code>5</code>). (<code>nilHMM</code>’s rigidity <em>duration</em> also has an exit rate <code>xrate</code>, but the faithful RTIGER port doesn’t use it.) The four count tracks below (Skim-nNIL, Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller, design prior, and these knobs — assembled in §5.</p>
 <p><code>eng()</code> is the thin adapter that wires a count file into the engine: locate and read the counts, decode through <code>call_ancestry()</code>, and hand back just the four columns the paint needs.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate a sample&#39;s count TSV under `dir`. Recursive because NILs and the B73</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># control may sit in different subfolders; returns NA if the sample isn&#39;t staged.</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>find1 <span class="ot">&lt;-</span> <span class="cf">function</span>(dir, s) {</span>
@@ -4338,11 +4349,14 @@ vertical-align: -.125em;
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>SK50 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;counts_50k&quot;</span>) <span class="co"># skim 50K-panel counts   (Skim-nNIL, Skim-RTIGER)</span></span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>BRBW <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;counts_wideseq&quot;</span>) <span class="co"># BRB wideseq-thinned counts (BrB-nNIL, BrB-RTIGER)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="assemble-all-tracks" class="level1">
 <h1>5. Assemble all tracks</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>methods <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Skim-binhmm&quot;</span>, <span class="st">&quot;Skim-nNIL&quot;</span>, <span class="st">&quot;Skim-rtiger&quot;</span>,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;BrB-nNIL&quot;</span>, <span class="st">&quot;BrB-rtiger&quot;</span>, <span class="st">&quot;BrB-atlas&quot;</span></span>
@@ -4388,6 +4402,7 @@ vertical-align: -.125em;
 <span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(all)</span>
 <span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>df[, .N, by <span class="ot">=</span> method]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>        method     N
         &lt;char&gt; &lt;int&gt;
@@ -4403,6 +4418,8 @@ vertical-align: -.125em;
 <section id="paint" class="level1">
 <h1>6. Paint</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>yb <span class="ot">&lt;-</span> <span class="fu">data.table</span>(<span class="at">method =</span> methods, <span class="at">k =</span> <span class="dv">5</span><span class="sc">:</span><span class="dv">0</span>) <span class="co"># top -&gt; bottom</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">merge</span>(df, yb, <span class="at">by =</span> <span class="st">&quot;method&quot;</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>df[, <span class="st">`</span><span class="at">:=</span><span class="st">`</span>(<span class="at">ylo =</span> k <span class="sc">/</span> <span class="dv">6</span> <span class="sc">+</span> <span class="fl">0.01</span>, <span class="at">yhi =</span> (k <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">6</span> <span class="sc">-</span> <span class="fl">0.01</span>)]</span>
@@ -4447,6 +4464,7 @@ vertical-align: -.125em;
 <span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/nilhmm_sanity_check_paint.png&quot;</span>), p, <span class="at">width =</span> <span class="dv">16</span>, <span class="at">height =</span> <span class="dv">11</span>, <span class="at">dpi =</span> <span class="dv">130</span>, <span class="at">limitsize =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a><span class="fu">fwrite</span>(df, here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/nilhmm_sanity_check_paint_segments.tsv&quot;</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>)</span>
 <span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -4464,6 +4482,8 @@ vertical-align: -.125em;
 <li><strong>Caller-specific behavior, as expected:</strong> Skim-binhmm paints the broadest blocks and is more permissive toward ALT; BrB-rtiger is the noisiest (the known BRB-RTI RNA false-donor floor); BrB-atlas and BrB-nNIL are the most conservative.</li>
 </ul>
 
+
+<!-- -->
 
 </section>
 
@@ -4538,6 +4558,57 @@ vertical-align: -.125em;
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -4867,7 +4938,410 @@ vertical-align: -.125em;
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;nilHMM sanity check paint: source × caller tracks, one engine, no Julia&quot;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Chromosome painting of the vary-skim sweep NILs (+B73 control) — 6 tracks = 2 data sources (Skim, BRB) crossed with nilHMM callers, all through the nilHMM package&quot;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> &quot;2026-07-02&quot;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>**Context.** This is the cross-track sanity check for the unified <span class="in">`nilHMM`</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>engine, where every caller runs through one duration-aware 3-state</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>(REF/HET/ALT) HMM with the emission as the only swappable piece. We paint the</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>same **vary-skim coverage-sweep NILs** (plus a clean B73 control) and eyeball</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>whether the independent tracks agree on where the donor blocks are, and whether</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>the control stays REF. Memory: <span class="in">`wideseq-chrpainting-code`</span>,</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="in">`generative_vs_discriminative_callers`</span>, <span class="in">`cassini-googa-caller`</span>,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="in">`method-naming-source-caller`</span>, <span class="in">`skim-count-caller-calibration`</span>,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="in">`rtiger-betabinomial-cost`</span>.</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>**The six tracks are *not* six callers.** Each track is a combination of a</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>**data source** and a **nilHMM caller method** (naming convention</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="in">`&lt;DataSource&gt;-&lt;Caller&gt;`</span>, source first — memory <span class="in">`method-naming-source-caller`</span>).</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>There are only **two data sources** and **four distinct callers**; Skim and BRB</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>each run three tracks and *share* the nNIL and RTIGER callers:</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Data sources (2):** <span class="in">`Skim`</span> = low-coverage WGS; <span class="in">`BrB`</span> = 3′ RNA-seq (BRB-seq).</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Callers (4 distinct):** <span class="in">`binhmm`</span> (Gaussian on per-bin <span class="in">`ALT_FREQ`</span>), <span class="in">`nNIL`</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  (count / BetaBinomial HMM), <span class="in">`RTIGER`</span> (Julia-free port), <span class="in">`ATLAS`</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  (GOOGA-shadow gene-level GT).</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>The tracks are ordered **first by data source, then by caller** (all three Skim</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>tracks, then all three BRB tracks):</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> # <span class="pp">|</span> Track <span class="pp">|</span> Data source <span class="pp">|</span> nilHMM caller <span class="pp">|</span> Input marker set <span class="pp">|</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|---|</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> **Skim-binhmm** | Skim (low-cov WGS) | `binhmm` — 3-state Gaussian on per-bin `ALT_FREQ`, REF anchored at the floor | **dense ~27.6 M-SNP set** — per-1 Mb <span class="in">`ALT_FREQ`</span> <span class="in">`bin_genotypes`</span> from GATK <span class="in">`CollectAllelicCounts`</span> at the full teosinte-informative wideseq positions (mount, <span class="in">`bzeaseq/ancestry`</span>) <span class="pp">|</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> **Skim-nNIL** | Skim (low-cov WGS) | `nNIL` — count / BetaBinomial HMM (`rrate=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) <span class="pp">|</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> **Skim-rtiger** | Skim (low-cov WGS) | `RTIGER` port (`rigidity=5`) | **50K panel** counts (thinned SNP50K) <span class="pp">|</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 4 <span class="pp">|</span> **BrB-nNIL** | BrB (3′ RNA-seq) | `nNIL` — count HMM, `fit_means` (`rrate=1e-8`) | **wideseq-thinned** BRB counts <span class="pp">|</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 5 <span class="pp">|</span> **BrB-rtiger** | BrB (3′ RNA-seq) | `RTIGER` port (`rigidity=7`) | **wideseq-thinned** BRB counts <span class="pp">|</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 6 <span class="pp">|</span> **BrB-atlas** | BrB (3′ RNA-seq) | `ATLAS` — GOOGA-shadow gene-level GT (`≥.95`/`≥.25`, min 5 reads) → geometric-duration HMM | cassini **pangene** counts, per donor species <span class="pp">|</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>So the grid is 2 sources × 3 caller-slots = 6 tracks, drawing on 4 unique</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>callers (<span class="in">`binhmm`</span> is Skim-only, <span class="in">`ATLAS`</span> is BRB-only, <span class="in">`nNIL`</span>/<span class="in">`RTIGER`</span> run on both).</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title=&quot;Marker-set provenance — the tracks run at different SNP densities&quot;}</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>The three Skim tracks are **not** all on the same markers. **Skim-binhmm runs on</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>the full dense set of ~27.6 M teosinte-informative SNPs** (2.0–4.0 M per</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>chromosome; total 27,603,777), whereas **Skim-nNIL / Skim-rtiger run on the much</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>sparser ~52 K &quot;SNP50K&quot; set**. These are two different marker sets with two</span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>different provenances:</span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**The ~27.6 M panel** (`wideseq_ref`) is a **teosinte-informative SNP set** —</span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>  positions where teosinte (the donor) carries variation relative to B73 (the</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>  recurrent parent), so a read there is diagnostic of donor-vs-recurrent ancestry.</span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>  That informativeness is the whole point of the panel; it is a **reference/filter</span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>  set, not sample genotypes**. It is built from the **Schnable et al. 2023** *Zea*</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  pan-genome VCF by keeping the teosinte/*Tripsacum* + B73 samples and biallelic</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>  SNPs — the MAF ≥ 0.05 cutoff is merely the mechanism that selects the</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>  donor-informative (species-common) sites</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`bzeaseq/get_variants_from_schnable2023.sh`</span>). GATK <span class="in">`CollectAllelicCounts`</span></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>  tallies each skim/BRB sample&#39;s reads at these positions — so the BRB count tracks</span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>  (BrB-nNIL, BrB-rtiger) draw on the same panel; only Skim-binhmm keeps the full</span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>  27.6 M density.</span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**The ~52 K SNP50K set is an *intersection* — not a genotyping array, and not</span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>  merely a coarse thinning of the 27.6 M panel.** Its unfiltered base is the</span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>  **BZea NIL BAMs → GATK joint genotyping (N. Tandukar) + Beagle imputation**</span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>  (196,120 SNPs); intersecting those genotyped sites with the 27.6 M</span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>  teosinte-informative panel yields **51,991 SNPs** (so the 50K is itself</span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>  teosinte-informative, being a subset of the panel). The Skim-nNIL / Skim-rtiger</span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>  counts are reads tallied at those ~52 K sites. Here the teosinte panel is the</span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>  **filter** and the</span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>  BZea genotyping is the base — full chain + paths in</span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a>  <span class="in">`sawers-rellan-labs/BzeaSeq`</span> → <span class="in">`docs/donor_id_jaccard.md`</span></span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>  (&quot;SNP50K &amp; marker-set provenance&quot;).</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>The MAF ≥ 0.05 filter keeps donor-informative (species-common) sites, which</span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>raises the donor dose and widens REF/HET/ALT separation —</span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>see <span class="co">[</span><span class="ot">`genotype_likelihoods_and_hmm` §5</span><span class="co">](genotype_likelihoods_and_hmm.html#what-survives-the-information-ceiling)</span></span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>and <span class="co">[</span><span class="ot">`snp50k_genotype_identifiability` §2.1/§2.6/§3</span><span class="co">](snp50k_genotype_identifiability.html#consequences)</span>.</span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **Parameters are illustrative, not fully re-calibrated.** This note is a</span></span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; coherence check across sources and callers, not a final call set.</span></span>
+<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a><span class="fu"># 1. Setup — engine, paths, samples</span></span>
+<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
+<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM)</span>
+<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
+<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
+<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a><span class="co"># Inputs are staged locally under data/ by stage_sanity_check_paint.R (see DATA.md),</span></span>
+<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a><span class="co"># organized by (source x input type); paths below point into that layout.</span></span>
+<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a>SS <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data/skimsweep&quot;</span>) <span class="co"># the vary-skim cohort</span></span>
+<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a>SKIM <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SS, <span class="st">&quot;skim&quot;</span>) <span class="co"># skim counts (counts_50k/) + bins (bins/)</span></span>
+<span id="cb8-107"><a href="#cb8-107" aria-hidden="true" tabindex="-1"></a>BRB <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SS, <span class="st">&quot;brb&quot;</span>) <span class="co"># brb counts (counts_wideseq/) + pangene (pangene/)</span></span>
+<span id="cb8-108"><a href="#cb8-108" aria-hidden="true" tabindex="-1"></a>REF <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data/ref&quot;</span>) <span class="co"># genome-level ATLAS gene maps</span></span>
+<span id="cb8-109"><a href="#cb8-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-110"><a href="#cb8-110" aria-hidden="true" tabindex="-1"></a><span class="co"># samples: control + 10 vary-skim NILs (ordered by skim lambda)</span></span>
+<span id="cb8-111"><a href="#cb8-111" aria-hidden="true" tabindex="-1"></a>mem <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(SS, <span class="st">&quot;coverage_sweep_members.csv&quot;</span>))[sweep <span class="sc">==</span> <span class="st">&quot;vary_skim&quot;</span>][<span class="fu">order</span>(vary_cov)]</span>
+<span id="cb8-112"><a href="#cb8-112" aria-hidden="true" tabindex="-1"></a>mem[, tax <span class="sc">:</span><span class="er">=</span> <span class="fu">sub</span>(<span class="st">&quot;</span><span class="sc">\\</span><span class="st">..*&quot;</span>, <span class="st">&quot;&quot;</span>, nil)]</span>
+<span id="cb8-113"><a href="#cb8-113" aria-hidden="true" tabindex="-1"></a>tax2dir <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb8-114"><a href="#cb8-114" aria-hidden="true" tabindex="-1"></a>  <span class="at">Zx =</span> <span class="st">&quot;mexicana&quot;</span>, <span class="at">Zl =</span> <span class="st">&quot;luxurians&quot;</span>, <span class="at">Zd =</span> <span class="st">&quot;diploperennis&quot;</span>,</span>
+<span id="cb8-115"><a href="#cb8-115" aria-hidden="true" tabindex="-1"></a>  <span class="at">Zv =</span> <span class="st">&quot;parviglumis&quot;</span>, <span class="at">Zh =</span> <span class="st">&quot;huehuetenangensis&quot;</span></span>
+<span id="cb8-116"><a href="#cb8-116" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-117"><a href="#cb8-117" aria-hidden="true" tabindex="-1"></a>mem[, adir <span class="sc">:</span><span class="er">=</span> tax2dir[tax]]</span>
+<span id="cb8-118"><a href="#cb8-118" aria-hidden="true" tabindex="-1"></a><span class="co"># wrapped left-hand label: cov + FULL pedigree string, then skim/brb plate ids</span></span>
+<span id="cb8-119"><a href="#cb8-119" aria-hidden="true" tabindex="-1"></a>wraplab <span class="ot">&lt;-</span> <span class="cf">function</span>(cov, ped, skim, brb) <span class="fu">sprintf</span>(<span class="st">&quot;%s</span><span class="sc">\n</span><span class="st">%s</span><span class="sc">\n</span><span class="st">skim:%s</span><span class="sc">\n</span><span class="st">brb:%s&quot;</span>, cov, ped, skim, brb)</span>
+<span id="cb8-120"><a href="#cb8-120" aria-hidden="true" tabindex="-1"></a>rows <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb8-121"><a href="#cb8-121" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(</span>
+<span id="cb8-122"><a href="#cb8-122" aria-hidden="true" tabindex="-1"></a>    <span class="at">rowlab =</span> <span class="fu">wraplab</span>(<span class="st">&quot;B73 ctrl&quot;</span>, <span class="st">&quot;B73 (control)&quot;</span>, <span class="st">&quot;PN10_SID893&quot;</span>, <span class="st">&quot;PN3_SID213&quot;</span>),</span>
+<span id="cb8-123"><a href="#cb8-123" aria-hidden="true" tabindex="-1"></a>    <span class="at">skim =</span> <span class="st">&quot;PN10_SID893&quot;</span>, <span class="at">brb =</span> <span class="st">&quot;PN3_SID213&quot;</span>, <span class="at">adir =</span> <span class="st">&quot;mexicana&quot;</span></span>
+<span id="cb8-124"><a href="#cb8-124" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb8-125"><a href="#cb8-125" aria-hidden="true" tabindex="-1"></a>  mem[, .(</span>
+<span id="cb8-126"><a href="#cb8-126" aria-hidden="true" tabindex="-1"></a>    <span class="at">rowlab =</span> <span class="fu">wraplab</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.2f×&quot;</span>, vary_cov), nil, skim_name, brb_name),</span>
+<span id="cb8-127"><a href="#cb8-127" aria-hidden="true" tabindex="-1"></a>    <span class="at">skim =</span> skim_name, <span class="at">brb =</span> brb_name, adir</span>
+<span id="cb8-128"><a href="#cb8-128" aria-hidden="true" tabindex="-1"></a>  )]</span>
+<span id="cb8-129"><a href="#cb8-129" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-130"><a href="#cb8-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-131"><a href="#cb8-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-132"><a href="#cb8-132" aria-hidden="true" tabindex="-1"></a><span class="fu"># 2. ATLAS: competitive-mapping ancestry (GOOGA-shadow)</span></span>
+<span id="cb8-133"><a href="#cb8-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-134"><a href="#cb8-134" aria-hidden="true" tabindex="-1"></a>**ATLAS** = **A**ncestry by **T**ranscript-**L**evel **A**lignment **S**cores.</span>
+<span id="cb8-135"><a href="#cb8-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-136"><a href="#cb8-136" aria-hidden="true" tabindex="-1"></a>**The basic principle is competitive mapping: count the reads that match each</span>
+<span id="cb8-137"><a href="#cb8-137" aria-hidden="true" tabindex="-1"></a>founder genome.** Where the SNP-panel callers read an *allele fraction* at</span>
+<span id="cb8-138"><a href="#cb8-138" aria-hidden="true" tabindex="-1"></a>predefined variant sites, ATLAS instead aligns each transcript read against</span>
+<span id="cb8-139"><a href="#cb8-139" aria-hidden="true" tabindex="-1"></a>**both founder references at once** — B73 (the recurrent parent) and the</span>
+<span id="cb8-140"><a href="#cb8-140" aria-hidden="true" tabindex="-1"></a>teosinte **donor** transcriptome — and lets the **alignment scores** decide</span>
+<span id="cb8-141"><a href="#cb8-141" aria-hidden="true" tabindex="-1"></a>which parent that read came from. Per read, the best alignment score (with a</span>
+<span id="cb8-142"><a href="#cb8-142" aria-hidden="true" tabindex="-1"></a>margin <span class="in">`k`</span> on the score gap <span class="in">`ΔAS`</span>) votes the read as **REF**, **DONOR**, or</span>
+<span id="cb8-143"><a href="#cb8-143" aria-hidden="true" tabindex="-1"></a>**AMBIGUOUS**. A read that maps equally well to both parents landed on sequence</span>
+<span id="cb8-144"><a href="#cb8-144" aria-hidden="true" tabindex="-1"></a>that is *identical* between them (conserved — at ~2 % B73-vs-donor divergence</span>
+<span id="cb8-145"><a href="#cb8-145" aria-hidden="true" tabindex="-1"></a>this is ~98 % of positions), so it carries no ancestry information: **AMBIGUOUS</span>
+<span id="cb8-146"><a href="#cb8-146" aria-hidden="true" tabindex="-1"></a>= non-informative → dropped** (it is *not* a HET call). Summing the informative</span>
+<span id="cb8-147"><a href="#cb8-147" aria-hidden="true" tabindex="-1"></a>votes over a gene gives the two competitive-mapping counts, <span class="in">`n_recur`</span></span>
+<span id="cb8-148"><a href="#cb8-148" aria-hidden="true" tabindex="-1"></a>(B73-matching reads) and <span class="in">`n_donor`</span> (donor-matching reads); ancestry is then just</span>
+<span id="cb8-149"><a href="#cb8-149" aria-hidden="true" tabindex="-1"></a>&quot;which founder&#39;s genome captured the reads at this gene.&quot;</span>
+<span id="cb8-150"><a href="#cb8-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-151"><a href="#cb8-151" aria-hidden="true" tabindex="-1"></a>**Caveat — the &quot;donor&quot; reference is a species-level stand-in, not the actual</span>
+<span id="cb8-152"><a href="#cb8-152" aria-hidden="true" tabindex="-1"></a>donor accession.** We do not have the genome/transcriptome of the specific</span>
+<span id="cb8-153"><a href="#cb8-153" aria-hidden="true" tabindex="-1"></a>teosinte accession used in each cross, so the donor side of the competitive</span>
+<span id="cb8-154"><a href="#cb8-154" aria-hidden="true" tabindex="-1"></a>alignment is a **representative reference for the donor&#39;s species** (per</span>
+<span id="cb8-155"><a href="#cb8-155" aria-hidden="true" tabindex="-1"></a><span class="in">`tax2dir`</span>: mexicana, luxurians, diploperennis, parviglumis, huehuetenangensis).</span>
+<span id="cb8-156"><a href="#cb8-156" aria-hidden="true" tabindex="-1"></a>A read is scored donor-vs-B73 against that proxy, not against the true parent —</span>
+<span id="cb8-157"><a href="#cb8-157" aria-hidden="true" tabindex="-1"></a>the same reference-data gap as the SNP-panel accession ceiling</span>
+<span id="cb8-158"><a href="#cb8-158" aria-hidden="true" tabindex="-1"></a>(<span class="co">[</span><span class="ot">`snp50k_genotype_identifiability` §2.6</span><span class="co">](snp50k_genotype_identifiability.html#the-site-selection-ceiling)</span>):</span>
+<span id="cb8-159"><a href="#cb8-159" aria-hidden="true" tabindex="-1"></a>sequence the accession carries but the species proxy lacks (or vice versa) is</span>
+<span id="cb8-160"><a href="#cb8-160" aria-hidden="true" tabindex="-1"></a>mis-scored, so <span class="in">`n_donor`</span> is only as good as the stand-in&#39;s match to the real donor.</span>
+<span id="cb8-161"><a href="#cb8-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-162"><a href="#cb8-162" aria-hidden="true" tabindex="-1"></a>**GOOGA is the template.** GOOGA (Fishman lab, *PLoS Genet* 2024,</span>
+<span id="cb8-163"><a href="#cb8-163" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">pgen.1011072</span><span class="co">](https://doi.org/10.1371/journal.pgen.1011072)</span>) is a *Mimulus* F2</span>
+<span id="cb8-164"><a href="#cb8-164" aria-hidden="true" tabindex="-1"></a>genetic-map-building pipeline whose ancestry step is **threshold-then-HMM**.</span>
+<span id="cb8-165"><a href="#cb8-165" aria-hidden="true" tabindex="-1"></a>ATLAS is a &quot;GOOGA-shadow&quot;: it ports that step onto the shared nilHMM engine —</span>
+<span id="cb8-166"><a href="#cb8-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-167"><a href="#cb8-167" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Per-gene hard call from the count fractions** (GOOGA <span class="in">`s2.py`</span>, verbatim):</span>
+<span id="cb8-168"><a href="#cb8-168" aria-hidden="true" tabindex="-1"></a>   <span class="in">`n_recur + n_donor &lt; 5`</span> → missing; recurrent fraction <span class="in">`≥ 0.95`</span> → **REF** (AA);</span>
+<span id="cb8-169"><a href="#cb8-169" aria-hidden="true" tabindex="-1"></a>   donor fraction <span class="in">`≥ 0.95`</span> → **ALT / donor-hom** (BB); *both* parents <span class="in">`≥ 0.25`</span></span>
+<span id="cb8-170"><a href="#cb8-170" aria-hidden="true" tabindex="-1"></a>   → **HET** (AB); otherwise missing. (Thresholds <span class="in">`0.95`</span> / <span class="in">`0.25`</span>, min 5 reads.)</span>
+<span id="cb8-171"><a href="#cb8-171" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Place each gene at its B73 coordinate** and order it along the chromosome.</span>
+<span id="cb8-172"><a href="#cb8-172" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Smooth with the engine&#39;s categorical genotype-error (<span class="in">`gt`</span>) emission +</span>
+<span id="cb8-173"><a href="#cb8-173" aria-hidden="true" tabindex="-1"></a>   geometric-duration HMM** — the same duration/rigidity layer as every other</span>
+<span id="cb8-174"><a href="#cb8-174" aria-hidden="true" tabindex="-1"></a>   caller, but a *categorical confusion* emission instead of count/BetaBinomial.</span>
+<span id="cb8-175"><a href="#cb8-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-176"><a href="#cb8-176" aria-hidden="true" tabindex="-1"></a>Why categorical and not a count model: these are **3′ RNA (BRB-seq) reads**, so</span>
+<span id="cb8-177"><a href="#cb8-177" aria-hidden="true" tabindex="-1"></a>a gene&#39;s read depth is driven by **expression**, not coverage, and</span>
+<span id="cb8-178"><a href="#cb8-178" aria-hidden="true" tabindex="-1"></a>**allele-specific expression** pushes a true HET&#39;s donor fraction off 0.5 — both</span>
+<span id="cb8-179"><a href="#cb8-179" aria-hidden="true" tabindex="-1"></a>confound a count/BetaBinomial emission. Discretizing to a hard genotype *first*</span>
+<span id="cb8-180"><a href="#cb8-180" aria-hidden="true" tabindex="-1"></a>(exactly what GOOGA, itself an eQTL/ASE pipeline, does) makes the emission</span>
+<span id="cb8-181"><a href="#cb8-181" aria-hidden="true" tabindex="-1"></a>**expression-agnostic**. Memory: <span class="in">`cassini-googa-caller`</span>,</span>
+<span id="cb8-182"><a href="#cb8-182" aria-hidden="true" tabindex="-1"></a><span class="in">`feedback-reproduce-from-source`</span>.</span>
+<span id="cb8-183"><a href="#cb8-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-184"><a href="#cb8-184" aria-hidden="true" tabindex="-1"></a>The code below is the consumer-side staging: read the cassini pangene counts per</span>
+<span id="cb8-185"><a href="#cb8-185" aria-hidden="true" tabindex="-1"></a>donor species, apply the GOOGA hard call, map genes to B73 coordinates, and</span>
+<span id="cb8-186"><a href="#cb8-186" aria-hidden="true" tabindex="-1"></a>decode each chromosome through the <span class="in">`gt`</span>-emission geometric-duration HMM.</span>
+<span id="cb8-187"><a href="#cb8-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-188"><a href="#cb8-188" aria-hidden="true" tabindex="-1"></a><span class="in">```{r atlas}</span></span>
+<span id="cb8-189"><a href="#cb8-189" aria-hidden="true" tabindex="-1"></a>g2p <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(REF, <span class="st">&quot;gene_to_pangene.tsv&quot;</span>))[species <span class="sc">==</span> <span class="st">&quot;B73&quot;</span>, .(gene, pan_gene)]</span>
+<span id="cb8-190"><a href="#cb8-190" aria-hidden="true" tabindex="-1"></a>co <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">file.path</span>(REF, <span class="st">&quot;b73_gene_coords.tsv&quot;</span>),</span>
+<span id="cb8-191"><a href="#cb8-191" aria-hidden="true" tabindex="-1"></a>  <span class="at">header =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-192"><a href="#cb8-192" aria-hidden="true" tabindex="-1"></a>  <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>, <span class="st">&quot;chr&quot;</span>, <span class="st">&quot;start&quot;</span>, <span class="st">&quot;end&quot;</span>)</span>
+<span id="cb8-193"><a href="#cb8-193" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-194"><a href="#cb8-194" aria-hidden="true" tabindex="-1"></a>gmap <span class="ot">&lt;-</span> <span class="fu">merge</span>(g2p, co, <span class="at">by =</span> <span class="st">&quot;gene&quot;</span>)</span>
+<span id="cb8-195"><a href="#cb8-195" aria-hidden="true" tabindex="-1"></a>gmap[, chr <span class="sc">:</span><span class="er">=</span> <span class="fu">as.integer</span>(<span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, chr))]</span>
+<span id="cb8-196"><a href="#cb8-196" aria-hidden="true" tabindex="-1"></a>gmap <span class="ot">&lt;-</span> <span class="fu">unique</span>(gmap[<span class="sc">!</span><span class="fu">is.na</span>(chr)], <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)[, .(pan_gene, chr, <span class="at">pos =</span> end)]</span>
+<span id="cb8-197"><a href="#cb8-197" aria-hidden="true" tabindex="-1"></a><span class="co"># The GOOGA hard-call (`≥.95`/`≥.25`, min 5 reads) + gt/geometric-duration HMM</span></span>
+<span id="cb8-198"><a href="#cb8-198" aria-hidden="true" tabindex="-1"></a><span class="co"># are the packaged ATLAS caller (`call_ancestry(caller = &quot;atlas&quot;)`). Here we do</span></span>
+<span id="cb8-199"><a href="#cb8-199" aria-hidden="true" tabindex="-1"></a><span class="co"># only the consumer-side staging — read pangene counts, map to B73 gene</span></span>
+<span id="cb8-200"><a href="#cb8-200" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates — and hand the engine `(name, chr, pos, n_ref = recurrent,</span></span>
+<span id="cb8-201"><a href="#cb8-201" aria-hidden="true" tabindex="-1"></a><span class="co"># n_alt = donor)`. `rrate = 1e-3` matches the geometric duration used originally.</span></span>
+<span id="cb8-202"><a href="#cb8-202" aria-hidden="true" tabindex="-1"></a>atlas_seg <span class="ot">&lt;-</span> <span class="cf">function</span>(brb, adir) {</span>
+<span id="cb8-203"><a href="#cb8-203" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;pangene&quot;</span>, adir, <span class="fu">paste0</span>(brb, <span class="st">&quot;.pangene_counts.tsv&quot;</span>))</span>
+<span id="cb8-204"><a href="#cb8-204" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
+<span id="cb8-205"><a href="#cb8-205" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb8-206"><a href="#cb8-206" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-207"><a href="#cb8-207" aria-hidden="true" tabindex="-1"></a>  ct <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">fread</span>(f), gmap, <span class="at">by =</span> <span class="st">&quot;pan_gene&quot;</span>)[<span class="fu">order</span>(chr, pos)]</span>
+<span id="cb8-208"><a href="#cb8-208" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(</span>
+<span id="cb8-209"><a href="#cb8-209" aria-hidden="true" tabindex="-1"></a>    ct[, .(<span class="at">name =</span> brb, chr, pos, <span class="at">n_ref =</span> n_recur, <span class="at">n_alt =</span> n_donor)],</span>
+<span id="cb8-210"><a href="#cb8-210" aria-hidden="true" tabindex="-1"></a>    <span class="at">caller =</span> <span class="st">&quot;atlas&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S3&quot;</span>, <span class="at">rrate =</span> <span class="fl">1e-3</span></span>
+<span id="cb8-211"><a href="#cb8-211" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb8-212"><a href="#cb8-212" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb8-213"><a href="#cb8-213" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-214"><a href="#cb8-214" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-215"><a href="#cb8-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-216"><a href="#cb8-216" aria-hidden="true" tabindex="-1"></a><span class="fu"># 3. binhmm (corrected) on the dense skim bins</span></span>
+<span id="cb8-217"><a href="#cb8-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-218"><a href="#cb8-218" aria-hidden="true" tabindex="-1"></a>3-state **Gaussian**-emission HMM on per-bin <span class="in">`ALT_FREQ`</span>, porting the nilhifi</span>
+<span id="cb8-219"><a href="#cb8-219" aria-hidden="true" tabindex="-1"></a><span class="in">`chromosome_painting.R`</span> fix: REF is **anchored at the baseline floor** (mean</span>
+<span id="cb8-220"><a href="#cb8-220" aria-hidden="true" tabindex="-1"></a>fixed, sd from the low bins) so REF noise stays REF; HET/ALT are seeded from the</span>
+<span id="cb8-221"><a href="#cb8-221" aria-hidden="true" tabindex="-1"></a>data and refined by hard-EM with REF fixed; sticky transitions + design start</span>
+<span id="cb8-222"><a href="#cb8-222" aria-hidden="true" tabindex="-1"></a>priors + collapse guards. This replaces the free K=3 GMM (which always invents a</span>
+<span id="cb8-223"><a href="#cb8-223" aria-hidden="true" tabindex="-1"></a>3rd cluster → HET over-call).</span>
+<span id="cb8-224"><a href="#cb8-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-225"><a href="#cb8-225" aria-hidden="true" tabindex="-1"></a><span class="in">```{r binhmm}</span></span>
+<span id="cb8-226"><a href="#cb8-226" aria-hidden="true" tabindex="-1"></a><span class="co"># The anchored 3-state Gaussian HMM is the packaged `binhmm` gauss backend. Our</span></span>
+<span id="cb8-227"><a href="#cb8-227" aria-hidden="true" tabindex="-1"></a><span class="co"># input is the pre-computed per-1 Mb `bin_genotypes.tsv` (ALT_FREQ over the dense</span></span>
+<span id="cb8-228"><a href="#cb8-228" aria-hidden="true" tabindex="-1"></a><span class="co"># ~27.6 M set); `call_ancestry(caller = &quot;binhmm&quot;)` accepts a pre-binned table (an</span></span>
+<span id="cb8-229"><a href="#cb8-229" aria-hidden="true" tabindex="-1"></a><span class="co"># `alt_freq` column + `start_bp`/`end_bp`, `pos` as the bin order key) and runs</span></span>
+<span id="cb8-230"><a href="#cb8-230" aria-hidden="true" tabindex="-1"></a><span class="co"># the HMM directly, with no re-binning.</span></span>
+<span id="cb8-231"><a href="#cb8-231" aria-hidden="true" tabindex="-1"></a>binhmm_gauss <span class="ot">&lt;-</span> <span class="cf">function</span>(skim, <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span>) {</span>
+<span id="cb8-232"><a href="#cb8-232" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;bins&quot;</span>, <span class="fu">paste0</span>(skim, <span class="st">&quot;_bin_genotypes.tsv&quot;</span>))</span>
+<span id="cb8-233"><a href="#cb8-233" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(f)) {</span>
+<span id="cb8-234"><a href="#cb8-234" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb8-235"><a href="#cb8-235" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-236"><a href="#cb8-236" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">fread</span>(f)</span>
+<span id="cb8-237"><a href="#cb8-237" aria-hidden="true" tabindex="-1"></a>  obs <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb8-238"><a href="#cb8-238" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> skim, <span class="at">chr =</span> <span class="fu">as.integer</span>(<span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, d<span class="sc">$</span>CONTIG)), <span class="at">pos =</span> d<span class="sc">$</span>BIN_POS,</span>
+<span id="cb8-239"><a href="#cb8-239" aria-hidden="true" tabindex="-1"></a>    <span class="at">alt_freq =</span> d<span class="sc">$</span>ALT_FREQ, <span class="at">start_bp =</span> d<span class="sc">$</span>BIN_START, <span class="at">end_bp =</span> d<span class="sc">$</span>BIN_END</span>
+<span id="cb8-240"><a href="#cb8-240" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-241"><a href="#cb8-241" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(obs, <span class="at">caller =</span> <span class="st">&quot;binhmm&quot;</span>, <span class="at">design =</span> design))</span>
+<span id="cb8-242"><a href="#cb8-242" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb8-243"><a href="#cb8-243" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-244"><a href="#cb8-244" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-245"><a href="#cb8-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-246"><a href="#cb8-246" aria-hidden="true" tabindex="-1"></a><span class="fu"># 4. Count / RTIGER via the engine</span></span>
+<span id="cb8-247"><a href="#cb8-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-248"><a href="#cb8-248" aria-hidden="true" tabindex="-1"></a>**nNIL and RTIGER are the same engine, different duration.** Both are</span>
+<span id="cb8-249"><a href="#cb8-249" aria-hidden="true" tabindex="-1"></a>count-emission callers: they read per-SNP allele counts and score each marker</span>
+<span id="cb8-250"><a href="#cb8-250" aria-hidden="true" tabindex="-1"></a>with the count / BetaBinomial emission through the *one* <span class="in">`nilHMM`</span> engine. The</span>
+<span id="cb8-251"><a href="#cb8-251" aria-hidden="true" tabindex="-1"></a>only thing that separates them is the duration layer — **nNIL** uses a</span>
+<span id="cb8-252"><a href="#cb8-252" aria-hidden="true" tabindex="-1"></a>**geometric** duration (a free per-marker switch probability), **RTIGER** a</span>
+<span id="cb8-253"><a href="#cb8-253" aria-hidden="true" tabindex="-1"></a>**rigidity** layer (an integer minimum run length). So both are just</span>
+<span id="cb8-254"><a href="#cb8-254" aria-hidden="true" tabindex="-1"></a><span class="in">`call_ancestry(read_counts(path), caller = …)`</span> with different arguments; there is</span>
+<span id="cb8-255"><a href="#cb8-255" aria-hidden="true" tabindex="-1"></a>no separate RTIGER program and no Julia.</span>
+<span id="cb8-256"><a href="#cb8-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-257"><a href="#cb8-257" aria-hidden="true" tabindex="-1"></a>**The duration knob has a distinct name per caller** (no overloaded <span class="in">`r`</span>):</span>
+<span id="cb8-258"><a href="#cb8-258" aria-hidden="true" tabindex="-1"></a><span class="in">`caller = &quot;nnil&quot;`</span> takes **`rrate`**, the expected per-marker *recombination rate*</span>
+<span id="cb8-259"><a href="#cb8-259" aria-hidden="true" tabindex="-1"></a>of the geometric duration (Holland&#39;s nNIL calibrates it as</span>
+<span id="cb8-260"><a href="#cb8-260" aria-hidden="true" tabindex="-1"></a><span class="in">`2·total_cM / (100·n_markers)`</span> ≈ <span class="in">`30/n_markers`</span> for a 1500 cM maize map, and it is</span>
+<span id="cb8-261"><a href="#cb8-261" aria-hidden="true" tabindex="-1"></a>tunable from data by KS-vs-sim); <span class="in">`caller = &quot;rtiger&quot;`</span> takes **`rigidity`**, the</span>
+<span id="cb8-262"><a href="#cb8-262" aria-hidden="true" tabindex="-1"></a>integer minimum run length (e.g. <span class="in">`5`</span>). (<span class="in">`nilHMM`</span>&#39;s rigidity *duration* also has an</span>
+<span id="cb8-263"><a href="#cb8-263" aria-hidden="true" tabindex="-1"></a>exit rate <span class="in">`xrate`</span>, but the faithful RTIGER port doesn&#39;t use it.) The four count</span>
+<span id="cb8-264"><a href="#cb8-264" aria-hidden="true" tabindex="-1"></a>tracks below (Skim-nNIL, Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller,</span>
+<span id="cb8-265"><a href="#cb8-265" aria-hidden="true" tabindex="-1"></a>design prior, and these knobs — assembled in §5.</span>
+<span id="cb8-266"><a href="#cb8-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-267"><a href="#cb8-267" aria-hidden="true" tabindex="-1"></a><span class="in">`eng()`</span> is the thin adapter that wires a count file into the engine: locate and</span>
+<span id="cb8-268"><a href="#cb8-268" aria-hidden="true" tabindex="-1"></a>read the counts, decode through <span class="in">`call_ancestry()`</span>, and hand back just the four</span>
+<span id="cb8-269"><a href="#cb8-269" aria-hidden="true" tabindex="-1"></a>columns the paint needs.</span>
+<span id="cb8-270"><a href="#cb8-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-271"><a href="#cb8-271" aria-hidden="true" tabindex="-1"></a><span class="in">```{r engine}</span></span>
+<span id="cb8-272"><a href="#cb8-272" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate a sample&#39;s count TSV under `dir`. Recursive because NILs and the B73</span></span>
+<span id="cb8-273"><a href="#cb8-273" aria-hidden="true" tabindex="-1"></a><span class="co"># control may sit in different subfolders; returns NA if the sample isn&#39;t staged.</span></span>
+<span id="cb8-274"><a href="#cb8-274" aria-hidden="true" tabindex="-1"></a>find1 <span class="ot">&lt;-</span> <span class="cf">function</span>(dir, s) {</span>
+<span id="cb8-275"><a href="#cb8-275" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">list.files</span>(dir, <span class="fu">paste0</span>(<span class="st">&quot;^&quot;</span>, s, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.tsv$&quot;</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-276"><a href="#cb8-276" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(f)) f[<span class="dv">1</span>] <span class="cf">else</span> <span class="cn">NA</span></span>
+<span id="cb8-277"><a href="#cb8-277" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-278"><a href="#cb8-278" aria-hidden="true" tabindex="-1"></a><span class="co"># Read a count file and decode it through the shared engine with the caller +</span></span>
+<span id="cb8-279"><a href="#cb8-279" aria-hidden="true" tabindex="-1"></a><span class="co"># params in `...` (caller, design, rrate (nnil) / rigidity (rtiger), err, …).</span></span>
+<span id="cb8-280"><a href="#cb8-280" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only the paint&#39;s 4 columns; return NULL — skipped, not fatal — if the</span></span>
+<span id="cb8-281"><a href="#cb8-281" aria-hidden="true" tabindex="-1"></a><span class="co"># file is missing, so one absent sample never aborts the sweep.</span></span>
+<span id="cb8-282"><a href="#cb8-282" aria-hidden="true" tabindex="-1"></a>eng <span class="ot">&lt;-</span> <span class="cf">function</span>(path, ...) {</span>
+<span id="cb8-283"><a href="#cb8-283" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(path) <span class="sc">||</span> <span class="sc">!</span><span class="fu">file.exists</span>(path)) {</span>
+<span id="cb8-284"><a href="#cb8-284" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb8-285"><a href="#cb8-285" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-286"><a href="#cb8-286" aria-hidden="true" tabindex="-1"></a>  seg <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(<span class="fu">call_ancestry</span>(<span class="fu">read_counts</span>(path), ...))</span>
+<span id="cb8-287"><a href="#cb8-287" aria-hidden="true" tabindex="-1"></a>  seg[, .(chr, start_bp, end_bp, state)]</span>
+<span id="cb8-288"><a href="#cb8-288" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-289"><a href="#cb8-289" aria-hidden="true" tabindex="-1"></a>SK50 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(SKIM, <span class="st">&quot;counts_50k&quot;</span>) <span class="co"># skim 50K-panel counts   (Skim-nNIL, Skim-RTIGER)</span></span>
+<span id="cb8-290"><a href="#cb8-290" aria-hidden="true" tabindex="-1"></a>BRBW <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRB, <span class="st">&quot;counts_wideseq&quot;</span>) <span class="co"># BRB wideseq-thinned counts (BrB-nNIL, BrB-RTIGER)</span></span>
+<span id="cb8-291"><a href="#cb8-291" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5. Assemble all tracks</span></span>
+<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a><span class="in">```{r assemble}</span></span>
+<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>methods <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb8-297"><a href="#cb8-297" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Skim-binhmm&quot;</span>, <span class="st">&quot;Skim-nNIL&quot;</span>, <span class="st">&quot;Skim-rtiger&quot;</span>,</span>
+<span id="cb8-298"><a href="#cb8-298" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;BrB-nNIL&quot;</span>, <span class="st">&quot;BrB-rtiger&quot;</span>, <span class="st">&quot;BrB-atlas&quot;</span></span>
+<span id="cb8-299"><a href="#cb8-299" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-300"><a href="#cb8-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-301"><a href="#cb8-301" aria-hidden="true" tabindex="-1"></a><span class="co"># run a caller, returning NULL (with a message) instead of aborting on error</span></span>
+<span id="cb8-302"><a href="#cb8-302" aria-hidden="true" tabindex="-1"></a>grab <span class="ot">&lt;-</span> <span class="cf">function</span>(fn) {</span>
+<span id="cb8-303"><a href="#cb8-303" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>(fn, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb8-304"><a href="#cb8-304" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">&quot;  ! &quot;</span>, <span class="fu">conditionMessage</span>(e))</span>
+<span id="cb8-305"><a href="#cb8-305" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span></span>
+<span id="cb8-306"><a href="#cb8-306" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb8-307"><a href="#cb8-307" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-308"><a href="#cb8-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-309"><a href="#cb8-309" aria-hidden="true" tabindex="-1"></a>all <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-310"><a href="#cb8-310" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(rows))) {</span>
+<span id="cb8-311"><a href="#cb8-311" aria-hidden="true" tabindex="-1"></a>  rl <span class="ot">&lt;-</span> rows<span class="sc">$</span>rowlab[i]</span>
+<span id="cb8-312"><a href="#cb8-312" aria-hidden="true" tabindex="-1"></a>  sk <span class="ot">&lt;-</span> rows<span class="sc">$</span>skim[i]</span>
+<span id="cb8-313"><a href="#cb8-313" aria-hidden="true" tabindex="-1"></a>  br <span class="ot">&lt;-</span> rows<span class="sc">$</span>brb[i]</span>
+<span id="cb8-314"><a href="#cb8-314" aria-hidden="true" tabindex="-1"></a>  ad <span class="ot">&lt;-</span> rows<span class="sc">$</span>adir[i]</span>
+<span id="cb8-315"><a href="#cb8-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-316"><a href="#cb8-316" aria-hidden="true" tabindex="-1"></a>  sk_counts <span class="ot">&lt;-</span> <span class="fu">find1</span>(SK50, sk) <span class="co"># skim 50K panel counts</span></span>
+<span id="cb8-317"><a href="#cb8-317" aria-hidden="true" tabindex="-1"></a>  brb_counts <span class="ot">&lt;-</span> <span class="fu">file.path</span>(BRBW, <span class="fu">paste0</span>(br, <span class="st">&quot;.tsv&quot;</span>)) <span class="co"># wideseq-thinned BRB counts</span></span>
+<span id="cb8-318"><a href="#cb8-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-319"><a href="#cb8-319" aria-hidden="true" tabindex="-1"></a>  tr <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb8-320"><a href="#cb8-320" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Skim-binhmm</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">binhmm_gauss</span>(sk)),</span>
+<span id="cb8-321"><a href="#cb8-321" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Skim-nNIL</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">eng</span>(sk_counts,</span>
+<span id="cb8-322"><a href="#cb8-322" aria-hidden="true" tabindex="-1"></a>      <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S2&quot;</span>, <span class="at">rrate =</span> <span class="fl">1e-4</span>, <span class="at">err =</span> <span class="fl">0.01</span></span>
+<span id="cb8-323"><a href="#cb8-323" aria-hidden="true" tabindex="-1"></a>    )),</span>
+<span id="cb8-324"><a href="#cb8-324" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Skim-rtiger</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">eng</span>(sk_counts, <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">rigidity =</span> <span class="dv">5</span>L)),</span>
+<span id="cb8-325"><a href="#cb8-325" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">BrB-nNIL</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">eng</span>(brb_counts,</span>
+<span id="cb8-326"><a href="#cb8-326" aria-hidden="true" tabindex="-1"></a>      <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>, <span class="at">design =</span> <span class="st">&quot;BC2S3&quot;</span>, <span class="at">rrate =</span> <span class="fl">1e-8</span>, <span class="at">fit_means =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-327"><a href="#cb8-327" aria-hidden="true" tabindex="-1"></a>    )),</span>
+<span id="cb8-328"><a href="#cb8-328" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">BrB-rtiger</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">eng</span>(brb_counts, <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">rigidity =</span> <span class="dv">7</span>L)),</span>
+<span id="cb8-329"><a href="#cb8-329" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">BrB-atlas</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">grab</span>(<span class="fu">atlas_seg</span>(br, ad))</span>
+<span id="cb8-330"><a href="#cb8-330" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-331"><a href="#cb8-331" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-332"><a href="#cb8-332" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep the non-empty tracks, tagging each with its row label and method</span></span>
+<span id="cb8-333"><a href="#cb8-333" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (m <span class="cf">in</span> <span class="fu">names</span>(tr)) {</span>
+<span id="cb8-334"><a href="#cb8-334" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(tr[[m]]) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(tr[[m]])) {</span>
+<span id="cb8-335"><a href="#cb8-335" aria-hidden="true" tabindex="-1"></a>      all[[<span class="fu">length</span>(all) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> tr[[m]][, <span class="st">`</span><span class="at">:=</span><span class="st">`</span>(<span class="at">rowlab =</span> rl, <span class="at">method =</span> m)]</span>
+<span id="cb8-336"><a href="#cb8-336" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-337"><a href="#cb8-337" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-338"><a href="#cb8-338" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-339"><a href="#cb8-339" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(all)</span>
+<span id="cb8-340"><a href="#cb8-340" aria-hidden="true" tabindex="-1"></a>df[, .N, by <span class="ot">=</span> method]</span>
+<span id="cb8-341"><a href="#cb8-341" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-342"><a href="#cb8-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-343"><a href="#cb8-343" aria-hidden="true" tabindex="-1"></a><span class="fu"># 6. Paint</span></span>
+<span id="cb8-344"><a href="#cb8-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-345"><a href="#cb8-345" aria-hidden="true" tabindex="-1"></a><span class="in">```{r paint, fig.width=16, fig.height=11, dpi=130}</span></span>
+<span id="cb8-346"><a href="#cb8-346" aria-hidden="true" tabindex="-1"></a>yb <span class="ot">&lt;-</span> <span class="fu">data.table</span>(<span class="at">method =</span> methods, <span class="at">k =</span> <span class="dv">5</span><span class="sc">:</span><span class="dv">0</span>) <span class="co"># top -&gt; bottom</span></span>
+<span id="cb8-347"><a href="#cb8-347" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">merge</span>(df, yb, <span class="at">by =</span> <span class="st">&quot;method&quot;</span>)</span>
+<span id="cb8-348"><a href="#cb8-348" aria-hidden="true" tabindex="-1"></a>df[, <span class="st">`</span><span class="at">:=</span><span class="st">`</span>(<span class="at">ylo =</span> k <span class="sc">/</span> <span class="dv">6</span> <span class="sc">+</span> <span class="fl">0.01</span>, <span class="at">yhi =</span> (k <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">6</span> <span class="sc">-</span> <span class="fl">0.01</span>)]</span>
+<span id="cb8-349"><a href="#cb8-349" aria-hidden="true" tabindex="-1"></a><span class="co"># B73 ctrl on top, then skim-cov descending (facet switch = &#39;y&#39;)</span></span>
+<span id="cb8-350"><a href="#cb8-350" aria-hidden="true" tabindex="-1"></a>df[, rowlab <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(rowlab, <span class="at">levels =</span> <span class="fu">c</span>(rows<span class="sc">$</span>rowlab[<span class="dv">1</span>], <span class="fu">rev</span>(rows<span class="sc">$</span>rowlab[<span class="sc">-</span><span class="dv">1</span>])))]</span>
+<span id="cb8-351"><a href="#cb8-351" aria-hidden="true" tabindex="-1"></a>df[, chr <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(chr, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">labels =</span> <span class="fu">paste0</span>(<span class="st">&quot;chr&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>))]</span>
+<span id="cb8-352"><a href="#cb8-352" aria-hidden="true" tabindex="-1"></a>df[, state <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(state, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="fu">c</span>(<span class="st">&quot;REF&quot;</span>, <span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>))]</span>
+<span id="cb8-353"><a href="#cb8-353" aria-hidden="true" tabindex="-1"></a>pal <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">REF =</span> <span class="st">&quot;gold&quot;</span>, <span class="at">HET =</span> <span class="st">&quot;springgreen4&quot;</span>, <span class="at">ALT =</span> <span class="st">&quot;purple4&quot;</span>)</span>
+<span id="cb8-354"><a href="#cb8-354" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">xmin =</span> start_bp <span class="sc">/</span> <span class="fl">1e6</span>, <span class="at">xmax =</span> end_bp <span class="sc">/</span> <span class="fl">1e6</span>, <span class="at">ymin =</span> ylo, <span class="at">ymax =</span> yhi, <span class="at">fill =</span> state)) <span class="sc">+</span></span>
+<span id="cb8-355"><a href="#cb8-355" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_rect</span>() <span class="sc">+</span></span>
+<span id="cb8-356"><a href="#cb8-356" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(rowlab <span class="sc">~</span> chr, <span class="at">scales =</span> <span class="st">&quot;free_x&quot;</span>, <span class="at">space =</span> <span class="st">&quot;free_x&quot;</span>, <span class="at">switch =</span> <span class="st">&quot;y&quot;</span>) <span class="sc">+</span></span>
+<span id="cb8-357"><a href="#cb8-357" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> pal, <span class="at">drop =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb8-358"><a href="#cb8-358" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb8-359"><a href="#cb8-359" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> (<span class="dv">5</span><span class="sc">:</span><span class="dv">0</span>) <span class="sc">/</span> <span class="dv">6</span> <span class="sc">+</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">12</span>, <span class="at">labels =</span> methods, <span class="at">position =</span> <span class="st">&quot;right&quot;</span>,</span>
+<span id="cb8-360"><a href="#cb8-360" aria-hidden="true" tabindex="-1"></a>    <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fl">0.01</span>)</span>
+<span id="cb8-361"><a href="#cb8-361" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-362"><a href="#cb8-362" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb8-363"><a href="#cb8-363" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;nilHMM sanity check paint — vary-skim sweep (B73 control + 10 NILs)&quot;</span>,</span>
+<span id="cb8-364"><a href="#cb8-364" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;6 tracks = data source × nilHMM caller (2 sources: Skim, BrB | 4 callers: binhmm, nNIL, RTIGER, ATLAS) | ordered by source then caller | all nilHMM, no Julia&quot;</span>,</span>
+<span id="cb8-365"><a href="#cb8-365" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;Position (Mb)&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;Genotype&quot;</span></span>
+<span id="cb8-366"><a href="#cb8-366" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-367"><a href="#cb8-367" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">8</span>) <span class="sc">+</span></span>
+<span id="cb8-368"><a href="#cb8-368" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb8-369"><a href="#cb8-369" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb8-370"><a href="#cb8-370" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb8-371"><a href="#cb8-371" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb8-372"><a href="#cb8-372" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb8-373"><a href="#cb8-373" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb8-374"><a href="#cb8-374" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.spacing.x =</span> <span class="fu">unit</span>(<span class="fl">0.04</span>, <span class="st">&quot;lines&quot;</span>),</span>
+<span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.spacing.y =</span> <span class="fu">unit</span>(<span class="fl">0.15</span>, <span class="st">&quot;lines&quot;</span>),</span>
+<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text.y.left =</span> <span class="fu">element_text</span>(</span>
+<span id="cb8-378"><a href="#cb8-378" aria-hidden="true" tabindex="-1"></a>      <span class="at">angle =</span> <span class="dv">0</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">12</span>, <span class="at">lineheight =</span> <span class="fl">0.9</span></span>
+<span id="cb8-379"><a href="#cb8-379" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb8-380"><a href="#cb8-380" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y.right =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">11</span>),</span>
+<span id="cb8-381"><a href="#cb8-381" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb8-382"><a href="#cb8-382" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb8-383"><a href="#cb8-383" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb8-384"><a href="#cb8-384" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb8-385"><a href="#cb8-385" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-386"><a href="#cb8-386" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results&quot;</span>), <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-387"><a href="#cb8-387" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/nilhmm_sanity_check_paint.png&quot;</span>), p, <span class="at">width =</span> <span class="dv">16</span>, <span class="at">height =</span> <span class="dv">11</span>, <span class="at">dpi =</span> <span class="dv">130</span>, <span class="at">limitsize =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-388"><a href="#cb8-388" aria-hidden="true" tabindex="-1"></a><span class="fu">fwrite</span>(df, here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/nilhmm_sanity_check_paint_segments.tsv&quot;</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>)</span>
+<span id="cb8-389"><a href="#cb8-389" aria-hidden="true" tabindex="-1"></a>p</span>
+<span id="cb8-390"><a href="#cb8-390" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-391"><a href="#cb8-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-392"><a href="#cb8-392" aria-hidden="true" tabindex="-1"></a><span class="fu"># 7. Sanity read</span></span>
+<span id="cb8-393"><a href="#cb8-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-394"><a href="#cb8-394" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**The anchor holds:** the B73 control (top row) is essentially all-REF across</span>
+<span id="cb8-395"><a href="#cb8-395" aria-hidden="true" tabindex="-1"></a>  all six tracks — a clean control paints clean.</span>
+<span id="cb8-396"><a href="#cb8-396" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**NILs show localized donor blocks that broadly agree across callers.** The</span>
+<span id="cb8-397"><a href="#cb8-397" aria-hidden="true" tabindex="-1"></a>  major introgressions land in the same chromosomes across independent callers</span>
+<span id="cb8-398"><a href="#cb8-398" aria-hidden="true" tabindex="-1"></a>  and across the two data sources — the core sanity result.</span>
+<span id="cb8-399"><a href="#cb8-399" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Caller-specific behavior, as expected:** Skim-binhmm paints the broadest</span>
+<span id="cb8-400"><a href="#cb8-400" aria-hidden="true" tabindex="-1"></a>  blocks and is more permissive toward ALT; BrB-rtiger is the noisiest (the</span>
+<span id="cb8-401"><a href="#cb8-401" aria-hidden="true" tabindex="-1"></a>  known BRB-RTI RNA false-donor floor); BrB-atlas and BrB-nNIL are the most</span>
+<span id="cb8-402"><a href="#cb8-402" aria-hidden="true" tabindex="-1"></a>  conservative.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

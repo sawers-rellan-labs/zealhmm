@@ -43,9 +43,12 @@ suppressMessages({
 })
 SIM <- here::here("results/sim")
 f <- function(x) file.path(SIM, x)
-have <- file.exists(f("calib_params.csv"))
+# Pinned BC2S2 params snapshot: the generic calib_params.csv gets overwritten by
+# BC1S4 runs (character `design` row breaks this BC2S2 note), so read a dated copy.
+CALIB <- "calib_params_bc2s2_20260706024342.csv"
+have <- file.exists(f(CALIB))
 if (have) {
-  P <- fread(f("calib_params.csv"))
+  P <- fread(f(CALIB))
   par <- setNames(P$value, P$key)
   nnil_sw <- fread(f("nnil_rrate_sweep.csv"))
   rtig_sw <- fread(f("rtiger_rigidity_sweep.csv"))

@@ -23,6 +23,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -111,7 +146,7 @@ ul.task-list li input[type="checkbox"] {
 <!-- margin-sidebar -->
     
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 
 
 
@@ -533,10 +568,22 @@ ul.task-list li input[type="checkbox"] {
 <li><label><input type="checkbox">B1 anthocyanin phenotype table + NIL panel. Blocks <code>b1-mapping-benchmark.qmd</code>.</label></li>
 </ul>
 </section>
+<section id="zeal-inv4m-tagging-snp-genotype-comparison-datazeal-gitignored" class="level2">
+<h2 class="anchored" data-anchor-id="zeal-inv4m-tagging-snp-genotype-comparison-datazeal-gitignored">ZEAL Inv4m tagging-SNP genotype comparison (<code>data/zeal/</code>, gitignored)</h2>
+<p>Inputs for <code>analysis/zeal-inv4m-rtiger-genotype.qmd</code> (genotype at PZE04175660223, chr4:181,637,780):</p>
+<ul>
+<li><code>rtiger_250K_calls_introfinder.rds</code> — <strong>250K (previous)</strong> RTIGER segment calls, one table per NIL (<code>V1</code> chr, <code>V2</code> start, <code>V3</code> end, <code>V4</code> state ∈ {<code>B73</code>, <code>Introgression</code>}). Staged from <code>results_list_new_name.rds</code> in Nirwan Tandukar’s app repo <code>github.com/nirwan1265/BZea_Introgression_Finder</code> (the calls behind the inversion paper’s <code>inv4m_introgression</code> label). Names carry a <code>.B</code> bulk suffix → strip to match pedigree.</li>
+<li><code>rtiger_50K_calls.csv</code> — <strong>50K (current)</strong> RTIGER 3-state segments (see <code>zeal_rtiger_mosaic.R</code>).</li>
+<li><code>CLY25_ZEAL.csv</code>, <code>Bzea_metadata.csv</code> — spatially-corrected NC2025 phenotypes + donor metadata, staged from the inv4m Drive repo (<code>scripts/inversion_paper</code>).</li>
+</ul>
+<p>Both call sets are RTIGER; they differ only in the reference variant set. See memory <code>bzea-genotype-call-sets</code>.</p>
+</section>
 <section id="migration-from-zealtiger-plan-b3" class="level2">
 <h2 class="anchored" data-anchor-id="migration-from-zealtiger-plan-b3">Migration from zealtiger (plan B3)</h2>
 <p>The sanity-paint sweep inputs currently read from the zealtiger working repo (<code>results/sim_calibration/coverage_sweep_members.csv</code>, <code>data/rtiger_50K/</code>, <code>results/sim_calibration/brbseq_ks_wideseq/counts/</code>). Only the <strong>validated, paper-bound</strong> subsets migrate onto the mount / local <code>data/</code>; the <code>agent/</code> scratch tree is not copied.</p>
 
+
+<!-- -->
 
 </section>
 </section>
@@ -612,6 +659,57 @@ ul.task-list li input[type="checkbox"] {
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -941,7 +1039,313 @@ ul.task-list li input[type="checkbox"] {
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Data provenance</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data/`</span>, <span class="in">`results/`</span>, and <span class="in">`sim/`</span> are **gitignored** (bulk inputs / generated</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>outputs — not tracked). Large inputs live on the mount and are referenced here;</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>resolve the mount roots with <span class="in">`R/staging.R::bzea_mounts()`</span> (<span class="in">`pick()`</span> fallback).</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>This file is the tracked record of where everything comes from.</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mount roots</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Alias <span class="pp">|</span> Resolved by <span class="in">`bzea_mounts()`</span> <span class="pp">|</span> Holds <span class="pp">|</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------|-----------------------------|-------|</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`CAS`</span> (cassini) <span class="pp">|</span> <span class="in">`/Volumes/rsstu/.../tlaloc/cassini`</span> → <span class="in">`/Volumes/tlaloc/cassini`</span> → <span class="in">`/Volumes/cassini`</span> <span class="pp">|</span> pangene counts, gene→pangene map, B73 gene coords (ATLAS) <span class="pp">|</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`MNT`</span> (ancestry) <span class="pp">|</span> <span class="in">`/Volumes/rsstu/.../BZea/bzeaseq/ancestry`</span> → <span class="in">`/Volumes/BZea/bzeaseq/ancestry`</span> <span class="pp">|</span> per-bin <span class="in">`ALT_FREQ`</span> <span class="in">`*_bin_genotypes.tsv`</span> (dense skim, binhmm) <span class="pp">|</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data sources (naming `&lt;Source&gt;-&lt;Caller&gt;`)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Source <span class="pp">|</span> Modality <span class="pp">|</span> Marker set <span class="pp">|</span> Notes <span class="pp">|</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|----------|------------|-------|</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Skim <span class="pp">|</span> low-cov WGS (~0.4×) <span class="pp">|</span> 50K panel (thinned) + dense ~27.6 M wideseq <span class="pp">|</span> TP teosinte–B73 wideseq filter; MAF ≥ 0.05 <span class="pp">|</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> BrB <span class="pp">|</span> 3′ RNA-seq (BRB-seq) <span class="pp">|</span> wideseq-thinned counts + cassini pangene <span class="pp">|</span> expression-driven depth; ASE <span class="pp">|</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Target-seq <span class="pp">|</span> MolBreeding 45K, high cov <span class="pp">|</span> 45K array <span class="pp">|</span> completeness / Holland-style cross-check only <span class="pp">|</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>The ~27.6 M wideseq set = Schnable et al. 2023 teosinte/*Tripsacum* VCF →</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>biallelic → MAF ≥ 0.05 (<span class="in">`wideseq_ref`</span>); GATK <span class="in">`CollectAllelicCounts`</span> tallies</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>skim/BRB reads at those positions. (memory <span class="in">`snp50k-cohort-provenance`</span>,</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="in">`gatk-table-readcount-standard`</span>.)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="fu">## Staged subset: skim sweep (`data/`, gitignored, ~33 MB)</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="in">`stage_sanity_check_paint.R`</span> copies the 11-sample vary-skim cohort (B73 control + 10</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>NILs) into <span class="in">`data/`</span>, organized by **(source × input type)** and consumed by</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="in">`analysis/nilhmm_sanity_check_paint.qmd`</span>. Verified: the note reproduces the original</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>zealtiger output **row-for-row** (1709 segments, all 6 tracks identical).</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="in">data/</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="in">  ref/                                genome-level, dataset-independent</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="in">    gene_to_pangene.tsv               ATLAS: pangene &lt;-&gt; B73 gene map</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="in">    b73_gene_coords.tsv               ATLAS: B73 gene coordinates</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="in">  skimsweep/                          the vary-skim cohort</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="in">    coverage_sweep_members.csv        full sweep table (note filters to vary_skim)</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="in">    skim/counts_50k/&lt;skim&gt;.tsv        -&gt; Skim-nNIL, Skim-rtiger</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="in">    skim/bins/&lt;skim&gt;_bin_genotypes.tsv-&gt; Skim-binhmm  (PER-SAMPLE only, never the aggregate)</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="in">    brb/counts_wideseq/&lt;brb&gt;.tsv      -&gt; BrB-nNIL, BrB-rtiger</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="in">    brb/pangene/&lt;species&gt;/&lt;brb&gt;.pangene_counts.tsv  -&gt; BrB-atlas</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Staged path <span class="pp">|</span> Source <span class="pp">|</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|--------|</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`skimsweep/coverage_sweep_members.csv`</span>, <span class="in">`skim/counts_50k/`</span>, <span class="in">`brb/counts_wideseq/`</span> <span class="pp">|</span> zealtiger repo <span class="pp">|</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`skim/bins/&lt;skim&gt;_bin_genotypes.tsv`</span> <span class="pp">|</span> rsstu <span class="in">`BZea/bzeaseq/ancestry/&lt;skim&gt;_bin_genotypes.tsv`</span> (per-sample) <span class="pp">|</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`brb/pangene/`</span>, <span class="in">`ref/`</span> <span class="pp">|</span> rsstu <span class="in">`tlaloc/cassini/`</span> (<span class="in">`results/&lt;species&gt;/pangene/`</span>, <span class="in">`data/pangene/`</span>, <span class="in">`data/meta/`</span>) <span class="pp">|</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>Re-stage with <span class="in">`Rscript stage_sanity_check_paint.R`</span> **run with the sandbox disabled** —</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>both shares live under the <span class="in">`rsstu`</span> automount, which the default sandbox cannot</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>see (it reports the files as missing).</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="fu">## TeoNAM genotypes (`data/teonam/`, gitignored, ~236 MB)</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>Recoded TeoNAM SNP genotypes (Chen et al. 2019, *Genetics* 213:1065; <span class="in">`chen2019teonam`</span>).</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>The genotypes cited in the paper at CyVerse <span class="in">`/iplant/home/shared/panzea/genotypes/GBS/TeosinteNAM`</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>are **no longer reachable** — the whole <span class="in">`panzea`</span> collection returns "not found" for our</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>account and for anonymous CyVerse access (panzea.org still routes there and requires a</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>CyVerse login, so it is likely permission-gated to a group we're not in, not necessarily</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>deleted). Figshare (9820178 / 9250682) has phenotypes/supplement only; panzea.org's Cornell</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>archive has only the older BC2S3 population (Yang et al. 2019 PNAS, <span class="in">`yang2019genetic`</span>).</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>**Source used instead:** the EasiGP repo (Tomura et al. 2025, bioRxiv <span class="in">`10.1101/2025.07.15.664852`</span>,</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a><span class="in">`tomura2025ensemble`</span>) vendors a recoded copy.</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>-<span class="pp">|</span>-<span class="pp">|</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Paper <span class="pp">|</span> Tomura et al. 2025, bioRxiv <span class="in">`10.1101/2025.07.15.664852`</span> (<span class="in">`tomura2025ensemble`</span>) <span class="pp">|</span></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Repo <span class="pp">|</span> https://github.com/ShunichiroT/EasiGP <span class="pp">|</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Commit <span class="pp">|</span> <span class="in">`259c242006bce415a8995be1833ef44399655718`</span> (2026-06-16) <span class="pp">|</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Path in repo <span class="pp">|</span> <span class="in">`Data/TeoNAM/`</span> <span class="pp">|</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`TeoNAM_genotype.zip`</span> sha256 <span class="pp">|</span> <span class="in">`3a8b5adcdff6ed162032347ecaabe25fed5384ea8ed387f0b22fe492b2c6f918`</span> <span class="pp">|</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>Staged files (copied verbatim; <span class="in">`TeoNAM_genotype.csv`</span> is the unzipped <span class="in">`TeoNAM_genotype.zip`</span>):</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="in">data/teonam/</span></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="in">  TeoNAM_genotype.csv        2,434 lines x ~51,483 markers; 0/1/2 coding</span></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="in">                             (0 = W22 hom, 1 = het, 2 = teosinte hom — paper's coding)</span></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="in">  TeoNAM_phenotype.csv       2,434 lines; traits DTA, ASI only (2 of the paper's 22)</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a><span class="in">  markers_v2.csv            51,544 markers; chromosome,name,start,end</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a><span class="in">                             names like S1_10045 = chr1 / AGPv2 position 10045 (start/end are 0)</span></span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a><span class="in">  chrom.csv                  per-family chromosome spans</span></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a><span class="in">  gene_info.csv              flowering-gene markers (Dong 2012, Wisser 2019)</span></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="in">  W22TIL{01,03,11,14,25}_genotype.csv / _phenotype.csv   the 5 teosinte-parent subpopulations</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a><span class="in">  W22TIL01_subset_*          small subset used by EasiGP as a quick example</span></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a><span class="in">  TeoNAM_genotype.zip        original artifact (kept for integrity)</span></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>**Caveats (verify before analysis):**</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Numeric **dosage matrix only** — no raw HapMap / ref-alt alleles. Fine for ancestry-HMM</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>  (0/1/2 *is* the W22↔teosinte ancestry dosage); insufficient if raw allele calls or an</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>  AGPv2 VCF are needed (positions survive only in the marker names).</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Line count 2,434 exceeds the paper's 1,257 RILs — resolved (2026-07-04):** the file</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>  is EasiGP's per-family files concatenated, and each family file already doubles every</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>  line. The two copies of a line differ **only in <span class="in">`2`</span> vs <span class="in">`2.0`</span> integer/decimal</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>  formatting** — numerically identical (0/1,197 disagree). Cleaned to <span class="in">`TeoNAM_genotype_clean.csv`</span></span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>  (see characterization below): dedup → **1,237** unique lines, all cells decimal.</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>"Adjusted example data" per EasiGP's <span class="in">`Data/README`</span> — treat as a re-derived convenience</span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>  copy, not the authoritative release. For the authoritative genotypes, request access to</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>  the CyVerse <span class="in">`panzea`</span> collection from the authors (Qiuyue Chen / John Doebley).</span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Assembly = AGPv2, documented first-party by Qiuyue Chen (not by EasiGP).** The marker-name</span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>  positions (<span class="in">`S[chr]_[pos]`</span>) are B73 AGPv2, confirmed by three sources:</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a><span class="ss">  1. </span>**Chen's own genotype-release README** (<span class="in">`data/teonam/9250682/Genotype_files_ReadMe.docx`</span>,</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>     shared directly by Qiuyue Chen from her Google Drive) — the authoritative, first-party</span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>     statement:</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="at">     &gt; "The genetic map was estimated separately for each subpopulation using est.map function</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a><span class="at">     &gt; in R/qtl, and the physical position is represented in marker name with **B73 V2 position</span></span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a><span class="at">     &gt; (S</span><span class="co">[</span><span class="ot">chr</span><span class="co">]</span><span class="at">_</span><span class="co">[</span><span class="ot">pos</span><span class="co">]</span><span class="at">)**."</span></span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a><span class="ss">  2. </span>**Chen et al. 2019** (Genetics 213:1065):</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a><span class="at">     &gt; "The genotypic data were uploaded with **AGPv2 position in the marker name**." (Data Availability)</span></span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a><span class="at">     &gt; "The **B73 reference genome v2** was used to determine marker order..." (Methods)</span></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>     AGPv4 appears in Chen 2019 **only** for *reporting* QTL positions (CrossMap-lifted from</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>     AGPv2); the genotype marker-name coordinates are AGPv2.</span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a><span class="ss">  3. </span>**EasiGP is silent on assembly.** The EasiGP repo and paper (Tomura et al. 2025, *Plant</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>     Genome*, doi:10.1002/tpg2.70138) only cite "adjusted example data from the TeoNAM dataset</span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>     (Chen et al., 2019)" and never mention a genome build — so the version documentation is</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>     entirely Chen's.</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>  **Marker-name identity checks (2026-07-07)** tying EasiGP back to Chen's documented panel:</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Chen's <span class="in">`TeoNAM.composite.genetic.map.51544snp.txt`</span> (51,544 names) **== EasiGP <span class="in">`marker_info.csv`</span></span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>    (51,544 names)**: identical name sets, 0 unique to either side.</span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>EasiGP <span class="in">`marker_info.csv`</span> is byte-identical to our <span class="in">`markers_v2.csv`</span> (md5 <span class="in">`6b29c715…`</span>).</span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Our analyzed genotype matrix <span class="in">`TeoNAM_genotype_clean.csv`</span> (51,482 columns) is a clean subset</span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>    of Chen's names (0 unrecognized columns; 62 Chen markers absent = the known 51,544→51,482 drop).</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Independent physical check: per-chromosome max marker position fills the AGPv2 length and</span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>    falls ~6–7 Mb short of v4/v5 (e.g. chr1 max 301,252,447 &lt; AGPv2 301,354,135 « v4 307,041,717).</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>  (EasiGP repo clone kept at <span class="in">`agent/EasiGP/`</span>. Chen's Drive release, incl. the README, composite</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>  map, phenotypes, and — per the README — the 118,838-SNP GWAS HapMap + raw <span class="in">`.h5`</span>, is under</span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>  <span class="in">`data/teonam/9250682/`</span>.)</span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>**Genotype-matrix characterization (measured 2026-07-04, full-scan of the raw and</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>cleaned files).** Raw <span class="in">`TeoNAM_genotype.csv`</span>: 2,434 rows × 51,482 marker columns</span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>(cols 4–51485; first 3 = <span class="in">`ID, population, factor`</span>), CRLF endings. Cleaned artifact</span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a><span class="in">`TeoNAM_genotype_clean.csv`</span>: **1,237 rows × 51,482 markers, all decimals, LF**</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>(dedup + <span class="in">`2`</span>→<span class="in">`2.0`</span> normalization; original preserved).</span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**The 2,434→1,237 doubling is a formatting artifact, not replicates.** Each line</span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>  appears twice (byte-identical ID); the two copies are numerically identical and</span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>  differ only in integer vs decimal spelling (<span class="in">`2`</span> vs <span class="in">`2.0`</span>). Raw matrix had 328,590</span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>  integer-formatted cells (0.26%) vs 33.4M decimal; the clean file has **0** integer</span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>  cells. Dedup keeps one copy → 1,237 unique lines.</span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Imputed / complete within family — proven, not inferred.** For every family,</span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>  each marker column is present in either *all* of the family's lines or *none*</span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>  (0 partially-present columns) → within-family missingness **0%**; hard <span class="in">`0/1/2`</span></span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>  calls only. This is the paper's per-subpopulation FSFHap-imputed output — not raw</span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>  GBS, and not the cross-imputed/thinned 4,578-marker JLM matrix.</span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Block-sparse union (73% blank, 100% structural):** each line is blank at other</span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>  families' markers. Per-family line/marker counts (cleaned, one row per line):</span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a>  | Family | nLines (clean) | markers (present per line) |</span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>  |---|---|---|</span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>  | W22TIL01 | 220 | 13,042 |</span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>  | W22TIL03 | 267 | 16,076 |</span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>  | W22TIL11 | 218 | 13,152 |</span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>  | W22TIL14 | 222 | 11,375 |</span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>  | W22TIL25 | 310 | 14,857 |</span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>  | total / mean | **1,237** | 13,700 |</span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>  Mean 13,700 markers ≈ Chen 2019's "average 13,733 high-quality SNPs per subpopulation."</span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>  Clean grid check: <span class="in">`1,237 × 51,482 = 63,683,234 = 17,159,588 present + 46,523,646 empty`</span>.</span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Genotype frequencies** among present calls (dedup-invariant): **0 = 76.65%,</span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>  1 (het) = 8.15%, 2 (teo hom) = 15.20%** — matches the paper's "15% homozygous</span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>  teosinte, 8% heterozygous."</span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reconciliation with phenotype (1,257 canonical RILs):** inner-join on</span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>  <span class="in">`(family, line)`</span> = **1,237** — i.e. **20 phenotyped RILs have no genotype in this</span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>  EasiGP copy** (scattered, not truncation; per family missing: TIL01 3, TIL03 3,</span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>  TIL11 1, **TIL14 13**, TIL25 0). Genuine incompleteness of the convenience copy.</span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Implication:** use each family as a dense <span class="in">`nLines × family-markers`</span> truth block</span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>  (simulate reads per family at that family's markers); no missingness to model on</span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>  the truth side. Downstream densification to a common grid = <span class="in">`interpolate_genotype()`</span></span>
+<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>  (nilHMM); see <span class="in">`agent/teonam-qtl-recovery-plan.md`</span> §4.</span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a><span class="fu">## TeoNAM marker sets (the thinning/densification hierarchy)</span></span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>All derive from the same cleaned genotypes; each row is a distinct marker count used</span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>downstream. Counts verified 2026-07-05.</span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>**Naming system — `teonam_&lt;panel&gt;_&lt;assembly&gt;_&lt;role&gt;`.** <span class="in">`panel`</span> = <span class="in">`map`</span> (all our data</span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>derives from the composite MAP panel); <span class="in">`assembly`</span> = <span class="in">`v2`</span> (marker-name coords) | <span class="in">`v5`</span></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a>(lifted); <span class="in">`role`</span> = <span class="in">`family_imputed`</span> (the base FSFHap within-family imputed calls) |</span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="in">`markers`</span> (annotation) | <span class="in">`gwas`</span> (GWAS base) | <span class="in">`jlm`</span> (JLM base — thinned directly from <span class="in">`gwas`</span>).</span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>(<span class="in">`gwas_nr`</span> is a **retired** label, not a pipeline role: it does **not** feed JLM; kept only</span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>as the duplicate-cM record — see the table note below.)</span>
+<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a>**All map sets share the same base calls, which are FSFHap family-imputed** (Chen's map</span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>construction — complete *within family*; verified 0% partial-missing). So <span class="in">`family_imputed`</span> is</span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>the base state, not a distinguishing step; the later suffixes describe downstream *selection*.</span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>The <span class="in">`family_imputed`</span> label is deliberate: FSFHap imputes **within each family**, leaving</span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a>cross-family gaps NA — distinct from the <span class="in">`interpolated`</span> matrix, where our cross-family</span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>step-interpolation (Tian 2011 / Chen densifier) fills those gaps to supply the complete</span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>genotypes for <span class="in">`jlm`</span> (and the interpolated GWAS matrix). Interpolation is a step, not a named panel.</span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> name <span class="pp">|</span> markers <span class="pp">|</span> assembly <span class="pp">|</span> role / provenance <span class="pp">|</span></span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_map_v2_family_imputed`</span> <span class="pp">|</span> 51,482 <span class="pp">|</span> v2 <span class="pp">|</span> **FSFHap family-imputed** recoded dosages (Chen map construction; complete *within family* — verified 0% partial-missing); EasiGP <span class="in">`TeoNAM_genotype_clean.csv`</span>; coords in marker names <span class="pp">|</span></span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_map_v5_markers`</span> <span class="pp">|</span> 51,065 <span class="pp">|</span> v5 <span class="pp">|</span> annotation (lift v2→v5 + consensus cM); <span class="in">`map_v5_coe2008.tsv`</span> (<span class="in">`R/teonam_liftover.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_map_v5_gwas`</span> <span class="pp">|</span> 51,004 <span class="pp">|</span> v5 <span class="pp">|</span> **GWAS base** — per-marker, typed lines only; <span class="in">`stam_gwas_scan_family_imputed.csv`</span> <span class="pp">|</span></span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_map_v5_gwas_nr`</span> <span class="pp">|</span> 47,750 <span class="pp">|</span> v5 <span class="pp">|</span> non-redundant (one marker per unique cM). **Retained only as the record of the duplicate-cM markers (`agent/notes-redundant-markers.md`); NOT in any active path.** <span class="pp">|</span></span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_map_v5_jlm`</span> <span class="pp">|</span> 6,049 <span class="pp">|</span> v5 <span class="pp">|</span> **JLM base** — FastIndep (**cM-distance** @0.1) directly on <span class="in">`_gwas`</span> (51,004); genotypes step-interpolated; <span class="in">`data/teonam/tassel/geno.hmp.txt`</span> (<span class="in">`scripts/teonam_jlm_build.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v2_hapmap`</span> <span class="pp">|</span> 118,838 <span class="pp">|</span> v2 name / v4 pos <span class="pp">|</span> **authentic Chen 2019 GWAS panel** (the real Fig 4C set) — TASSEL HapMap, single-char IUPAC, 1,257 RILs; from Qiuyue Chen's Drive: <span class="in">`data/teonam/9250682/W22TILXX_Chr1-10.impute_filter_MR0.2_MAF0.05.hmp.txt`</span> <span class="pp">|</span></span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_markers`</span> <span class="pp">|</span> 118,514 <span class="pp">|</span> v5 <span class="pp">|</span> v2→v5 liftover roster (chr from marker NAME, not the v4 <span class="in">`chrom`</span> col); <span class="in">`markers_v5_gwas118k.tsv`</span> (<span class="in">`scripts/teonam_lift_gwas118k.R`</span>). 32,120/32,120 markers shared with <span class="in">`teonam_map_v5_markers`</span> lift identically. <span class="pp">|</span></span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_dosage`</span> <span class="pp">|</span> 118,838 <span class="pp">|</span> v5 <span class="pp">|</span> additive dosage matrix <span class="co">[</span><span class="ot">markers×1,257 lines</span><span class="co">]</span>, 2.72% NA; dosage = A2-allele count (TASSEL polarization, arbitrary vs W22/teo — fine for the flip-invariant STAM F-test); <span class="in">`teonam_gwas118k_dosage.rds`</span> (<span class="in">`scripts/teonam_gwas118k_dosage.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_scan`</span> <span class="pp">|</span> 118,514 <span class="pp">|</span> v5 <span class="pp">|</span> **STAM GWAS scan** on the 118K panel — <span class="in">`STAM ~ Family + marker`</span>, 1-df F (same model as <span class="in">`stam_gwas_scan_family_imputed.csv`</span>); <span class="in">`stam_gwas_scan_118k.csv`</span> (<span class="in">`scripts/teonam_stam_gwas118k.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_dosage_polar`</span> <span class="pp">|</span> 118,838 <span class="pp">|</span> v5 <span class="pp">|</span> **the coverage-sweep TRUTH** — dosage polarized to W22↔teo (0=W22, 2=teo; 0 flips, 99.6% concordant with 51K), from the distributed imputed-nucleotide genotypes. These are the *real* per-SNP genotypes (ancestry is choppy, ~889 flips/chr — real per-SNP imputation het). The sweep Poisson-samples reads from these; the **caller's ancestry inference + back-projection does the smoothing** (not a pre-smoothed input), which is why the truth stays the authentic per-SNP panel. <span class="in">`teonam_gwas118k_dosage_polar.rds`</span> (<span class="in">`scripts/teonam_gwas118k_polarize.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_dosage_fsfhap`</span> <span class="pp">|</span> 118,514 <span class="pp">|</span> v5 <span class="pp">|</span> the **ancestry-imputed panel** (Fig-4C panel C + the source of `stam_gwas_scan_118k_complete_baseline.csv`) — the 118K block-smoothed with TASSEL5 **FSFHap** as Chen (bc, Phet=0.03125, Fillgaps, per family), parental (A/C) output → clean mosaic (~9 breakpoints/chr) step-interpolated to the union. `teonam_gwas118k_dosage_fsfhap.rds` (`teonam_gwas118k_fsfhap.R` + `teonam_gwas118k_truth_assemble.R`). **NOT the sweep truth** (superseded — the sweep uses the authentic per-SNP <span class="in">`_dosage_polar`</span>; the ancestry smoothing belongs in the caller, not the truth). <span class="pp">|</span></span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_cm`</span> <span class="pp">|</span> 118,514 <span class="pp">|</span> v5 <span class="pp">|</span> native-cM grid (31,411 est.map-placed + 87,103 Marey-spline); <span class="in">`markers_v5_gwas118k_cm.tsv`</span> (<span class="in">`scripts/teonam_gwas118k_cm_grid.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_thin01`</span> <span class="pp">|</span> 8,969 <span class="pp">|</span> v5 <span class="pp">|</span> **0.1 cM ancestry-inference grid** (the exact maximum distance-*d* independent set on the 1-D cM axis via O(n) greedy — Jena et al. 2018, <span class="in">`data/main.pdf`</span>; no O(n²) matrix). The sweep HMMs infer segments on this grid, then back-project to the full 118K. <span class="in">`markers_v5_gwas118k_cm_thin01.tsv`</span> (<span class="in">`scripts/teonam_gwas118k_thin01.R`</span>) <span class="pp">|</span></span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`teonam_gwas118k_v5_&lt;caller&gt;_sweep`</span> <span class="pp">|</span> 118,514 <span class="pp">|</span> v5 <span class="pp">|</span> **coverage-degradation sweeps** — Poisson reads from the authentic per-SNP truth (`_dosage_polar`), ancestry inferred on the **0.1 cM thin grid** (`_thin01`), segments **back-projected onto the full 118K** for the STAM `~Family+marker` scan, at λ∈{0.1,0.2,0.5,1,5,10,20,∞}. **λ=∞ is each caller at perfect coverage** (deterministic decisive counts) — its own ceiling, in-pipeline (no shared baseline; per-caller). Four callers: <span class="in">`teonam_{rtiger,nnil,lbimpute,control}_sweep_118k.R`</span> → <span class="in">`results/sim/teonam/stam_gwas_&lt;caller&gt;_118k_sweep.csv`</span> (+ <span class="in">`_sweep_manhattan.png`</span> via <span class="in">`teonam_sweep_manhattan_png.R`</span>). One replicate/cell; peak heights not monotone in coverage (caller smoothing × real per-SNP noise). <span class="pp">|</span></span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>Notes:</span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`teonam_gwas118k_*` is a NEW panel, a SIBLING of `map` — not derived from it.** Both were</span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a>  filtered from the same raw 955,690 ZeaGBSv2.7 SNPs via different chains (map: MAF&lt;5% + 64-bp thin</span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a><span class="ss">  + </span>FSFHap; GWAS: MAF&gt;1%, MR&lt;0.2, no thin, separate imputation). Name overlap with the 51K map panel</span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a>  is only 32,171 / 118,838 (86,667 GWAS-only, 19,373 map-only). This is the file whose absence</span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a>  made the earlier STAM Manhattan a non-faithful approximation — now resolved.</span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**GWAS reproduction (2026-07-07):** 118K scan gives max −log10P 19.8 (vs 14.3 for the 51K approx)</span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>  and 8,392 genome-wide-significant hits concentrated on chr1 (4,901; tb1 region, v5 ~270–282 Mb),</span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>  chr3 (3,428), chr7 (58) — matching Chen 2019's STAM QTL architecture (STAM1.x/tb1, STAM3.x, STAM7.1).</span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>  Decoding validated: all 32,158 shared markers correlate positively with the 51K coding (mean |r| 0.996).</span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Also in Chen's Drive release** (<span class="in">`9250682/`</span>, per <span class="in">`Genotype_files_ReadMe.docx`</span>), not yet all pulled:</span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>  raw <span class="in">`W22TILXX_NoDepth.h5`</span> (GBS in H5), <span class="in">`TeoNAM.filter0.1cM.snpInfor.txt`</span> (4,578-SNP JLM subset),</span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>  <span class="in">`TeoNAM_phenotype_07022018.txt`</span> (4,578 SNPs + 22 traits for SAS JLM).</span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`teonam_map_v5_jlm` thinning is a cM-distance thin, not an r² LD prune.**</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>  <span class="in">`select_independent`</span> (FastIndep, deterministic greedy) is fed the per-chr cM-distance matrix, so</span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>  it enforces a hard 0.1 cM minimum spacing and does no LD decorrelation. The full pipeline is now</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>  reconstructed as a traceable script — <span class="in">`scripts/teonam_jlm_build.R`</span> (FastIndep on the 51K pool +</span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>  step-interpolated genotypes). <span class="in">`scripts/teonam_jlm_verify_source.R`</span> reproduces the prior</span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>  47,750-pool hapmap **0-mismatch** (6,059 markers × 1,237 taxa), confirming the method.</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>  <span class="in">`analysis/marker-thinning.qmd`</span> (written against the old 47,750 pool → 6,059) needs</span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>  re-rendering to the 51K-pool set (6,049).</span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**6,049 (`teonam_map_v5_jlm`) vs `chen2019_JLM` 4,578** = map length (1781 vs 1540 cM,</span>
+<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a>  ×1.156) × 0.1-cM-bin saturation (×1.14) = ×1.32. Not a thinning-algorithm artifact.</span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a>  See <span class="in">`analysis/marker-thinning.qmd`</span>.</span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`teonam_map_v5_gwas_nr`** dedups markers sharing a cM (unique-cM grid, 47,750). It is</span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>  **no longer in any active path** — JLM now thins directly from the 51K <span class="in">`_gwas`</span> pool</span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a>  (cM-distance @0.1 subsumes the dedup: tied markers are 0 cM apart → one survivor per cluster).</span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>  Retained only as the record of the duplicate-cM markers (~3,307 on the 51,004 base, centromeric</span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>  low-recombination); see <span class="in">`agent/notes-redundant-markers.md`</span>.</span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a><span class="fu">### What Chen 2019 has vs what we managed (reproduction status, 2026-07-05)</span></span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>We are reproducing Chen 2019 on the **51,544-marker composite MAP panel** (obtained via EasiGP;</span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>verified map-set-only). It's a strong basis and the JLM anchors reproduce on it. Chen's separate</span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>**118,838-SNP GWAS set** is not yet in hand (sibling of the map set — same raw 955,690 ZeaGBSv2.7</span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>SNPs, different filter chain); we keep working on the 50K and will fold in the 118K once obtained</span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>(outreach: <span class="in">`agent/outreach_teonam_118k.md`</span>).</span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> pipeline stage <span class="pp">|</span> <span class="in">`chen2019_*`</span> (published) <span class="pp">|</span> <span class="in">`teonam_*`</span> (this work) <span class="pp">|</span> status <span class="pp">|</span></span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> raw GBS calls <span class="pp">|</span> 955,690 SNPs (ZeaGBSv2.7, AGPv2, HapMap) <span class="pp">|</span> not held (EasiGP ships post-filter 0/1/2 dosages) <span class="pp">|</span> to obtain <span class="pp">|</span></span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **map panel** <span class="pp">|</span> <span class="in">`chen2019_map`</span> 51,544 — MAF&lt;5% + 64-bp thin → FSFHap → composite <span class="pp">|</span> <span class="in">`teonam_map_v2_family_imputed`</span> 51,482 / <span class="in">`teonam_map_v5_markers`</span> 51,065 <span class="pp">|</span> ✓ have <span class="pp">|</span></span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> genetic map <span class="pp">|</span> R/qtl <span class="in">`est.map`</span>, 1540 cM, AGPv2 order <span class="pp">|</span> consensus Marey cM (Ed Coe composite), 1781 cM <span class="pp">|</span> different map <span class="pp">|</span></span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> coordinates <span class="pp">|</span> AGPv2 → AGPv4 (CrossMap) <span class="pp">|</span> AGPv2 → AGPv5 (liftover) <span class="pp">|</span> v5 vs v4 <span class="pp">|</span></span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **JLM markers** <span class="pp">|</span> <span class="in">`chen2019_JLM`</span> 4,578 (0.1 cM thin of map set) <span class="pp">|</span> <span class="in">`teonam_map_v5_jlm`</span> 6,049 (FastIndep on cM-dist @0.1, 51K pool) <span class="pp">|</span> ✓ same op, denser/longer map <span class="pp">|</span></span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> JLM engine <span class="pp">|</span> SAS <span class="in">`PROC GLMSELECT`</span>, marker nested-in-family, permutation threshold <span class="pp">|</span> TASSEL5 StepwiseOLS, nested-in-family, default threshold <span class="pp">|</span> perm threshold TODO <span class="pp">|</span></span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> JLM result <span class="pp">|</span> STAM 5 QTL, DTA 19 QTL <span class="pp">|</span> recovers STAM QTL (more enter w/o perm cutoff) <span class="pp">|</span> reproducing <span class="pp">|</span></span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **GWAS markers** <span class="pp">|</span> <span class="in">`chen2019_GWAS`</span> 118,838 (MAF&gt;0.01, unthinned → FSFHap) <span class="pp">|</span> <span class="in">`teonam_map_v5_gwas`</span> 51,004 (full set; also the JLM thinning pool) <span class="pp">|</span> 118K to obtain <span class="pp">|</span></span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> GWAS model <span class="pp">|</span> MLM: Q (5 PCs) + K (IBS) <span class="pp">|</span> OLS: Family + marker, 1-df F <span class="pp">|</span> MLM upgrade TODO <span class="pp">|</span></span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> GWAS threshold <span class="pp">|</span> P &lt; 1e-5 (LOD 5) <span class="pp">|</span> LOD 5 <span class="pp">|</span> ✓ <span class="pp">|</span></span>
+<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a>Consequences to keep closing (not blockers): the GWAS Manhattan on <span class="in">`teonam_map_v5_gwas`</span> is</span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>sparser than <span class="in">`chen2019_GWAS`</span> (some gaps, esp. low-recombination regions) and runs hotter (fixed</span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>OLS vs Q+K MLM → peak inflation; λ_GC analysis pending). JLM QTL recovery is the primary</span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>empirical-truth anchor and is unaffected by the GWAS-set gap.</span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a><span class="fu">## Still to freeze (plan B5 — blocks B2.3 / B2.4)</span></span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **~400 paired BrB + skim cohort manifest** — IDs, donor species, per-source</span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>      depth. Trace from <span class="in">`sample_metatada.csv`</span> / <span class="in">`bzea-sample-donor-metadata`</span> +</span>
+<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>      the BRB and skim sample maps. Blocks <span class="in">`source-method-comparison.qmd`</span>.</span>
+<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Which MolBreeding target-seq samples for the calibration cross-check.</span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> B1 anthocyanin phenotype table + NIL panel. Blocks</span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>      <span class="in">`b1-mapping-benchmark.qmd`</span>.</span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a><span class="fu">## ZEAL Inv4m tagging-SNP genotype comparison (`data/zeal/`, gitignored)</span></span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>Inputs for <span class="in">`analysis/zeal-inv4m-rtiger-genotype.qmd`</span> (genotype at PZE04175660223, chr4:181,637,780):</span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`rtiger_250K_calls_introfinder.rds`</span> — **250K (previous)** RTIGER segment calls, one table per NIL</span>
+<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`V1`</span> chr, <span class="in">`V2`</span> start, <span class="in">`V3`</span> end, <span class="in">`V4`</span> state ∈ {<span class="in">`B73`</span>, <span class="in">`Introgression`</span>}). Staged from</span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>  <span class="in">`results_list_new_name.rds`</span> in Nirwan Tandukar's app repo</span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>  <span class="in">`github.com/nirwan1265/BZea_Introgression_Finder`</span> (the calls behind the inversion paper's</span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>  <span class="in">`inv4m_introgression`</span> label). Names carry a <span class="in">`.B`</span> bulk suffix → strip to match pedigree.</span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`rtiger_50K_calls.csv`</span> — **50K (current)** RTIGER 3-state segments (see <span class="in">`zeal_rtiger_mosaic.R`</span>).</span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`CLY25_ZEAL.csv`</span>, <span class="in">`Bzea_metadata.csv`</span> — spatially-corrected NC2025 phenotypes + donor metadata,</span>
+<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>  staged from the inv4m Drive repo (<span class="in">`scripts/inversion_paper`</span>).</span>
+<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a>Both call sets are RTIGER; they differ only in the reference variant set. See memory</span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a><span class="in">`bzea-genotype-call-sets`</span>.</span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a><span class="fu">## Migration from zealtiger (plan B3)</span></span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>The sanity-paint sweep inputs currently read from the zealtiger working repo</span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>(<span class="in">`results/sim_calibration/coverage_sweep_members.csv`</span>, <span class="in">`data/rtiger_50K/`</span>,</span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a><span class="in">`results/sim_calibration/brbseq_ks_wideseq/counts/`</span>). Only the **validated,</span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a>paper-bound** subsets migrate onto the mount / local <span class="in">`data/`</span>; the <span class="in">`agent/`</span></span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a>scratch tree is not copied.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

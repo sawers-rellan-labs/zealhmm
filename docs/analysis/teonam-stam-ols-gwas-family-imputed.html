@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-08">
+<meta name="dcterms.date" content="2026-07-09">
 
 <title>TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C) – zealhmm</title>
 <style>
@@ -4218,6 +4218,11 @@ window.Quarto = {
   <li><a href="#the-scan" id="toc-the-scan" class="nav-link" data-scroll-target="#the-scan">The scan</a></li>
   <li><a href="#qc-and-results" id="toc-qc-and-results" class="nav-link" data-scroll-target="#qc-and-results">QC and results</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
+  <li><a href="#inputs-all-primary-data-no-.rds-intermediates-1" id="toc-inputs-all-primary-data-no-.rds-intermediates-1" class="nav-link" data-scroll-target="#inputs-all-primary-data-no-.rds-intermediates-1">Inputs (all primary data — no <code>.rds</code> intermediates)</a></li>
+  <li><a href="#the-model-1" id="toc-the-model-1" class="nav-link" data-scroll-target="#the-model-1">The model</a></li>
+  <li><a href="#the-scan-1" id="toc-the-scan-1" class="nav-link" data-scroll-target="#the-scan-1">The scan</a></li>
+  <li><a href="#qc-and-results-1" id="toc-qc-and-results-1" class="nav-link" data-scroll-target="#qc-and-results-1">QC and results</a></li>
+  <li><a href="#notes-1" id="toc-notes-1" class="nav-link" data-scroll-target="#notes-1">Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -4226,7 +4231,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)</h1>
+<div class="quarto-title-block"><div><h1 class="title">TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 <p class="subtitle lead">Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model &amp; QC</p>
 </div>
 
@@ -4244,7 +4249,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 8, 2026</p>
+      <p class="date">July 9, 2026</p>
     </div>
   </div>
   
@@ -4525,10 +4530,195 @@ F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank}
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <ul>
 <li>This notebook is the <strong>canonical, tracked source</strong> for <code>stam_gwas_scan_family_imputed.csv</code>; it supersedes the untracked <code>scripts/teonam_stam_gwas_family_imputed.R</code> (identical model, ported verbatim).</li>
-<li>Model is <strong>OLS (a fixed-effects linear model) with no kinship term</strong> — deliberately faithful to the throwaway script, <em>not</em> to Chen’s MLM. The peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook. ```</li>
+<li>Model is <strong>OLS (a fixed-effects linear model) with no kinship term</strong> — deliberately faithful to the throwaway script, <em>not</em> to Chen’s MLM. The peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook.</li>
 </ul>
+<pre><code>
 
 
+
+:::{#quarto-navigation-envelope .hidden}
+[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1zaWRlYmFyLXRpdGxl&quot;}
+[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXItdGl0bGU=&quot;}
+[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6emVhbGhtbQ==&quot;}
+[https://github.com/sawers-rellan-labs/zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL3Nhd2Vycy1yZWxsYW4tbGFicy96ZWFsaG1t&quot;}
+[Home]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6SG9tZQ==&quot;}
+[/index.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L2luZGV4Lmh0bWw=&quot;}
+[Data provenance]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6RGF0YSBwcm92ZW5hbmNl&quot;}
+[/DATA.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L0RBVEEuaHRtbA==&quot;}
+:::
+
+
+
+:::{#quarto-meta-markdown .hidden}
+[TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGF0aXRsZQ==&quot;}
+[TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkdGl0bGU=&quot;}
+[TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZHRpdGxl&quot;}
+[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlbmFtZQ==&quot;}
+[Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model &amp; QC]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkZGVzYw==&quot;}
+[Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model &amp; QC]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZGRkZXNj&quot;}
+[Teosinte-introgression QTL recovery — TeoNAM &amp; ZEAL/BZea]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlZGVzYw==&quot;}
+:::
+
+
+
+
+&lt;!-- --&gt;
+
+::: {.quarto-embedded-source-code}
+```````````````````{.markdown shortcodes=&quot;false&quot;}
+---
+title: &quot;TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)&quot;
+subtitle: &quot;Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model &amp; QC&quot;
+author: &quot;Fausto Rodríguez-Zapata&quot;
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+  echo: true
+  freeze: auto
+---
+
+**What this is.** The *computation* behind the STAM OLS GWAS scan on the family-imputed
+map panel (`data/teonam/stam_gwas_scan_family_imputed.csv`), tracked in its own right. It
+ports the throwaway `scripts/teonam_stam_gwas_family_imputed.R` into a rendered notebook so
+the scan — not just its Manhattan — is reproducible from primary data. The annotated
+Fig-4C Manhattan that *consumes* this CSV lives in
+[`teonam-qtl-recovery`](teonam-qtl-recovery.html); this notebook **produces** it.
+
+The genotypes are **FSFHap family-imputed** (`teonam_map_v5_gwas`, 51,004 markers — Chen&#39;s
+map construction, complete *within family*). Each marker is tested only on the families
+that typed it (cross-family gaps left as NA, **not** densified), giving the natural GWAS
+scatter with no step-interpolation plateau artifact. (`family_imputed` names exactly this
+state: FSFHap within-family imputation only, *without* cross-family step-interpolation —
+contrast the `interpolated` matrix used by the MLM notebook.)
+
+```{r setup}
+library(here)
+library(data.table)
+library(parallel)
+library(readxl)
+library(ggplot2)
+theme_set(theme_bw(base_size = 12))
+THREADS &lt;- max(1L, detectCores() - 2L)
+LOD &lt;- 5 # Chen 2019 significance line: P &lt; 1e-5</code></pre>
+</section>
+<section id="inputs-all-primary-data-no-.rds-intermediates-1" class="level2">
+<h2 class="anchored" data-anchor-id="inputs-all-primary-data-no-.rds-intermediates-1">Inputs (all primary data — no <code>.rds</code> intermediates)</h2>
+<pre class="{r inputs}"><code># FSFHap-imputed recoded dosages (complete within family): 1237 lines x 51,482 markers; NA = cross-family untyped (0/1/2 = W22 / het / teosinte)
+geno &lt;- fread(here(&quot;data/teonam/TeoNAM_genotype_clean.csv&quot;))
+
+# robust key = family + line, e.g. &quot;TIL01&quot; + &quot;A001&quot;; family from the population column
+key &lt;- paste0(sub(&quot;^W22&quot;, &quot;&quot;, geno[[2]]), sub(&quot;^.*Line_&quot;, &quot;&quot;, geno[[1]]))
+fam &lt;- factor(sub(&quot;^W22&quot;, &quot;&quot;, geno[[2]]))
+
+# phenotype: STAM (staminate spikelet), joined by line key
+ph &lt;- as.data.frame(read_excel(
+  here(&quot;data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx&quot;)
+))
+names(ph)[1] &lt;- &quot;line&quot;
+y &lt;- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[key]))
+
+# v5 coordinates; restrict the scan to markers that lifted to v5
+mc &lt;- fread(here(&quot;data/teonam/markers_v5.tsv&quot;))
+chr_by &lt;- setNames(mc$chr_v5, mc$marker)
+pos_by &lt;- setNames(mc$pos_v5, mc$marker)
+mk &lt;- intersect(names(geno)[-(1:3)], mc$marker)
+
+data.table(
+  quantity = c(
+    &quot;lines&quot;, &quot;markers (raw)&quot;, &quot;markers (lifted, scanned)&quot;,
+    &quot;STAM phenotyped&quot;, &quot;families&quot;
+  ),
+  value = c(
+    nrow(geno), ncol(geno) - 3L, length(mk),
+    sum(!is.na(y)), nlevels(fam)
+  )
+)</code></pre>
+</section>
+<section id="the-model-1" class="level2">
+<h2 class="anchored" data-anchor-id="the-model-1">The model</h2>
+<p>For each marker <span class="math inline">\(m\)</span>, restrict to the lines <span class="math inline">\(i\)</span> with a non-missing dosage <span class="math inline">\(g_{im}\in\{0,1,2\}\)</span> <strong>and</strong> a non-missing STAM value <span class="math inline">\(y_i\)</span>, then compare two nested least-squares fits:</p>
+<p><span class="math display">\[
+\textbf{Null:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \varepsilon_i
+\]</span> <span class="math display">\[
+\textbf{Full:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \gamma\, g_{im} + \varepsilon_i
+\]</span></p>
+<p>The marker enters as a <strong>single additive dosage effect <span class="math inline">\(\gamma\)</span> shared across families</strong> (1 numerator df). Significance is the marginal <span class="math inline">\(F\)</span>-test of <span class="math inline">\(\gamma\)</span>:</p>
+<p><span class="math display">\[
+F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank})},
+\qquad P = \Pr\big(F_{1,\,n-\mathrm{rank}} &gt; F\big).
+\]</span></p>
+<p>Family enters as a fixed categorical covariate (levels dropped to those present for that marker) — it plays the role of the structure term. <strong>This is ordinary least squares (OLS): there is no kinship/polygenic random effect <span class="math inline">\(K\)</span>.</strong> Chen 2019 instead used a mixed model <code>y ~ Q(5 PCs) + SNP + K(IBS)</code>; the missing random <span class="math inline">\(K\)</span> is what makes ours “not mixed”, so peak heights here are expected to run hotter — quantifying that inflation (<span class="math inline">\(\lambda_{GC}\)</span>, QQ) is a separate analysis.</p>
+</section>
+<section id="the-scan-1" class="level2">
+<h2 class="anchored" data-anchor-id="the-scan-1">The scan</h2>
+<pre class="{r scan}"><code>scan1 &lt;- function(m) {
+  g &lt;- geno[[m]]
+  ok &lt;- !is.na(g) &amp; !is.na(y)
+  if (sum(ok) &lt; 20) {
+    return(c(NA_real_, sum(ok)))
+  }
+  gg &lt;- g[ok]
+  if (stats::sd(gg) == 0) {
+    return(c(NA_real_, sum(ok)))
+  }
+  yy &lt;- y[ok]
+  ff &lt;- droplevels(fam[ok])
+  Xr &lt;- if (nlevels(ff) &gt; 1) model.matrix(~ff) else matrix(1, sum(ok), 1)
+  n &lt;- sum(ok)
+  RSS0 &lt;- sum(lm.fit(Xr, yy)$residuals^2)
+  fit &lt;- lm.fit(cbind(Xr, gg), yy)
+  RSS1 &lt;- sum(fit$residuals^2)
+  df2 &lt;- n - fit$rank
+  if (df2 &lt;= 0 || RSS1 &lt;= 0) {
+    return(c(NA_real_, n))
+  }
+  c(pf(((RSS0 - RSS1) / 1) / (RSS1 / df2), 1, df2, lower.tail = FALSE), n)
+}
+out &lt;- mclapply(mk, scan1, mc.cores = THREADS)
+P &lt;- vapply(out, `[`, numeric(1), 1)
+N &lt;- vapply(out, `[`, numeric(1), 2)
+
+scan &lt;- data.table(
+  SNP = mk, CHR = as.integer(chr_by[mk]),
+  BP = as.integer(pos_by[mk]), P = P,
+  n = as.integer(N)
+)[order(CHR, BP)]
+fwrite(scan, here(&quot;data/teonam/stam_gwas_scan_family_imputed.csv&quot;)) # canonical output</code></pre>
+</section>
+<section id="qc-and-results-1" class="level2">
+<h2 class="anchored" data-anchor-id="qc-and-results-1">QC and results</h2>
+<pre class="{r results}"><code>fin &lt;- scan[is.finite(P) &amp; P &gt; 0]
+data.table(
+  metric = c(
+    &quot;markers scanned&quot;, &quot;markers tested (finite P)&quot;,
+    &quot;median lines / marker&quot;, &quot;max -log10P&quot;,
+    sprintf(&quot;genome-wide sig. (P &lt; 1e-%d)&quot;, LOD)
+  ),
+  value = c(
+    nrow(scan), nrow(fin), median(scan$n),
+    round(max(-log10(fin$P)), 2), sum(fin$P &lt; 10^(-LOD))
+  )
+)</code></pre>
+<pre class="{r top-hits}"><code>top &lt;- fin[order(P)][1:10, .(SNP, CHR, BP, n, logP = round(-log10(P), 2))]
+knitr::kable(top, caption = &quot;Top 10 STAM associations (family-imputed scan)&quot;)</code></pre>
+<p><code>{r per-marker-n, fig.width=7, fig.height=2.8} ggplot(scan, aes(n)) +   geom_histogram(bins = 60, fill = &quot;grey30&quot;) +   labs(     x = &quot;lines tested per marker (families typing that marker)&quot;,     y = &quot;markers&quot;, title = &quot;Per-marker sample size — the source of the natural scatter&quot;   )</code></p>
+<p><code>{r manhattan, fig.width=9, fig.height=3.4} # lightweight Manhattan (the annotated Fig-4C version lives in teonam-qtl-recovery) m &lt;- fin[order(CHR, BP)] off &lt;- m[, .(mx = max(BP)), by = CHR][order(CHR)] off[, base := cumsum(shift(mx, fill = 0))] m &lt;- merge(m, off[, .(CHR, base)], by = &quot;CHR&quot;) m[, x := BP + base] axis &lt;- m[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)] ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +   geom_point(size = 0.5) +   geom_hline(yintercept = LOD, linetype = &quot;dotted&quot;) +   scale_colour_manual(values = c(&quot;grey60&quot;, &quot;black&quot;), guide = &quot;none&quot;) +   scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +   labs(     x = &quot;chromosome&quot;, y = expression(-log[10](italic(P))),     title = &quot;STAM family-imputed GWAS (OLS: STAM ~ Family + marker)&quot;   )</code></p>
+</section>
+<section id="notes-1" class="level2">
+<h2 class="anchored" data-anchor-id="notes-1">Notes</h2>
+<ul>
+<li>This notebook is the <strong>canonical, tracked source</strong> for <code>stam_gwas_scan_family_imputed.csv</code>; it supersedes the untracked <code>scripts/teonam_stam_gwas_family_imputed.R</code> (identical model, ported verbatim).</li>
+<li>Model is <strong>OLS (a fixed-effects linear model) with no kinship term</strong> — deliberately faithful to the throwaway script, <em>not</em> to Chen’s MLM. The peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook.</li>
+</ul>
+<pre><code></code></pre>
+<p>:::</p>
 </section>
 
 </main> <!-- /main -->
@@ -4602,6 +4792,57 @@ F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank}
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
