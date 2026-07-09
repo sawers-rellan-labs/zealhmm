@@ -1,8 +1,24 @@
 project:
-  type: default
+  type: website
   output-dir: docs
   render:
     - index.qmd
     - analysis/*.qmd
     - analysis/*.md
     - DATA.md
+
+website:
+  title: "zealhmm"
+  description: "Teosinte-introgression QTL recovery — TeoNAM & ZEAL/BZea"
+  search: true
+  page-navigation: true
+  navbar:
+    background: dark
+    left:
+      - text: "Home"
+        href: index.html
+      - text: "Data provenance"
+        href: DATA.html
+    tools:
+      - icon: github
+        href: https://github.com/sawers-rellan-labs/zealhmm

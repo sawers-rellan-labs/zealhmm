@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>zealhmm — teosinte-introgression QTL recovery</title>
+<title>zealhmm</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,31 +26,187 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="index_files/libs/clipboard/clipboard.min.js"></script>
-<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="index_files/libs/quarto-html/popper.min.js"></script>
-<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="index_files/libs/quarto-html/anchor.min.js"></script>
-<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="index_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-listing/list.min.js"></script>
+<script src="site_libs/quarto-listing/quarto-listing.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-e8ceec9fd8916a5f8990aca9c03c0672.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
 
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-zeal .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-subtitle','listing-date',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-zeal'] = new List('listing-zeal', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-teonam .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-subtitle','listing-date',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-teonam'] = new List('listing-teonam', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
-<body class="quarto-light">
+<body class="nav-fixed quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-full">
-
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">zealhmm</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./DATA.html"> 
+<span class="menu-text">Data provenance</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+    <a href="https://github.com/sawers-rellan-labs/zealhmm" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
 <main class="content column-page" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">zealhmm — teosinte-introgression QTL recovery</h1>
-<p class="subtitle lead">Reproductions and low-coverage ancestry-calling benchmarks for two maize×teosinte populations</p>
+<h1 class="title">zealhmm</h1>
+<p class="subtitle lead">Teosinte-introgression QTL recovery under low-coverage genotyping — TeoNAM (Chen 2019) and ZEAL/BZea</p>
 </div>
 
 
@@ -67,56 +223,348 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Analysis notebooks for recovering QTL from teosinte introgressions under low-coverage genotyping. Two populations: <strong>TeoNAM</strong> (Chen 2019, W22 × 5 teosinte inbreds, BC1S4 RILs — the faithful reproduction) and <strong>ZEAL/BZea</strong> (B73 × teosinte BC2S3 near-isogenic lines — the new build from real skim + field data). Data provenance: <a href="DATA.html">DATA.html</a>.</p>
-<section id="teonam-chen-2019-reproduction" class="level1">
-<h1>TeoNAM — Chen 2019 reproduction</h1>
-<p>W22 × {TIL01, TIL03, TIL11, TIL14, TIL25}; 1,257 BC1S4 RILs; 118K / 51K SNP panels, v5.</p>
-<section id="qtl-recovery-gwas-jlm" class="level3">
-<h3 class="anchored" data-anchor-id="qtl-recovery-gwas-jlm">QTL recovery (GWAS + JLM)</h3>
-<ul>
-<li><a href="analysis/teonam-qtl-recovery.html">teonam-qtl-recovery</a> — the core QTL-recovery reproduction.</li>
-<li><a href="analysis/teonam-qtl-recovery-118k.html">teonam-qtl-recovery-118k</a> — authentic 118K panel, OLS GWAS + JLM + coverage sweep.</li>
-<li><a href="analysis/teonam-qtl-recovery-mlm-118k.html">teonam-qtl-recovery-mlm-118k</a> — the MLM (Family + K) counterpart (STAM).</li>
-<li><a href="analysis/teonam-qtl-recovery-dta-mlm-118k.html">teonam-qtl-recovery-dta-mlm-118k</a> — <strong>DTA</strong> MLM composite + five-caller degradation sweep + caller noisiness.</li>
-</ul>
+<p>Analysis notebooks for recovering QTL from teosinte introgressions under low-coverage genotyping, across two maize×teosinte populations. Data provenance: <a href="DATA.html">DATA.html</a>.</p>
+<section id="zeal-bzea-zea-exotic-allele-library" class="level2">
+<h2 class="anchored" data-anchor-id="zeal-bzea-zea-exotic-allele-library">ZEAL / BZea — Zea Exotic Allele Library</h2>
+<p>B73 × teosinte <strong>BC2S3 near-isogenic lines</strong>; 5 teosinte taxa (Zx <em>mexicana</em>, Zv <em>parviglumis</em>, Zd <em>diploperennis</em>, Zl <em>luxurians</em>, Zh <em>huehuetenangensis</em>); SNP50K panel at ~0.4× skim. Built end-to-end from field books + skim counts: samplesheet → SpATS BLUEs → SNP50K dosage → RTIGER ancestry mosaic → K → JLM + MLM.</p>
+<div id="listing-zeal" class="quarto-listing quarto-listing-container-table">
+<div class="listing-actions-group">
+   <div class="input-group input-group-sm quarto-listing-sort">
+    <span class="input-group-text"><i class="bi bi-sort-down"></i></span>
+    <select id="listing-zeal-sort" class="form-select" aria-label="Order By" onchange="window['quarto-listings']['listing-zeal'].sort(this.options[this.selectedIndex].value, { order: this.options[this.selectedIndex].getAttribute('data-direction')})">
+      <option value="" disabled="" selected="" hidden="">Order By</option>
+      <option value="index" data-direction="asc">Default</option>
+      <option value="listing-date-sort" data-direction="asc">
+        Date - Oldest
+      </option>
+      <option value="listing-date-sort" data-direction="desc">
+        Date - Newest
+      </option>
+      <option value="listing-title-sort" data-direction="asc">
+        Notebook
+      </option>
+    </select>
+  </div>
+    <div class="input-group input-group-sm quarto-listing-filter">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="search form-control" placeholder="Filter">
+    </div>
+</div>
+<table class="quarto-listing-table table">
+<thead>
+<tr>
+
+<th>
+<a class="sort" data-sort="listing-title-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Notebook</a>
+</th>
+
+<th>
+Description
+</th>
+
+<th>
+<a class="sort" data-sort="listing-date-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Date</a>
+</th>
+
+</tr>
+</thead>
+<tbody class="list">
+
+<tr data-index="0" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783560714749" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1265" data-listing-title-sort="ZEAL/BZea DTA (days to anthesis) — MLM (Taxon + K) GWAS + JLM on the SNP50K panel" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k.qmd">
+<td>
+<a href="./analysis/zeal-qtl-recovery-dta-mlm-snp50k.html" class="title listing-title">ZEAL/BZea DTA (days to anthesis) — MLM (Taxon + K) GWAS + JLM on the SNP50K panel</a>
+</td>
+<td>
+<span class="listing-subtitle">The ZEAL reproduction of the TeoNAM DTA composite: JLM QTL, per-SNP vs RTIGER-ancestry MLM, and the ancestry↔︎flowering confound, on 1,403 B73×teosinte BC2S3 NILs</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="1" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783560714395" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1518" data-listing-title-sort="ZEAL/BZea DTA GWAS + JLM on the SNP50K panel — FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k-fdr.qmd">
+<td>
+<a href="./analysis/zeal-qtl-recovery-dta-mlm-snp50k-fdr.html" class="title listing-title">ZEAL/BZea DTA GWAS + JLM on the SNP50K panel — FDR ≤ 0.05</a>
+</td>
+<td>
+<span class="listing-subtitle">As the base DTA notebook, but significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q.</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+</tbody>
+</table>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
 </section>
-<section id="stam-gwas-model-comparisons" class="level3">
-<h3 class="anchored" data-anchor-id="stam-gwas-model-comparisons">STAM GWAS model comparisons</h3>
-<ul>
-<li><a href="analysis/teonam-stam-mlm-gwas-118k.html">teonam-stam-mlm-gwas-118k</a> — TASSEL Q=5PC + Centered-IBS K, the exact Fig-4C model + QQ/λ_GC.</li>
-<li><a href="analysis/teonam-stam-ols-gwas-118k.html">teonam-stam-ols-gwas-118k</a> — OLS (Family + marker) on the 118K panel.</li>
-<li><a href="analysis/teonam-stam-mlm-gwas-interpolated.html">teonam-stam-mlm-gwas-interpolated</a> — MLM on the interpolated 51K map panel.</li>
-<li><a href="analysis/teonam-stam-ols-gwas-family-imputed.html">teonam-stam-ols-gwas-family-imputed</a> — OLS on the family-imputed panel.</li>
-</ul>
-</section>
-<section id="maps-callers-methods" class="level3">
-<h3 class="anchored" data-anchor-id="maps-callers-methods">Maps, callers &amp; methods</h3>
-<ul>
-<li><a href="analysis/teonam-genetic-map.html">teonam-genetic-map</a> — native v5 R/qtl composite genetic map.</li>
-<li><a href="analysis/marker-thinning.html">marker-thinning</a> — cM thinning (JLM/ancestry grid) as a Max Distance-d Independent Set.</li>
-<li><a href="analysis/callers-and-methods.html">callers-and-methods</a> — the ancestry callers (nNIL, RTIGER, LB-Impute, binhmm, control).</li>
-<li><a href="analysis/simulation-calibration.html">simulation-calibration</a> — per-coverage caller calibration on simulated BC truth.</li>
-<li><a href="analysis/rtiger_vs_nilhmm_reproduction.html">rtiger_vs_nilhmm_reproduction</a> — RTIGER vs nilHMM ancestry agreement.</li>
-<li><a href="analysis/nilhmm_sanity_check_paint.html">nilhmm_sanity_check_paint</a> — nilHMM ancestry-painting sanity check.</li>
-<li><a href="analysis/source-method-comparison.html">source-method-comparison</a> · <a href="analysis/b1-mapping-benchmark.html">b1-mapping-benchmark</a> — source/method comparisons.</li>
-</ul>
-</section>
-</section>
-<section id="zeal-bzea-zea-exotic-allele-library" class="level1">
-<h1>ZEAL / BZea — Zea Exotic Allele Library</h1>
-<p>B73 × teosinte BC2S3 near-isogenic lines; <strong>5 teosinte taxa</strong> (Zx <em>mexicana</em>, Zv <em>parviglumis</em>, Zd <em>diploperennis</em>, Zl <em>luxurians</em>, Zh <em>huehuetenangensis</em>); SNP50K panel at ~0.4× skim. Built end-to-end from field books + skim counts: samplesheet → SpATS BLUEs → SNP50K dosage → RTIGER ancestry mosaic → K → JLM + MLM.</p>
-<section id="dta-days-to-anthesis" class="level3">
-<h3 class="anchored" data-anchor-id="dta-days-to-anthesis">DTA (days to anthesis)</h3>
-<ul>
-<li><a href="analysis/zeal-qtl-recovery-dta-mlm-snp50k.html">zeal-qtl-recovery-dta-mlm-snp50k</a> — DTA JLM + MLM (Taxon + K) composite (A: JLM · B: per-SNP · C: RTIGER mosaic) + five-caller comparison. Nominal significance (LOD 5).</li>
-<li><a href="analysis/zeal-qtl-recovery-dta-mlm-snp50k-fdr.html">zeal-qtl-recovery-dta-mlm-snp50k-fdr</a> — the same, with <strong>Benjamini–Hochberg FDR ≤ 0.05</strong> significance (per-scan q-values); <em>zmcct10</em> significant under the RTIGER/binhmm/nNIL mosaics.</li>
-</ul>
-<p><em>Key result:</em> JLM recovers <em>zmcct10</em> (chr10 photoperiod QTL); the MLM confound (K = teosinte-ancestry relatedness) suppresses the ancestry-collinear flowering peaks; and at 0.4× the ancestry calling must be block/bin-aggregated (RTIGER, binhmm) — per-SNP calling under-calls teosinte.</p>
-</section>
+<section id="teonam-chen-2019-reproduction" class="level2">
+<h2 class="anchored" data-anchor-id="teonam-chen-2019-reproduction">TeoNAM — Chen 2019 reproduction</h2>
+<p>W22 × {TIL01, TIL03, TIL11, TIL14, TIL25}; 1,257 <strong>BC1S4 RILs</strong>; 118K / 51K SNP panels (v5). The faithful reproduction plus the low-coverage ancestry-caller benchmarks (nNIL, RTIGER, LB-Impute, binhmm, control) and genetic-map / calibration methods.</p>
+<div id="listing-teonam" class="quarto-listing quarto-listing-container-table">
+<div class="listing-actions-group">
+   <div class="input-group input-group-sm quarto-listing-sort">
+    <span class="input-group-text"><i class="bi bi-sort-down"></i></span>
+    <select id="listing-teonam-sort" class="form-select" aria-label="Order By" onchange="window['quarto-listings']['listing-teonam'].sort(this.options[this.selectedIndex].value, { order: this.options[this.selectedIndex].getAttribute('data-direction')})">
+      <option value="" disabled="" selected="" hidden="">Order By</option>
+      <option value="index" data-direction="asc">Default</option>
+      <option value="listing-date-sort" data-direction="asc">
+        Date - Oldest
+      </option>
+      <option value="listing-date-sort" data-direction="desc">
+        Date - Newest
+      </option>
+      <option value="listing-title-sort" data-direction="asc">
+        Notebook
+      </option>
+    </select>
+  </div>
+    <div class="input-group input-group-sm quarto-listing-filter">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="search form-control" placeholder="Filter">
+    </div>
+</div>
+<table class="quarto-listing-table table">
+<thead>
+<tr>
+
+<th>
+<a class="sort" data-sort="listing-title-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Notebook</a>
+</th>
+
+<th>
+Description
+</th>
+
+<th>
+<a class="sort" data-sort="listing-date-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Date</a>
+</th>
+
+</tr>
+</thead>
+<tbody class="list">
+
+<tr data-index="0" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783098398910" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="163" data-listing-title-sort="B1 anthocyanin mapping benchmark (DEFERRED)" data-listing-filename-sort="b1-mapping-benchmark.qmd">
+<td>
+<a href="./analysis/b1-mapping-benchmark.html" class="title listing-title">B1 anthocyanin mapping benchmark (DEFERRED)</a>
+</td>
+<td>
+<span class="listing-subtitle">Discussion / future application — mapping power &amp; resolution across callers × sources</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="1" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783204628033" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="281" data-listing-title-sort="Cross-modality concordance on the paired BrB + skim cohort" data-listing-filename-sort="source-method-comparison.qmd">
+<td>
+<a href="./analysis/source-method-comparison.html" class="title listing-title">Cross-modality concordance on the paired BrB + skim cohort</a>
+</td>
+<td>
+<span class="listing-subtitle">Results §3.3 — transfer sim-calibrated params to ~400 NILs sequenced two ways</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="2" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783464240899" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1996" data-listing-title-sort="Marker thinning for joint-linkage mapping — provenance &amp; proof" data-listing-filename-sort="marker-thinning.qmd">
+<td>
+<a href="./analysis/marker-thinning.html" class="title listing-title">Marker thinning for joint-linkage mapping — provenance &amp; proof</a>
+</td>
+<td>
+<span class="listing-subtitle">What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="3" data-listing-date-sort="1783051200000" data-listing-file-modified-sort="1783283759161" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1876" data-listing-title-sort="RTIGER reproduction &amp; timing: nilHMM `rtiger` vs the Julia RTIGER" data-listing-filename-sort="rtiger_vs_nilhmm_reproduction.qmd">
+<td>
+<a href="./analysis/rtiger_vs_nilhmm_reproduction.html" class="title listing-title">RTIGER reproduction &amp; timing: nilHMM <code>rtiger</code> vs the Julia RTIGER</a>
+</td>
+<td>
+<span class="listing-subtitle">&nbsp;</span>
+</td>
+<td>
+<span class="listing-date">2026-07-03</span>
+</td>
+
+</tr>
+
+<tr data-index="4" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783204622051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="678" data-listing-title-sort="Simulation-calibrated ancestry calling: two-stage parameter search" data-listing-filename-sort="simulation-calibration.qmd">
+<td>
+<a href="./analysis/simulation-calibration.html" class="title listing-title">Simulation-calibrated ancestry calling: two-stage parameter search</a>
+</td>
+<td>
+<span class="listing-subtitle">Materials &amp; Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="5" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783546628475" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2191" data-listing-title-sort="TeoNAM DTA (days to anthesis) — MLM (Family + K) GWAS with candidate genes + coverage sweep [118K panel]" data-listing-filename-sort="teonam-qtl-recovery-dta-mlm-118k.qmd">
+<td>
+<a href="./analysis/teonam-qtl-recovery-dta-mlm-118k.html" class="title listing-title">TeoNAM DTA (days to anthesis) — MLM (Family + K) GWAS with candidate genes + coverage sweep [118K panel]</a>
+</td>
+<td>
+<span class="listing-subtitle">The OLS model (Family + marker) plus a K random effect, on the authentic 118,838-SNP panel, and the five-caller coverage-degradation sweep under MLM</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="6" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783476085632" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4092" data-listing-title-sort="TeoNAM STAM — GWAS Manhattan with candidate genes (Chen 2019 Fig 4C)" data-listing-filename-sort="teonam-qtl-recovery.qmd">
+<td>
+<a href="./analysis/teonam-qtl-recovery.html" class="title listing-title">TeoNAM STAM — GWAS Manhattan with candidate genes (Chen 2019 Fig 4C)</a>
+</td>
+<td>
+<span class="listing-subtitle">Empirical-truth validation: reproduce Chen 2019 STAM on real TeoNAM genotypes</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="7" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783499302289" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3684" data-listing-title-sort="TeoNAM STAM — GWAS Manhattan with candidate genes (Chen 2019 Fig 4C) [118K panel]" data-listing-filename-sort="teonam-qtl-recovery-118k.qmd">
+<td>
+<a href="./analysis/teonam-qtl-recovery-118k.html" class="title listing-title">TeoNAM STAM — GWAS Manhattan with candidate genes (Chen 2019 Fig 4C) [118K panel]</a>
+</td>
+<td>
+<span class="listing-subtitle">Empirical-truth validation on the authentic 118,838-SNP Chen 2019 GWAS panel</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="8" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783547088840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2172" data-listing-title-sort="TeoNAM STAM — MLM (Family + K) GWAS with candidate genes + coverage sweep [118K panel]" data-listing-filename-sort="teonam-qtl-recovery-mlm-118k.qmd">
+<td>
+<a href="./analysis/teonam-qtl-recovery-mlm-118k.html" class="title listing-title">TeoNAM STAM — MLM (Family + K) GWAS with candidate genes + coverage sweep [118K panel]</a>
+</td>
+<td>
+<span class="listing-subtitle">The OLS model (Family + marker) plus a K random effect, on the authentic 118,838-SNP panel, and the five-caller coverage-degradation sweep under MLM</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="9" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783478641829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1113" data-listing-title-sort="TeoNAM STAM — MLM (Q+K) GWAS on the authentic 118K panel (Fig 4C)" data-listing-filename-sort="teonam-stam-mlm-gwas-118k.qmd">
+<td>
+<a href="./analysis/teonam-stam-mlm-gwas-118k.html" class="title listing-title">TeoNAM STAM — MLM (Q+K) GWAS on the authentic 118K panel (Fig 4C)</a>
+</td>
+<td>
+<span class="listing-subtitle">Chen’s actual Fig-4C mixed model (Q = 5 PCs + K = Centered-IBS, P3D) on the 118,838-SNP panel — scatter preserved, no densification</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="10" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783450982319" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2191" data-listing-title-sort="TeoNAM STAM — MLM (Q+K) GWAS on the interpolated map panel" data-listing-filename-sort="teonam-stam-mlm-gwas-interpolated.qmd">
+<td>
+<a href="./analysis/teonam-stam-mlm-gwas-interpolated.html" class="title listing-title">TeoNAM STAM — MLM (Q+K) GWAS on the interpolated map panel</a>
+</td>
+<td>
+<span class="listing-subtitle">The correct mixed model: Q = 5 PCs + K = Centered-IBS (P3D), with the OLS→MLM genomic-inflation comparison</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="11" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783478045857" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="952" data-listing-title-sort="TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C)" data-listing-filename-sort="teonam-stam-ols-gwas-118k.qmd">
+<td>
+<a href="./analysis/teonam-stam-ols-gwas-118k.html" class="title listing-title">TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C)</a>
+</td>
+<td>
+<span class="listing-subtitle">Per-marker across-family OLS on Chen 2019’s 118,838-SNP GWAS panel (v5) — computation, model &amp; QC</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="12" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783463586943" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="902" data-listing-title-sort="TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)" data-listing-filename-sort="teonam-stam-ols-gwas-family-imputed.qmd">
+<td>
+<a href="./analysis/teonam-stam-ols-gwas-family-imputed.html" class="title listing-title">TeoNAM STAM — OLS GWAS on the family-imputed map panel (Fig 4C)</a>
+</td>
+<td>
+<span class="listing-subtitle">Per-marker across-family OLS on the FSFHap family-imputed map-panel genotypes — computation, model &amp; QC</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="13" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783458026260" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="286" data-listing-title-sort="TeoNAM composite genetic map (bcsft(1,4), B73 v5)" data-listing-filename-sort="teonam-genetic-map.qmd">
+<td>
+<a href="./analysis/teonam-genetic-map.html" class="title listing-title">TeoNAM composite genetic map (bcsft(1,4), B73 v5)</a>
+</td>
+<td>
+<span class="listing-subtitle">Native per-marker cM (cm) — results view</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="14" data-listing-date-sort="1783483200000" data-listing-file-modified-sort="1783204613227" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="633" data-listing-title-sort="The nilHMM caller family: one duration-aware HMM, swappable emissions" data-listing-filename-sort="callers-and-methods.qmd">
+<td>
+<a href="./analysis/callers-and-methods.html" class="title listing-title">The nilHMM caller family: one duration-aware HMM, swappable emissions</a>
+</td>
+<td>
+<span class="listing-subtitle">Materials &amp; Methods §2.1–2.2 — the shared 3-state engine and the four callers (nNIL, RTIGER, binhmm, ATLAS)</span>
+</td>
+<td>
+<span class="listing-date">2026-07-08</span>
+</td>
+
+</tr>
+
+<tr data-index="15" data-listing-date-sort="1782964800000" data-listing-file-modified-sort="1783119347243" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2781" data-listing-title-sort="nilHMM sanity check paint: source × caller tracks, one engine, no Julia" data-listing-filename-sort="nilhmm_sanity_check_paint.qmd">
+<td>
+<a href="./analysis/nilhmm_sanity_check_paint.html" class="title listing-title">nilHMM sanity check paint: source × caller tracks, one engine, no Julia</a>
+</td>
+<td>
+<span class="listing-subtitle">Chromosome painting of the vary-skim sweep NILs (+B73 control) — 6 tracks = 2 data sources (Skim, BRB) crossed with nilHMM callers, all through the nilHMM package</span>
+</td>
+<td>
+<span class="listing-date">2026-07-02</span>
+</td>
+
+</tr>
+
+</tbody>
+</table>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
+
+
+
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
