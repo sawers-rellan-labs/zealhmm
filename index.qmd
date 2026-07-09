@@ -25,6 +25,9 @@ listing:
       - title: "StPi · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd
         description: "Stem pigment (anthocyanin): phenotype used directly (no spatial correction, 0–1 score); JLM + MLM composite, five-caller comparison, anthocyanin-pathway candidates, FDR ≤ 0.05"
+      - title: "Inv4m genotype · 50K vs 250K"
+        path: analysis/zeal-inv4m-rtiger-genotype.qmd
+        description: "Genotype at the Inv4m tagging SNP (PZE04175660223) from the 250K (previous, Nirwan) and 50K (current, Fausto) RTIGER call sets: confusion matrix, BC2S3 goodness-of-fit, and the flowering-time LMM on each"
   - id: teonam
     type: table
     fields: [title, description]

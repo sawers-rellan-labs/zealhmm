@@ -1,0 +1,352 @@
+---
+title: "Inv4m tagging-SNP genotype: 50K vs 250K RTIGER calls, ZEAL NIL panel"
+subtitle: "The *Inv4m* flowering analysis of the inversion paper (`Zeal_Inv4m_flowering_lmm.Rmd`) codes each NIL from the **250K** genotype set (previous). Here I read the genotype at the tagging SNP **PZE04175660223** (chr4:181,637,780) from **both** RTIGER call sets, the 250K (previous) and my 50K (current), build a confusion matrix between them, test each genotype-frequency spectrum against the single-locus **BC2S3** Mendelian expectation (stacked bar + χ² goodness-of-fit), and re-fit the flowering LMM on each genotype source."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** A companion to the inversion-paper ZEAL flowering notebook
+(`scripts/inversion_paper/Zeal_Inv4m_flowering_lmm.Rmd`). The genotype at the *Inv4m* tagging SNP
+**PZE04175660223** (chr4:181,637,780) is read from **two RTIGER ancestry call sets**, both are
+RTIGER (HMM on skim allele counts); they differ only in the **reference variant set**:
+
+- **250K (previous)**, the calls behind the inversion paper, from Nirwan Tandukar's QC subset of a
+  larger GATK variant set (Bzea introgression-finder pipeline / `BzeaSeq`). Emitted as **two
+  states**: `B73` (recurrent) vs `Introgression` (donor), no zygosity split.
+- **50K (current)**, my reworked RTIGER on the 50K teosinte-reference variant-filtered set
+  (`data/zeal/rtiger_50K_calls.csv`). Emitted as **three states**: `0/1/2` = REF / HET / ALT.
+
+::: {.callout-important}
+## Same locus, same method, different marker set
+`PZE04175660223` is not a marker in either panel, so for each call set the genotype at
+4:181,637,780 is the state of the RTIGER **segment** spanning that coordinate. This is a like-for-like
+comparison: identical locus, identical caller, only the reference variant set changes. The population
+is the same **~1,400 near-isogenic B73×teosinte BC2S3 lines**. Genotype frequency is a per-line
+property, so replicate field plots are collapsed to one call per NIL.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggpubr)
+library(scales)
+library(lme4)
+library(lmerTest)
+library(knitr)
+source(here("R/plotting.R")) # state_palette(): REF=gold, HET=springgreen4, ALT=purple4
+
+POS <- 181637780L # PZE04175660223, chr4
+geno2 <- c(recurrent = "gold", donor = "purple4") # 2-state (presence)
+geno3 <- state_palette() # REF / HET / ALT
+```
+
+## Deriving the two genotype vectors
+
+```{r derive}
+# --- 250K (previous): B73 / Introgression segment state at the locus, per line ---
+L <- readRDS(here("data/zeal/rtiger_250K_calls_introfinder.rds")) # staged from BZea_Introgression_Finder
+g250v <- sapply(L, function(tb) {
+  tb <- as.data.frame(tb)
+  s <- tb[tb$V1 == "chr4", , drop = FALSE]
+  if (!nrow(s)) {
+    return(NA_character_)
+  }
+  h <- s$V4[s$V2 <= POS & s$V3 >= POS]
+  if (length(h)) h[1] else NA_character_
+})
+d250 <- data.table(
+  NIL = sub("[.]B$", "", names(L)), # strip .B bulk suffix -> pedigree
+  g250 = ifelse(is.na(g250v), NA_character_, ifelse(g250v == "B73", "recurrent", "donor"))
+)
+d250 <- unique(d250[!is.na(g250)], by = "NIL")
+
+# --- 50K (current): 0/1/2 segment state at the locus, per line (via skim_id) ---
+seg <- fread(here("data/zeal/rtiger_50K_calls.csv"))
+ss <- fread(here("data/zeal/samplesheet_3way.csv"))
+cov <- unique(seg[chr == 4L & start_bp <= POS & end_bp >= POS, .(skim_id = name, st = state)], by = "skim_id")
+p2s <- unique(ss[!is.na(skim_id) & skim_id != "", .(NIL = pedigree, skim_id)], by = "NIL")
+d50 <- merge(p2s, cov, by = "skim_id")[, .(NIL,
+  g50_3 = factor(st, 0:2, c("REF", "HET", "ALT")),
+  g50   = ifelse(st == 0L, "recurrent", "donor")
+)]
+
+# --- phenotypes + paper filters (CLY25, incl. paper's outlier plots) ---
+OUTLIER_PLOTS <- c(2756, 453, 304)
+cly <- fread(here("data/zeal/CLY25_ZEAL.csv"))
+setnames(cly, "Genotype", "NIL")
+meta <- fread(here("data/zeal/Bzea_metadata.csv"))
+pheno <- cly[!Plot %in% OUTLIER_PLOTS & !NIL %in% c("B73", "Purple Check") & !is.na(NIL)]
+pheno[, accession := substr(NIL, 1, 7)]
+pheno[, ancestry := meta$race[match(accession, meta$donor_id)]]
+pheno <- merge(pheno, d250[, .(NIL, g250)], by = "NIL", all.x = TRUE)
+pheno <- merge(pheno, d50[, .(NIL, g50, g50_3)], by = "NIL", all.x = TRUE)
+
+# per-line table, restricted to lines carrying BOTH calls (fair head-to-head)
+byNIL <- unique(pheno[!is.na(g250) & !is.na(g50), .(NIL, g250, g50, g50_3)], by = "NIL")
+cat(sprintf(
+  "lines with 250K call: %d | 50K call: %d | BOTH: %d\n",
+  uniqueN(d250$NIL), uniqueN(d50$NIL), nrow(byNIL)
+))
+```
+
+## 1. Confusion matrix, 50K (current) vs 250K (previous)
+
+The 250K set resolves only presence/absence (`recurrent` / `donor`), while the 50K set resolves all
+three genotypes. A cell is a **match** when the two sets agree on presence: `REF ↔ recurrent`, and
+`HET` or `ALT ↔ donor`. Match cells are filled with the 50K genotype colour (`state_palette`);
+mismatches are white.
+
+```{r confusion, fig.width=5.6, fig.height=5}
+cm <- CJ(
+  g50_3 = factor(c("REF", "HET", "ALT"), c("REF", "HET", "ALT")),
+  g250 = factor(c("recurrent", "donor"), c("recurrent", "donor"))
+)
+cnt <- byNIL[, .N, by = .(g50_3, g250)]
+cm <- cnt[cm, on = .(g50_3, g250)][is.na(N), N := 0L]
+cm[, match := (g50_3 == "REF" & g250 == "recurrent") | (g50_3 %in% c("HET", "ALT") & g250 == "donor")]
+cm[, fillkey := ifelse(match, as.character(g50_3), "mismatch")]
+cm[, g50_3 := factor(g50_3, levels = c("ALT", "HET", "REF"))] # ALT top → REF bottom
+
+n_tot <- sum(cm$N)
+n_match <- cm[match == TRUE, sum(N)]
+fill_vals <- c(geno3, mismatch = "white")
+
+p_cm <- ggplot(cm, aes(g250, g50_3, fill = fillkey)) +
+  geom_tile(color = "grey70", linewidth = 0.8) +
+  # match-cell counts in white; mismatch-cell counts in grey for legibility on white
+  geom_text(data = cm[match == TRUE], aes(label = N), color = "white", size = 7, fontface = "bold") +
+  geom_text(data = cm[match == FALSE], aes(label = N), color = "grey35", size = 6) +
+  scale_fill_manual(values = fill_vals, guide = "none") +
+  scale_x_discrete(
+    position = "top", limits = c("recurrent", "donor"),
+    labels = c(recurrent = "B73\n(recurrent)", donor = "Introgression\n(donor)")
+  ) +
+  scale_y_discrete(labels = c(REF = "REF\n(recurrent)", HET = "HET", ALT = "ALT\n(hom. donor)")) +
+  labs(
+    x = "250K (previous), Nirwan",
+    y = "50K (current)\nFausto",
+    title = "Inv4m RTIGER calls",
+    subtitle = sprintf(
+      "%d NILs with both lines,\n%.1f%% concordant on presence",
+      n_tot, 100 * n_match / n_tot
+    )
+  ) +
+  coord_equal() +
+  theme_classic2(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.line = element_blank(), axis.ticks = element_blank()
+  )
+p_cm
+```
+
+```{r confusion-table}
+dcast(cm, g50_3 ~ g250, value.var = "N")[order(-match(g50_3, c("REF", "HET", "ALT")))] |>
+  kable(caption = "NIL counts, 50K genotype (rows) × 250K genotype (columns)")
+```
+
+**Reading it.** The two RTIGER call sets agree on donor **presence** for
+`r sprintf("%.1f%%", 100 * n_match / n_tot)` of lines. Where the 250K set calls `Introgression`,
+the 50K set resolves the zygosity into heterozygous (the majority) and homozygous-donor. The few
+off-diagonal lines are small, roughly symmetric disagreements at the detection margin, expected for
+two callers built on different reference variant sets.
+
+## 2. Genotype frequency vs the single-locus BC2S3 expectation
+
+::: {.callout-note}
+## BC2S3 Mendelian expectation at an unselected locus
+Two backcrosses to B73 then three selfing generations. With no selection, donor-allele frequency is
+$q = 1/8$ and heterozygosity $1/4$ at BC2; three selfing generations shrink heterozygosity by
+$(1/2)^3$ while $q$ is conserved:
+
+$$
+\Pr(Aa) = \tfrac14\left(\tfrac12\right)^3 = \tfrac{2}{64},\quad
+\Pr(aa) = q - \tfrac12\Pr(Aa) = \tfrac{7}{64},\quad
+\Pr(AA) = \tfrac{55}{64}.
+$$
+
+So an unselected BC2S3 locus is **85.9 % hom. recurrent, 3.1 % het, 10.9 % hom. donor**, i.e.
+**14.1 % donor-carrying**. This single-locus expectation is the null both call sets are tested against.
+:::
+
+```{r bc2s3}
+p_AA <- 55 / 64
+p_Aa <- 2 / 64
+p_aa <- 7 / 64
+exp2 <- c(recurrent = p_AA, donor = p_Aa + p_aa)
+exp3 <- c(REF = p_AA, HET = p_Aa, ALT = p_aa)
+
+N <- nrow(byNIL)
+o250 <- c(recurrent = byNIL[g250 == "recurrent", .N], donor = byNIL[g250 == "donor", .N])
+o50 <- c(recurrent = byNIL[g50 == "recurrent", .N], donor = byNIL[g50 == "donor", .N])
+o50_3 <- c(REF = byNIL[g50_3 == "REF", .N], HET = byNIL[g50_3 == "HET", .N], ALT = byNIL[g50_3 == "ALT", .N])
+```
+
+### Stacked bar, both call sets alongside the BC2S3 expectation
+
+Genotype-frequency spectrum in the REF / HET / ALT categories for all three groups. The 250K set
+does not resolve zygosity, so its `Introgression` calls are shown as **homozygous ALT** by
+assumption (it emits no heterozygotes); the 50K set carries its measured het / hom split.
+
+```{r stack3, fig.width=5.8, fig.height=4.8}
+o250_3 <- c(REF = unname(o250["recurrent"]), HET = 0, ALT = unname(o250["donor"])) # 250K donor := hom ALT
+bar3 <- rbindlist(list(
+  data.table(source = "250K\n(previous)", geno = names(o250_3), freq = o250_3 / N),
+  data.table(source = "50K\n(current)", geno = names(o50_3), freq = o50_3 / N),
+  data.table(source = "BC2S3\nexpected", geno = names(exp3), freq = exp3)
+))
+bar3[, geno := factor(geno, c("REF", "HET", "ALT"))]
+bar3[, source := factor(source, c("250K\n(previous)", "50K\n(current)", "BC2S3\nexpected"))]
+
+# donor-carrying total (HET + ALT) labelled atop each bar
+donor_lab <- bar3[geno %in% c("HET", "ALT"), .(freq = sum(freq)), by = source]
+
+ggplot(bar3, aes(source, freq, fill = geno)) +
+  geom_col(width = 0.72, color = "white", linewidth = 0.4) +
+  geom_text(
+    data = donor_lab, aes(x = source, y = freq, label = percent(freq, accuracy = 0.1)),
+    vjust = -0.4, size = 4, fontface = "bold", inherit.aes = FALSE
+  ) +
+  scale_fill_manual(
+    values = geno3, name = "Genotype",
+    labels = c(REF = "hom. recurrent", HET = "heterozygous", ALT = "hom. donor")
+  ) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.08))) +
+  labs(
+    x = NULL, y = "Fraction of NIL lines",
+    title = "Genotype-frequency spectrum at the Inv4m tagging SNP",
+    subtitle = sprintf("n = %d NILs (both calls) · label = donor-carrying %% (HET + ALT) · BC2S3 donor = 14.1%%", N)
+  ) +
+  theme_classic2(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+```
+
+### χ² goodness-of-fit tests
+
+```{r gof}
+gof <- function(obs, p, label) {
+  tt <- suppressWarnings(chisq.test(x = obs, p = p))
+  data.table(
+    comparison = label, classes = length(obs),
+    X2 = unname(tt$statistic), df = unname(tt$parameter), p_value = tt$p.value
+  )
+}
+rbindlist(list(
+  gof(o250, exp2, "250K (previous) vs BC2S3   (2-class)"),
+  gof(o50, exp2, "50K (current)   vs BC2S3   (2-class)"),
+  gof(o50_3, exp3, "50K (current)   vs BC2S3   (3-class)")
+)) |>
+  mutate(p_value = format.pval(p_value, digits = 3, eps = 1e-300)) |>
+  kable(digits = 1, caption = "χ² goodness-of-fit of each genotype spectrum against the single-locus BC2S3 expectation")
+```
+
+**Reading it.** On donor **presence** both call sets sit just below the 14.1 % BC2S3 expectation and
+track each other closely (250K ≈ 11.5 %, 50K ≈ 12.2 %); the 50K set is not significantly different
+from Mendelian expectation, the 250K only mildly so. The 3-class test is strongly rejected because
+the 50K carriers skew **heterozygous** (HET excess, hom-donor deficit vs three generations of
+selfing), consistent with introgressions maintained heterozygous rather than selfed to fixation,
+plus RTIGER's tendency to call low-coverage / boundary donor tracts as heterozygous at ~0.4× skim.
+
+## 3. Does the flowering effect change? (LMM refit)
+
+The paper's model, refit with each genotype source. Both apply the paper's *both-arms-at-BC1* family
+filter on their own genotype definition.
+
+```{r lmm}
+fit_trait <- function(dd, trait, geno_col) {
+  dd <- copy(dd)
+  dd[, Inv4m := factor(get(geno_col), levels = c("recurrent", "donor"))]
+  dd[, bc1 := substr(NIL, 1, 13)]
+  dd[, bc2 := substr(NIL, 1, 16)]
+  arms <- dd[!is.na(Inv4m), uniqueN(Inv4m), by = bc1]
+  dd <- dd[bc1 %in% arms[V1 == 2, bc1] & !is.na(Inv4m) & !is.na(get(trait))]
+  m <- suppressMessages(lmerTest::lmer(
+    as.formula(paste(trait, "~ Inv4m + (1 | ancestry/bc2/NIL)")),
+    data = dd
+  ))
+  fe <- summary(m)$coefficients["Inv4mdonor", ]
+  data.table(
+    genotype = geno_col, trait = trait,
+    n_plots = nrow(dd), n_bc1_families = uniqueN(dd$bc1),
+    est = fe["Estimate"], se = fe["Std. Error"], p = fe["Pr(>|t|)"]
+  )
+}
+TRAITS <- c("DTA_corr", "DTS_corr", "PH_corr")
+lmm_tbl <- rbindlist(lapply(TRAITS, function(tr) {
+  rbindlist(list(
+    fit_trait(pheno[!is.na(g250)], tr, "g250"),
+    fit_trait(pheno[!is.na(g50)], tr, "g50")
+  ))
+}))
+lmm_tbl[, genotype := factor(genotype, c("g250", "g50"), c("250K (previous)", "50K (current)"))]
+lmm_tbl[order(trait, genotype)] |>
+  kable(
+    digits = c(0, 0, 0, 0, 3, 3, 6),
+    col.names = c(
+      "Genotype", "Trait", "n plots", "n BC1 families",
+      "Inv4m effect (d/cm)", "SE", "p"
+    ),
+    caption = "Inv4m (donor − recurrent) fixed effect: 250K vs 50K genotype"
+  )
+```
+
+```{r lmm-compact}
+unit <- c(DTA_corr = "d", DTS_corr = "d", PH_corr = "cm")
+tlab <- c(DTA_corr = "DTA", DTS_corr = "DTS", PH_corr = "PH")
+pfmt <- function(p) ifelse(p >= 0.05, "ns", sprintf("p=%.1e", p))
+comp <- copy(lmm_tbl)
+comp[, cell := sprintf("%+.2f %s, %s", est, unit[trait], pfmt(p))]
+comp[, Trait := tlab[trait]]
+wide <- dcast(comp, Trait ~ genotype, value.var = "cell")[match(c("DTS", "DTA", "PH"), Trait)]
+kable(wide,
+  align = "lcc",
+  caption = "Inv4m (donor − recurrent) effect, compact summary (native units)"
+)
+```
+
+```{r lmm-forest, fig.width=7, fig.height=3.4}
+fdf <- copy(lmm_tbl)
+fdf[, trait := factor(trait, TRAITS, c("Days to anthesis", "Days to silking", "Plant height (cm)"))]
+fdf[, `:=`(lo = est - 1.96 * se, hi = est + 1.96 * se)]
+ggplot(fdf, aes(est, genotype, color = genotype)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.18, linewidth = 0.8) +
+  geom_point(size = 3.4) +
+  facet_wrap(~trait, scales = "free_x") +
+  scale_color_manual(values = c("250K (previous)" = "grey55", "50K (current)" = "purple4"), guide = "none") +
+  labs(
+    x = "Inv4m effect (donor − recurrent)", y = NULL,
+    title = "Inv4m flowering effect is stable across genotype sets",
+    subtitle = "LMM  trait ~ Inv4m + (1 | ancestry/bc2/NIL);  95% Wald CI"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+## Takeaways
+
+- **Concordance (confusion matrix).** The 250K (previous) and 50K (current) RTIGER call sets agree
+  on donor presence at the tagging SNP for ~98 % of lines; the 50K set additionally resolves the
+  250K `Introgression` state into heterozygous (majority) and homozygous-donor.
+- **BC2S3 fit.** Both sets recover a donor-carrying frequency (≈11,12 %) close to the single-locus
+  BC2S3 expectation (14.1 %); the 50K set is statistically indistinguishable from it on presence.
+  The 3-class spectrum departs from the strict selfing null through a heterozygote excess.
+- **Flowering effect (LMM).** The donor → earlier-flowering effect (DTS, DTA) is stable in direction
+  and magnitude across both genotype sets; plant height stays non-significant. The paper's conclusion
+  does not depend on which RTIGER marker set defines the genotype.
+
+```{r session}
+sessionInfo()
+```

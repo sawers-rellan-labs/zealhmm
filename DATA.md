@@ -280,6 +280,22 @@ empirical-truth anchor and is unaffected by the GWAS-set gap.
 - [ ] B1 anthocyanin phenotype table + NIL panel. Blocks
       `b1-mapping-benchmark.qmd`.
 
+## ZEAL Inv4m tagging-SNP genotype comparison (`data/zeal/`, gitignored)
+
+Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223, chr4:181,637,780):
+
+- `rtiger_250K_calls_introfinder.rds` — **250K (previous)** RTIGER segment calls, one table per NIL
+  (`V1` chr, `V2` start, `V3` end, `V4` state ∈ {`B73`, `Introgression`}). Staged from
+  `results_list_new_name.rds` in Nirwan Tandukar's app repo
+  `github.com/nirwan1265/BZea_Introgression_Finder` (the calls behind the inversion paper's
+  `inv4m_introgression` label). Names carry a `.B` bulk suffix → strip to match pedigree.
+- `rtiger_50K_calls.csv` — **50K (current)** RTIGER 3-state segments (see `zeal_rtiger_mosaic.R`).
+- `CLY25_ZEAL.csv`, `Bzea_metadata.csv` — spatially-corrected NC2025 phenotypes + donor metadata,
+  staged from the inv4m Drive repo (`scripts/inversion_paper`).
+
+Both call sets are RTIGER; they differ only in the reference variant set. See memory
+`bzea-genotype-call-sets`.
+
 ## Migration from zealtiger (plan B3)
 
 The sanity-paint sweep inputs currently read from the zealtiger working repo

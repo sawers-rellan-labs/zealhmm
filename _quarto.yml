@@ -7,6 +7,17 @@ project:
     - analysis/*.md
     - DATA.md
 
+# project-wide HTML defaults: hide code by default, offer a top-right
+# "</> Code" menu to show all code or view/download the complete .qmd source.
+# Per-notebook YAML can still override any of these.
+format:
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    code-tools:
+      toggle: true
+      source: true
+
 website:
   title: "zealhmm"
   description: "Teosinte-introgression QTL recovery — TeoNAM & ZEAL/BZea"
@@ -14,11 +25,11 @@ website:
   page-navigation: true
   navbar:
     background: dark
+    title: false
     left:
+      - text: "zealhmm"
+        href: https://github.com/sawers-rellan-labs/zealhmm
       - text: "Home"
         href: index.html
       - text: "Data provenance"
         href: DATA.html
-    tools:
-      - icon: github
-        href: https://github.com/sawers-rellan-labs/zealhmm
