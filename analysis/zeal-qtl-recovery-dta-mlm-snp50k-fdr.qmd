@@ -202,11 +202,11 @@ inference is mandatory at low coverage.
 
 ```{r composite, fig.width=9, fig.height=13}
 p_B <- plot_manhattan(persnp,
-  sprintf("DTA — MLM (Taxon+K), authentic per-SNP dosage (λ_GC = %.2f)", lam(persnp$P)),
+  sprintf("DTA — MLM (Taxon+K), authentic per-SNP dosage (λ_GC = %.2f; dotted = FDR 0.05)", lam(persnp$P)),
   overlap_csv = overlap, lod = fdr_lod(persnp$P)
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("DTA — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  sprintf("DTA — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = FDR 0.05)", lam(mlm$P)),
   overlap_csv = overlap, lod = fdr_lod(mlm$P)
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
