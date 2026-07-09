@@ -43,8 +43,9 @@ mk <- mk[keep]
 if (any(duplicated(colnames(state)))) state <- state[, !duplicated(colnames(state)), drop = FALSE]
 
 # --- phenotype BLUE + taxon (family) ------------------------------------------
-ph <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", TTAG)))
-# BLUE columns keep the trait's native case (e.g. StPi_mean); TRAIT is upper-cased -> match case-insensitively
+PHENO <- Sys.getenv("PHENO", "blue") # blue = SpATS BLUE (default) | direct = raw genotype mean (StPi)
+ph <- fread(here(sprintf("data/zeal/pheno_%s_%s.csv", TTAG, PHENO)))
+# phenotype columns keep the trait's native case (e.g. StPi_mean); TRAIT is upper-cased -> match case-insensitively
 mcol <- names(ph)[tolower(names(ph)) == tolower(paste0(TRAIT, "_mean"))][1]
 stopifnot(!is.na(mcol))
 y_all <- setNames(ph[[mcol]], ph$Genotype)

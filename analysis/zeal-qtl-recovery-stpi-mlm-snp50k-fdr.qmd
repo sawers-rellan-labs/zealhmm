@@ -1,6 +1,6 @@
 ---
 title: "ZEAL/BZea Stem-Pigment (StPi) GWAS + JLM on the SNP50K panel — FDR ≤ 0.05"
-subtitle: "Stem-anthocyanin analog of the DTA notebook: the same SNP50K ancestry pipeline, with per-field SpATS stem-pigment-intensity BLUEs as the phenotype and the maize anthocyanin-biosynthesis pathway as the candidate set. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
+subtitle: "Stem-anthocyanin analog of the DTA notebook: the same SNP50K ancestry pipeline, with the raw per-genotype stem-pigment score used directly (no spatial correction) as the phenotype and the maize anthocyanin-biosynthesis pathway as the candidate set. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,11 +16,20 @@ execute:
 
 **What this is.** The stem-pigment (StPi) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k-fdr`](zeal-qtl-recovery-dta-mlm-snp50k-fdr.html), built from the
-same real BZea pipeline: field StPi → SpATS spatial BLUEs → SNP50K teosinte-ancestry dosage →
-RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic B73×teosinte
-BC2S3 lines from **5 teosinte taxa**. StPi scores **stem anthocyanin intensity** (a 0–1 scale;
-union mean ≈ 0.17 across ~1,305 phenotyped lines), i.e. how strongly the culm accumulates purple
-anthocyanin pigment.
+same real BZea pipeline: field StPi → **raw per-genotype mean (used directly)** → SNP50K
+teosinte-ancestry dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same
+near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi scores **stem anthocyanin
+intensity** (a 0–1 scale), i.e. how strongly the culm accumulates purple anthocyanin pigment; most
+plots score 0 with a pigmented minority, so the direct per-genotype mean is ≈ 0.05.
+
+::: {.callout-important}
+## Why the phenotype is used directly (no spatial correction)
+StPi is a bounded 0–1 pigment score, not a continuous measurement. A SpATS genotype-fixed
+2-D P-spline (used for the continuous DTA/DTS/PH traits) is the wrong model here — fitting it
+pushed BLUEs out of range (13 genotypes > 1, impossible for a 0–1 score). So StPi is analysed as
+the **raw per-genotype mean** of the plot scores (mean within each field, then across fields),
+with no spatial correction.
+:::
 
 ::: {.callout-important}
 ## Genotype at 0.4× skim: why ancestry, not per-SNP
@@ -37,9 +46,7 @@ QTL plus a few small-effect ones** — unlike the polygenic flowering (DTA/DTS) 
 traits. The candidates here are the classic maize **anthocyanin-biosynthesis** genes: the
 regulators `r1`/`b1` (bHLH) and `c1`/`pl1` (MYB) that switch the pathway on, and the structural
 enzymes `c2` (CHS), `chi1` (CHI), `pr1` (F3'H), `a1` (DFR), `a2` (ANS), `bz1` (UFGT) and `bz2`
-(GST). Many teosintes are strongly pigmented, so teosinte introgression at these loci is
-pigment-increasing — and, where an anthocyanin locus is *not* collinear with genome-wide ancestry,
-it can survive the mixed model rather than be absorbed by K.
+(GST).
 
 ```{r setup}
 library(here)
@@ -122,9 +129,7 @@ knitr::kable(ctab,
 ## OLS → MLM: structure control on a pigment trait
 
 The fixed-effect OLS (Taxon + marker, no K) vs the MLM (Taxon + K) on the RTIGER mosaic, same
-fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1. Unlike the
-flowering traits, an anthocyanin locus of large effect that is *not* collinear with genome-wide
-ancestry can persist under MLM.
+fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
