@@ -1,6 +1,6 @@
 ---
 title: "ZEAL/BZea Stem-Pigment (StPi) GWAS + JLM on the SNP50K panel — FDR ≤ 0.05"
-subtitle: "Stem-anthocyanin analog of the DTA notebook: the same SNP50K ancestry pipeline, with the raw per-genotype stem-pigment score used directly (no spatial correction) as the phenotype and the maize anthocyanin-biosynthesis pathway as the candidate set. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
+subtitle: "Stem-anthocyanin analog of the DTA notebook: the same SNP50K ancestry pipeline, with the binary stem-pigment score modeled on the logit scale (empirical logit of the per-genotype pigmented-plot proportion, no spatial correction) and the maize anthocyanin-biosynthesis pathway as the candidate set. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,19 +16,24 @@ execute:
 
 **What this is.** The stem-pigment (StPi) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k-fdr`](zeal-qtl-recovery-dta-mlm-snp50k-fdr.html), built from the
-same real BZea pipeline: field StPi → **raw per-genotype mean (used directly)** → SNP50K
+same real BZea pipeline: field StPi → **per-genotype empirical logit** → SNP50K
 teosinte-ancestry dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same
-near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi scores **stem anthocyanin
-intensity** (a 0–1 scale), i.e. how strongly the culm accumulates purple anthocyanin pigment; most
-plots score 0 with a pigmented minority, so the direct per-genotype mean is ≈ 0.05.
+near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi is a **binary 0/1**
+stem-pigment call per plot (pigmented / not); the per-genotype phenotype is the **proportion of
+pigmented plots**, `k/n`, and only ~22% of genotypes are ever pigmented.
 
 ::: {.callout-important}
-## Why the phenotype is used directly (no spatial correction)
-StPi is a bounded 0–1 pigment score, not a continuous measurement. A SpATS genotype-fixed
-2-D P-spline (used for the continuous DTA/DTS/PH traits) is the wrong model here — fitting it
-pushed BLUEs out of range (13 genotypes > 1, impossible for a 0–1 score). So StPi is analysed as
-the **raw per-genotype mean** of the plot scores (mean within each field, then across fields),
-with no spatial correction.
+## Phenotype: empirical logit of the pigmented-plot proportion (no spatial correction)
+StPi is a binary 0/1 plot score, not a continuous measurement, so a SpATS genotype-fixed 2-D
+P-spline (used for the continuous DTA/DTS/PH traits) is misspecified — fitting it pushed BLUEs
+out of range (13 genotypes > 1, impossible for a 0–1 score). The per-genotype value is a bounded
+**proportion** `k/n` (k pigmented of n plots, pooled across fields), which is modeled on the
+**logit scale** via the Haldane–Anscombe empirical logit `log((k+0.5)/(n−k+0.5))` — finite at
+`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction.
+This is a pragmatic logit for the existing linear (EMMAX/TASSEL) pipeline; a full binomial GLMM
+would be the stricter model. With ~78% of genotypes never pigmented, StPi is a low-prevalence
+trait — the logit sharpens the ordering among the 316 pigmented genotypes but cannot add power the
+sparse phenotype lacks.
 :::
 
 ::: {.callout-important}
