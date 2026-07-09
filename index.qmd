@@ -24,7 +24,7 @@ listing:
         description: "Days to silk (flowering): JLM + MLM composite, five-caller comparison, flowering candidates, FDR ≤ 0.05"
       - title: "StPi · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd
-        description: "Stem pigment (anthocyanin): JLM + MLM composite, five-caller comparison, anthocyanin-pathway candidates, FDR ≤ 0.05"
+        description: "Stem pigment (anthocyanin): phenotype used directly (no spatial correction, 0–1 score); JLM + MLM composite, five-caller comparison, anthocyanin-pathway candidates, FDR ≤ 0.05"
   - id: teonam
     type: table
     fields: [title, description]

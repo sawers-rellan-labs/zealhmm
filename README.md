@@ -77,6 +77,29 @@ core calibration (02), the 400-cohort comparison (03), and B1 mapping (04) are
 scaffolded and **blocked on open inputs** tracked in [`DATA.md`](DATA.md) and
 plan B5.
 
+## QTL-recovery notebooks (TeoNAM + ZEAL/BZea)
+
+Beyond the methods paper, the docs site hosts a set of **QTL-recovery** notebooks that
+put the calibrated ancestry callers to work on real association mapping — reproducing the
+TeoNAM analysis (Chen et al. 2019) and extending it to the BZea/ZEAL population:
+
+- **TeoNAM reproduction** — JLM + MLM/OLS GWAS on the 118K/51K panels (STAM, DTA),
+  coverage sweeps, the native v5 genetic map, and the ancestry-caller comparison.
+- **ZEAL/BZea trait analyses** — B73 × teosinte BC2S3 near-isogenic lines, SNP50K at
+  ~0.4× skim; per trait: phenotype → RTIGER ancestry mosaic → K → JLM + MLM (Taxon+K),
+  five-caller comparison, all at Benjamini–Hochberg FDR ≤ 0.05:
+  - **DTA** (days to anthesis) and **DTS** (days to silk) — flowering; candidates
+    `ZmCCT10`/`ZCN8`. K is collinear with the flowering QTL, so MLM suppresses the
+    candidates and JLM recovers them.
+  - **PH** (plant height) — dwarf/GA/BR candidate genes (Peiffer et al. 2014).
+  - **StPi** (stem anthocyanin) — anthocyanin-pathway candidates. A bounded 0–1 pigment
+    score, so the phenotype is used **directly** (raw per-genotype mean, no spatial
+    correction); DTA/DTS/PH use SpATS spatial BLUEs.
+
+  JLM lollipops label a candidate gene only when a QTL falls within ±500 kb of it (the
+  same window the candidate/peak tables use). See the
+  [docs landing page](https://sawers-rellan-labs.github.io/zealhmm/) for the full listing.
+
 ## Relationship to other repos
 
 - **`nilhmm`** — the R + Rcpp caller package this repo consumes.
