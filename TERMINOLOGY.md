@@ -30,14 +30,17 @@ estimator is always `argmax`; the **method = the prior**:
 
 | token | estimator | prior | `call_gt(...)` |
 |-------|-----------|-------|----------------|
-| `gl` | argmax **GL** (ML) | flat / none | `prior = "flat"` |
+| `ml` | argmax **GL** = maximum likelihood | flat / none | `prior = "flat"` |
 | `gphwe` | argmax **GP** (MAP) | HWE at panel AF | `prior = "hwe", af = <AF>` |
 | `gpdesign` | argmax **GP** (MAP) | Mendelian single-locus expectation of the cross | `prior = design_prior("BC2S3")` |
 | `gp` | argmax **GP** (MAP) | custom | `prior = <length-3 vector>` |
 
 Notes:
-- Tokens mirror the **VCF FORMAT fields**: `GL` (likelihood) vs `GP` (posterior). See the
-  `gl-gp-map-caller-terminology` memory + `genotype_likelihoods_and_hmm.qmd §2`.
+- The method names the **estimator**: `ml` = maximum likelihood (argmax of the genotype
+  likelihood, flat prior — the token is `ml`, *not* `gl`, since `gl`/`gt` are both VCF FORMAT
+  fields and `gl_gt` would read as gibberish); `gphwe`/`gpdesign`/`gp` = MAP (argmax of the
+  posterior **GP**, the VCF field) under a prior. See the `gl-gp-map-caller-terminology` memory
+  + `genotype_likelihoods_and_hmm.qmd §2`.
 - Bare **`gp`** = "MAP with a custom prior you pass in"; `gphwe`/`gpdesign` are the two named
   priors. (`gphwe` and `gpdesign` *are* also MAP — `gp` alone just means custom.)
 - **`gpdesign` is per-site and marginal** — it applies the design's single-locus expectation
@@ -49,8 +52,8 @@ Notes:
   (`return="post"`): `gp[,,2]*1 + gp[,,3]*2`. Do **not** use `return="dosage"` for this — it
   returns the hardcall as a double, not the posterior mean.
 - **`persnp` is retired** (replaced by the `_gt` scheme). The old ad-hoc `round(2·alt/cov)` hardcall
-  is now built by `scripts/zeal_gt.R` (`METHOD=gl|gphwe|gpdesign`) via `call_gt` → `zeal_<method>_gt.rds`;
-  `gl_gt` is the canonical per-SNP genotype (GWAS Panel B / the per-SNP control).
+  is now built by `scripts/zeal_gt.R` (`METHOD=ml|gphwe|gpdesign`) via `call_gt` → `zeal_<method>_gt.rds`;
+  `ml_gt` is the canonical per-SNP genotype (GWAS Panel B / the per-SNP control).
 
 ## Ancestry-mosaic layer — `<caller>_mosaic`
 
@@ -74,7 +77,7 @@ Our HMM ancestry inference, via `call_ancestry()` / `call_states()`. The **calle
 `GENO` (and any predictor selector) takes the **object name directly** — the suffix carries the
 type. No prefix, no alias:
 
-- `GENO=gl_gt`, `GENO=gphwe_gt`, `GENO=gpdesign_gt`, `GENO=gp_gt`  (genotype layer)
+- `GENO=ml_gt`, `GENO=gphwe_gt`, `GENO=gpdesign_gt`, `GENO=gp_gt`  (genotype layer)
 - `GENO=rtiger_mosaic`, `GENO=nnil_mosaic`, `GENO=binhmm_mosaic`, `GENO=lbimpute_mosaic`  (mosaic layer)
 
 Dead and removed: the `mosaic:` prefix, the bare `mosaic`=rtiger alias, `persnp`.

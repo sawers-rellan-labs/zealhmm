@@ -46,7 +46,7 @@ ancestry mosaic" G1 calls for.
 | SNP50K dosage base | `zeal_snp50k_dosage.rds` | `n_ref,n_alt,dosage,cov` matrices | 51,991 HQ teo-vs-B73 sites, B73 v5, polarized (0=B73,2=teo) |
 | SNP50K markers | `markers_snp50k_v5.tsv`, `markers_snp50k_cm.tsv` | marker,chr,pos(,cM) | v5 bp + native cM |
 | **50K mosaics (variations)** | `zeal_{rtiger,nnil,binhmm,lbimpute}_mosaic.rds` | 0/1/2 marker×line | one per caller — the G1.1 payload |
-| per-SNP genotype (`_gt`) | `zeal_gl_gt.rds` | 0/1/2 hardcall | `call_gt(prior="flat")` via `zeal_gt.R`; retired `persnp` |
+| per-SNP genotype (`_gt`) | `zeal_ml_gt.rds` | 0/1/2 hardcall | `call_gt(prior="flat")` via `zeal_gt.R`; retired `persnp` |
 | **250K calls** | `rtiger_250K_calls_introfinder.rds` | per-line segment tbls (2-state) | 1,077 lines; from Nirwan's finder |
 | 50K RTIGER segments | `rtiger_50K_calls.csv` | 3-state segments | Fausto's calls |
 | samplesheet | `samplesheet_3way.csv` | line metadata | `skim_id/brbseq_id/in_snp50k/gwas_nil/...` |
@@ -75,7 +75,7 @@ The single worst overload:
 |---------|----------------|-----------------------|
 | The 0/1/2 ancestry-state matrix (any caller) | **ancestry mosaic** (generic) | keep as file suffix `_mosaic.rds` but never as a caller name |
 | The RTIGER-derived mosaic used as GWAS Panel C | **`rtiger`** | replace `GENO=mosaic` alias with `GENO=rtiger`; drop the "mosaic == rtiger" special-case |
-| Per-site genotype from counts (no HMM) | **`<method>_gt`** via `call_gt` | `persnp` retired → `gl_gt` (`zeal_gt.R`) |
+| Per-site genotype from counts (no HMM) | **`<method>_gt`** via `call_gt` | `persnp` retired → `ml_gt` (`zeal_gt.R`) |
 | Caller set | `rtiger`, `nnil`, `binhmm`, `lbimpute` | one spelling everywhere |
 | 50K marker set | **SNP50K** | `50K` / `snp50k` / `SNP 50K` → pick one (`SNP50K`) |
 | 250K call set | **250K (inv4m / introfinder)** | always tag "previous"; it is 2-state |
