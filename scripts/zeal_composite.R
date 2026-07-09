@@ -26,7 +26,7 @@ lam <- function(p) {
   p <- p[is.finite(p) & p > 0 & p <= 1]
   round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
 }
-persnp <- fread(here(sprintf("data/zeal/%s_gwas_mlm_persnp_%s_snp50k.csv", TTAG, FAMCOL))) # Panel B
+gt <- fread(here(sprintf("data/zeal/%s_gwas_mlm_gl_gt_%s_snp50k.csv", TTAG, FAMCOL))) # Panel B
 rtiger <- fread(here(sprintf("data/zeal/%s_gwas_mlm_rtiger_mosaic_%s_snp50k.csv", TTAG, FAMCOL))) # Panel C
 
 # A: JLM lollipop (model-independent QTL; context scan = the rtiger_mosaic MLM)
@@ -36,10 +36,10 @@ p_lolli <- plot_lollipop(
   overlap_csv = overlap, label_genes = c("zcn8", "zcn12", "zmcct9", "zmcct10", "dlf1", "tu1"),
   out_png = file.path(OUT, sprintf("%s_jlm_lollipop_snp50k.png", TTAG))
 )
-# B: authentic per-SNP dosage MLM (sharp SNP peaks; sparse -> lambda-deflated at 0.4x)
-p_B <- plot_manhattan(persnp,
-  sprintf("ZEAL/BZea %s — MLM (Taxon+K), authentic per-SNP dosage (lambda_GC = %.2f)", TRAIT, lam(persnp$P)),
-  overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_persnp_manhattan_snp50k.png", TTAG))
+# B: per-SNP GL genotype MLM (sharp SNP peaks; sparse -> lambda-deflated at 0.4x)
+p_B <- plot_manhattan(gt,
+  sprintf("ZEAL/BZea %s — MLM (Taxon+K), per-SNP GL genotype (lambda_GC = %.2f)", TRAIT, lam(gt$P)),
+  overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_gl_gt_manhattan_snp50k.png", TTAG))
 )
 # C: RTIGER ancestry mosaic MLM (block-smoothed; well-calibrated)
 p_C <- plot_manhattan(rtiger,
