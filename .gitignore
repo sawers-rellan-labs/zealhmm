@@ -34,3 +34,6 @@
 
 # stray R plot device output
 Rplots.pdf
+
+# Phase B release bundle (bulk; published to CyVerse, see DATA.md)
+/release/
