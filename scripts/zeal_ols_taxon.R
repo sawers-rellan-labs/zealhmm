@@ -23,7 +23,10 @@ mk <- mk[keep]
 if (any(duplicated(colnames(state)))) state <- state[, !duplicated(colnames(state)), drop = FALSE]
 
 ph <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", TTAG)))
-y_all <- setNames(ph[[paste0(TRAIT, "_mean")]], ph$Genotype)
+# BLUE columns keep the trait's native case (e.g. StPi_mean); TRAIT is upper-cased -> match case-insensitively
+mcol <- names(ph)[tolower(names(ph)) == tolower(paste0(TRAIT, "_mean"))][1]
+stopifnot(!is.na(mcol))
+y_all <- setNames(ph[[mcol]], ph$Genotype)
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))[gwas_nil == TRUE]
 FAMCOL <- Sys.getenv("FAMILY_COL", "taxon")
 taxon_by <- setNames(ss[[FAMCOL]], ss$pedigree)
