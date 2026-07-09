@@ -111,7 +111,7 @@ plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = 
 
 #' Chen 2019 Fig 4A: JLM QTL genomic distribution as a lollipop. `overlap_csv` =
 #' candidate table (symbol, chr, start); `label_genes` = symbols to label in bold-italic.
-plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, out_png = NULL, label_dist = 5e6) {
+plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, out_png = NULL, label_dist = 5e5) {
   scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
   scan <- scan[is.finite(scan$P) & scan$P > 0, ]
   maxis <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
@@ -123,9 +123,10 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
   ov <- fread(overlap_csv)
   ov <- ov[symbol %in% label_genes]
   # Label a QTL with a candidate gene only when the gene actually co-locates with it
-  # (nearest QTL within label_dist bp). Without this, a distant gene is snapped onto an
-  # unrelated QTL on the same chromosome, so its lollipop position disagrees with its true
-  # position in the candidate/OLS tables (e.g. chi1 at chr1 300 Mb pulled onto a 86 Mb QTL).
+  # (nearest QTL within label_dist bp = the same +/-500 kb window the candidate/OLS tables
+  # use). Without this, a distant gene is snapped onto an unrelated QTL on the same
+  # chromosome, so its lollipop position disagrees with its true position in the tables
+  # (e.g. chi1 at chr1 300 Mb pulled onto an 86 Mb QTL).
   q[, gene := ""]
   for (i in seq_len(nrow(ov))) {
     idx <- which(q$CHR == ov$chr[i])
