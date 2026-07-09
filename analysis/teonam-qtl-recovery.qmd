@@ -417,7 +417,7 @@ the **identical** truth mosaics over the same coverage grid
 `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` (+ the λ = ∞ interpolated-truth baseline) and
 feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs:
 
-- **A — interpolation control** (`nilHMM::call_gl(prior = "hwe")` + per-RIL
+- **A — interpolation control** (`nilHMM::call_gt(prior = "hwe")` + per-RIL
   step-interpolation; `scripts/teonam_control_sweep.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
 - **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,

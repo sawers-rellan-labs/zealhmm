@@ -5,7 +5,7 @@
 # per-site GL call with an HWE posterior (a single ALT read -> HET via 2p(1-p)).
 # TRUTH/GRID/BASELINE are the dense polarized 118K panel (see
 # scripts/teonam_rtiger_sweep_118k.R for the shared design).
-#   caller: call_gl(n_ref, n_alt, prior="hwe", af=<per-marker truth teosinte AF>,
+#   caller: call_gt(n_ref, n_alt, prior="hwe", af=<per-marker truth teosinte AF>,
 #           error=0.01) -> 0/1/2, NA at zero depth. Covered markers vary per RIL,
 #           so interpolation is PER-RIL (no HMM).
 #
@@ -109,7 +109,7 @@ recover_block <- function(fam, li) {
     n_alt <- matrix(as.integer(ac$alt), M, N)
   }
   # GL+HWE call: 0/1/2, NA at zero depth; af recycled column-wise over M x N.
-  calls <- call_gl(n_ref, n_alt, prior = "hwe", af = af, error = ERROR)
+  calls <- call_gt(n_ref, n_alt, prior = "hwe", af = af, error = ERROR)
   covered <- !is.na(calls)
   # per-RIL step-interpolation of the RIL's covered calls onto the union grid.
   block <- matrix(NA_real_, nrow(u), N, dimnames = list(union_markers, keys))

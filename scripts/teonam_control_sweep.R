@@ -13,11 +13,11 @@
 # For each TeoNAM family x coverage lambda:
 #   1. simulate low-coverage reads from the real (truth) 0/1/2 genotypes
 #      [R/simulate.R::.draw_counts(pi_floor=0, k_decay=1, error=0.01)]
-#   2. GL+HWE-call genotypes [nilHMM::call_gl(prior="hwe", af=<per-marker truth
+#   2. GL+HWE-call genotypes [nilHMM::call_gt(prior="hwe", af=<per-marker truth
 #      teosinte AF>, error=0.01)] -> 0/1/2, NA at zero depth (het-excess control)
 #   3. PER-RIL step-interpolate each RIL's called (non-NA) markers onto the union
 #      cM grid [nilHMM::interpolate_genotype(mode="step")]. Unlike RTIGER (which
-#      decodes EVERY marker -> a complete rectangular block), call_gl leaves NA at
+#      decodes EVERY marker -> a complete rectangular block), call_gt leaves NA at
 #      uncovered markers, so covered markers vary per RIL and interpolation is
 #      per-RIL. Cheap: no HMM.
 # Then assemble the union matrix (51,004 markers x 1,237 lines; full GWAS set) at each lambda and
@@ -36,7 +36,7 @@
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (same scheme as the RTIGER
 #    sweep, so both sweeps degrade the identical truth mosaics).
-#  - Zero-depth markers -> NA (call_gl); "covered" = non-NA. No min_reads floor:
+#  - Zero-depth markers -> NA (call_gt); "covered" = non-NA. No min_reads floor:
 #    interpolation fills uncovered union markers from each RIL's flanking calls.
 #
 # Run:  Rscript scripts/teonam_control_sweep.R --generate
@@ -163,7 +163,7 @@ recover_block <- function(fam, li) {
   n_alt <- matrix(as.integer(ac$alt), M, N)
 
   # GL+HWE call: 0/1/2, NA at zero depth. af recycled column-wise over M x N.
-  calls <- call_gl(n_ref, n_alt, prior = "hwe", af = af, error = ERROR) # M x N int, NA=uncovered
+  calls <- call_gt(n_ref, n_alt, prior = "hwe", af = af, error = ERROR) # M x N int, NA=uncovered
 
   covered <- !is.na(calls)
   n_called <- sum(covered)
@@ -205,7 +205,7 @@ cells <- mclapply(seq_len(nrow(grid)), function(i) {
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) {
   stop(
-    "call_gl cell(s) failed: ",
+    "call_gt cell(s) failed: ",
     paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]]
   )
 }
