@@ -1,0 +1,35 @@
+#!/bin/bash
+#BSUB -J md_summaries
+#BSUB -q sara
+#BSUB -o md_summaries.%J.out
+#BSUB -e md_summaries.%J.err
+#BSUB -W 2:00
+#BSUB -n 1
+#BSUB -R "rusage[mem=32GB]"
+#
+# Submit the per-sample missing-data summarization on Hazel (LSF).
+#   bsub < scripts/make_missing_data_summaries.lsf
+# stdout/stderr land in md_summaries.<jobid>.{out,err} in the submit dir.
+#
+# Reads native /rsstu paths (no mount); writes summaries next to this job under
+# $OUT_DIR, which the caller then copies back into the repo's data/missing_data/.
+
+set -euo pipefail
+echo "host: $(hostname)   start: $(date)"
+
+# --- activate the minimal R + data.table env (built in /share scratch) -------
+# `module` is not available in LSF batch shells; source the conda hook directly.
+source /usr/local/apps/conda/miniconda3/26.3.2/etc/profile.d/conda.sh
+conda activate /share/maize/frodrig4/conda/env/rdt
+command -v Rscript >/dev/null || { echo "ERROR: Rscript not on PATH after env load"; exit 1; }
+echo "Rscript: $(command -v Rscript)"
+
+export BZEASEQ_DIR="${BZEASEQ_DIR:-/rsstu/users/r/rrellan/BZea/bzeaseq}"
+export OUT_DIR="${OUT_DIR:-$PWD/out}"
+
+# LSF runs the job in the submit directory; the R script is copied there too.
+Rscript make_missing_data_summaries.R
+
+echo "done: $(date)"
+echo "outputs:"
+ls -l "$OUT_DIR"

@@ -283,6 +283,51 @@ now removed) was realized instead by the stem-pigment GWAS
 `analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd` — no dedicated B1 phenotype
 table / NIL panel is required.
 
+## §1 missing-data summaries (`data/missing_data/`, gitignored)
+
+Inputs for the §1 foundations notebooks `analysis/missing-data-floor-model.qmd`
+(part 2) and `analysis/missing-data-model-comparison.qmd` (part 3). Each is a tiny
+per-sample table of coverage (`lambda`) and observed missingness (`missing_obs`):
+
+- `wgs_per_sample.tsv`      (1437 samples) — from `picard CollectWgsMetrics`
+- `wideseq_per_sample.tsv`  (1434 samples) — 27 M teosinte-variant binned counts
+- `snp50k_per_sample.tsv`   (1439 samples) — 50 K panel per-site allelic counts
+
+**Source tables (native HPC paths, `/rsstu` — the mount `/Volumes/rsstu/...` is the
+same data but unstable):**
+
+- `/rsstu/users/r/rrellan/BZea/bzeaseq/WGSmetrics_summary.tsv` (296 KB)
+- `/rsstu/users/r/rrellan/BZea/bzeaseq/ancestry/all_samples_bin_genotypes.tsv` (309 MB)
+- `/rsstu/users/r/rrellan/BZea/bzeaseq/50K/allelic_counts50K.tsv` (2.4 GB)
+
+**How they were built (NCSU Hazel, LSF).** The heavy reduction (esp. the 2.4 GB 50K
+read) runs on a compute node; only tiny summaries are pulled back. Scheduler is LSF.
+
+1. Code (tracked): `scripts/make_missing_data_summaries.R` (reduces each source to a
+   per-sample summary with `data.table::fread`, reading only the needed columns) and
+   its submit wrapper `scripts/make_missing_data_summaries.lsf`.
+2. R environment: the full `bzeaseq.yml` conda spec is no longer dependency-solvable,
+   so a **minimal** env was built on the **login node** (compute nodes have no
+   internet) in fast scratch (ephemeral, ~1 month):
+   ```
+   source /usr/local/apps/conda/miniconda3/26.3.2/etc/profile.d/conda.sh
+   conda create -y -p /share/maize/frodrig4/conda/env/rdt -c conda-forge r-base r-data.table
+   ```
+3. Submit the reduction (native `/rsstu` reads, priority queue `sara`):
+   ```
+   cd /share/maize/frodrig4/zealhmm_jobs/missing_data
+   # (make_missing_data_summaries.{R,lsf} staged here)
+   bsub < make_missing_data_summaries.lsf     # -> out/{wgs,wideseq,snp50k}_per_sample.tsv
+   ```
+   The `.lsf` activates the `rdt` env, sets `BZEASEQ_DIR=/rsstu/users/r/rrellan/BZea/bzeaseq`
+   and `OUT_DIR=$PWD/out`, and runs the R script (~20 s wall, incl. the 2.4 GB read).
+4. Copy the three summaries back into `data/missing_data/` here. They are gitignored
+   (local only); the notebooks read them and the executed render is shipped via the
+   committed `docs/` HTML (Pages does not re-execute).
+
+To reproduce anywhere with the mount instead of the HPC, run the same R script with
+`BZEASEQ_DIR=/Volumes/rsstu/users/r/rrellan/BZea/bzeaseq`.
+
 ## ZEAL Inv4m tagging-SNP genotype comparison (`data/zeal/`, gitignored)
 
 Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223, chr4:181,637,780):

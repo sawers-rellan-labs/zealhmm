@@ -1,0 +1,189 @@
+---
+title: "Genome coverage theory: the Poisson model of missing data"
+subtitle: "Missing-data modelling in BZea, part 1 of 3 — the coverage baseline"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**Purpose.** Establish the theoretical baseline for reasoning about missing
+genotype data in a low-coverage sequencing population. Before we fit any model
+to the BZea data (`missing-data-floor-model.qmd`) or compare fits across
+datasets (`missing-data-model-comparison.qmd`), we need the expectation that a
+purely random, Poisson sampling of reads would produce. Everything downstream is
+measured as a *departure* from this baseline.
+
+::: {.callout-note title="Where this sits in the series"}
+1. **This note** — Poisson coverage theory and the missing-data expectation it implies.
+2. `missing-data-floor-model.qmd` — the exponential-with-floor model, fit to BZea BAM alignments.
+3. `missing-data-model-comparison.qmd` — the floor model applied to three BZea datasets.
+:::
+
+# Coverage calculation
+
+## Theory
+
+Ewens & Grant (2005) describe the coverage of a genome as a Poisson process. The
+probability of observing $x$ reads at a given site is
+
+$$P(x) = \frac{\lambda^x e^{-\lambda}}{x!}$$
+
+where:
+
+- $x$ is the number of short reads covering a given site on the genome,
+- $\lambda = \dfrac{LN}{G}$ is the sequencing redundancy (mean coverage),
+
+and:
+
+- $G$ is the genome length (in bp),
+- $L$ is the short-read average length,
+- $N$ is the number of short reads sequenced.
+
+## For the BZea population
+
+The NAM v5 B73 genome is about 2.2 Gb:
+
+```{r genome-size}
+G <- 2.2e9
+```
+
+The mean read length is 150 bp:
+
+```{r read-length}
+L <- 150
+```
+
+The nominal coverage for BZea is 0.8:
+
+```{r lambda}
+lambda <- 0.8
+```
+
+Then the implied number of sequenced reads per sample is:
+
+```{r n-reads}
+N <- G * lambda / L
+N / 1e6
+```
+
+i.e. each sample has ~12 million reads. Checking the other direction:
+
+```{r coverage-check}
+12e6 * 150 / 2.2e9
+```
+
+If 1400 samples were sequenced:
+
+```{r total-reads}
+n <- 1400
+total_reads <- n * 12e6
+```
+
+and a lane yields ~4e9 reads:
+
+```{r lanes}
+total_reads / 4e9
+```
+
+so roughly 4 lanes were sequenced.
+
+**Fraction of the genome covered** (at least one read at a site) under the
+Poisson model:
+
+```{r frac-covered}
+p <- 1 - exp(-lambda)
+p
+```
+
+**Expected number of samples with at least one read** at each position:
+
+```{r expected-covered-samples}
+round(n * p, 0)
+```
+
+with standard deviation:
+
+```{r sd-covered}
+sqrt(n * p * (1 - p))
+```
+
+**Expected number of missing genotypes per position** (median):
+
+```{r expected-missing}
+n - qbinom(0.50, n, p)
+```
+
+# Missing data
+
+Expected fraction of missing data per position:
+
+```{r frac-missing}
+1 - qbinom(0.50, n, p) / n
+```
+
+# Probability of extreme missingness at a site
+
+Now consider a specific question that matters for filtering: **what is the
+probability that a site has at least 98% missing data?**
+
+We assume a cohort of **1400** individuals.
+
+```{r params}
+n <- 1400 # number of individuals
+p_missing <- 0.98 # missing-data proportion threshold
+k_missing <- ceiling(n * p_missing) # number of missing genotypes at threshold
+
+n
+p_missing
+k_missing
+```
+
+We model the number of missing genotypes at a site as a
+$\text{Binomial}(n, p_0)$, where $p_0$ is the (unknown) true per-genotype
+missingness rate. For illustration, assume **random missingness** with
+$p_0 = 0.5$:
+
+```{r prob-high-missing}
+p0 <- 0.5
+
+# Probability of having >= k_missing missing genotypes at a site
+prob_high_missing <- pbinom(k_missing - 1,
+  size = n, prob = p0,
+  lower.tail = FALSE
+)
+prob_high_missing
+```
+
+# Dispersion
+
+For the Binomial, the dispersion (variance-to-mean ratio) is
+
+$$\frac{\text{Variance}}{\text{Mean}} = \frac{n p (1-p)}{n p} = 1 - p$$
+
+```{r dispersion}
+dispersion <- (n * p0 * (1 - p0)) / (n * p0)
+dispersion
+```
+
+# Notes
+
+- If $p_0$ is estimated from the real data (mean missingness rate across sites),
+  this probability will be more realistic than the illustrative $p_0 = 0.5$.
+- For **overdispersed** data (extra variability beyond the Binomial), a
+  Beta-Binomial model may be more appropriate.
+- Critically, real sequencing data has an *irreducible* missingness floor that
+  the pure Poisson model cannot capture — that is the motivation for the
+  exponential-with-floor model developed in `missing-data-floor-model.qmd`.
+
+# References
+
+Ewens, W. J., & Grant, G. (2005). *Statistical methods in bioinformatics: An
+introduction* (2nd ed.). Springer. <https://doi.org/10.1007/b137845>
