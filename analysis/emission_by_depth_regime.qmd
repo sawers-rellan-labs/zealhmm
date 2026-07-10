@@ -1,0 +1,155 @@
+---
+title: "Emission by depth regime: when read counts matter, and when a hard genotype is enough"
+subtitle: "The HMM emission is a depth-driven choice — BetaBinomial counts earn their keep only in an intermediate band"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**Context.** A unified ancestry-caller engine (RTIGER / nilHMM / Skim-BIN as one
+duration-aware HMM, see `generative_vs_discriminative_callers`) keeps **3 hidden genotype
+states** (REF / HET / ALT) and a shared **duration/rigidity** layer, and treats the
+**emission as a swappable module**. This note pins down *which* emission to use *when*: the
+choice is driven almost entirely by **read depth**, with the BetaBinomial count model earning
+its keep only in an intermediate band. Below it the data is degenerate; above it the count
+model saturates into a hard genotype. Memory: `rtiger-betabinomial-cost`, `nilhmm-counts-path`,
+`bzea-skim-bulked-bc2s2`, `molbreeding-45k-source5`.
+
+---
+
+# 1. The emission is the swappable axis
+
+The three callers differ mainly in their emission; the 3 states and the duration layer are
+shared. The candidate emissions:
+
+| Observation | Emission family | Carries depth-confidence? |
+|---|---|---|
+| read counts $(n_\text{ref}, n_\text{alt})$ | **BetaBinomial** (state means $\theta=\{\text{err},\,0.5,\,1-\text{err}\}$) | **yes** — sharpens with $n$ |
+| hard genotype $\in\{0,1,2\}$ | **categorical** + genotype-error matrix | no (a call is a call) |
+| imputed dosage $\in[0,2]$ | Gaussian/Beta centred at $0/1/2$ | yes, *if* it carries imputation uncertainty |
+
+The claim of this note: **counts vs. hard-GT is not a modelling preference — it is dictated by
+depth.**
+
+# 2. The depth axis
+
+| Depth | What is true | Right emission |
+|---|---|---|
+| $\ll 1\times$ (skim, ~0.4×) | counts needed, but **HET is invisible** — a single alt read can't distinguish HET from donor-hom (data-limited, *not* emission-limited) | BetaBinomial counts (best available; still degenerate) |
+| $\sim 1\text{–}20\times$ (BRB-seq, ~2.8×) | depth-weighting is genuinely informative; HET/HOM resolvable | **BetaBinomial counts** |
+| $\gtrsim 20\times$ (target sequencing / MolBreeding) | **saturated** — the count likelihood collapses to a near-delta = a hard call | **categorical hard GT** (equivalent *and* cheaper) |
+
+The BetaBinomial matters **only in the middle band.** The two boundaries are the interesting
+part.
+
+## 2.1 Upper boundary — why ≥20× saturates to a hard call
+
+The BetaBinomial emission cost scales with the **number of distinct $(n, k)$ count pairs,
+which scales with coverage** — so RTIGER and the optimized nilHMM **cap depth at ~20–30×**
+(`rtiger-betabinomial-cost`). That cap is statistically free for exactly the reason it makes
+hard GT viable: **at $\geq 20\times$ the emission is so peaked that the genotype is already
+certain.** The likelihood over $\{\text{ref},\text{het},\text{alt}\}$ becomes a delta on one
+state → a hard call. So above the cap, **counts and hard GT carry the same information**, and
+hard GT is strictly cheaper (a $3\times3$ error matrix vs. per-pair BetaBinomial). You are not
+*approximating* the count model with a hard genotype — at saturation the count model *is* a
+hard genotype.
+
+## 2.2 Lower boundary — why ≪1× is degenerate (and the emission can't fix it)
+
+At depth ~1, a single observed allele is consistent with **both** HET ($\theta=0.5$) and the
+matching homozygote. A lone alt read is actually *more* likely under donor-hom ($\theta\approx1$)
+than under HET ($0.5$), so HET gets misassigned to hom. This is the **depth-1 HET/HOM
+degeneracy** (`bzea-skim-bulked-bc2s2`, `nilhmm-counts-path`): it is a **data** limit, not an
+emission-model limit — no choice of emission recovers information the reads don't contain.
+
+# 3. The picture: discriminability vs. depth
+
+For a marker whose true genotype is HET ($\theta=0.5$) vs. donor-hom ($\theta\approx1$), the
+probability that the MAP call is **correct**, as a function of depth:
+
+```{r emission-depth, fig.width=8, fig.height=4.5}
+library(ggplot2)
+err <- 0.01
+th <- c(ref = err, het = 0.5, alt = 1 - err) # emission alt-fraction per hidden state
+
+# P(MAP call == truth) for a given true state, as a function of depth n (flat prior)
+p_correct <- function(true_state, n) {
+  ks <- 0:n
+  w <- dbinom(ks, n, th[[true_state]]) # distribution of observed alt count
+  L <- sapply(th, function(p) dbinom(ks, n, p)) # (n+1) x 3 likelihoods
+  call <- colnames(L)[max.col(L, ties.method = "first")]
+  sum(w[call == true_state])
+}
+ns <- 1:40
+df <- rbind(
+  data.frame(depth = ns, p = vapply(ns, function(n) p_correct("het", n), 0), state = "true HET (θ=0.5)"),
+  data.frame(depth = ns, p = vapply(ns, function(n) p_correct("alt", n), 0), state = "true ALT-hom (θ≈1)")
+)
+
+ggplot(df, aes(depth, p, colour = state)) +
+  geom_line(linewidth = 1) +
+  geom_vline(xintercept = 20, linetype = "dashed", colour = "grey40") +
+  annotate("text", x = 20.6, y = 0.45, label = "~20× cap = saturation", hjust = 0, size = 3) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(
+    x = "read depth n at the marker", y = "P(MAP genotype call correct)", colour = NULL,
+    title = "The emission choice is a depth axis",
+    subtitle = "HET needs depth to separate from hom (depth-1 degeneracy: P≈0); both saturate by ~20×"
+  ) +
+  theme_bw() +
+  theme(legend.position = "top")
+```
+
+Read it: **donor-hom is callable even at depth 1** (≈0.99); **HET is essentially uncallable at
+depth 1** (P≈0 — the degeneracy) and only becomes reliable past several ×, with **both
+saturated by ~20×**. The middle of that curve is the only place the BetaBinomial's
+depth-weighting does work a hard call couldn't.
+
+# 4. Mapping to our three platforms
+
+| Source | Depth | Regime | Emission |
+|---|---|---|---|
+| **Skim** (SNP50K) | ~0.4× | degenerate (HET invisible) | BetaBinomial counts — best available, still degenerate |
+| **BRB-seq** | ~2.8× | intermediate | **BetaBinomial counts** — the band where they pay off |
+| **MolBreeding** (target sequencing, 45K) | genotyping assay, high | **saturated** | **categorical hard GT** — equivalent + cheaper |
+
+MolBreeding is the **saturated** regime: the BetaBinomial degenerates to a hard call by
+construction, so the categorical-GT emission (Holland's original nilHMM GT path — the one we
+abandoned *only* because skim GT is 73% missing) is the correct, native, efficient choice
+there.
+
+# 5. Implications
+
+- **The emission selector is a depth rule**, not a taste:
+  `depth-saturated (≥~20×) → categorical hard GT; intermediate (~1–20×) → BetaBinomial counts;
+  (imputed → Gaussian dosage)`.
+- **MolBreeding → hard GT.** The GATK count-table built for it (`molbreeding-45k-source5`) was
+  needed for the uniform schema/liftover, but the *caller* can run straight off the genotypes;
+  same answer, less machinery. Running it through *both* emissions is a built-in consistency
+  check on the GT path (which skim could never exercise).
+- **Skim's problem is not the emission.** No emission recovers the HET/HOM split at depth 1; the
+  honest move is the binary teosinte/B73 collapse (`elai_admixture_mapping_plan`), or higher
+  depth (BRB).
+- **Imputed dosage is a separate axis.** LD-aware imputation can lift a low-depth source toward
+  the saturated regime *without* more reads (it borrows information across markers/individuals),
+  feeding a Gaussian-dosage emission — the one way to escape the lower-boundary degeneracy short
+  of sequencing deeper.
+
+# 6. Caveats
+
+- **Heterogeneous depth.** "≥20× → hard GT" assumes roughly uniform high depth. If a source has a
+  low-depth tail, those markers still want counts; a categorical emission **with an error matrix**
+  recovers most of it, and you can keep counts for the low tail if it matters.
+- **Decision boundaries.** Even at high depth, a marker with $k/n$ near a state boundary
+  (paralogs, contamination) is genuinely ambiguous; the error matrix in the categorical emission
+  models the miscall rate, so little is lost.
+- **The states and duration layer are unchanged** across all of this — only $p(\text{obs}\mid
+  \text{state})$ swaps. That is the whole point of factoring the engine this way.

@@ -4,6 +4,21 @@ subtitle: "Teosinte-introgression QTL recovery under low-coverage genotyping"
 page-layout: full
 toc: false
 listing:
+  - id: foundations-calling
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
+      - title: "Genotype likelihoods"
+        path: analysis/genotype_likelihoods_and_hmm.qmd
+        description: "GL → posterior → call; where the prior lives; what accumulation can and cannot do"
+      - title: "Zygosity identifiability"
+        path: analysis/snp50k_genotype_identifiability.qmd
+        description: "Why SNP50K skim can't resolve het/hom — rare-allele prior + outbred-donor dilution"
+      - title: "Emission by depth"
+        path: analysis/emission_by_depth_regime.qmd
+        description: "When read counts earn their keep vs a hard genotype"
   - id: foundations
     type: table
     fields: [title, description]
@@ -19,6 +34,9 @@ listing:
       - title: "Model comparison"
         path: analysis/missing-data-model-comparison.qmd
         description: "Floor model across WGS, Wideseq, and SNP50K datasets"
+      - title: "Ergodicity assumption"
+        path: analysis/wideseq-coverage-ergodicity.qmd
+        description: "Scale-invariance of missing(λ) — the per-sample coverage model transfers to the per-bin scale"
   - id: methods
     type: table
     fields: [title, description]
@@ -121,12 +139,20 @@ written, in review), which this repo supplies updated genotypes to.
 
 ## nilHMM methods
 
-### §1 Foundations — low coverage & the missing-data model
+### §1 Foundations — missing data
 
-Why low-coverage genotype calling is hard: single-read calling and the Poisson +
-exponential-with-floor model of missing data, fit to the BZea population.
+The Poisson and exponential-with-floor model of missing data, fit to the BZea
+population.
 
 ::: {#foundations}
+:::
+
+### §1 Foundations — genotype calling
+
+Single-read genotype likelihoods and the prior's role in low-coverage calling, the
+depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.
+
+::: {#foundations-calling}
 :::
 
 ### Engine & calibration

@@ -2,9 +2,13 @@
   {
     "listing": "/index.html",
     "items": [
+      "/analysis/genotype_likelihoods_and_hmm.html",
+      "/analysis/snp50k_genotype_identifiability.html",
+      "/analysis/emission_by_depth_regime.html",
       "/analysis/missing-data-coverage-theory.html",
       "/analysis/missing-data-floor-model.html",
       "/analysis/missing-data-model-comparison.html",
+      "/analysis/wideseq-coverage-ergodicity.html",
       "/analysis/callers-and-methods.html",
       "/analysis/simulation-calibration.html",
       "/analysis/teonam-qtl-recovery.html",
