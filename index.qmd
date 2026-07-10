@@ -34,6 +34,9 @@ listing:
       - title: "Model comparison"
         path: analysis/missing-data-model-comparison.qmd
         description: "Floor model across WGS, Wideseq, and SNP50K datasets"
+      - title: "Ergodicity assumption"
+        path: analysis/wideseq-coverage-ergodicity.qmd
+        description: "Scale-invariance of missing(λ) — the per-sample coverage model transfers to the per-bin scale"
   - id: methods
     type: table
     fields: [title, description]
