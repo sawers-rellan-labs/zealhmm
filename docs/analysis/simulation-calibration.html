@@ -4908,7 +4908,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>(~0.43× / ~72% missing). Truth = the donor mosaic. The simulated genome</span>
 <span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>composition should match the single-locus (Mendelian) expectation:</span>
 <span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a><span class="in">```{r truth, eval=have}</span></span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a><span class="in">```{r truth, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
 <span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
 <span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(<span class="st">&quot;REF&quot;</span>, <span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>, <span class="st">&quot;donor dosage&quot;</span>),</span>
 <span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">simulated =</span> <span class="fu">round</span>(par[<span class="fu">c</span>(<span class="st">&quot;REF_truth&quot;</span>, <span class="st">&quot;HET_truth&quot;</span>, <span class="st">&quot;ALT_truth&quot;</span>, <span class="st">&quot;dosage_truth&quot;</span>)], <span class="dv">4</span>),</span>
@@ -4922,7 +4922,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>**golden-ratio refine** (points) homes in; the dashed line is the refined</span>
 <span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>parameter carried to the benchmark.</span>
 <span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-fig, eval=have, fig.width=9, fig.height=4}</span></span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-fig, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=9, fig.height=4}</span></span>
 <span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>calib_panel <span class="ot">&lt;-</span> <span class="cf">function</span>(sweep, refine, star, xlab, xtrans) {</span>
 <span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(sweep, <span class="fu">aes</span>(value)) <span class="sc">+</span></span>
 <span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> donor_frag_dice, <span class="at">colour =</span> <span class="st">&quot;donor-fragment Dice&quot;</span>)) <span class="sc">+</span></span>
@@ -4949,7 +4949,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-tables, eval=have}</span></span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-tables, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
 <span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="co"># The log-sweep curves (Dice peaks then over-fragments as FDR/breakpoints climb).</span></span>
 <span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a>show <span class="ot">&lt;-</span> <span class="cf">function</span>(s, pcol) {</span>
 <span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a>  s[, .(</span>
@@ -4968,7 +4968,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a>Each caller run at its refined optimum on a held-out set, scored vs truth:</span>
 <span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{r benchmark, eval=have}</span></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{r benchmark, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
 <span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a>bench[]</span>
 <span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a></span>
@@ -4977,7 +4977,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a>Donor-block size distributions vs the BC2S2 truth (the calibrated callers should</span>
 <span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a>track the truth&#39;s fragment sizes; KS in the benchmark table).</span>
 <span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fragsize, eval=have, fig.width=7, fig.height=4}</span></span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fragsize, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=7, fig.height=4}</span></span>
 <span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(frag, <span class="fu">aes</span>(mb, <span class="at">colour =</span> src)) <span class="sc">+</span></span>
 <span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_ecdf</span>() <span class="sc">+</span></span>
 <span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
@@ -4986,7 +4986,7 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5. Genotype-frequency vs the one-locus expectation (supplementary)</span></span>
 <span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a><span class="in">```{r genofreq, eval=have, fig.width=7, fig.height=4}</span></span>
+<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a><span class="in">```{r genofreq, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=7, fig.height=4}</span></span>
 <span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(geno[, .(src, HET, ALT)], <span class="at">id.vars =</span> <span class="st">&quot;src&quot;</span>), <span class="fu">aes</span>(src, value)) <span class="sc">+</span></span>
 <span id="cb17-150"><a href="#cb17-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_violin</span>(<span class="at">scale =</span> <span class="st">&quot;width&quot;</span>) <span class="sc">+</span></span>
 <span id="cb17-151"><a href="#cb17-151" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="sc">+</span></span>
