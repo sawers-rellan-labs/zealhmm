@@ -13,9 +13,9 @@ listing:
       - title: "Genotype likelihoods"
         path: analysis/genotype_likelihoods_and_hmm.qmd
         description: "GL → posterior → call; where the prior lives; what accumulation can and cannot do"
-      - title: "Zygosity identifiability"
+      - title: "Resolving dosage"
         path: analysis/snp50k_genotype_identifiability.qmd
-        description: "Why SNP50K skim can't resolve het/hom — rare-allele prior + outbred-donor dilution"
+        description: "Why SNP50K skim can't resolve het/hom dosage — rare-allele prior + outbred-donor dilution"
       - title: "Emission by depth"
         path: analysis/emission_by_depth_regime.qmd
         description: "When read counts earn their keep vs a hard genotype"
@@ -49,45 +49,63 @@ listing:
       - title: "Simulation calibration"
         path: analysis/simulation-calibration.qmd
         description: "Per-coverage caller calibration on simulated truth"
-  - id: teonam
+  - id: teonam-recovery
     type: table
     fields: [title, description]
     field-display-names: {title: "Notebook", description: "Description"}
     sort: false
     contents:
-      - title: "QTL recovery"
+      - title: "STAM · GWAS + coverage sweep (native)"
         path: analysis/teonam-qtl-recovery.qmd
-        description: "Core QTL-recovery reproduction"
-      - title: "QTL recovery · 118K OLS"
+        description: "STAM Manhattan (Chen Fig 4C) on real genotypes + coverage sweep, native map"
+      - title: "STAM · GWAS + coverage sweep (118K)"
         path: analysis/teonam-qtl-recovery-118k.qmd
-        description: "118K OLS GWAS + JLM + coverage sweep"
-      - title: "QTL recovery · 118K MLM"
+        description: "Same, on the authentic 118,838-SNP Chen 2019 panel"
+      - title: "STAM · MLM five-caller sweep (118K)"
         path: analysis/teonam-qtl-recovery-mlm-118k.qmd
-        description: "118K MLM (Family + K), STAM"
-      - title: "DTA · 118K MLM"
+        description: "STAM MLM (Family + K), five-caller coverage-degradation sweep"
+      - title: "DTA · MLM five-caller sweep (118K)"
         path: analysis/teonam-qtl-recovery-dta-mlm-118k.qmd
-        description: "DTA MLM composite + five-caller sweep + noisiness"
+        description: "DTA MLM (Family + K) sweep + noisiness — robustness on a 2nd trait"
+  - id: teonam-fig4c
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
+      - title: "STAM · MLM (Q + K), 118K"
+        path: analysis/teonam-stam-mlm-gwas-118k.qmd
+        description: "Chen's exact Fig-4C model (5 PCs + Centered-IBS K, P3D) on the authentic 118K + QQ/λ"
+      - title: "STAM · MLM (Q + K), interpolated"
+        path: analysis/teonam-stam-mlm-gwas-interpolated.qmd
+        description: "Same model on the interpolated map panel; OLS → MLM inflation comparison"
+  - id: teonam-calmap
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
       - title: "Caller calibration"
         path: analysis/teonam-caller-calibration.qmd
         description: "Per-coverage caller parameters (rigidity/rrate/recombdist) by min-FDR on simulated truth"
-      - title: "STAM · MLM (Q + K, Fig 4C)"
-        path: analysis/teonam-stam-mlm-gwas-118k.qmd
-        description: "TASSEL 5-PC + Centered-IBS K, exact Fig-4C model + QQ/λ"
-      - title: "STAM · OLS 118K"
-        path: analysis/teonam-stam-ols-gwas-118k.qmd
-        description: "OLS (Family + marker), 118K panel"
-      - title: "STAM · MLM interpolated"
-        path: analysis/teonam-stam-mlm-gwas-interpolated.qmd
-        description: "MLM on the interpolated 51K map panel"
-      - title: "STAM · OLS family-imputed"
-        path: analysis/teonam-stam-ols-gwas-family-imputed.qmd
-        description: "OLS on the family-imputed panel"
       - title: "Genetic map"
         path: analysis/teonam-genetic-map.qmd
         description: "Native v5 R/qtl composite genetic map"
       - title: "Marker thinning"
         path: analysis/marker-thinning.qmd
         description: "cM thinning as a Max Distance-d Independent Set"
+  - id: teonam-supp
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
+      - title: "STAM · OLS computation (118K)"
+        path: analysis/teonam-stam-ols-gwas-118k.qmd
+        description: "Per-marker across-family OLS on the 118K panel — computation, model & QC"
+      - title: "STAM · OLS computation (family-imputed)"
+        path: analysis/teonam-stam-ols-gwas-family-imputed.qmd
+        description: "Per-marker OLS on the FSFHap family-imputed panel — computation & QC"
   - id: zeal-methods
     type: table
     fields: [title, description]
@@ -171,10 +189,31 @@ W22 × 5 teosinte inbreds; 1,257 BC1S4 RILs (Chen 2019).
 
 ### nilHMM R package paper
 
-Empirical-truth reproduction and the coverage-degradation QTL-recovery sweeps — the
-results core of the methods paper.
+#### Coverage-degradation reproduction — the results core
 
-::: {#teonam}
+Reproduce Chen 2019 on real genotypes, then degrade coverage and re-call ancestry
+with each caller: the GWAS-profile-under-simulated-coverage comparison.
+
+::: {#teonam-recovery}
+:::
+
+#### Fig-4C model reproduction
+
+Chen's actual Fig-4C mixed model (Q = 5 PCs + K = Centered-IBS, P3D).
+
+::: {#teonam-fig4c}
+:::
+
+#### Calibration, map & marker framework
+
+::: {#teonam-calmap}
+:::
+
+#### Supplementary — OLS computation & QC
+
+The per-marker OLS computation behind the scans, reproducible from primary data.
+
+::: {#teonam-supp}
 :::
 
 ## ZEAL / BZea
