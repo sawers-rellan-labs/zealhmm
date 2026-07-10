@@ -2,6 +2,9 @@
   {
     "listing": "/index.html",
     "items": [
+      "/analysis/missing-data-coverage-theory.html",
+      "/analysis/missing-data-floor-model.html",
+      "/analysis/missing-data-model-comparison.html",
       "/analysis/callers-and-methods.html",
       "/analysis/simulation-calibration.html",
       "/analysis/teonam-qtl-recovery.html",

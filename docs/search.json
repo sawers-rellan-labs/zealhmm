@@ -1194,6 +1194,111 @@
     "href": "index.html#nilhmm-methods",
     "title": "zealhmm",
     "section": "nilHMM methods",
-    "text": "nilHMM methods\nThe shared HMM engine and its simcross calibration — common to every dataset below.\n\n\n   \n    \n    \n      Order By\n      Default\n      \n        Notebook\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nNotebook\n\n\n\nDescription\n\n\n\n\n\n\n\n\nAncestry callers\n\n\nnNIL, RTIGER, LB-Impute, binhmm, control\n\n\n\n\n\n\nSimulation calibration\n\n\nPer-coverage caller calibration on simulated truth\n\n\n\n\n\n\nNo matching items"
+    "text": "nilHMM methods\n\n§1 Foundations — low coverage & the missing-data model\nWhy low-coverage genotype calling is hard: single-read calling and the Poisson + exponential-with-floor model of missing data, fit to the BZea population.\n\n\n   \n    \n    \n      Order By\n      Default\n      \n        Notebook\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nNotebook\n\n\n\nDescription\n\n\n\n\n\n\n\n\nCoverage theory\n\n\nPoisson coverage model — the missing-data baseline\n\n\n\n\n\n\nFloor model\n\n\nExponential-with-floor missingness, fit to BZea BAM alignments\n\n\n\n\n\n\nModel comparison\n\n\nFloor model across WGS, Wideseq, and SNP50K datasets\n\n\n\n\n\n\nNo matching items\n\n\n\nEngine & calibration\nThe shared HMM engine and its simcross calibration — common to every dataset below.\n\n\n   \n    \n    \n      Order By\n      Default\n      \n        Notebook\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nNotebook\n\n\n\nDescription\n\n\n\n\n\n\n\n\nAncestry callers\n\n\nnNIL, RTIGER, LB-Impute, binhmm, control\n\n\n\n\n\n\nSimulation calibration\n\n\nPer-coverage caller calibration on simulated truth\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "analysis/missing-data-coverage-theory.html",
+    "href": "analysis/missing-data-coverage-theory.html",
+    "title": "Genome coverage theory: the Poisson model of missing data",
+    "section": "",
+    "text": "Purpose. Establish the theoretical baseline for reasoning about missing genotype data in a low-coverage sequencing population. Before we fit any model to the BZea data (missing-data-floor-model.qmd) or compare fits across datasets (missing-data-model-comparison.qmd), we need the expectation that a purely random, Poisson sampling of reads would produce. Everything downstream is measured as a departure from this baseline."
+  },
+  {
+    "objectID": "analysis/missing-data-coverage-theory.html#theory",
+    "href": "analysis/missing-data-coverage-theory.html#theory",
+    "title": "Genome coverage theory: the Poisson model of missing data",
+    "section": "Theory",
+    "text": "Theory\nEwens & Grant (2005) describe the coverage of a genome as a Poisson process. The probability of observing \\(x\\) reads at a given site is\n\\[P(x) = \\frac{\\lambda^x e^{-\\lambda}}{x!}\\]\nwhere:\n\n\\(x\\) is the number of short reads covering a given site on the genome,\n\\(\\lambda = \\dfrac{LN}{G}\\) is the sequencing redundancy (mean coverage),\n\nand:\n\n\\(G\\) is the genome length (in bp),\n\\(L\\) is the short-read average length,\n\\(N\\) is the number of short reads sequenced."
+  },
+  {
+    "objectID": "analysis/missing-data-coverage-theory.html#for-the-bzea-population",
+    "href": "analysis/missing-data-coverage-theory.html#for-the-bzea-population",
+    "title": "Genome coverage theory: the Poisson model of missing data",
+    "section": "For the BZea population",
+    "text": "For the BZea population\nThe NAM v5 B73 genome is about 2.2 Gb:\n\n\nShow code\nG &lt;- 2.2e9\n\n\nThe mean read length is 150 bp:\n\n\nShow code\nL &lt;- 150\n\n\nThe nominal coverage for BZea is 0.8:\n\n\nShow code\nlambda &lt;- 0.8\n\n\nThen the implied number of sequenced reads per sample is:\n\n\nShow code\nN &lt;- G * lambda / L\nN / 1e6\n\n\n[1] 11.73333\n\n\ni.e. each sample has ~12 million reads. Checking the other direction:\n\n\nShow code\n12e6 * 150 / 2.2e9\n\n\n[1] 0.8181818\n\n\nIf 1400 samples were sequenced:\n\n\nShow code\nn &lt;- 1400\ntotal_reads &lt;- n * 12e6\n\n\nand a lane yields ~4e9 reads:\n\n\nShow code\ntotal_reads / 4e9\n\n\n[1] 4.2\n\n\nso roughly 4 lanes were sequenced.\nFraction of the genome covered (at least one read at a site) under the Poisson model:\n\n\nShow code\np &lt;- 1 - exp(-lambda)\np\n\n\n[1] 0.550671\n\n\nExpected number of samples with at least one read at each position:\n\n\nShow code\nround(n * p, 0)\n\n\n[1] 771\n\n\nwith standard deviation:\n\n\nShow code\nsqrt(n * p * (1 - p))\n\n\n[1] 18.61197\n\n\nExpected number of missing genotypes per position (median):\n\n\nShow code\nn - qbinom(0.50, n, p)\n\n\n[1] 629"
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html",
+    "href": "analysis/missing-data-floor-model.html",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "",
+    "text": "Purpose. Extend the Poisson baseline from missing-data-coverage-theory.qmd into a model that actually fits the BZea data. We analyze BAM alignments directly — before any genotype calling or VCF filtering — and show that per-sample missingness follows an exponential-with-floor law rather than the pure Poisson expectation.\nShow code\nsuppressMessages({\n  library(here)\n  library(readr)\n  library(dplyr)\n  library(tidyr)\n  library(ggplot2)\n  library(ggpubr)\n  library(cowplot)\n  library(minpack.lm)   # nlsLM: robust Levenberg-Marquardt nonlinear least squares\n  library(viridis)\n})"
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#theoretical-background",
+    "href": "analysis/missing-data-floor-model.html#theoretical-background",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "1.1 Theoretical background",
+    "text": "1.1 Theoretical background\nModeling missingness in sequencing data involves both stochastic sampling effects and systematic biases. The foundational concept is the Poisson coverage model, where the probability of observing zero reads at a site decreases exponentially with increasing coverage — this reflects the stochastic nature of read sampling.\nAdditionally, certain genomic regions inherently exhibit higher missingness due to low-complexity/repetitive sequences or structural variation. This leads to an irreducible baseline missingness that persists even at high coverage with short reads. These two facts are the basis for the exponential-with-floor model: a parsimonious and mechanistically interpretable summary of missingness across samples."
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#models-of-missingness",
+    "href": "analysis/missing-data-floor-model.html#models-of-missingness",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "1.2 Models of missingness",
+    "text": "1.2 Models of missingness\n\n1.2.1 Poisson model\nIf reads are randomly and independently distributed across the genome, the probability of missing a site is\n\\[P_{\\text{missing}} = e^{-\\lambda}\\]\nwhere \\(\\lambda\\) is the mean coverage (average reads per variant site) and \\(P_{\\text{missing}}\\) is the probability of no reads covering a site. This serves as a baseline to evaluate whether missingness arises purely from random sequencing variation or whether additional biases (e.g. mapping issues) contribute.\n\n\n1.2.2 Exponential-with-floor model\nWe model per-sample missingness as\n\\[P_{\\text{missing}} = \\pi + (1 - \\pi)\\, e^{-k \\lambda}\\]\nwhere:\n\n\\(\\lambda\\) is the mean coverage.\n\\(\\pi\\) (floor parameter) is the fraction of sites that remain uncalled even at high coverage with short reads. This baseline missingness likely corresponds to repetitive DNA, structural variants, or highly polymorphic regions where short reads fail to map or are discarded by mapping filters. For example, picard CollectWgsMetrics reports a PCT_EXC_TOTAL statistic that can be interpreted as a floor parameter — for the alux project, at nominal coverage \\(3.2\\times\\) I obtained a mean \\(\\text{PCT\\_EXC\\_TOTAL} = 0.45 \\sim \\pi\\).\n\\(k\\) (decay rate) is how fast missingness decays with increasing coverage relative to the Poisson model. I interpret the product \\(k\\lambda\\) as an effective coverage (perhaps the coverage of the informative variants)."
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#simple-exponential-model",
+    "href": "analysis/missing-data-floor-model.html#simple-exponential-model",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "4.1 Simple exponential model",
+    "text": "4.1 Simple exponential model\nA first pass: regress log-missingness on coverage to get a rough decay rate.\n\n\nShow code\nfit_linear &lt;- lm(log(missing_obs) ~ lambda, data = per_sample)\nper_sample$missing_exp_k &lt;- exp(predict(fit_linear))\n\nk_est &lt;- -coef(fit_linear)[2]\ncat(\"Estimated k:\", round(k_est, 3), \"\\n\")\n\n\nEstimated k: 0.581 \n\n\nShow code\ncat(\"Effective coverage (k*lambda) range:\",\n    paste0(round(k_est * range(per_sample$lambda), 3), collapse = \" - \"), \"\\n\")\n\n\nEffective coverage (k*lambda) range: 0 - 0.846"
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#exponential-with-floor-model-1",
+    "href": "analysis/missing-data-floor-model.html#exponential-with-floor-model-1",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "4.2 Exponential-with-floor model",
+    "text": "4.2 Exponential-with-floor model\nNow the full model, fit by robust nonlinear least squares (nlsLM), using the linear-model estimates as starting values.\n\n\nShow code\n# Restrict to samples with well-defined missingness in (0, 1)\ndat &lt;- per_sample %&gt;%\n  filter(is.finite(lambda), is.finite(missing_obs),\n         missing_obs &gt; 0, missing_obs &lt; 1)\n\n# Initial estimate of the floor from a linear fit of observed vs Poisson\nfit_missing &lt;- lm(missing_obs ~ missing_poisson, data = per_sample)\npi_est &lt;- coef(fit_missing)[1]\n\nfit_exp_floor &lt;- nlsLM(\n  missing_obs ~ pi + (1 - pi) * exp(-k * lambda),\n  data  = dat,\n  start = list(pi = pi_est, k = k_est),\n  lower = c(0, 0),\n  upper = c(1, 10)\n)\n\nmodel_params &lt;- coef(fit_exp_floor)\npi &lt;- model_params[1]\nk  &lt;- model_params[2]\n\ncat(\"Floor parameter (pi):\", round(pi, 3), \"\\n\")\n\n\nFloor parameter (pi): 0.346 \n\n\nShow code\ncat(\"Decay rate (k):\", round(k, 3), \"\\n\")\n\n\nDecay rate (k): 1.256 \n\n\nShow code\nper_sample$missing_exp_floor &lt;- predict(fit_exp_floor, newdata = per_sample)\noverall_stats$missing_exp_floor &lt;- predict(\n  fit_exp_floor, newdata = data.frame(lambda = overall_stats$lambda)\n)"
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#poisson-model-assessment",
+    "href": "analysis/missing-data-floor-model.html#poisson-model-assessment",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "6.1 Poisson model assessment",
+    "text": "6.1 Poisson model assessment\n\n\nShow code\np_scatter_poisson &lt;- per_sample %&gt;%\n  ggplot(aes(x = missing_poisson, y = missing_obs, col = lambda)) +\n  geom_point() +\n  geom_abline(slope = 1, intercept = 0, color = \"red\") +\n  scale_color_viridis_c(breaks = legend_breaks, labels = legend_labels,\n                        limits = c(0, 1.5)) +\n  guides(col = guide_colorbar(title = \"Coverage\")) +\n  geom_point(x = overall_stats$missing_poisson, y = overall_stats$missing_obs,\n             color = \"red\") +\n  scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n  scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n  coord_fixed(ratio = 1) +\n  xlab(\"Expected Missing (Poisson)\") +\n  ylab(\"Observed Missing\") +\n  ggpubr::theme_classic2(base_size = 16) +\n  theme(legend.position = \"top\")\n\ninlay_grob &lt;- cowplot::as_grob(p_hist)\n\nfinal_plot_poisson &lt;- cowplot::ggdraw() +\n  cowplot::draw_plot(p_scatter_poisson) +\n  cowplot::draw_plot(inlay_grob, x = 0.55, y = 0.16, width = 0.2, height = 0.25)\n\nprint(final_plot_poisson)\n\n\n\n\n\n\n\n\n\nThe Poisson model systematically underpredicts missingness: observed points sit above the 1:1 line."
+  },
+  {
+    "objectID": "analysis/missing-data-floor-model.html#exponential-with-floor-model-assessment",
+    "href": "analysis/missing-data-floor-model.html#exponential-with-floor-model-assessment",
+    "title": "BAM-alignment genome coverage and missing data in the BZea population",
+    "section": "6.2 Exponential-with-floor model assessment",
+    "text": "6.2 Exponential-with-floor model assessment\n\n\nShow code\np_scatter_floor &lt;- per_sample %&gt;%\n  ggplot(aes(x = missing_exp_floor, y = missing_obs, col = lambda)) +\n  geom_point() +\n  geom_vline(xintercept = pi, linetype = \"dashed\") +\n  geom_abline(slope = 1, intercept = 0, color = \"red\") +\n  scale_color_viridis_c(breaks = legend_breaks, labels = legend_labels,\n                        limits = c(0, 1.5)) +\n  guides(col = guide_colorbar(title = \"Coverage\")) +\n  geom_point(x = overall_stats$missing_exp_floor,\n             y = overall_stats$missing_obs, color = \"red\") +\n  scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n  scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n  coord_fixed(ratio = 1) +\n  xlab(\"Expected Missing (Floor Model)\") +\n  ylab(\"Observed Missing\") +\n  ggpubr::theme_classic2(base_size = 16) +\n  theme(legend.position = \"top\")\n\nfinal_plot_floor &lt;- cowplot::ggdraw() +\n  cowplot::draw_plot(p_scatter_floor) +\n  cowplot::draw_plot(inlay_grob, x = 0.55, y = 0.16, width = 0.2, height = 0.25)\n\nprint(final_plot_floor)\n\n\n\n\n\n\n\n\n\nThe floor model places points on the 1:1 line; the dashed line marks the floor \\(\\pi\\), the minimum missingness attainable no matter how high the coverage."
+  },
+  {
+    "objectID": "analysis/missing-data-model-comparison.html",
+    "href": "analysis/missing-data-model-comparison.html",
+    "title": "Comparing missing-data estimates across three BZea datasets",
+    "section": "",
+    "text": "Purpose. Take the exponential-with-floor model developed in missing-data-floor-model.qmd and evaluate how stable its parameters (\\(\\pi\\), \\(k\\)) are when the same BZea samples are viewed through three different data products: whole-genome picard WGS metrics, the 27 M-SNP Wideseq binned counts, and a filtered 50 K SNP panel.\nShow code\nsuppressMessages({\n  library(here)\n  library(readr)\n  library(dplyr)\n  library(tidyr)\n  library(ggplot2)\n  library(ggpubr)\n  library(cowplot)\n  library(minpack.lm)\n  library(viridis)\n  library(knitr)\n})"
+  },
+  {
+    "objectID": "analysis/missing-data-model-comparison.html#helper-functions",
+    "href": "analysis/missing-data-model-comparison.html#helper-functions",
+    "title": "Comparing missing-data estimates across three BZea datasets",
+    "section": "Helper functions",
+    "text": "Helper functions\nThese wrap the per-dataset workflow from part 2 so the same fit and plots can be applied to every dataset. (In the original notebook they were sourced from a project helper file; they are reproduced here so this note is self-contained.)\n\n\nShow code\n# Fit the exponential-with-floor model to a per-sample data frame that already\n# has columns `lambda` (mean coverage) and `missing_obs` (observed missingness).\n# Returns the fit object, the fitted parameters, and the data with predictions.\nfit_exp_floor_model &lt;- function(per_sample) {\n  per_sample &lt;- per_sample %&gt;%\n    mutate(missing_poisson = exp(-lambda))\n\n  dat &lt;- per_sample %&gt;%\n    filter(is.finite(lambda), is.finite(missing_obs),\n           missing_obs &gt; 0, missing_obs &lt; 1)\n\n  # Starting values: linear fits for the floor intercept and the decay rate\n  pi_est &lt;- coef(lm(missing_obs ~ missing_poisson, data = per_sample))[1]\n  k_est  &lt;- -coef(lm(log(missing_obs) ~ lambda, data = dat))[2]\n\n  fit &lt;- nlsLM(\n    missing_obs ~ pi + (1 - pi) * exp(-k * lambda),\n    data  = dat,\n    start = list(pi = unname(pi_est), k = unname(k_est)),\n    lower = c(0, 0),\n    upper = c(1, 10)\n  )\n\n  params &lt;- as.list(coef(fit))\n  per_sample$missing_exp_floor &lt;- predict(fit, newdata = per_sample)\n\n  list(fit = fit, params = params, data = per_sample)\n}\n\n# Coverage histogram for a per-sample data frame (used as an inlay).\ngenerate_coverage_histogram &lt;- function(per_sample) {\n  per_sample %&gt;%\n    ggplot(aes(x = lambda)) +\n    xlab(\"Coverage\") + ylab(\"Sample Count\") +\n    geom_histogram(aes(fill = after_stat(x))) +\n    geom_vline(xintercept = mean(per_sample$lambda, na.rm = TRUE),\n               color = \"red\") +\n    scale_fill_viridis_c() +\n    ggpubr::theme_classic2(base_size = 8) +\n    theme(legend.position = \"none\")\n}\n\n# Validation plot: observed vs floor-model expected missingness, 1:1 line,\n# floor as a dashed vertical line, with the coverage histogram as an inlay.\ngenerate_floor_model_plot &lt;- function(model_results, coverage_hist_plot,\n                                      plot_title = \"\") {\n  ps &lt;- model_results$data\n  pi &lt;- model_results$params$pi\n  xy_limits &lt;- c(0.2, 1.0)\n\n  scatter &lt;- ps %&gt;%\n    ggplot(aes(x = missing_exp_floor, y = missing_obs, col = lambda)) +\n    geom_point() +\n    geom_vline(xintercept = pi, linetype = \"dashed\") +\n    geom_abline(slope = 1, intercept = 0, color = \"red\") +\n    scale_color_viridis_c(limits = c(0, 1.5)) +\n    guides(col = guide_colorbar(title = \"Coverage\")) +\n    scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n    scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +\n    coord_fixed(ratio = 1) +\n    xlab(\"Expected Missing (Floor Model)\") +\n    ylab(\"Observed Missing\") +\n    ggtitle(plot_title) +\n    ggpubr::theme_classic2(base_size = 12) +\n    theme(legend.position = \"top\")\n\n  cowplot::ggdraw() +\n    cowplot::draw_plot(scatter) +\n    cowplot::draw_plot(cowplot::as_grob(coverage_hist_plot),\n                       x = 0.55, y = 0.16, width = 0.2, height = 0.25)\n}"
+  },
+  {
+    "objectID": "analysis/missing-data-model-comparison.html#dataset-1-wgs-metrics-summary",
+    "href": "analysis/missing-data-model-comparison.html#dataset-1-wgs-metrics-summary",
+    "title": "Comparing missing-data estimates across three BZea datasets",
+    "section": "1.1 Dataset 1: WGS metrics summary",
+    "text": "1.1 Dataset 1: WGS metrics summary\nDerived from WGSmetrics_summary.tsv (picard CollectWgsMetrics output), reduced to a per-sample summary by scripts/make_missing_data_summaries.R: \\(\\lambda = \\texttt{MEAN\\_COVERAGE}\\), \\(\\texttt{missing\\_obs} = 1 - \\texttt{PCT\\_1X}\\).\n\n\nShow code\nper_sample_wgs &lt;- read_tsv(\n  here(\"data/missing_data/wgs_per_sample.tsv\"), show_col_types = FALSE\n) %&gt;%\n  filter(is.finite(lambda) & is.finite(missing_obs))\n\nhead(per_sample_wgs)\n\n\n# A tibble: 6 × 3\n  SAMPLE      lambda missing_obs\n  &lt;chr&gt;        &lt;dbl&gt;       &lt;dbl&gt;\n1 PN10_SID865  0.262       0.806\n2 PN10_SID866  0.907       0.558\n3 PN10_SID867  0.534       0.680\n4 PN10_SID868  0.608       0.651\n5 PN10_SID869  0.545       0.683\n6 PN10_SID870  0.637       0.640"
+  },
+  {
+    "objectID": "analysis/missing-data-model-comparison.html#dataset-2-bzea-wideseq-27-m-binned-genotypes",
+    "href": "analysis/missing-data-model-comparison.html#dataset-2-bzea-wideseq-27-m-binned-genotypes",
+    "title": "Comparing missing-data estimates across three BZea datasets",
+    "section": "1.2 Dataset 2: BZea Wideseq (27 M binned genotypes)",
+    "text": "1.2 Dataset 2: BZea Wideseq (27 M binned genotypes)\nDerived from all_samples_bin_genotypes.tsv — the same source used in part 2, via the shared per-sample summary from scripts/make_missing_data_summaries.R.\n\n\nShow code\nper_sample_bzea &lt;- read_tsv(\n  here(\"data/missing_data/wideseq_per_sample.tsv\"), show_col_types = FALSE\n) %&gt;%\n  select(SAMPLE, lambda, missing_obs) %&gt;%\n  filter(is.finite(lambda) & is.finite(missing_obs))\n\nhead(per_sample_bzea)\n\n\n# A tibble: 6 × 3\n  SAMPLE      lambda missing_obs\n  &lt;chr&gt;        &lt;dbl&gt;       &lt;dbl&gt;\n1 PN10_SID865  0.415       0.739\n2 PN10_SID866  1.40        0.446\n3 PN10_SID867  0.867       0.573\n4 PN10_SID868  0.945       0.550\n5 PN10_SID869  0.888       0.575\n6 PN10_SID870  0.998       0.534"
+  },
+  {
+    "objectID": "analysis/missing-data-model-comparison.html#dataset-3-50-k-filtered-snps",
+    "href": "analysis/missing-data-model-comparison.html#dataset-3-50-k-filtered-snps",
+    "title": "Comparing missing-data estimates across three BZea datasets",
+    "section": "1.3 Dataset 3: 50 K filtered SNPs",
+    "text": "1.3 Dataset 3: 50 K filtered SNPs\nDerived from allelic_counts50K.tsv (per-site REF/ALT read counts), reduced to a per-sample summary by scripts/make_missing_data_summaries.R.\n\n\nShow code\nper_sample_snp50K &lt;- read_tsv(\n  here(\"data/missing_data/snp50k_per_sample.tsv\"), show_col_types = FALSE\n) %&gt;%\n  select(SAMPLE, lambda, missing_obs) %&gt;%\n  filter(is.finite(lambda) & is.finite(missing_obs))\n\nhead(per_sample_snp50K)\n\n\n# A tibble: 6 × 3\n  SAMPLE      lambda missing_obs\n  &lt;chr&gt;        &lt;dbl&gt;       &lt;dbl&gt;\n1 PN10_SID865  0.313       0.769\n2 PN10_SID866  0.961       0.466\n3 PN10_SID867  0.666       0.586\n4 PN10_SID868  0.676       0.579\n5 PN10_SID869  0.697       0.579\n6 PN10_SID870  0.724       0.558"
   }
 ]

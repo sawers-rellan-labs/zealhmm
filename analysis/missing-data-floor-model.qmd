@@ -1,0 +1,359 @@
+---
+title: "BAM-alignment genome coverage and missing data in the BZea population"
+subtitle: "Missing-data modelling in BZea, part 2 of 3 — the exponential-with-floor model"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**Purpose.** Extend the Poisson baseline from `missing-data-coverage-theory.qmd`
+into a model that actually fits the BZea data. We analyze **BAM alignments
+directly** — before any genotype calling or VCF filtering — and show that
+per-sample missingness follows an *exponential-with-floor* law rather than the
+pure Poisson expectation.
+
+::: {.callout-note title="Where this sits in the series"}
+1. `missing-data-coverage-theory.qmd` — Poisson coverage theory (the baseline).
+2. **This note** — the exponential-with-floor model, fit to BZea BAM alignments.
+3. `missing-data-model-comparison.qmd` — the floor model applied to three BZea datasets.
+:::
+
+```{r setup}
+suppressMessages({
+  library(here)
+  library(readr)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(ggpubr)
+  library(cowplot)
+  library(minpack.lm) # nlsLM: robust Levenberg-Marquardt nonlinear least squares
+  library(viridis)
+})
+```
+
+# 1 Introduction
+
+This analysis examines genome coverage and the distribution of missing read data
+in the **BZea** maize–teosinte population without calling genotypes or relying on
+VCF files. Instead, we analyze the **BAM alignments** directly, prior to any
+genotype calling. We used GATK's `CollectAllelicCounts` on the BAM files,
+restricting read counting to sites corresponding to ~27 million known teosinte
+variants (the `wideseq_ref` panel). For each site and sample the tool counted the
+number of reads supporting each allele, and these counts were aggregated into
+1 Mb bins for the initial file in the workflow.
+
+By aggregating the per-bin read counts across the genome, we estimate coverage
+($\lambda$) and compare the **observed fraction of missing genotype calls**
+against the **expected missing fraction** under the Poisson coverage model.
+
+## 1.1 Theoretical background
+
+Modeling missingness in sequencing data involves both stochastic sampling effects
+and systematic biases. The foundational concept is the Poisson coverage model,
+where the probability of observing zero reads at a site decreases exponentially
+with increasing coverage — this reflects the stochastic nature of read sampling.
+
+Additionally, certain genomic regions inherently exhibit higher missingness due
+to low-complexity/repetitive sequences or structural variation. This leads to an
+irreducible baseline missingness that persists even at high coverage with short
+reads. These two facts are the basis for the **exponential-with-floor** model:
+a parsimonious and mechanistically interpretable summary of missingness across
+samples.
+
+## 1.2 Models of missingness
+
+### 1.2.1 Poisson model
+
+If reads are randomly and independently distributed across the genome, the
+probability of missing a site is
+
+$$P_{\text{missing}} = e^{-\lambda}$$
+
+where $\lambda$ is the mean coverage (average reads per variant site) and
+$P_{\text{missing}}$ is the probability of no reads covering a site. This serves
+as a baseline to evaluate whether missingness arises purely from random
+sequencing variation or whether additional biases (e.g. mapping issues)
+contribute.
+
+### 1.2.2 Exponential-with-floor model
+
+We model per-sample missingness as
+
+$$P_{\text{missing}} = \pi + (1 - \pi)\, e^{-k \lambda}$$
+
+where:
+
+- $\lambda$ is the mean coverage.
+- $\pi$ (**floor parameter**) is the fraction of sites that remain uncalled even
+  at high coverage with short reads. This baseline missingness likely corresponds
+  to repetitive DNA, structural variants, or highly polymorphic regions where
+  short reads fail to map or are discarded by mapping filters. For example,
+  `picard CollectWgsMetrics` reports a `PCT_EXC_TOTAL` statistic that can be
+  interpreted as a floor parameter — for the *alux* project, at nominal coverage
+  $3.2\times$ I obtained a mean $\text{PCT\_EXC\_TOTAL} = 0.45 \sim \pi$.
+- $k$ (**decay rate**) is how fast missingness decays with increasing coverage
+  relative to the Poisson model. I interpret the product $k\lambda$ as an
+  *effective coverage* (perhaps the coverage of the informative variants).
+
+# 2 Data loading and processing
+
+The input is a small per-sample summary of the aggregated 1 Mb bin allele-count
+table (`all_samples_bin_genotypes.tsv`), reduced to per-sample variant/depth
+counts by `scripts/make_missing_data_summaries.R` (run once on-mount; see
+`DATA.md`). The notebook reads only this summary, so it renders with no mount
+attached. The genotype **calls** in the source file are irrelevant here — we use
+only depth and variant counts.
+
+```{r data-load}
+summary_file <- here("data/missing_data/wideseq_per_sample.tsv")
+stopifnot(file.exists(summary_file))
+per_sample <- read_tsv(summary_file, show_col_types = FALSE) %>%
+  mutate(missing_poisson = exp(-lambda))
+```
+
+```{r per-sample}
+# Overall (pooled) population statistics
+overall_stats <- per_sample %>%
+  summarize(
+    VARIANT_COUNT             = sum(VARIANT_COUNT, na.rm = TRUE),
+    INFORMATIVE_VARIANT_COUNT = sum(INFORMATIVE_VARIANT_COUNT, na.rm = TRUE),
+    DEPTH_SUM                 = sum(DEPTH_SUM, na.rm = TRUE)
+  ) %>%
+  mutate(
+    lambda          = DEPTH_SUM / VARIANT_COUNT,
+    missing_obs     = 1 - INFORMATIVE_VARIANT_COUNT / VARIANT_COUNT,
+    missing_poisson = exp(-lambda)
+  )
+
+overall_stats
+```
+
+The population-level mean coverage is $\lambda \approx 0.59$, with an observed
+missingness of $\approx 0.67$ — already above the Poisson expectation of
+$\approx 0.554$.
+
+# 3 Coverage distribution analysis
+
+```{r coverage-hist}
+lambda_bar <- overall_stats$lambda
+p_hist <- per_sample %>%
+  ggplot(aes(x = lambda)) +
+  xlab("Coverage") +
+  ylab("Sample Count") +
+  geom_histogram(aes(fill = after_stat(x))) +
+  geom_vline(xintercept = lambda_bar, color = "red") +
+  scale_fill_viridis_c() +
+  ggpubr::theme_classic2(base_size = 8) +
+  theme(legend.position = "none")
+
+print(p_hist)
+```
+
+The coverage distribution has a mean of ~0.59 with substantial spread across
+samples.
+
+# 4 Model fitting
+
+## 4.1 Simple exponential model
+
+A first pass: regress log-missingness on coverage to get a rough decay rate.
+
+```{r fit-linear}
+fit_linear <- lm(log(missing_obs) ~ lambda, data = per_sample)
+per_sample$missing_exp_k <- exp(predict(fit_linear))
+
+k_est <- -coef(fit_linear)[2]
+cat("Estimated k:", round(k_est, 3), "\n")
+
+cat(
+  "Effective coverage (k*lambda) range:",
+  paste0(round(k_est * range(per_sample$lambda), 3), collapse = " - "), "\n"
+)
+```
+
+## 4.2 Exponential-with-floor model
+
+Now the full model, fit by robust nonlinear least squares (`nlsLM`), using the
+linear-model estimates as starting values.
+
+```{r fit-floor}
+# Restrict to samples with well-defined missingness in (0, 1)
+dat <- per_sample %>%
+  filter(
+    is.finite(lambda), is.finite(missing_obs),
+    missing_obs > 0, missing_obs < 1
+  )
+
+# Initial estimate of the floor from a linear fit of observed vs Poisson
+fit_missing <- lm(missing_obs ~ missing_poisson, data = per_sample)
+pi_est <- coef(fit_missing)[1]
+
+fit_exp_floor <- nlsLM(
+  missing_obs ~ pi + (1 - pi) * exp(-k * lambda),
+  data  = dat,
+  start = list(pi = pi_est, k = k_est),
+  lower = c(0, 0),
+  upper = c(1, 10)
+)
+
+model_params <- coef(fit_exp_floor)
+pi <- model_params[1]
+k <- model_params[2]
+
+cat("Floor parameter (pi):", round(pi, 3), "\n")
+cat("Decay rate (k):", round(k, 3), "\n")
+
+per_sample$missing_exp_floor <- predict(fit_exp_floor, newdata = per_sample)
+overall_stats$missing_exp_floor <- predict(
+  fit_exp_floor,
+  newdata = data.frame(lambda = overall_stats$lambda)
+)
+```
+
+# 5 Model comparison
+
+```{r decay-plot}
+decay_plot <- per_sample %>%
+  select(-missing_obs) %>%
+  ungroup() %>%
+  tidyr::pivot_longer(
+    cols = starts_with("missing_"),
+    names_to = "model", values_to = "pred",
+    names_prefix = "missing_"
+  ) %>%
+  ggplot(aes(x = lambda, y = pred, col = model, group = model)) +
+  geom_point(
+    data = per_sample, aes(x = lambda, y = missing_obs),
+    inherit.aes = FALSE, alpha = 0.3
+  ) +
+  geom_line(linewidth = 1) +
+  xlab("Coverage") +
+  ylab("Missing Fraction") +
+  geom_point(x = lambda_bar, y = overall_stats$missing_obs, color = "red") +
+  ggpubr::theme_classic2(base_size = 16) +
+  theme(legend.position = c(0.2, 0.25), legend.box = "horizontal")
+
+print(decay_plot)
+```
+
+# 6 Model validation
+
+Common scales for the validation scatter plots.
+
+```{r validation-scales}
+xy_limits <- c(0.2, 1.0)
+legend_breaks <- c(0, 0.5, 1.0, 1.5)
+legend_labels <- as.character(legend_breaks)
+```
+
+## 6.1 Poisson model assessment
+
+```{r poisson-scatter}
+p_scatter_poisson <- per_sample %>%
+  ggplot(aes(x = missing_poisson, y = missing_obs, col = lambda)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  scale_color_viridis_c(
+    breaks = legend_breaks, labels = legend_labels,
+    limits = c(0, 1.5)
+  ) +
+  guides(col = guide_colorbar(title = "Coverage")) +
+  geom_point(
+    x = overall_stats$missing_poisson, y = overall_stats$missing_obs,
+    color = "red"
+  ) +
+  scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +
+  scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +
+  coord_fixed(ratio = 1) +
+  xlab("Expected Missing (Poisson)") +
+  ylab("Observed Missing") +
+  ggpubr::theme_classic2(base_size = 16) +
+  theme(legend.position = "top")
+
+inlay_grob <- cowplot::as_grob(p_hist)
+
+final_plot_poisson <- cowplot::ggdraw() +
+  cowplot::draw_plot(p_scatter_poisson) +
+  cowplot::draw_plot(inlay_grob, x = 0.55, y = 0.16, width = 0.2, height = 0.25)
+
+print(final_plot_poisson)
+```
+
+The Poisson model systematically **underpredicts** missingness: observed points
+sit above the 1:1 line.
+
+## 6.2 Exponential-with-floor model assessment
+
+```{r floor-scatter}
+p_scatter_floor <- per_sample %>%
+  ggplot(aes(x = missing_exp_floor, y = missing_obs, col = lambda)) +
+  geom_point() +
+  geom_vline(xintercept = pi, linetype = "dashed") +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  scale_color_viridis_c(
+    breaks = legend_breaks, labels = legend_labels,
+    limits = c(0, 1.5)
+  ) +
+  guides(col = guide_colorbar(title = "Coverage")) +
+  geom_point(
+    x = overall_stats$missing_exp_floor,
+    y = overall_stats$missing_obs, color = "red"
+  ) +
+  scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +
+  scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +
+  coord_fixed(ratio = 1) +
+  xlab("Expected Missing (Floor Model)") +
+  ylab("Observed Missing") +
+  ggpubr::theme_classic2(base_size = 16) +
+  theme(legend.position = "top")
+
+final_plot_floor <- cowplot::ggdraw() +
+  cowplot::draw_plot(p_scatter_floor) +
+  cowplot::draw_plot(inlay_grob, x = 0.55, y = 0.16, width = 0.2, height = 0.25)
+
+print(final_plot_floor)
+```
+
+The floor model places points on the 1:1 line; the dashed line marks the floor
+$\pi$, the minimum missingness attainable no matter how high the coverage.
+
+# 7 Results summary
+
+```{r results-summary}
+cat("Population-level Statistics:\n")
+cat("Mean coverage (lambda):", round(overall_stats$lambda, 3), "\n")
+cat("Observed missingness:", round(overall_stats$missing_obs, 3), "\n")
+cat("Poisson expectation:", round(overall_stats$missing_poisson, 3), "\n")
+cat("Floor model expectation:", round(overall_stats$missing_exp_floor, 3), "\n\n")
+
+cat("Model Parameters:\n")
+cat("Floor parameter (pi):", round(pi, 3), "\n")
+cat("Decay rate (k):", round(k, 3), "\n")
+```
+
+The exponential-with-floor model substantially improves the fit over the simple
+Poisson model. The floor parameter (~0.35) indicates that about a third of sites
+remain uncallable even at high coverage — likely repetitive sequence, structural
+variants, or mapping artifacts. The decay rate (~1.26) implies
+slower-than-Poisson decay of missingness with increasing coverage.
+
+Part 3 (`missing-data-model-comparison.qmd`) evaluates how stable $\pi$ and $k$
+are when the same model is fit to three different BZea data products.
+
+# 8 References
+
+Li, H., Ruan, J., & Durbin, R. (2008). Mapping short DNA sequencing reads and
+calling variants using mapping quality scores. *Bioinformatics*, 24(3), 223–230.
+
+Nielsen, R., Paul, J. S., Albrechtsen, A., & Song, Y. S. (2011). Genotype and SNP
+calling from next-generation sequencing data. *Nature Reviews Genetics*, 12(6),
+443–451.

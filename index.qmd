@@ -4,6 +4,21 @@ subtitle: "Teosinte-introgression QTL recovery under low-coverage genotyping"
 page-layout: full
 toc: false
 listing:
+  - id: foundations
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
+      - title: "Coverage theory"
+        path: analysis/missing-data-coverage-theory.qmd
+        description: "Poisson coverage model — the missing-data baseline"
+      - title: "Floor model"
+        path: analysis/missing-data-floor-model.qmd
+        description: "Exponential-with-floor missingness, fit to BZea BAM alignments"
+      - title: "Model comparison"
+        path: analysis/missing-data-model-comparison.qmd
+        description: "Floor model across WGS, Wideseq, and SNP50K datasets"
   - id: methods
     type: table
     fields: [title, description]
@@ -105,6 +120,16 @@ the work supports. Two papers are being written here — the **nilHMM R package 
 written, in review), which this repo supplies updated genotypes to.
 
 ## nilHMM methods
+
+### §1 Foundations — low coverage & the missing-data model
+
+Why low-coverage genotype calling is hard: single-read calling and the Poisson +
+exponential-with-floor model of missing data, fit to the BZea population.
+
+::: {#foundations}
+:::
+
+### Engine & calibration
 
 The shared HMM engine and its `simcross` calibration — common to every dataset below.
 
