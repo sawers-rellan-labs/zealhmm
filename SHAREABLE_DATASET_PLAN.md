@@ -132,15 +132,25 @@ Definition of the QC (per user): **per-position KS goodness-of-fit to a Poisson*
 - *Open param:* exact "normalized z" definition (z of KS-D across positions vs a per-position
   p-value → z). Pin it in the script header before running at scale.
 
-### Phase D — Shiny genotype browser (G2, new standalone repo)
+### Phase D — Shiny genotype browser (G2, new standalone repo) — ACTIVE FOCUS
 Proposed repo: **`bzea-genotype-browser`** (separate git repo; deploy to shinyapps.io).
-- D1. Commit the **SNP50K 0/1/2 ancestry mosaic** (per caller) into the app repo as the served
-  asset — compact binary (PLINK `.bed` or an indexed RDS/`fst`), sized to fit shinyapps.io.
-- D2. UI: pick chromosome + start (bp), window ≤ **1 Mb** (hard cap), caller/call-set selector
-  (rtiger/nnil/binhmm/lbimpute; 50K vs 250K), sample subset.
+**Base = the 1395-line release** (`release/bzea_genotypes/`, all 5 objects, 49,002 sites, B73 v5).
+- D1. Commit the served asset from the release — the 4 `<caller>_mosaic` (ancestry 0/1/2) +
+  `hwe_post_gt` (genotype) — as compact binary (PLINK `.bed` or indexed RDS/`fst`), sized for
+  shinyapps.io.
+- D2. UI: pick chromosome + start (bp), window ≤ **1 Mb** (hard cap), object selector
+  (rtiger/nnil/binhmm/lbimpute mosaic + hwe_post_gt genotype), sample subset. (250K dropped.)
 - D3. Export: assemble the requested fragment on the fly → **VCF** and **HapMap** download.
-  Reuse the exporter from B2/C4 as a shared function.
+  Reuse the release exporter's encoding as a shared function.
 - D4. Provenance panel + link to the CyVerse release and this repo.
+
+### Deferred TODOs (noted; not blocking the app)
+- **Restrict the GWAS to the 1395 panel** — the mosaic MLM scans (nnil/binhmm/lbimpute) still run
+  on 1403 lines (8 near-empty libs present as mean-imputed-inert columns; rtiger already 1395).
+  Benign, but restrict for exact GWAS↔release consistency.
+- **More upstream QC likely needed** before finalizing the released dataset — additional QC from
+  earlier pipeline steps (read-count / variant filtering) may be required; 1395 is the release *for
+  now* and the app's base.
 
 ### Phase E — Archive & cite (G1)
 - E1. Push the full release bundle (50K variations + 250K + wideseq-union PLINK/VCF + manifest +
