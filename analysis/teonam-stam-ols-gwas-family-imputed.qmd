@@ -201,4 +201,3 @@ ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
   deliberately faithful to the throwaway script, *not* to Chen's MLM. The peak-height
   / $\lambda_{GC}$ comparison against Chen's `Q + K` mixed model is deferred to a
   dedicated inflation notebook.
-```

@@ -162,4 +162,3 @@ ggplot(melt(geno[, .(src, HET, ALT)], id.vars = "src"), aes(src, value)) +
   `source-method-comparison.qmd`.
 - Sharpen the objective's soft plateau near the optimum with a KS or
   breakpoint-match tie-breaker.
-```

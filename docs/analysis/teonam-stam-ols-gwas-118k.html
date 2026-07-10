@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-09">
+<meta name="dcterms.date" content="2026-07-10">
 
 <title>TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C) – zealhmm</title>
 <style>
@@ -4218,11 +4218,6 @@ window.Quarto = {
   <li><a href="#the-scan" id="toc-the-scan" class="nav-link" data-scroll-target="#the-scan">The scan</a></li>
   <li><a href="#qc-and-results" id="toc-qc-and-results" class="nav-link" data-scroll-target="#qc-and-results">QC and results</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
-  <li><a href="#inputs-primary-118k-dosage-phenotype-v5-liftover-1" id="toc-inputs-primary-118k-dosage-phenotype-v5-liftover-1" class="nav-link" data-scroll-target="#inputs-primary-118k-dosage-phenotype-v5-liftover-1">Inputs (primary 118K dosage + phenotype + v5 liftover)</a></li>
-  <li><a href="#the-model-1" id="toc-the-model-1" class="nav-link" data-scroll-target="#the-model-1">The model</a></li>
-  <li><a href="#the-scan-1" id="toc-the-scan-1" class="nav-link" data-scroll-target="#the-scan-1">The scan</a></li>
-  <li><a href="#qc-and-results-1" id="toc-qc-and-results-1" class="nav-link" data-scroll-target="#qc-and-results-1">QC and results</a></li>
-  <li><a href="#notes-1" id="toc-notes-1" class="nav-link" data-scroll-target="#notes-1">Notes</a></li>
   </ul>
 </nav>
     </div>
@@ -4249,7 +4244,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 9, 2026</p>
+      <p class="date">July 10, 2026</p>
     </div>
   </div>
   
@@ -4533,198 +4528,10 @@ F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank}
 <li>The marker set is the <strong>authentic Chen 2019 GWAS panel</strong> (118,838 SNPs → 118,514 lifted to v5), <em>not</em> the 51K map panel. Same model, different markers → the two OLS notebooks are directly comparable.</li>
 <li>Model is <strong>OLS (fixed effects), no kinship term</strong> — the peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook (the 118K MLM analog is not yet built).</li>
 </ul>
-<pre><code>
 
 
+<!-- -->
 
-:::{#quarto-navigation-envelope .hidden}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1zaWRlYmFyLXRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXItdGl0bGU=&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6emVhbGhtbQ==&quot;}
-[https://github.com/sawers-rellan-labs/zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL3Nhd2Vycy1yZWxsYW4tbGFicy96ZWFsaG1t&quot;}
-[Home]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6SG9tZQ==&quot;}
-[/index.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L2luZGV4Lmh0bWw=&quot;}
-[Data provenance]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6RGF0YSBwcm92ZW5hbmNl&quot;}
-[/DATA.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L0RBVEEuaHRtbA==&quot;}
-:::
-
-
-
-:::{#quarto-meta-markdown .hidden}
-[TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGF0aXRsZQ==&quot;}
-[TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkdGl0bGU=&quot;}
-[TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C) – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZHRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlbmFtZQ==&quot;}
-[Per-marker across-family OLS on Chen 2019&#39;s 118,838-SNP GWAS panel (v5) — computation, model &amp; QC]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkZGVzYw==&quot;}
-[Per-marker across-family OLS on Chen 2019&#39;s 118,838-SNP GWAS panel (v5) — computation, model &amp; QC]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZGRkZXNj&quot;}
-[Teosinte-introgression QTL recovery — TeoNAM &amp; ZEAL/BZea]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlZGVzYw==&quot;}
-:::
-
-
-
-
-&lt;!-- --&gt;
-
-::: {.quarto-embedded-source-code}
-```````````````````{.markdown shortcodes=&quot;false&quot;}
----
-title: &quot;TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C)&quot;
-subtitle: &quot;Per-marker across-family OLS on Chen 2019&#39;s 118,838-SNP GWAS panel (v5) — computation, model &amp; QC&quot;
-author: &quot;Fausto Rodríguez-Zapata&quot;
-date: today
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    embed-resources: true
-    code-fold: false
-execute:
-  warning: false
-  message: false
-  echo: true
-  freeze: auto
----
-
-**What this is.** The *computation* behind the STAM OLS GWAS scan on the **authentic
-118,838-SNP Chen 2019 GWAS panel** (Qiuyue Chen&#39;s Drive release), lifted to B73 v5
-(`data/teonam/stam_gwas_scan_118k.csv`), tracked in its own right. It ports the
-`scripts/teonam_stam_gwas118k.R` scan into a rendered notebook so the scan — not just
-its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that
-*consumes* this CSV lives in [`teonam-qtl-recovery`](teonam-qtl-recovery.html); this
-notebook **produces** it.
-
-This is the **faithful** Fig 4C marker set: Chen&#39;s GWAS SNPs (GBS filtered at MAF &gt; 0.01,
-missing rate &lt; 0.75, then FSFHap-imputed per subpopulation, combined, and re-filtered to
-MAF &gt; 0.05 / missing &lt; 0.2 → 118,838 SNPs), lifted v2 → v5 (118,514 lifted). It **replaces
-the 51K map-panel approximation** used by
-[`teonam-stam-ols-gwas-family-imputed`](teonam-stam-ols-gwas-family-imputed.html); the
-model is **identical** (`STAM ~ Family + marker`, 1-df F), so the two are directly
-comparable — only the marker set differs (118K GWAS panel vs 51K map panel). As there,
-each marker is tested only on the families that typed it (cross-family gaps left as NA,
-**not** densified), giving natural GWAS scatter.
-
-```{r setup}
-library(here)
-library(data.table)
-library(parallel)
-library(readxl)
-library(ggplot2)
-theme_set(theme_bw(base_size = 12))
-THREADS &lt;- max(1L, detectCores() - 2L)
-LOD &lt;- 5 # Chen 2019 significance line: P &lt; 1e-5</code></pre>
-</section>
-<section id="inputs-primary-118k-dosage-phenotype-v5-liftover-1" class="level2">
-<h2 class="anchored" data-anchor-id="inputs-primary-118k-dosage-phenotype-v5-liftover-1">Inputs (primary 118K dosage + phenotype + v5 liftover)</h2>
-<pre class="{r inputs}"><code># 118K GWAS-panel dosage: integer matrix [markers x lines], NA = untyped (0/1/2)
-g118 &lt;- readRDS(here(&quot;data/teonam/teonam_gwas118k_dosage.rds&quot;))
-dos &lt;- g118$dos
-lines &lt;- colnames(dos)
-fam &lt;- factor(substr(lines, 1, 5)) # TIL01A001 -&gt; TIL01
-
-# phenotype: STAM (staminate spikelet), joined by line key
-ph &lt;- as.data.frame(read_excel(
-  here(&quot;data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx&quot;)
-))
-names(ph)[1] &lt;- &quot;line&quot;
-y &lt;- suppressWarnings(as.numeric(setNames(ph$STAM, ph$line)[lines]))
-
-# v5 coordinates; restrict the scan to 118K markers that lifted to v5
-mc &lt;- fread(here(&quot;data/teonam/markers_v5_gwas118k.tsv&quot;))
-chr_by &lt;- setNames(mc$chr_v5, mc$marker)
-pos_by &lt;- setNames(mc$pos_v5, mc$marker)
-mk &lt;- intersect(rownames(dos), mc$marker)
-mk_idx &lt;- match(mk, rownames(dos))
-
-data.table(
-  quantity = c(
-    &quot;lines&quot;, &quot;markers (panel)&quot;, &quot;markers (lifted, scanned)&quot;,
-    &quot;STAM phenotyped&quot;, &quot;families&quot;
-  ),
-  value = c(
-    length(lines), nrow(dos), length(mk),
-    sum(!is.na(y)), nlevels(fam)
-  )
-)</code></pre>
-</section>
-<section id="the-model-1" class="level2">
-<h2 class="anchored" data-anchor-id="the-model-1">The model</h2>
-<p>Identical to the family-imputed 51K notebook. For each marker <span class="math inline">\(m\)</span>, restrict to the lines <span class="math inline">\(i\)</span> with a non-missing dosage <span class="math inline">\(g_{im}\in\{0,1,2\}\)</span> <strong>and</strong> a non-missing STAM value <span class="math inline">\(y_i\)</span>, then compare two nested least-squares fits:</p>
-<p><span class="math display">\[
-\textbf{Null:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \varepsilon_i
-\]</span> <span class="math display">\[
-\textbf{Full:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}[\text{family}_i = f] + \gamma\, g_{im} + \varepsilon_i
-\]</span></p>
-<p>The marker enters as a <strong>single additive dosage effect <span class="math inline">\(\gamma\)</span> shared across families</strong> (1 numerator df). Significance is the marginal <span class="math inline">\(F\)</span>-test of <span class="math inline">\(\gamma\)</span>:</p>
-<p><span class="math display">\[
-F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank})},
-\qquad P = \Pr\big(F_{1,\,n-\mathrm{rank}} &gt; F\big).
-\]</span></p>
-<p>Family is a fixed categorical covariate (levels dropped to those present for that marker). <strong>This is OLS: no kinship/polygenic random effect <span class="math inline">\(K\)</span></strong> — deliberately the same fixed-effects model as the 51K notebook, <em>not</em> Chen’s <code>Q(5 PCs) + SNP + K(IBS)</code> mixed model, so peak heights run hotter (the <span class="math inline">\(\lambda_{GC}\)</span>/QQ comparison is a separate analysis).</p>
-</section>
-<section id="the-scan-1" class="level2">
-<h2 class="anchored" data-anchor-id="the-scan-1">The scan</h2>
-<pre class="{r scan}"><code>scan1 &lt;- function(i) {
-  g &lt;- dos[i, ] # dosage across lines, NA where untyped
-  ok &lt;- !is.na(g) &amp; !is.na(y)
-  n &lt;- sum(ok)
-  if (n &lt; 20) {
-    return(c(NA_real_, n))
-  }
-  gg &lt;- as.numeric(g[ok])
-  if (stats::sd(gg) == 0) {
-    return(c(NA_real_, n))
-  }
-  yy &lt;- y[ok]
-  ff &lt;- droplevels(fam[ok])
-  Xr &lt;- if (nlevels(ff) &gt; 1) model.matrix(~ff) else matrix(1, n, 1)
-  RSS0 &lt;- sum(lm.fit(Xr, yy)$residuals^2)
-  fit &lt;- lm.fit(cbind(Xr, gg), yy)
-  RSS1 &lt;- sum(fit$residuals^2)
-  df2 &lt;- n - fit$rank
-  if (df2 &lt;= 0 || RSS1 &lt;= 0) {
-    return(c(NA_real_, n))
-  }
-  c(pf(((RSS0 - RSS1) / 1) / (RSS1 / df2), 1, df2, lower.tail = FALSE), n)
-}
-out &lt;- mclapply(mk_idx, scan1, mc.cores = THREADS)
-P &lt;- vapply(out, `[`, numeric(1), 1)
-N &lt;- vapply(out, `[`, numeric(1), 2)
-
-scan &lt;- data.table(
-  SNP = mk, CHR = as.integer(chr_by[mk]),
-  BP = as.integer(pos_by[mk]), P = P,
-  n = as.integer(N)
-)[order(CHR, BP)]
-fwrite(scan, here(&quot;data/teonam/stam_gwas_scan_118k.csv&quot;)) # canonical output</code></pre>
-</section>
-<section id="qc-and-results-1" class="level2">
-<h2 class="anchored" data-anchor-id="qc-and-results-1">QC and results</h2>
-<pre class="{r results}"><code>fin &lt;- scan[is.finite(P) &amp; P &gt; 0]
-data.table(
-  metric = c(
-    &quot;markers scanned&quot;, &quot;markers tested (finite P)&quot;,
-    &quot;median lines / marker&quot;, &quot;max -log10P&quot;,
-    sprintf(&quot;genome-wide sig. (P &lt; 1e-%d)&quot;, LOD)
-  ),
-  value = c(
-    nrow(scan), nrow(fin), median(scan$n),
-    round(max(-log10(fin$P)), 2), sum(fin$P &lt; 10^(-LOD))
-  )
-)</code></pre>
-<pre class="{r top-hits}"><code>top &lt;- fin[order(P)][1:10, .(SNP, CHR, BP, n, logP = round(-log10(P), 2))]
-knitr::kable(top, caption = &quot;Top 10 STAM associations (118K GWAS panel)&quot;)</code></pre>
-<p><code>{r per-marker-n, fig.width=7, fig.height=2.8} ggplot(scan, aes(n)) +   geom_histogram(bins = 60, fill = &quot;grey30&quot;) +   labs(     x = &quot;lines tested per marker (families typing that marker)&quot;,     y = &quot;markers&quot;, title = &quot;Per-marker sample size — the source of the natural scatter&quot;   )</code></p>
-<p><code>{r manhattan, fig.width=9, fig.height=3.4} # lightweight Manhattan (the annotated Fig-4C version lives in teonam-qtl-recovery) m &lt;- fin[order(CHR, BP)] off &lt;- m[, .(mx = max(BP)), by = CHR][order(CHR)] off[, base := cumsum(shift(mx, fill = 0))] m &lt;- merge(m, off[, .(CHR, base)], by = &quot;CHR&quot;) m[, x := BP + base] axis &lt;- m[, .(mid = (min(x) + max(x)) / 2), by = CHR][order(CHR)] ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +   geom_point(size = 0.4) +   geom_hline(yintercept = LOD, linetype = &quot;dotted&quot;) +   scale_colour_manual(values = c(&quot;grey60&quot;, &quot;black&quot;), guide = &quot;none&quot;) +   scale_x_continuous(breaks = axis$mid, labels = axis$CHR, expand = c(0.01, 0)) +   labs(     x = &quot;chromosome&quot;, y = expression(-log[10](italic(P))),     title = &quot;STAM 118K GWAS (OLS: STAM ~ Family + marker)&quot;   )</code></p>
-</section>
-<section id="notes-1" class="level2">
-<h2 class="anchored" data-anchor-id="notes-1">Notes</h2>
-<ul>
-<li>This notebook is the <strong>canonical, tracked source</strong> for <code>stam_gwas_scan_118k.csv</code>; it ports <code>scripts/teonam_stam_gwas118k.R</code> verbatim (same OLS model as the 51K family-imputed notebook).</li>
-<li>The marker set is the <strong>authentic Chen 2019 GWAS panel</strong> (118,838 SNPs → 118,514 lifted to v5), <em>not</em> the 51K map panel. Same model, different markers → the two OLS notebooks are directly comparable.</li>
-<li>Model is <strong>OLS (fixed effects), no kinship term</strong> — the peak-height / <span class="math inline">\(\lambda_{GC}\)</span> comparison against Chen’s <code>Q + K</code> mixed model is deferred to a dedicated inflation notebook (the 118K MLM analog is not yet built).</li>
-</ul>
-<pre><code></code></pre>
-<p>:::</p>
 </section>
 
 </main> <!-- /main -->
@@ -5178,7 +4985,216 @@ knitr::kable(top, caption = &quot;Top 10 STAM associations (118K GWAS panel)&quo
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;TeoNAM STAM — OLS GWAS on the authentic 118K GWAS panel (Fig 4C)&quot;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Per-marker across-family OLS on Chen 2019&#39;s 118,838-SNP GWAS panel (v5) — computation, model &amp; QC&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">  freeze: auto</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>**What this is.** The *computation* behind the STAM OLS GWAS scan on the **authentic</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>118,838-SNP Chen 2019 GWAS panel** (Qiuyue Chen&#39;s Drive release), lifted to B73 v5</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>(<span class="in">`data/teonam/stam_gwas_scan_118k.csv`</span>), tracked in its own right. It ports the</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/teonam_stam_gwas118k.R`</span> scan into a rendered notebook so the scan — not just</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>its Manhattan — is reproducible from primary data. The annotated Fig-4C Manhattan that</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>*consumes* this CSV lives in <span class="co">[</span><span class="ot">`teonam-qtl-recovery`</span><span class="co">](teonam-qtl-recovery.html)</span>; this</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>notebook **produces** it.</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>This is the **faithful** Fig 4C marker set: Chen&#39;s GWAS SNPs (GBS filtered at MAF &gt; 0.01,</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>missing rate &lt; 0.75, then FSFHap-imputed per subpopulation, combined, and re-filtered to</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>MAF &gt; 0.05 / missing &lt; 0.2 → 118,838 SNPs), lifted v2 → v5 (118,514 lifted). It **replaces</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>the 51K map-panel approximation** used by</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">`teonam-stam-ols-gwas-family-imputed`</span><span class="co">](teonam-stam-ols-gwas-family-imputed.html)</span>; the</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>model is **identical** (<span class="in">`STAM ~ Family + marker`</span>, 1-df F), so the two are directly</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>comparable — only the marker set differs (118K GWAS panel vs 51K map panel). As there,</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>each marker is tested only on the families that typed it (cross-family gaps left as NA,</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>**not** densified), giving natural GWAS scatter.</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">12</span>))</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>THREADS <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>L, <span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">2</span>L)</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>LOD <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="co"># Chen 2019 significance line: P &lt; 1e-5</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inputs (primary 118K dosage + phenotype + v5 liftover)</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a><span class="in">```{r inputs}</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="co"># 118K GWAS-panel dosage: integer matrix [markers x lines], NA = untyped (0/1/2)</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>g118 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/teonam_gwas118k_dosage.rds&quot;</span>))</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>dos <span class="ot">&lt;-</span> g118<span class="sc">$</span>dos</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span> <span class="fu">colnames</span>(dos)</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>fam <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">substr</span>(lines, <span class="dv">1</span>, <span class="dv">5</span>)) <span class="co"># TIL01A001 -&gt; TIL01</span></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a><span class="co"># phenotype: STAM (staminate spikelet), joined by line key</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>ph <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">read_excel</span>(</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">&quot;data/teonam/9250682/TeoNAM_1257RILs_22traits_phenotype_data.xlsx&quot;</span>)</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(ph)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;line&quot;</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.numeric</span>(<span class="fu">setNames</span>(ph<span class="sc">$</span>STAM, ph<span class="sc">$</span>line)[lines]))</span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a><span class="co"># v5 coordinates; restrict the scan to 118K markers that lifted to v5</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>mc <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/markers_v5_gwas118k.tsv&quot;</span>))</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>chr_by <span class="ot">&lt;-</span> <span class="fu">setNames</span>(mc<span class="sc">$</span>chr_v5, mc<span class="sc">$</span>marker)</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>pos_by <span class="ot">&lt;-</span> <span class="fu">setNames</span>(mc<span class="sc">$</span>pos_v5, mc<span class="sc">$</span>marker)</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>mk <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">rownames</span>(dos), mc<span class="sc">$</span>marker)</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>mk_idx <span class="ot">&lt;-</span> <span class="fu">match</span>(mk, <span class="fu">rownames</span>(dos))</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(</span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;lines&quot;</span>, <span class="st">&quot;markers (panel)&quot;</span>, <span class="st">&quot;markers (lifted, scanned)&quot;</span>,</span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;STAM phenotyped&quot;</span>, <span class="st">&quot;families&quot;</span></span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(lines), <span class="fu">nrow</span>(dos), <span class="fu">length</span>(mk),</span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(y)), <span class="fu">nlevels</span>(fam)</span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## The model</span></span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a>Identical to the family-imputed 51K notebook. For each marker $m$, restrict to the</span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a>lines $i$ with a non-missing dosage $g_{im}\in<span class="sc">\{</span>0,1,2<span class="sc">\}</span>$ **and** a non-missing STAM</span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a>value $y_i$, then compare two nested least-squares fits:</span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a>\textbf{Null:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}<span class="co">[</span><span class="ot">\text{family}_i = f</span><span class="co">]</span> + \varepsilon_i</span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-92"><a href="#cb10-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-93"><a href="#cb10-93" aria-hidden="true" tabindex="-1"></a>\textbf{Full:}\quad y_i = \mu + \sum_{f} \beta_f \,\mathbb{1}<span class="co">[</span><span class="ot">\text{family}_i = f</span><span class="co">]</span> + \gamma\, g_{im} + \varepsilon_i</span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a>The marker enters as a **single additive dosage effect $\gamma$ shared across families**</span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a>(1 numerator df). Significance is the marginal $F$-test of $\gamma$:</span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a>F = \frac{(\mathrm{RSS}_0 - \mathrm{RSS}_1)/1}{\mathrm{RSS}_1/(n - \mathrm{rank})},</span>
+<span id="cb10-101"><a href="#cb10-101" aria-hidden="true" tabindex="-1"></a>\qquad P = \Pr\big(F_{1,\,n-\mathrm{rank}} &gt; F\big).</span>
+<span id="cb10-102"><a href="#cb10-102" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb10-103"><a href="#cb10-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-104"><a href="#cb10-104" aria-hidden="true" tabindex="-1"></a>Family is a fixed categorical covariate (levels dropped to those present for that</span>
+<span id="cb10-105"><a href="#cb10-105" aria-hidden="true" tabindex="-1"></a>marker). **This is OLS: no kinship/polygenic random effect $K$** — deliberately the</span>
+<span id="cb10-106"><a href="#cb10-106" aria-hidden="true" tabindex="-1"></a>same fixed-effects model as the 51K notebook, *not* Chen&#39;s <span class="in">`Q(5 PCs) + SNP + K(IBS)`</span></span>
+<span id="cb10-107"><a href="#cb10-107" aria-hidden="true" tabindex="-1"></a>mixed model, so peak heights run hotter (the $\lambda_{GC}$/QQ comparison is a</span>
+<span id="cb10-108"><a href="#cb10-108" aria-hidden="true" tabindex="-1"></a>separate analysis).</span>
+<span id="cb10-109"><a href="#cb10-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-110"><a href="#cb10-110" aria-hidden="true" tabindex="-1"></a><span class="fu">## The scan</span></span>
+<span id="cb10-111"><a href="#cb10-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-112"><a href="#cb10-112" aria-hidden="true" tabindex="-1"></a><span class="in">```{r scan}</span></span>
+<span id="cb10-113"><a href="#cb10-113" aria-hidden="true" tabindex="-1"></a>scan1 <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb10-114"><a href="#cb10-114" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> dos[i, ] <span class="co"># dosage across lines, NA where untyped</span></span>
+<span id="cb10-115"><a href="#cb10-115" aria-hidden="true" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(g) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(y)</span>
+<span id="cb10-116"><a href="#cb10-116" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">sum</span>(ok)</span>
+<span id="cb10-117"><a href="#cb10-117" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (n <span class="sc">&lt;</span> <span class="dv">20</span>) {</span>
+<span id="cb10-118"><a href="#cb10-118" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">c</span>(<span class="cn">NA_real_</span>, n))</span>
+<span id="cb10-119"><a href="#cb10-119" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-120"><a href="#cb10-120" aria-hidden="true" tabindex="-1"></a>  gg <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(g[ok])</span>
+<span id="cb10-121"><a href="#cb10-121" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (stats<span class="sc">::</span><span class="fu">sd</span>(gg) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb10-122"><a href="#cb10-122" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">c</span>(<span class="cn">NA_real_</span>, n))</span>
+<span id="cb10-123"><a href="#cb10-123" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-124"><a href="#cb10-124" aria-hidden="true" tabindex="-1"></a>  yy <span class="ot">&lt;-</span> y[ok]</span>
+<span id="cb10-125"><a href="#cb10-125" aria-hidden="true" tabindex="-1"></a>  ff <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(fam[ok])</span>
+<span id="cb10-126"><a href="#cb10-126" aria-hidden="true" tabindex="-1"></a>  Xr <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nlevels</span>(ff) <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="fu">model.matrix</span>(<span class="sc">~</span>ff) <span class="cf">else</span> <span class="fu">matrix</span>(<span class="dv">1</span>, n, <span class="dv">1</span>)</span>
+<span id="cb10-127"><a href="#cb10-127" aria-hidden="true" tabindex="-1"></a>  RSS0 <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">lm.fit</span>(Xr, yy)<span class="sc">$</span>residuals<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb10-128"><a href="#cb10-128" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">lm.fit</span>(<span class="fu">cbind</span>(Xr, gg), yy)</span>
+<span id="cb10-129"><a href="#cb10-129" aria-hidden="true" tabindex="-1"></a>  RSS1 <span class="ot">&lt;-</span> <span class="fu">sum</span>(fit<span class="sc">$</span>residuals<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb10-130"><a href="#cb10-130" aria-hidden="true" tabindex="-1"></a>  df2 <span class="ot">&lt;-</span> n <span class="sc">-</span> fit<span class="sc">$</span>rank</span>
+<span id="cb10-131"><a href="#cb10-131" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (df2 <span class="sc">&lt;=</span> <span class="dv">0</span> <span class="sc">||</span> RSS1 <span class="sc">&lt;=</span> <span class="dv">0</span>) {</span>
+<span id="cb10-132"><a href="#cb10-132" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">c</span>(<span class="cn">NA_real_</span>, n))</span>
+<span id="cb10-133"><a href="#cb10-133" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-134"><a href="#cb10-134" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fu">pf</span>(((RSS0 <span class="sc">-</span> RSS1) <span class="sc">/</span> <span class="dv">1</span>) <span class="sc">/</span> (RSS1 <span class="sc">/</span> df2), <span class="dv">1</span>, df2, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>), n)</span>
+<span id="cb10-135"><a href="#cb10-135" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-136"><a href="#cb10-136" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">mclapply</span>(mk_idx, scan1, <span class="at">mc.cores =</span> THREADS)</span>
+<span id="cb10-137"><a href="#cb10-137" aria-hidden="true" tabindex="-1"></a>P <span class="ot">&lt;-</span> <span class="fu">vapply</span>(out, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="fu">numeric</span>(<span class="dv">1</span>), <span class="dv">1</span>)</span>
+<span id="cb10-138"><a href="#cb10-138" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="fu">vapply</span>(out, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="fu">numeric</span>(<span class="dv">1</span>), <span class="dv">2</span>)</span>
+<span id="cb10-139"><a href="#cb10-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-140"><a href="#cb10-140" aria-hidden="true" tabindex="-1"></a>scan <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb10-141"><a href="#cb10-141" aria-hidden="true" tabindex="-1"></a>  <span class="at">SNP =</span> mk, <span class="at">CHR =</span> <span class="fu">as.integer</span>(chr_by[mk]),</span>
+<span id="cb10-142"><a href="#cb10-142" aria-hidden="true" tabindex="-1"></a>  <span class="at">BP =</span> <span class="fu">as.integer</span>(pos_by[mk]), <span class="at">P =</span> P,</span>
+<span id="cb10-143"><a href="#cb10-143" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="fu">as.integer</span>(N)</span>
+<span id="cb10-144"><a href="#cb10-144" aria-hidden="true" tabindex="-1"></a>)[<span class="fu">order</span>(CHR, BP)]</span>
+<span id="cb10-145"><a href="#cb10-145" aria-hidden="true" tabindex="-1"></a><span class="fu">fwrite</span>(scan, <span class="fu">here</span>(<span class="st">&quot;data/teonam/stam_gwas_scan_118k.csv&quot;</span>)) <span class="co"># canonical output</span></span>
+<span id="cb10-146"><a href="#cb10-146" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-147"><a href="#cb10-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-148"><a href="#cb10-148" aria-hidden="true" tabindex="-1"></a><span class="fu">## QC and results</span></span>
+<span id="cb10-149"><a href="#cb10-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-150"><a href="#cb10-150" aria-hidden="true" tabindex="-1"></a><span class="in">```{r results}</span></span>
+<span id="cb10-151"><a href="#cb10-151" aria-hidden="true" tabindex="-1"></a>fin <span class="ot">&lt;-</span> scan[<span class="fu">is.finite</span>(P) <span class="sc">&amp;</span> P <span class="sc">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb10-152"><a href="#cb10-152" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb10-153"><a href="#cb10-153" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(</span>
+<span id="cb10-154"><a href="#cb10-154" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;markers scanned&quot;</span>, <span class="st">&quot;markers tested (finite P)&quot;</span>,</span>
+<span id="cb10-155"><a href="#cb10-155" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;median lines / marker&quot;</span>, <span class="st">&quot;max -log10P&quot;</span>,</span>
+<span id="cb10-156"><a href="#cb10-156" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sprintf</span>(<span class="st">&quot;genome-wide sig. (P &lt; 1e-%d)&quot;</span>, LOD)</span>
+<span id="cb10-157"><a href="#cb10-157" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-158"><a href="#cb10-158" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
+<span id="cb10-159"><a href="#cb10-159" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(scan), <span class="fu">nrow</span>(fin), <span class="fu">median</span>(scan<span class="sc">$</span>n),</span>
+<span id="cb10-160"><a href="#cb10-160" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">max</span>(<span class="sc">-</span><span class="fu">log10</span>(fin<span class="sc">$</span>P)), <span class="dv">2</span>), <span class="fu">sum</span>(fin<span class="sc">$</span>P <span class="sc">&lt;</span> <span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span>LOD))</span>
+<span id="cb10-161"><a href="#cb10-161" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-162"><a href="#cb10-162" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-163"><a href="#cb10-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-164"><a href="#cb10-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-165"><a href="#cb10-165" aria-hidden="true" tabindex="-1"></a><span class="in">```{r top-hits}</span></span>
+<span id="cb10-166"><a href="#cb10-166" aria-hidden="true" tabindex="-1"></a>top <span class="ot">&lt;-</span> fin[<span class="fu">order</span>(P)][<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, .(SNP, CHR, BP, n, <span class="at">logP =</span> <span class="fu">round</span>(<span class="sc">-</span><span class="fu">log10</span>(P), <span class="dv">2</span>))]</span>
+<span id="cb10-167"><a href="#cb10-167" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(top, <span class="at">caption =</span> <span class="st">&quot;Top 10 STAM associations (118K GWAS panel)&quot;</span>)</span>
+<span id="cb10-168"><a href="#cb10-168" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-169"><a href="#cb10-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-170"><a href="#cb10-170" aria-hidden="true" tabindex="-1"></a><span class="in">```{r per-marker-n, fig.width=7, fig.height=2.8}</span></span>
+<span id="cb10-171"><a href="#cb10-171" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(scan, <span class="fu">aes</span>(n)) <span class="sc">+</span></span>
+<span id="cb10-172"><a href="#cb10-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">60</span>, <span class="at">fill =</span> <span class="st">&quot;grey30&quot;</span>) <span class="sc">+</span></span>
+<span id="cb10-173"><a href="#cb10-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb10-174"><a href="#cb10-174" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;lines tested per marker (families typing that marker)&quot;</span>,</span>
+<span id="cb10-175"><a href="#cb10-175" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">&quot;markers&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Per-marker sample size — the source of the natural scatter&quot;</span></span>
+<span id="cb10-176"><a href="#cb10-176" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-177"><a href="#cb10-177" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-178"><a href="#cb10-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-179"><a href="#cb10-179" aria-hidden="true" tabindex="-1"></a><span class="in">```{r manhattan, fig.width=9, fig.height=3.4}</span></span>
+<span id="cb10-180"><a href="#cb10-180" aria-hidden="true" tabindex="-1"></a><span class="co"># lightweight Manhattan (the annotated Fig-4C version lives in teonam-qtl-recovery)</span></span>
+<span id="cb10-181"><a href="#cb10-181" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> fin[<span class="fu">order</span>(CHR, BP)]</span>
+<span id="cb10-182"><a href="#cb10-182" aria-hidden="true" tabindex="-1"></a>off <span class="ot">&lt;-</span> m[, .(<span class="at">mx =</span> <span class="fu">max</span>(BP)), by <span class="ot">=</span> CHR][<span class="fu">order</span>(CHR)]</span>
+<span id="cb10-183"><a href="#cb10-183" aria-hidden="true" tabindex="-1"></a>off[, base <span class="sc">:</span><span class="er">=</span> <span class="fu">cumsum</span>(<span class="fu">shift</span>(mx, <span class="at">fill =</span> <span class="dv">0</span>))]</span>
+<span id="cb10-184"><a href="#cb10-184" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">merge</span>(m, off[, .(CHR, base)], <span class="at">by =</span> <span class="st">&quot;CHR&quot;</span>)</span>
+<span id="cb10-185"><a href="#cb10-185" aria-hidden="true" tabindex="-1"></a>m[, x <span class="sc">:</span><span class="er">=</span> BP <span class="sc">+</span> base]</span>
+<span id="cb10-186"><a href="#cb10-186" aria-hidden="true" tabindex="-1"></a>axis <span class="ot">&lt;-</span> m[, .(<span class="at">mid =</span> (<span class="fu">min</span>(x) <span class="sc">+</span> <span class="fu">max</span>(x)) <span class="sc">/</span> <span class="dv">2</span>), by <span class="ot">=</span> CHR][<span class="fu">order</span>(CHR)]</span>
+<span id="cb10-187"><a href="#cb10-187" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(m, <span class="fu">aes</span>(x, <span class="sc">-</span><span class="fu">log10</span>(P), <span class="at">colour =</span> <span class="fu">factor</span>(CHR <span class="sc">%%</span> <span class="dv">2</span>))) <span class="sc">+</span></span>
+<span id="cb10-188"><a href="#cb10-188" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb10-189"><a href="#cb10-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> LOD, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb10-190"><a href="#cb10-190" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;grey60&quot;</span>, <span class="st">&quot;black&quot;</span>), <span class="at">guide =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
+<span id="cb10-191"><a href="#cb10-191" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> axis<span class="sc">$</span>mid, <span class="at">labels =</span> axis<span class="sc">$</span>CHR, <span class="at">expand =</span> <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb10-192"><a href="#cb10-192" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb10-193"><a href="#cb10-193" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;chromosome&quot;</span>, <span class="at">y =</span> <span class="fu">expression</span>(<span class="sc">-</span>log[<span class="dv">10</span>](<span class="fu">italic</span>(P))),</span>
+<span id="cb10-194"><a href="#cb10-194" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;STAM 118K GWAS (OLS: STAM ~ Family + marker)&quot;</span></span>
+<span id="cb10-195"><a href="#cb10-195" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-196"><a href="#cb10-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-197"><a href="#cb10-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-198"><a href="#cb10-198" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notes</span></span>
+<span id="cb10-199"><a href="#cb10-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-200"><a href="#cb10-200" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>This notebook is the **canonical, tracked source** for</span>
+<span id="cb10-201"><a href="#cb10-201" aria-hidden="true" tabindex="-1"></a>  <span class="in">`stam_gwas_scan_118k.csv`</span>; it ports <span class="in">`scripts/teonam_stam_gwas118k.R`</span> verbatim</span>
+<span id="cb10-202"><a href="#cb10-202" aria-hidden="true" tabindex="-1"></a>  (same OLS model as the 51K family-imputed notebook).</span>
+<span id="cb10-203"><a href="#cb10-203" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The marker set is the **authentic Chen 2019 GWAS panel** (118,838 SNPs → 118,514</span>
+<span id="cb10-204"><a href="#cb10-204" aria-hidden="true" tabindex="-1"></a>  lifted to v5), *not* the 51K map panel. Same model, different markers → the two OLS</span>
+<span id="cb10-205"><a href="#cb10-205" aria-hidden="true" tabindex="-1"></a>  notebooks are directly comparable.</span>
+<span id="cb10-206"><a href="#cb10-206" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Model is **OLS (fixed effects), no kinship term** — the peak-height / $\lambda_{GC}$</span>
+<span id="cb10-207"><a href="#cb10-207" aria-hidden="true" tabindex="-1"></a>  comparison against Chen&#39;s <span class="in">`Q + K`</span> mixed model is deferred to a dedicated inflation</span>
+<span id="cb10-208"><a href="#cb10-208" aria-hidden="true" tabindex="-1"></a>  notebook (the 118K MLM analog is not yet built).</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

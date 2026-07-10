@@ -325,4 +325,3 @@ thin is the pragmatic choice that matches Chen's *operation* (a 0.1 cM thin), at
 documented cost of retaining LD-redundant neighbours. Both are defensible; this
 notebook records which one is in force — a 0.1 cM genetic-distance ruler — so
 downstream QTL results are read with the right framework in mind.
-```
