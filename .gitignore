@@ -31,6 +31,8 @@
 **/*.quarto_ipynb
 *_cache/
 *_files/
+# copied image resources under the rendered site (inlined via embed-resources)
+docs/**/figures/
 
 # stray R plot device output
 Rplots.pdf
