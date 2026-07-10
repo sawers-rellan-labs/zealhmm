@@ -19,8 +19,12 @@ echo "host: $(hostname)   start: $(date)"
 
 # --- activate the minimal R + data.table env (built in /share scratch) -------
 # `module` is not available in LSF batch shells; source the conda hook directly.
-source /usr/local/apps/conda/miniconda3/26.3.2/etc/profile.d/conda.sh
-conda activate /share/maize/frodrig4/conda/env/rdt
+# Same defaults as scripts/build_missing_data_env.sh, so the env this activates is
+# the env that script builds. Override CONDA_BASE / RDT_ENV to match your setup.
+CONDA_BASE="${CONDA_BASE:-/usr/local/apps/conda/miniconda3/26.3.2}"
+RDT_ENV="${RDT_ENV:-/share/$(id -gn)/$(whoami)/conda/env/rdt}"
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate "$RDT_ENV"
 command -v Rscript >/dev/null || { echo "ERROR: Rscript not on PATH after env load"; exit 1; }
 echo "Rscript: $(command -v Rscript)"
 

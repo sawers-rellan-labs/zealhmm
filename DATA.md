@@ -307,11 +307,11 @@ read) runs on a compute node; only tiny summaries are pulled back. Scheduler is 
    per-sample summary with `data.table::fread`, reading only the needed columns) and
    its submit wrapper `scripts/make_missing_data_summaries.lsf`.
 2. R environment: the full `bzeaseq.yml` conda spec is no longer dependency-solvable,
-   so a **minimal** env was built on the **login node** (compute nodes have no
-   internet) in fast scratch (ephemeral, ~1 month):
+   so a **minimal** env (`r-base` + `r-data.table`) is built on the **login node**
+   (compute nodes have no internet) in fast scratch (ephemeral, ~1 month) by
+   `scripts/build_missing_data_env.sh`:
    ```
-   source /usr/local/apps/conda/miniconda3/26.3.2/etc/profile.d/conda.sh
-   conda create -y -p /share/maize/frodrig4/conda/env/rdt -c conda-forge r-base r-data.table
+   bash scripts/build_missing_data_env.sh   # -> $RDT_ENV (default /share/<grp>/<user>/conda/env/rdt)
    ```
 3. Submit the reduction (native `/rsstu` reads, priority queue `sara`):
    ```
