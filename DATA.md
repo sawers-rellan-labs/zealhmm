@@ -277,8 +277,11 @@ empirical-truth anchor and is unaffected by the GWAS-set gap.
       depth. Trace from `sample_metatada.csv` / `bzea-sample-donor-metadata` +
       the BRB and skim sample maps. Blocks `source-method-comparison.qmd`.
 - [ ] Which MolBreeding target-seq samples for the calibration cross-check.
-- [ ] B1 anthocyanin phenotype table + NIL panel. Blocks
-      `b1-mapping-benchmark.qmd`.
+
+The B1 anthocyanin positive control (formerly the deferred `b1-mapping-benchmark.qmd`,
+now removed) was realized instead by the stem-pigment GWAS
+`analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd` — no dedicated B1 phenotype
+table / NIL panel is required.
 
 ## ZEAL Inv4m tagging-SNP genotype comparison (`data/zeal/`, gitignored)
 
