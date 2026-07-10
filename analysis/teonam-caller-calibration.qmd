@@ -1,0 +1,174 @@
+---
+title: "Per-coverage caller calibration on simulated TeoNAM truth"
+subtitle: "Choosing each ancestry caller's parameter by coverage — minimum donor-fragment FDR against a BC1S4 simulation on the 118K v5 grid"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The coverage-degradation GWAS sweep is only *fair* if each
+ancestry caller runs at its **per-coverage optimal parameter**. This note is the
+calibration that produces those parameters: for each caller and each coverage
+$\lambda$ we simulate a known-truth NIL panel, degrade it to $\lambda$ with the
+same read model the sweep uses, sweep the caller's one segmentation parameter,
+and pick the value that **minimizes the donor-fragment false-discovery rate**.
+
+::: {.callout-note title="Method (identical across callers)"}
+1. **Simulated ground truth** — `simulate_nil("BC1S4", n = 200, map = <118K v5 cM
+   grid>, seed = 12345)`, with known crossovers. Truth is *simulated*, never a real
+   family's caller output (that would score a caller against another caller).
+2. **Degrade** with the sweep's read model — `.draw_counts(state, λ, error = 0.01)`,
+   same seeds — at $\lambda \in \{0.1, 0.2, 0.5, 1, 5, 10, 20, \infty\}$
+   ($\infty$ = deterministic depth-100).
+3. **Sweep** the caller's single parameter and **score** each fit against truth.
+4. **Pick** by **minimum `donor_frag_FDR`** (fewest spurious donor fragments), at
+   `min_reads = 1`. Donor recall stays $\approx 0.99$–$1.0$ throughout, so recall
+   does not discriminate — FDR does.
+:::
+
+The three callers differ only in the segmentation parameter and whether it is
+map-aware:
+
+| caller | parameter | type | map-aware? |
+|---|---|---|---|
+| **RTIGER** | `rigidity` | integer — minimum run length in **markers** | no (index-based) |
+| **nNIL** | `rrate` | continuous — per-marker recombination rate (self-stay $= 1-$`rrate`) | **no** (one fixed transition every marker) |
+| **LB-Impute** | `recombdist` | continuous — linkage-decay **distance (cM)** | **yes** (consumes the cM gaps) |
+
+```{r setup}
+suppressMessages({
+  library(here)
+  library(data.table)
+  library(ggplot2)
+})
+
+COVS <- c("0.1", "0.2", "0.5", "1", "5", "10", "20", "Inf")
+read_pick <- function(caller) {
+  d <- fread(here(sprintf("results/sim/teonam/%s_calib_bycov.csv", caller)))
+  setnames(d, tolower(names(d)))
+  parm <- intersect(c("rigidity", "rrate", "recombdist"), names(d))
+  data.table(
+    caller = caller, coverage = as.character(d$coverage),
+    param = parm, param_value = d[[parm]],
+    fdr = d[["fdr"]], recall = d[["recall"]], dice = d[["dice"]]
+  )
+}
+picks <- rbindlist(lapply(c("rtiger", "nnil", "lbimpute"), read_pick))
+picks[, coverage := factor(coverage, levels = COVS)]
+picks[, caller := factor(caller, levels = c("rtiger", "nnil", "lbimpute"))]
+
+curves <- rbindlist(lapply(c("rtiger", "nnil", "lbimpute"), function(c) {
+  d <- fread(here(sprintf("results/sim/teonam/%s_calib_bycov_sweep.csv", c)))
+  d[, caller := c]
+  d
+}), fill = TRUE)
+curves[, coverage := factor(as.character(coverage), levels = COVS)]
+curves[, caller := factor(caller, levels = c("rtiger", "nnil", "lbimpute"))]
+```
+
+# The chosen parameter by coverage
+
+`param*(λ)`, the value carried into the sweep at each coverage. Each caller's
+parameter lives on a different scale, so the panels have independent $y$-axes.
+
+```{r pick-table}
+knitr::kable(
+  dcast(picks, coverage ~ caller, value.var = "param_value"),
+  caption = "param*(λ): rigidity (RTIGER), rrate (nNIL), recombdist cM (LB-Impute)."
+)
+```
+
+```{r param-by-coverage, fig.width = 9, fig.height = 3.4}
+ggplot(picks, aes(coverage, param_value, group = caller, colour = caller)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2) +
+  facet_wrap(~caller,
+    scales = "free_y",
+    labeller = as_labeller(c(
+      rtiger = "RTIGER · rigidity (markers)",
+      nnil = "nNIL · rrate",
+      lbimpute = "LB-Impute · recombdist (cM)"
+    ))
+  ) +
+  labs(x = "coverage λ (×)", y = "chosen parameter", colour = NULL) +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "none")
+```
+
+- **RTIGER `rigidity` rises with coverage** (16 → 128): deeper coverage exposes
+  more per-marker detail, so a longer minimum run is needed to keep segments stable.
+- **LB-Impute `recombdist`** is high at the lowest coverages (stiffer, longer
+  segments compensate for sparse reads) and settles to $\approx 8$–25 cM once
+  coverage is informative.
+- **nNIL `rrate` does not trend** — it bounces over an order of magnitude. That is
+  not signal; see the flat FDR plateau below.
+
+# Why each pick — FDR against the parameter
+
+The selection objective, `donor_frag_FDR`, as a function of the swept parameter,
+one line per coverage. The chosen parameter is the curve's minimum.
+
+```{r fdr-curves, fig.width = 9, fig.height = 8}
+# Mark each pick at its own recorded (param*, FDR*) — robust to golden-refined
+# values that need not sit on the coarse swept grid.
+mark <- picks[, .(caller, coverage, value = param_value, donor_frag_FDR = fdr)]
+
+ggplot(curves, aes(value, donor_frag_FDR, colour = coverage, group = coverage)) +
+  geom_line() +
+  geom_point(data = mark, size = 2.4, shape = 21, fill = "white", stroke = 1) +
+  facet_wrap(~caller,
+    ncol = 1, scales = "free_x",
+    labeller = as_labeller(c(
+      rtiger = "RTIGER · rigidity", nnil = "nNIL · rrate",
+      lbimpute = "LB-Impute · recombdist (cM)"
+    ))
+  ) +
+  scale_x_log10() +
+  labs(
+    x = "swept parameter (log scale)", y = "donor-fragment FDR",
+    colour = "λ (×)",
+    title = "Selection curves — chosen value (○) minimizes donor-fragment FDR"
+  ) +
+  theme_bw(base_size = 12)
+```
+
+**nNIL is a flat low-`rrate` plateau.** Across the whole low-`rrate` range the FDR
+barely moves (recall is already $\approx 1$), so the "minimum" is essentially noise
+— which is why the per-coverage `rrate*` bounces around above. The operational
+decision is therefore to run nNIL at a **single fixed `rrate` = 3.3e-5** in the
+sweep rather than the per-coverage argmin; RTIGER and LB-Impute do carry their
+per-coverage values.
+
+# Recall is not the discriminating metric
+
+Donor-marker recall is saturated ($\approx 0.99$–$1.0$) at every coverage and
+parameter, confirming that `donor_frag_FDR` — not recall — is what separates a
+good parameter from a bad one.
+
+```{r recall, fig.width = 8, fig.height = 3.2}
+ggplot(picks, aes(coverage, recall, group = caller, colour = caller)) +
+  geom_line() +
+  geom_point(size = 2) +
+  scale_y_continuous(limits = c(0.98, 1)) +
+  labs(x = "coverage λ (×)", y = "donor-marker recall at param*", colour = NULL) +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "top")
+```
+
+# Bottom line
+
+The calibration gives each caller a coverage-matched parameter for the
+degradation sweep: RTIGER's `rigidity` climbs 16 → 128 with depth, LB-Impute's
+`recombdist` settles near 8–25 cM, and nNIL's FDR plateau means a single fixed
+`rrate` is the honest choice. All three hold donor recall at $\approx 1$; the
+tuning only trades off spurious donor fragments (FDR). Parameters are read from
+`results/sim/teonam/{rtiger,nnil,lbimpute}_calib_bycov.csv`; the full selection
+curves are in the `_calib_bycov_sweep.csv` companions.

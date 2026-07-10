@@ -67,6 +67,9 @@ listing:
       - title: "DTA · 118K MLM"
         path: analysis/teonam-qtl-recovery-dta-mlm-118k.qmd
         description: "DTA MLM composite + five-caller sweep + noisiness"
+      - title: "Caller calibration"
+        path: analysis/teonam-caller-calibration.qmd
+        description: "Per-coverage caller parameters (rigidity/rrate/recombdist) by min-FDR on simulated truth"
       - title: "STAM · MLM (Q + K, Fig 4C)"
         path: analysis/teonam-stam-mlm-gwas-118k.qmd
         description: "TASSEL 5-PC + Centered-IBS K, exact Fig-4C model + QQ/λ"
