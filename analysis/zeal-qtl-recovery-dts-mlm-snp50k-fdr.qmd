@@ -28,7 +28,7 @@ below are identical to the DTA notebook — only the phenotype changes.
 ## Genotype at 0.4× skim: why ancestry, not per-SNP
 SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
 unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
-**counts**. The **per-SNP genotype (bcftools gpHWE) (Panel B)** is therefore λ_GC-deflated (sparse
+**counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is therefore λ_GC-deflated (sparse
 mean-imputation); the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed
 genotype (teosinte presence 0.111, matching the established BzeaSeq ~0.101). This is the
 SNP50K-specific reason ancestry inference is mandatory.
@@ -53,7 +53,7 @@ source(here("scripts/teonam_notebook_plots.R")) # shared: plot_manhattan/lollipo
 
 ```{r load}
 mlm <- fread(here("data/zeal/dts_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv")) # Panel C
-gt <- fread(here("data/zeal/dts_gwas_mlm_gphwe_gt_donor_accession_snp50k.csv")) # Panel B
+gt <- fread(here("data/zeal/dts_gwas_mlm_hwe_post_gt_donor_accession_snp50k.csv")) # Panel B
 ols <- fread(here("data/zeal/dts_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
 overlap <- here("results/sim/zeal/dts_candidate_overlap.csv")
 lam <- function(p) {
@@ -187,13 +187,13 @@ cat(sprintf("%d markers pass FDR <= 0.05 (BH); FDR line at -log10P = %s\n", sum(
 
 ## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
 
-Panel B (per-SNP genotype (bcftools gpHWE)) is λ_GC-deflated but catches sharp SNP hits (`ZCN8`) the
+Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated but catches sharp SNP hits (`ZCN8`) the
 mosaic block-terraces away. Panel C (the ancestry mosaic) is the usable, well-calibrated
 genotype. The B↔C contrast is the notebook's per-SNP-scatter vs ancestry-block-smoothing.
 
 ```{r composite, fig.width=9, fig.height=13}
 p_B <- plot_manhattan(gt,
-  sprintf("DTS — MLM (Taxon+K), per-SNP genotype (bcftools gpHWE) (λ_GC = %.2f)", lam(gt$P)),
+  sprintf("DTS — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
   overlap_csv = overlap, lod = fdr_lod(gt$P)
 )
 p_C <- plot_manhattan(mlm,
@@ -215,7 +215,7 @@ give λ-deflated scans. Caller genotypes are population-level and trait-independ
 phenotype (DTS) changes.
 
 ```{r caller-table}
-callers <- c(control = "gphwe_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
 tb1 <- fread(here("data/teonam/dts_candidate_genes.tsv"))[symbol == "zmcct10"]
 ctab2 <- rbindlist(lapply(names(callers), function(nm) {
   g <- callers[[nm]]

@@ -318,18 +318,19 @@ scratch tree is not copied.
 DOI — Phase E of `SHAREABLE_DATASET_PLAN.md`). Fully reproducible from the tracked script
 + `scripts/release_README.md` template; ~156 MB, 30 files.
 
-The **four ancestry mosaics** (`rtiger/nnil/binhmm/lbimpute`, B73 v5, 49,002 sites × ~1,400
-NILs) ship in three encodings: PLINK `.bed/.bim/.fam` (canonical binary 012), tidy
-`_012.tsv.gz`, and the native `.rds`. The **genotype** (`gphwe`) is the **authoritative
-cohort VCF** `bzea_50K_cohort.vcf.gz` (`bcftools mpileup | call -mv`, HWE-prior MAP; 1439
-samples) shipped **verbatim** + a PLINK build from it + the gwas_nil analysis subset
-(`zeal_gphwe_gt.rds`). **No single-sample GL genotypes are shared.** Shared
-`markers/snp50k_markers.tsv` + `lines/snp50k_lines.tsv`; `MANIFEST.tsv` carries sha256 per file.
+All five objects share **one common callable panel** (intersection of every object's callable
+lines ≈ 1,395; the 8 near-empty libraries RTIGER's per-chromosome QC can't call are dropped) and
+ship in three encodings: PLINK `.bed/.bim/.fam` (canonical binary 012), tidy `_012.tsv.gz`, and
+the native `.rds`. Four are **ancestry mosaics** (`rtiger/nnil/binhmm/lbimpute`); the fifth,
+**`hwe_post_gt`**, is the **genotype** — the real `bcftools mpileup | call -mv` (HWE-prior MAP)
+calls from `bzea_50K_cohort.vcf.gz`, extracted for the panel (values = the bcftools calls, not a
+reconstruction). **No single-sample GL genotypes are shared.** Shared `markers/snp50k_markers.tsv`
++ `lines/snp50k_lines.tsv`; `MANIFEST.tsv` carries sha256 per file.
 The legacy **250K** RTIGER introgression set is **not** in the release (regenerate with
 recalibrated RTIGER if ever needed).
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
-into `data/zeal/` (gitignored) and consumed by `scripts/zeal_gphwe_gt.R`. The README states the
+into `data/zeal/` (gitignored) and consumed by `scripts/zeal_hwe_post_gt.R`. The README states the
 wall (see `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
 ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
-allele at invariant sites; only `gphwe` does.
+allele at invariant sites; only `hwe_post` does.

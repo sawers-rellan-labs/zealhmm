@@ -5,9 +5,10 @@
 # 50K "variations" (SNP50K panel, B73 v5):
 #   <caller>_mosaic  ANCESTRY inference (call_ancestry): rtiger, nnil, binhmm, lbimpute
 #                    -> marker x line 0/1/2 matrix -> our VCF -> PLINK + tidy TSV + rds
-#   gphwe            the GENOTYPE: authoritative cohort VCF bzea_50K_cohort.vcf.gz
-#                    (bcftools mpileup | call -mv, HWE-prior MAP) shipped VERBATIM + PLINK
-#                    from it + the gwas_nil subset rds. NO single-sample GL is shipped.
+#   hwe_post_gt         the GENOTYPE: real bcftools calls (mpileup | call -mv, HWE-prior MAP)
+#                    from bzea_50K_cohort.vcf.gz, exported on the common panel like the mosaics
+#                    (values = the bcftools calls, not a reconstruction). NO single-sample GL.
+# All objects share ONE panel (intersection of callable lines; 8 near-empty libs dropped).
 #
 # plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 250K RTIGER
 # introgression set is NOT shipped — it would be regenerated with recalibrated RTIGER.)
@@ -15,7 +16,7 @@
 # IMPORTANT (see TERMINOLOGY.md): a mosaic is ANCESTRY, not a genotype. The PLINK/VCF
 # 0/1/2 for a mosaic is the ANCESTRY dosage (0=B73, 1=het, 2=teosinte), encoded on the
 # SNP's ref/alt alleles for tooling compatibility — it does NOT report the true allele
-# at invariant sites. Only gphwe is an actual genotype. This is documented in the README.
+# at invariant sites. Only hwe_post is an actual genotype. This is documented in the README.
 #
 # Requires plink2 on PATH (override with env PLINK2). Bulk output is gitignored (/release/).
 # =============================================================================
@@ -41,8 +42,18 @@ fwrite(mkref, file.path(OUT, "markers", "snp50k_markers.tsv"), sep = "\t")
 log_info("markers: %d SNP50K sites (B73 v5) with ref/alt/cM", nrow(mkref))
 
 # --- shared line metadata -----------------------------------------------------
+# The release panel = the intersection of every object's callable lines. RTIGER's
+# per-chromosome ">= 2x rigidity informative markers" QC is the binding constraint: 8
+# near-empty libraries (<0.3% of SNP50K sites covered) it cannot call are dropped so ALL
+# objects (mosaics + hwe_post) share one panel of lines. (See DATA.md / TERMINOLOGY.md.)
+OBJS <- c("rtiger_mosaic", "nnil_mosaic", "binhmm_mosaic", "lbimpute_mosaic", "hwe_post_gt")
+panel_common <- Reduce(intersect, lapply(OBJS, function(o) {
+  unique(colnames(readRDS(here(sprintf("data/zeal/zeal_%s.rds", o)))$state))
+}))
+log_info("common callable panel: %d lines (intersection of %d objects)", length(panel_common), length(OBJS))
+
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))
-linemeta <- unique(ss[!is.na(skim_id), .(pedigree, taxon, donor_accession, taxa_code, skim_id)])
+linemeta <- unique(ss[pedigree %in% panel_common, .(pedigree, taxon, donor_accession, taxa_code, skim_id)])
 fwrite(linemeta, file.path(OUT, "lines", "snp50k_lines.tsv"), sep = "\t")
 
 # --- per-object exporter: 0/1/2 matrix -> TSV.gz + VCF -> PLINK bed ------------
@@ -56,6 +67,7 @@ export_50k <- function(obj, layer) {
     log_warn("%s: dropping %d duplicate line columns", obj, sum(dup))
     state <- state[, !dup, drop = FALSE]
   }
+  state <- state[, panel_common, drop = FALSE] # common callable panel; identical column order across objects
   # join marker coords/alleles; keep only markers with ref/alt (all SNP50K should)
   mk <- mkref[mk, on = "marker"]
   keep <- !is.na(mk$chr) & !is.na(mk$ref) & !is.na(mk$alt)
@@ -117,30 +129,11 @@ export_50k <- function(obj, layer) {
 
 for (o in c("rtiger_mosaic", "nnil_mosaic", "binhmm_mosaic", "lbimpute_mosaic")) export_50k(o, "ancestry mosaic")
 
-# gpHWE GENOTYPE: ship the AUTHORITATIVE bcftools cohort VCF verbatim (no reconstruction) +
-# PLINK derived from it. Genotypes are `bcftools mpileup | call -mv` (HWE-prior MAP). The
-# gwas_nil analysis subset (zeal_gphwe_gt.rds) rides along. NO single-sample GL is shipped.
-export_gphwe <- function() {
-  src <- here("data/zeal/bzea_50K_cohort.vcf.gz")
-  base <- "bzea_snp50k_gphwe"
-  vcf <- file.path(OUT, "snp50k", paste0(base, ".vcf.gz"))
-  file.copy(src, vcf, overwrite = TRUE)
-  if (file.exists(paste0(src, ".csi"))) file.copy(paste0(src, ".csi"), paste0(vcf, ".csi"), overwrite = TRUE)
-  outp <- file.path(OUT, "snp50k", base)
-  rc <- system2(PLINK2, c(
-    "--vcf", vcf, "--make-bed", "--out", outp,
-    "--allow-extra-chr", "--double-id", "--set-all-var-ids", "@:#"
-  ), stdout = FALSE, stderr = FALSE)
-  if (rc != 0 || !file.exists(paste0(outp, ".bed"))) stop("plink2 failed for gphwe")
-  unlink(paste0(outp, ".log"))
-  file.copy(here("data/zeal/zeal_gphwe_gt.rds"),
-    file.path(OUT, "snp50k", paste0(base, "_gwasnil.rds")),
-    overwrite = TRUE
-  )
-  n <- length(readLines(paste0(outp, ".fam")))
-  log_info("gphwe [genotype]: authoritative bcftools VCF (%d samples) + PLINK + gwasnil.rds", n)
-}
-export_gphwe()
+# HWE-posterior GENOTYPE: the REAL bcftools calls (`bcftools mpileup | call -mv`, HWE-prior MAP),
+# extracted into zeal_hwe_post_gt.rds, exported on the SAME common panel + pedigree names as the
+# mosaics. The genotype VALUES are the bcftools calls (not a reconstruction) — only restricted
+# to the callable panel. NO single-sample GL is shipped.
+export_50k("hwe_post_gt", "genotype")
 
 # --- README (tracked template) + MANIFEST (file, bytes, sha256) ----------------
 unlink(list.files(file.path(OUT, "snp50k"), pattern = "\\.log$", full.names = TRUE)) # drop plink2 logs
