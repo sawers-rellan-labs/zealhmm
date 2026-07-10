@@ -145,9 +145,19 @@ Proposed repo: **`bzea-genotype-browser`** (separate git repo; deploy to shinyap
 - D4. Provenance panel + link to the CyVerse release and this repo.
 
 ### Deferred TODOs (noted; not blocking the app)
-- **Restrict the GWAS to the 1395 panel** — the mosaic MLM scans (nnil/binhmm/lbimpute) still run
-  on 1403 lines (8 near-empty libs present as mean-imputed-inert columns; rtiger already 1395).
-  Benign, but restrict for exact GWAS↔release consistency.
+- **Move the sample-coverage QC UPSTREAM (preferred path).** The right fix is a single sample-level
+  coverage gate applied *early* — right after the allele counts / dosage are assembled
+  (`zeal_snp50k_dosage.R`), e.g. a `pass_cov_qc` samplesheet flag or a min coverage-fraction cut —
+  so every downstream step inherits one consistent QC'd panel. Rationale: near-empty libraries (the
+  8 at ~0.001 cov-fraction, and any others near the floor) don't merely change per-object line
+  counts — **they contaminate every population-level statistic**: VanRaden **K** (empty samples
+  land at the genotype centroid), allele-frequency / HWE-prior estimation, per-marker **MAF &
+  missingness**, and **λ_GC**. Doing the QC once, upstream, makes the callers, kinship, genotype,
+  GWAS, and release all share the same clean sample set — and supersedes the per-step band-aids
+  below.
+  - band-aid (only if the upstream gate isn't done): **restrict the GWAS to 1395** — the mosaic MLM
+    scans (nnil/binhmm/lbimpute) still run on 1403 (8 near-empty libs as mean-imputed-inert columns;
+    rtiger already 1395).
 - **More upstream QC likely needed** before finalizing the released dataset — additional QC from
   earlier pipeline steps (read-count / variant filtering) may be required; 1395 is the release *for
   now* and the app's base.
