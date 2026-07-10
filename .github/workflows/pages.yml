@@ -12,7 +12,10 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  # true (not the Pages-template default of false): a new deploy supersedes an older/stuck
+  # one instead of queuing behind it. A hung "waiting" deploy once jammed the queue for ~13h;
+  # this prevents a single stuck run from blocking all future deploys.
+  cancel-in-progress: true
 
 jobs:
   deploy:
