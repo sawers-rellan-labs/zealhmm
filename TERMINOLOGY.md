@@ -23,37 +23,33 @@ and it blurs the wall.
 
 Never call our output "genotypes." Genotypes are inputs; the mosaic is what we infer.
 
-## Genotype layer — `_gt`
+## Genotype layer — `_gt` (`gphwe`)
 
-A genotype is a per-site call from read counts (the evidence), via `call_gt()` (nilhmm). The
-estimator is always `argmax`; the **method = the prior**:
+A genotype is a per-site call from the reads (the evidence), **not** an HMM inference. The
+genotype ZEAL actually uses and shares is **`gphwe`** — the authoritative cohort VCF
+`bzea_50K_cohort.vcf.gz`, produced by
 
-| token | estimator | prior | `call_gt(...)` |
-|-------|-----------|-------|----------------|
-| `ml` | argmax **GL** = maximum likelihood | flat / none | `prior = "flat"` |
-| `gphwe` | argmax **GP** (MAP) | HWE at panel AF | `prior = "hwe", af = <AF>` |
-| `gpdesign` | argmax **GP** (MAP) | Mendelian single-locus expectation of the cross | `prior = design_prior("BC2S3")` |
-| `gp` | argmax **GP** (MAP) | custom | `prior = <length-3 vector>` |
+```
+bcftools mpileup -f <B73 v5> -R <SNP50K sites> | bcftools call -mv     # HWE-prior MAP = "gpHWE"
+```
 
-Notes:
-- The method names the **estimator**: `ml` = maximum likelihood (argmax of the genotype
-  likelihood, flat prior — the token is `ml`, *not* `gl`, since `gl`/`gt` are both VCF FORMAT
-  fields and `gl_gt` would read as gibberish); `gphwe`/`gpdesign`/`gp` = MAP (argmax of the
-  posterior **GP**, the VCF field) under a prior. See the `gl-gp-map-caller-terminology` memory
-  + `genotype_likelihoods_and_hmm.qmd §2`.
-- Bare **`gp`** = "MAP with a custom prior you pass in"; `gphwe`/`gpdesign` are the two named
-  priors. (`gphwe` and `gpdesign` *are* also MAP — `gp` alone just means custom.)
-- **`gpdesign` is per-site and marginal** — it applies the design's single-locus expectation
-  independently at each site, *no linkage*. That's the deliberate contrast to `call_ancestry`,
-  which adds the recombination/linkage prior. The design prior is **derived** from
-  `design_priors("BC2S3")` → `c(.859, .031, .109)` (55:2:7 / 64), never hand-typed.
-- **Representation:** the canonical `_gt` is the **hardcall** (`return="call"`, 0/1/2 → the VCF
-  `GT`). A continuous **dosage** `E[G|reads]` for GWAS power is derived from the GP array
-  (`return="post"`): `gp[,,2]*1 + gp[,,3]*2`. Do **not** use `return="dosage"` for this — it
-  returns the hardcall as a double, not the posterior mean.
-- **`persnp` is retired** (replaced by the `_gt` scheme). The old ad-hoc `round(2·alt/cov)` hardcall
-  is now built by `scripts/zeal_gt.R` (`METHOD=ml|gphwe|gpdesign`) via `call_gt` → `zeal_<method>_gt.rds`;
-  `ml_gt` is the canonical per-SNP genotype (GWAS Panel B / the per-SNP control).
+REF = B73, so its `0/1/2 = B73 / het / teosinte` allele dosage. Built into `zeal_gphwe_gt.rds`
+(gwas_nil subset) by `scripts/zeal_gphwe_gt.R`; used as GWAS Panel B and shipped verbatim in the
+release. This is what was sent to Jim Holland — no reconstruction, no ambiguity.
+
+**Not used / not shared:** single-sample **GL / argmax-GL** genotypes (`bcftools`'s underlying GL,
+or nilhmm `call_gt(prior="flat")`). They were never part of the pipeline. An earlier `ml_gt`
+(single-sample argmax-GL) was created by mistake during the persnp retirement and has been removed
+from the repo and the release.
+
+`GL/GP/MAP` terms (reference): **GL/PL** = likelihood `P(reads|G)`; **GP** = posterior `P(G|reads)`
+(VCF field); **MAP** = argmax-GP estimator. `call -m` applies an HWE genotype prior → its `GT` is
+the MAP (hence *gpHWE*). See the `gl-gp-map-caller-terminology` memory. `call_gt()` exists in nilhmm
+(a per-site caller with a swappable prior) but the ZEAL genotype comes from bcftools, not `call_gt`.
+
+- **`persnp` is retired** and so is the mistaken `ml_gt`; the genotype layer is `gphwe` (above).
+- `design_priors("BC2S3")` → `c(.859, .031, .109)` (55:2:7 / 64) remains available as a prior
+  vector for anyone who wants a design-informed per-site caller, but ZEAL does not use it.
 
 ## Ancestry-mosaic layer — `<caller>_mosaic`
 
@@ -77,7 +73,7 @@ Our HMM ancestry inference, via `call_ancestry()` / `call_states()`. The **calle
 `GENO` (and any predictor selector) takes the **object name directly** — the suffix carries the
 type. No prefix, no alias:
 
-- `GENO=ml_gt`, `GENO=gphwe_gt`, `GENO=gpdesign_gt`, `GENO=gp_gt`  (genotype layer)
+- `GENO=gphwe_gt`  (genotype layer — the bcftools cohort genotypes)
 - `GENO=rtiger_mosaic`, `GENO=nnil_mosaic`, `GENO=binhmm_mosaic`, `GENO=lbimpute_mosaic`  (mosaic layer)
 
 Dead and removed: the `mosaic:` prefix, the bare `mosaic`=rtiger alias, `persnp`.
@@ -108,8 +104,9 @@ accessions. See the `bzea-taxa-naming` memory.
 
 ## Verbs vs nouns (quick reference)
 
-- `call_gt()` — verb, genotype layer → a **genotype** (`_gt`); nilhmm ≥ 0.3.0 (the old `call_gl`
-  name was removed, no alias). Builder: `scripts/zeal_gt.R`.
+- **genotype** (`gphwe`, `_gt`) → `bcftools mpileup | call -mv` (HWE-prior MAP); built into
+  `zeal_gphwe_gt.rds` by `scripts/zeal_gphwe_gt.R`. (`call_gt()` exists in nilhmm ≥ 0.3.0 as a
+  per-site caller, but ZEAL's genotype comes from bcftools, not `call_gt`.)
 - `call_ancestry()` / `call_states()` — verb, mosaic layer → an **ancestry mosaic** (`_mosaic`).
 - **caller** = a method (engine + params). **genotype** = input. **mosaic** = output. **GENO** =
   the object name.

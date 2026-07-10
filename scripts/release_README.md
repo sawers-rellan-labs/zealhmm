@@ -10,14 +10,18 @@ conventions: see `TERMINOLOGY.md` there.
 
 - **`*_mosaic`** = an **ancestry** inference (which parental genome each segment came
   from), produced by an HMM. States `0/1/2 = B73 / het / teosinte` **ancestry**.
-- **`ml_gt`** = an actual **genotype** called per-site from the read counts (no HMM).
-  States `0/1/2 = REF / het / ALT` allele dosage.
+- **`gphwe`** = the actual **genotype** — the authoritative `bzea_50K_cohort.vcf.gz`,
+  produced by `bcftools mpileup -f <B73 v5> | bcftools call -mv` (HWE-prior MAP = "gpHWE").
+  Shipped verbatim; REF = B73, so `0/1/2 = B73 / het / teosinte` allele dosage.
 
 > ⚠️ A mosaic is **not** a genotype. Its `0/1/2` is *ancestry* dosage — at an invariant
 > site inside a teosinte block it reports `2` even though the allele equals B73. The
 > PLINK/`012` files encode that ancestry dosage on the SNP's ref/alt alleles **only for
 > tooling compatibility**; do not read a `*_mosaic` file as allele genotypes. Only
-> `ml_gt` reports true alleles.
+> `gphwe` reports true alleles.
+>
+> No single-sample GL / argmax-GL genotypes are distributed — only the cohort-called
+> `gphwe` VCF, which is what the project actually produced and used.
 
 ## Contents
 
@@ -25,9 +29,14 @@ conventions: see `TERMINOLOGY.md` there.
 markers/snp50k_markers.tsv        marker, chr, pos, ref, alt, cM  (B73 v5)
 lines/snp50k_lines.tsv            pedigree, taxon, donor_accession, taxa_code, skim_id
 snp50k/
-  bzea_snp50k_<name>.{bed,bim,fam}   PLINK 1 binary (canonical; "binary 012")
-  bzea_snp50k_<name>_012.tsv.gz      tidy marker × line 0/1/2 matrix
-  bzea_snp50k_<name>.rds             native R list(markers, state, lines)
+  # the four *_mosaic (ancestry) objects:
+  bzea_snp50k_<caller>_mosaic.{bed,bim,fam}   PLINK 1 binary (canonical; "binary 012")
+  bzea_snp50k_<caller>_mosaic_012.tsv.gz      tidy marker × line 0/1/2 matrix
+  bzea_snp50k_<caller>_mosaic.rds             native R list(markers, state, lines)
+  # the gphwe (genotype) object:
+  bzea_snp50k_gphwe.vcf.gz(.csi)              authoritative bcftools cohort VCF (1439), verbatim
+  bzea_snp50k_gphwe.{bed,bim,fam}             PLINK 1 binary from that VCF
+  bzea_snp50k_gphwe_gwasnil.rds               the gwas_nil analysis subset (1403), 0/1/2
 250k/
   bzea_250k_rtiger_introgression_segments.tsv.gz   previous 2-state segments
   bzea_250k_rtiger_introgression.rds
@@ -42,7 +51,7 @@ MANIFEST.tsv                       file, bytes, sha256
 | `nnil_mosaic` | ancestry | nilHMM nNIL | per-SNP recall; under-calls at 0.4× |
 | `binhmm_mosaic` | ancestry | bin-HMM (1 Mb) | block-aggregated |
 | `lbimpute_mosaic` | ancestry | LB-Impute | |
-| `ml_gt` | **genotype** | `call_gt(prior="flat")` = argmax-GL (ML) | per-site; the observed-evidence layer |
+| `gphwe` | **genotype** | `bcftools mpileup \| call -mv` (HWE-prior MAP) | authoritative cohort VCF (1439) + PLINK; the observed-evidence layer |
 
 ### 250K (previous)
 

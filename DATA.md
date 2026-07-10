@@ -311,13 +311,17 @@ scratch tree is not copied.
 DOI — Phase E of `SHAREABLE_DATASET_PLAN.md`). Fully reproducible from the tracked script
 + `scripts/release_README.md` template; ~156 MB, 30 files.
 
-Per SNP50K object (B73 v5, 49,002 sites × ~1,400 NILs) — the four ancestry mosaics
-(`rtiger/nnil/binhmm/lbimpute`) + the `ml_gt` genotype — three redundant encodings:
-PLINK `.bed/.bim/.fam` (canonical binary 012), tidy `_012.tsv.gz`, and the native `.rds`.
-Shared `markers/snp50k_markers.tsv` (marker,chr,pos,ref,alt,cM) and
-`lines/snp50k_lines.tsv`. The **250K (previous)** set ships as 2-state
-(`B73`/`Introgression`) segment TSV + rds. `MANIFEST.tsv` carries sha256 per file.
+The **four ancestry mosaics** (`rtiger/nnil/binhmm/lbimpute`, B73 v5, 49,002 sites × ~1,400
+NILs) ship in three encodings: PLINK `.bed/.bim/.fam` (canonical binary 012), tidy
+`_012.tsv.gz`, and the native `.rds`. The **genotype** (`gphwe`) is the **authoritative
+cohort VCF** `bzea_50K_cohort.vcf.gz` (`bcftools mpileup | call -mv`, HWE-prior MAP; 1439
+samples) shipped **verbatim** + a PLINK build from it + the gwas_nil analysis subset
+(`zeal_gphwe_gt.rds`). **No single-sample GL genotypes are shared.** Shared
+`markers/snp50k_markers.tsv` + `lines/snp50k_lines.tsv`; the **250K (previous)** set as
+2-state (`B73`/`Introgression`) segment TSV + rds; `MANIFEST.tsv` carries sha256 per file.
 
-The README states the wall (see `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes
-**ancestry** dosage on the SNP's ref/alt alleles for tooling compatibility — it is not a
-genotype and does not report the true allele at invariant sites; only `ml_gt` does.
+The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
+into `data/zeal/` (gitignored) and consumed by `scripts/zeal_gphwe_gt.R`. The README states the
+wall (see `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
+ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
+allele at invariant sites; only `gphwe` does.
