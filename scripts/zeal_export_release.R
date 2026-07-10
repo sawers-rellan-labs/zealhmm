@@ -2,21 +2,20 @@
 # =============================================================================
 # Phase B — assemble the shareable BZea genotype release.
 #
-# 50K "variations" (SNP50K panel, B73 v5), each a marker x line 0/1/2 matrix:
+# 50K "variations" (SNP50K panel, B73 v5):
 #   <caller>_mosaic  ANCESTRY inference (call_ancestry): rtiger, nnil, binhmm, lbimpute
-#   ml_gt            per-site GENOTYPE (call_gt, argmax-GL): the observed-evidence layer
+#                    -> marker x line 0/1/2 matrix -> our VCF -> PLINK + tidy TSV + rds
+#   gphwe            the GENOTYPE: authoritative cohort VCF bzea_50K_cohort.vcf.gz
+#                    (bcftools mpileup | call -mv, HWE-prior MAP) shipped VERBATIM + PLINK
+#                    from it + the gwas_nil subset rds. NO single-sample GL is shipped.
 # 250K: the *previous* 2-state RTIGER introgression segments (Nirwan / inv4m paper).
 #
-# For each 50K object we emit, into release/bzea_genotypes/:
-#   - PLINK binary  <name>.{bed,bim,fam}   (canonical "binary 012"; via VCF -> plink2)
-#   - tidy TSV.gz   <name>_012.tsv.gz      (marker x line 0/1/2; universal)
-#   - RDS           <name>.rds             (native R; copied verbatim)
 # plus shared markers/ + lines/ tables, the 250K segments, a MANIFEST and README.
 #
 # IMPORTANT (see TERMINOLOGY.md): a mosaic is ANCESTRY, not a genotype. The PLINK/VCF
 # 0/1/2 for a mosaic is the ANCESTRY dosage (0=B73, 1=het, 2=teosinte), encoded on the
 # SNP's ref/alt alleles for tooling compatibility — it does NOT report the true allele
-# at invariant sites. Only ml_gt is an actual genotype. This is documented in the README.
+# at invariant sites. Only gphwe is an actual genotype. This is documented in the README.
 #
 # Requires plink2 on PATH (override with env PLINK2). Bulk output is gitignored (/release/).
 # =============================================================================
@@ -81,7 +80,7 @@ export_50k <- function(obj, layer) {
   GT <- matrix(gtmap[as.character(state)], nrow = nrow(state))
   GT[is.na(state)] <- "./."
   vcf <- data.table(
-    `#CHROM` = mk$chr, POS = mk$pos, ID = mk$marker, REF = mk$ref, ALT = mk$alt,
+    `#CHROM` = paste0("chr", mk$chr), POS = mk$pos, ID = mk$marker, REF = mk$ref, ALT = mk$alt,
     QUAL = ".", FILTER = ".", INFO = ".", FORMAT = "GT"
   )
   vcf <- cbind(vcf, as.data.table(GT))
@@ -90,7 +89,7 @@ export_50k <- function(obj, layer) {
   hdr <- c(
     "##fileformat=VCFv4.2",
     sprintf('##FILTER=<ID=PASS,Description="All filters passed">'),
-    sprintf("##contig=<ID=%d>", sort(unique(mk$chr))),
+    sprintf("##contig=<ID=chr%d>", sort(unique(mk$chr))),
     '##FORMAT=<ID=GT,Number=1,Type=String,Description="0/1/2 = REF/HET/ALT (ancestry dosage for _mosaic; genotype for _gt)">'
   )
   writeLines(hdr, vcff)
@@ -117,7 +116,31 @@ export_50k <- function(obj, layer) {
 }
 
 for (o in c("rtiger_mosaic", "nnil_mosaic", "binhmm_mosaic", "lbimpute_mosaic")) export_50k(o, "ancestry mosaic")
-export_50k("ml_gt", "genotype")
+
+# gpHWE GENOTYPE: ship the AUTHORITATIVE bcftools cohort VCF verbatim (no reconstruction) +
+# PLINK derived from it. Genotypes are `bcftools mpileup | call -mv` (HWE-prior MAP). The
+# gwas_nil analysis subset (zeal_gphwe_gt.rds) rides along. NO single-sample GL is shipped.
+export_gphwe <- function() {
+  src <- here("data/zeal/bzea_50K_cohort.vcf.gz")
+  base <- "bzea_snp50k_gphwe"
+  vcf <- file.path(OUT, "snp50k", paste0(base, ".vcf.gz"))
+  file.copy(src, vcf, overwrite = TRUE)
+  if (file.exists(paste0(src, ".csi"))) file.copy(paste0(src, ".csi"), paste0(vcf, ".csi"), overwrite = TRUE)
+  outp <- file.path(OUT, "snp50k", base)
+  rc <- system2(PLINK2, c(
+    "--vcf", vcf, "--make-bed", "--out", outp,
+    "--allow-extra-chr", "--double-id", "--set-all-var-ids", "@:#"
+  ), stdout = FALSE, stderr = FALSE)
+  if (rc != 0 || !file.exists(paste0(outp, ".bed"))) stop("plink2 failed for gphwe")
+  unlink(paste0(outp, ".log"))
+  file.copy(here("data/zeal/zeal_gphwe_gt.rds"),
+    file.path(OUT, "snp50k", paste0(base, "_gwasnil.rds")),
+    overwrite = TRUE
+  )
+  n <- length(readLines(paste0(outp, ".fam")))
+  log_info("gphwe [genotype]: authoritative bcftools VCF (%d samples) + PLINK + gwasnil.rds", n)
+}
+export_gphwe()
 
 # --- 250K (previous): 2-state RTIGER introgression segments -> long TSV.gz -----
 k250 <- readRDS(here("data/zeal/rtiger_250K_calls_introfinder.rds"))
