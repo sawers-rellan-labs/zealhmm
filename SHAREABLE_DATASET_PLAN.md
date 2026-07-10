@@ -202,7 +202,9 @@ callouts, and source-tree TODO grep. **None of these block the dataset/app work 
 - **plan-B5 ~400 paired BrB+skim cohort manifest** — gates the two paper-core notebooks
   `simulation-calibration.qmd` and `source-method-comparison.qmd` (both scaffolded/rendered but
   the §3.3 concordance is not real without it). Also needs the MolBreeding target-seq sample list.
-- **B1 anthocyanin phenotype + NIL panel** — gates `b1-mapping-benchmark.qmd` (marked DEFERRED).
+- ~~**B1 anthocyanin phenotype + NIL panel**~~ — resolved: the `b1-mapping-benchmark.qmd`
+  stub was removed; the anthocyanin positive control was realized by the stem-pigment
+  GWAS `zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd` (no dedicated B1 panel needed).
 - **Authentic TeoNAM raw GBS / some Drive artifacts** — CyVerse `panzea` is access-gated; raw
   ZeaGBSv2.7 + a few Drive files not all pulled. Blocked on author access (outreach open).
 
