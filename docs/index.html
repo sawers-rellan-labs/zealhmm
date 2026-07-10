@@ -399,77 +399,6 @@ window.Quarto = {
 <p>Analysis notebooks grouped by <strong>dataset</strong>, and within each dataset by the <strong>paper</strong> the work supports. Two papers are being written here — the <strong>nilHMM R package paper</strong> (priority) and the <strong>ZEAL population paper</strong> — plus the <strong>Inv4m paper</strong> (already written, in review), which this repo supplies updated genotypes to.</p>
 <section id="nilhmm-methods" class="level2">
 <h2 class="anchored" data-anchor-id="nilhmm-methods">nilHMM methods</h2>
-<section id="foundations-genotype-calling" class="level3">
-<h3 class="anchored" data-anchor-id="foundations-genotype-calling">§1 Foundations — genotype calling</h3>
-<p>Single-read genotype likelihoods and the prior’s role in low-coverage calling, the depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</p>
-<div id="listing-foundations-calling" class="quarto-listing quarto-listing-container-table">
-<div class="listing-actions-group">
-   <div class="input-group input-group-sm quarto-listing-sort">
-    <span class="input-group-text"><i class="bi bi-sort-down"></i></span>
-    <select id="listing-foundations-calling-sort" class="form-select" aria-label="Order By" onchange="window['quarto-listings']['listing-foundations-calling'].sort(this.options[this.selectedIndex].value, { order: this.options[this.selectedIndex].getAttribute('data-direction')})">
-      <option value="" disabled="" selected="" hidden="">Order By</option>
-      <option value="index" data-direction="asc">Default</option>
-      <option value="listing-title-sort" data-direction="asc">
-        Notebook
-      </option>
-    </select>
-  </div>
-    <div class="input-group input-group-sm quarto-listing-filter">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
-      <input type="text" class="search form-control" placeholder="Filter">
-    </div>
-</div>
-<table class="quarto-listing-table table">
-<thead>
-<tr>
-
-<th>
-<a class="sort" data-sort="listing-title-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Notebook</a>
-</th>
-
-<th>
-Description
-</th>
-
-</tr>
-</thead>
-<tbody class="list">
-
-<tr data-index="0" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783721372958" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2669" data-listing-title-sort="Genotype likelihoods" data-listing-filename-sort="genotype_likelihoods_and_hmm.qmd">
-<td>
-<a href="./analysis/genotype_likelihoods_and_hmm.html" class="title listing-title">Genotype likelihoods</a>
-</td>
-<td>
-<span class="listing-description">GL → posterior → call; where the prior lives; what accumulation can and cannot do</span>
-</td>
-
-</tr>
-
-<tr data-index="1" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783721475104" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2299" data-listing-title-sort="Zygosity identifiability" data-listing-filename-sort="snp50k_genotype_identifiability.qmd">
-<td>
-<a href="./analysis/snp50k_genotype_identifiability.html" class="title listing-title">Zygosity identifiability</a>
-</td>
-<td>
-<span class="listing-description">Why SNP50K skim can’t resolve het/hom — rare-allele prior + outbred-donor dilution</span>
-</td>
-
-</tr>
-
-<tr data-index="2" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783719759077" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1174" data-listing-title-sort="Emission by depth" data-listing-filename-sort="emission_by_depth_regime.qmd">
-<td>
-<a href="./analysis/emission_by_depth_regime.html" class="title listing-title">Emission by depth</a>
-</td>
-<td>
-<span class="listing-description">When read counts earn their keep vs a hard genotype</span>
-</td>
-
-</tr>
-
-</tbody>
-</table>
-<div class="listing-no-matching d-none">No matching items</div>
-</div>
-</section>
 <section id="foundations-missing-data" class="level3">
 <h3 class="anchored" data-anchor-id="foundations-missing-data">§1 Foundations — missing data</h3>
 <p>The Poisson and exponential-with-floor model of missing data, fit to the BZea population.</p>
@@ -532,6 +461,77 @@ Description
 </td>
 <td>
 <span class="listing-description">Floor model across WGS, Wideseq, and SNP50K datasets</span>
+</td>
+
+</tr>
+
+</tbody>
+</table>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
+</section>
+<section id="foundations-genotype-calling" class="level3">
+<h3 class="anchored" data-anchor-id="foundations-genotype-calling">§1 Foundations — genotype calling</h3>
+<p>Single-read genotype likelihoods and the prior’s role in low-coverage calling, the depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</p>
+<div id="listing-foundations-calling" class="quarto-listing quarto-listing-container-table">
+<div class="listing-actions-group">
+   <div class="input-group input-group-sm quarto-listing-sort">
+    <span class="input-group-text"><i class="bi bi-sort-down"></i></span>
+    <select id="listing-foundations-calling-sort" class="form-select" aria-label="Order By" onchange="window['quarto-listings']['listing-foundations-calling'].sort(this.options[this.selectedIndex].value, { order: this.options[this.selectedIndex].getAttribute('data-direction')})">
+      <option value="" disabled="" selected="" hidden="">Order By</option>
+      <option value="index" data-direction="asc">Default</option>
+      <option value="listing-title-sort" data-direction="asc">
+        Notebook
+      </option>
+    </select>
+  </div>
+    <div class="input-group input-group-sm quarto-listing-filter">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="search form-control" placeholder="Filter">
+    </div>
+</div>
+<table class="quarto-listing-table table">
+<thead>
+<tr>
+
+<th>
+<a class="sort" data-sort="listing-title-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Notebook</a>
+</th>
+
+<th>
+Description
+</th>
+
+</tr>
+</thead>
+<tbody class="list">
+
+<tr data-index="0" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783721372958" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2669" data-listing-title-sort="Genotype likelihoods" data-listing-filename-sort="genotype_likelihoods_and_hmm.qmd">
+<td>
+<a href="./analysis/genotype_likelihoods_and_hmm.html" class="title listing-title">Genotype likelihoods</a>
+</td>
+<td>
+<span class="listing-description">GL → posterior → call; where the prior lives; what accumulation can and cannot do</span>
+</td>
+
+</tr>
+
+<tr data-index="1" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783721475104" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2299" data-listing-title-sort="Zygosity identifiability" data-listing-filename-sort="snp50k_genotype_identifiability.qmd">
+<td>
+<a href="./analysis/snp50k_genotype_identifiability.html" class="title listing-title">Zygosity identifiability</a>
+</td>
+<td>
+<span class="listing-description">Why SNP50K skim can’t resolve het/hom — rare-allele prior + outbred-donor dilution</span>
+</td>
+
+</tr>
+
+<tr data-index="2" data-listing-date-sort="1783656000000" data-listing-file-modified-sort="1783722758354" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1153" data-listing-title-sort="Emission by depth" data-listing-filename-sort="emission_by_depth_regime.qmd">
+<td>
+<a href="./analysis/emission_by_depth_regime.html" class="title listing-title">Emission by depth</a>
+</td>
+<td>
+<span class="listing-description">When read counts earn their keep vs a hard genotype</span>
 </td>
 
 </tr>
@@ -1565,20 +1565,20 @@ Description
 <span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a><span class="fu">## nilHMM methods</span></span>
 <span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — genotype calling</span></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — missing data</span></span>
 <span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>Single-read genotype likelihoods and the prior's role in low-coverage calling, the</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>The Poisson and exponential-with-floor model of missing data, fit to the BZea</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>population.</span>
 <span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>::: {#foundations-calling}</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>::: {#foundations}</span>
 <span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — missing data</span></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — genotype calling</span></span>
 <span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>The Poisson and exponential-with-floor model of missing data, fit to the BZea</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>population.</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>Single-read genotype likelihoods and the prior's role in low-coverage calling, the</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</span>
 <span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>::: {#foundations}</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>::: {#foundations-calling}</span>
 <span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a><span class="fu">### Engine &amp; calibration</span></span>

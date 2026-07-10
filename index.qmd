@@ -136,20 +136,20 @@ written, in review), which this repo supplies updated genotypes to.
 
 ## nilHMM methods
 
-### §1 Foundations — genotype calling
-
-Single-read genotype likelihoods and the prior's role in low-coverage calling, the
-depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.
-
-::: {#foundations-calling}
-:::
-
 ### §1 Foundations — missing data
 
 The Poisson and exponential-with-floor model of missing data, fit to the BZea
 population.
 
 ::: {#foundations}
+:::
+
+### §1 Foundations — genotype calling
+
+Single-read genotype likelihoods and the prior's role in low-coverage calling, the
+depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.
+
+::: {#foundations-calling}
 :::
 
 ### Engine & calibration
