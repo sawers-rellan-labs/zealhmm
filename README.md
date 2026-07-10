@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="zeal.png" alt="ZEAL — Zea Exotic Allele Library" width="200">
+</p>
+
+<h1 align="center">ZEAL — Zea Exotic Allele Library</h1>
+
 # zealhmm — simulation-calibrated HMM ancestry calling for NILs
 
 Clean, reproducible analysis repo backing the **nilHMM methods paper** (Oxford
