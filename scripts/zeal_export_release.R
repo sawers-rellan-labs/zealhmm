@@ -8,9 +8,9 @@
 #   gphwe            the GENOTYPE: authoritative cohort VCF bzea_50K_cohort.vcf.gz
 #                    (bcftools mpileup | call -mv, HWE-prior MAP) shipped VERBATIM + PLINK
 #                    from it + the gwas_nil subset rds. NO single-sample GL is shipped.
-# 250K: the *previous* 2-state RTIGER introgression segments (Nirwan / inv4m paper).
 #
-# plus shared markers/ + lines/ tables, the 250K segments, a MANIFEST and README.
+# plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 250K RTIGER
+# introgression set is NOT shipped — it would be regenerated with recalibrated RTIGER.)
 #
 # IMPORTANT (see TERMINOLOGY.md): a mosaic is ANCESTRY, not a genotype. The PLINK/VCF
 # 0/1/2 for a mosaic is the ANCESTRY dosage (0=B73, 1=het, 2=teosinte), encoded on the
@@ -27,7 +27,7 @@ source(here("scripts/logging.R"))
 
 OUT <- here("release/bzea_genotypes")
 PLINK2 <- Sys.getenv("PLINK2", "plink2")
-for (d in c("snp50k", "markers", "lines", "250k")) {
+for (d in c("snp50k", "markers", "lines")) {
   dir.create(file.path(OUT, d), recursive = TRUE, showWarnings = FALSE)
 }
 
@@ -141,23 +141,6 @@ export_gphwe <- function() {
   log_info("gphwe [genotype]: authoritative bcftools VCF (%d samples) + PLINK + gwasnil.rds", n)
 }
 export_gphwe()
-
-# --- 250K (previous): 2-state RTIGER introgression segments -> long TSV.gz -----
-k250 <- readRDS(here("data/zeal/rtiger_250K_calls_introfinder.rds"))
-seg <- rbindlist(lapply(names(k250), function(nm) {
-  d <- as.data.table(k250[[nm]])
-  data.table(
-    pedigree = sub("\\.B$", "", nm),
-    chr = as.integer(sub("^chr", "", d[[1]])), start = as.integer(d[[2]]),
-    end = as.integer(d[[3]]), state = d[[4]]
-  )
-}))[order(pedigree, chr, start)]
-fwrite(seg, file.path(OUT, "250k", "bzea_250k_rtiger_introgression_segments.tsv.gz"), sep = "\t")
-file.copy(here("data/zeal/rtiger_250K_calls_introfinder.rds"),
-  file.path(OUT, "250k", "bzea_250k_rtiger_introgression.rds"),
-  overwrite = TRUE
-)
-log_info("250K (previous): %d lines, %d segments (2-state B73/Introgression)", uniqueN(seg$pedigree), nrow(seg))
 
 # --- README (tracked template) + MANIFEST (file, bytes, sha256) ----------------
 unlink(list.files(file.path(OUT, "snp50k"), pattern = "\\.log$", full.names = TRUE)) # drop plink2 logs

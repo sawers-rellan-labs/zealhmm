@@ -18,9 +18,9 @@ landing (CyVerse Data Store). Three components:
 
 1. **50K dataset, in its caller variations** — the SNP50K ancestry mosaics produced by each
    nilHMM/RTIGER caller, as **binary 0/1/2 ancestry-state matrices** (0 = B73 hom,
-   1 = het, 2 = teosinte hom).
-2. **250K dataset** — the previous (inv4m-paper) RTIGER introgression call set
-   (2-state B73 / introgression), as staged from Nirwan's introgression finder.
+   1 = het, 2 = teosinte hom), **plus the `gphwe` genotype** (bcftools cohort VCF).
+2. ~~**250K dataset**~~ — **dropped** (2026-07-09): legacy inv4m-paper RTIGER set; would be
+   regenerated with recalibrated RTIGER if ever needed, not shipped.
 3. **Expanded wideseq-union dataset** — genotype/ancestry at the **union of (Poisson-QC'd
    wideseq 27 M positions) ∪ (SNP50K positions)**, derived from the low-coverage read counts.
 
@@ -97,14 +97,15 @@ scripts both cite, plus a mechanical rename pass (`GENO=mosaic` → `rtiger`).
 - A3. Normalize spellings (`SNP50K`, `wideseq`, caller names) across `scripts/`, `DATA.md`,
   `analysis/`.
 
-### Phase B — Package the 50K + 250K datasets (G1.1, G1.2) — ✅ DONE (2026-07-09)
-Built by `scripts/zeal_export_release.R` → `release/bzea_genotypes/` (gitignored, ~156 MB, 30
-files, fully reproducible; awaits CyVerse upload = Phase E). Per 50K object (`rtiger/nnil/binhmm/
-lbimpute`_mosaic + `ml_gt`): PLINK `.bed/.bim/.fam` + tidy `_012.tsv.gz` + `.rds`; shared
-`markers/` (marker,chr,pos,ref,alt,cM) + `lines/` tables; 250K as 2-state segment TSV + rds;
-`README` (from tracked `scripts/release_README.md`) + `MANIFEST.tsv` (sha256). 49,002 SNP50K sites
-× ~1,400 lines, B73 v5. README carries the mosaic≠genotype wall (PLINK 0/1/2 for a `_mosaic` is
-ancestry dosage, not true alleles).
+### Phase B — Package the 50K dataset (G1.1) — ✅ DONE (2026-07-09)
+Built by `scripts/zeal_export_release.R` → `release/bzea_genotypes/` (gitignored, fully
+reproducible; awaits CyVerse upload = Phase E). Four ancestry mosaics (`rtiger/nnil/binhmm/
+lbimpute`_mosaic): PLINK `.bed/.bim/.fam` + tidy `_012.tsv.gz` + `.rds`. Genotype = **`gphwe`**:
+the authoritative bcftools cohort VCF `bzea_50K_cohort.vcf.gz` (`mpileup | call -mv`, HWE-prior
+MAP; 1439) shipped verbatim + PLINK + the gwas_nil rds. Shared `markers/`+`lines/` tables; `README`
++ sha256 `MANIFEST`. 49,002 sites, B73 v5. README carries the mosaic≠genotype wall.
+**G1.2 (250K) dropped** — legacy; regenerate with recalibrated RTIGER if needed. **No single-sample
+GL shared** (the mistaken `ml_gt` was removed; see PR #6).
 
 - B1. Define a **release schema**: per caller, a plain-text 0/1/2 matrix + a marker table
   (`chr,pos,ref,alt,marker,cM`) + a line table (`skim_id,pedigree,taxon,donor_accession`).
