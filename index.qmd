@@ -84,6 +84,12 @@ listing:
         description: "B1 mapping benchmark"
 ---
 
+::: {style="text-align:center; margin-bottom:2rem;"}
+![](zeal.png){fig-alt="ZEAL — Zea Exotic Allele Library" width="200"}
+
+*Zea Exotic Allele Library*
+:::
+
 ## ZEAL / BZea
 
 B73 × teosinte BC2S3 near-isogenic lines; SNP50K panel at ~0.4× skim.
