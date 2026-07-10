@@ -48,7 +48,10 @@ listing:
         description: "nNIL, RTIGER, LB-Impute, binhmm, control"
       - title: "Simulation calibration"
         path: analysis/simulation-calibration.qmd
-        description: "Per-coverage caller calibration on simulated truth"
+        description: "Two-stage simcross parameter search (calibrate on sim, validate on truth)"
+      - title: "Single-locus validation"
+        path: analysis/single-locus-validation.qmd
+        description: "Does the simcross BC2S3 simulator reproduce the breeding-scheme genotype frequencies? (native v5 map)"
   - id: teonam-recovery
     type: table
     fields: [title, description]

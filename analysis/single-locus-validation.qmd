@@ -1,0 +1,152 @@
+---
+title: "Single-locus validation of the BC2S3 simulation"
+subtitle: "Does the simcross BC2S3 simulator reproduce the breeding-scheme genotype frequencies? — on the TeoNAM native v5 map"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+params:
+  n: 1500
+  m: 10
+  p: 0
+  seed: 1
+---
+
+Does the Broman/`simcross` BC2S3 simulation reproduce the **single-locus
+breeding-scheme expectation** for the REF/Het/ALT genome fractions? This notebook
+runs that check on the **TeoNAM native v5 cM map** (the same 118K-marker grid the
+per-coverage caller calibration uses), validating the simulator this repo's
+coverage-degradation sweeps rely on. It is a *circularity* check: before trusting a
+caller's recovery of the truth, confirm the truth-generator itself is unbiased.
+
+The sim stack is zealhmm's own (`R/simulate.R`: `.bcsft_pedigree`, `.simulate_dosage`);
+the single-locus expectation and the design-correct goodness-of-fit test are in
+`R/single_locus.R` (ported from the exploratory `zealtiger` repo). Why Hotelling and
+not Pearson, why Mb on real marker coordinates, and the ergodicity distinction are
+explained inline.
+
+## Setup
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(dplyr)
+  library(ggplot2)
+  library(simcross)
+  library(patchwork)
+  library(here)
+})
+source(here("R/simulate.R")) # .bcsft_pedigree, .chr_cm_lengths, .simulate_dosage
+source(here("R/single_locus.R")) # single_locus_p0, state_fractions_mb, hotelling_fractions, plot_fraction_forest
+set.seed(params$seed)
+
+# TeoNAM native v5 cM map — the 118K-marker grid used by the caller calibration.
+mc <- fread(here("data/teonam/markers_v5_gwas118k_cm.tsv"))
+map <- mc[, .(chr = as.integer(chr), bp = as.integer(pos_v5), cm = as.numeric(cm))][order(chr, bp)]
+markers <- map # the native markers directly carry chr/bp/cm — no re-gridding
+
+bp <- .bcsft_pedigree(n_bc = 2L, n_self = 3L)
+ped <- bp$ped
+nid <- bp$nil_id
+cmlen <- .chr_cm_lengths(map)
+cat(sprintf(
+  "simcross %s | native markers: %d | genome: %.0f cM | N: %d\n",
+  as.character(packageVersion("simcross")), nrow(markers), sum(cmlen$L), params$n
+))
+```
+
+## 1. The single-locus expectation (BC2S3 transition matrix)
+
+The genotype distribution at any single locus after F1 → 2 backcrosses → 3
+selfings, from the breeding-scheme transition matrices (map- and
+interference-independent — a marginal quantity).
+
+```{r p0}
+p0 <- single_locus_p0(n_bc = 2L, n_self = 3L)
+tibble(state = names(p0), expected = as.numeric(p0)) |>
+  mutate(note = c("hom recurrent", "het", "hom donor")) |>
+  knitr::kable(digits = 6)
+cat(sprintf(
+  "donor dosage = ALT + 0.5*Het = %.4f (expect 0.1250)\n",
+  p0["ALT"] + 0.5 * p0["Het"]
+))
+```
+
+## 2. f_i validation (Mb-based, Hotelling)
+
+Simulate `n` NILs on the native map, tabulate per-NIL Mb fractions, and test the
+population means against `p0` with the design-correct Hotelling/Wald χ²(2) (sample
+= unit; empirical between-sample covariance — **not** per-marker binomial, which
+linkage overdispersion would make reject a correct sampler).
+
+```{r fi-check}
+F <- t(vapply(seq_len(params$n), function(i) {
+  state_fractions_mb(markers, .simulate_dosage(ped, cmlen, markers,
+    m = params$m, p = params$p, nil_id = nid
+  ))
+}, numeric(3)))
+colnames(F) <- c("REF", "Het", "ALT")
+res <- hotelling_fractions(F, p0)
+knitr::kable(res$table, digits = 5)
+cat(sprintf(
+  "Hotelling T^2 = %.3f (df=2), chi2 p = %.4g | N_eff(ALT) = %.1f vs %d markers\n",
+  res$T2, res$p_chisq,
+  with(res$table[res$table$state == "ALT", ], expected * (1 - expected) / sd_fi^2),
+  nrow(markers)
+))
+cat(if (all(res$table$in_ci)) {
+  "PASS: all expectations inside 95% Wald CIs.\n"
+} else {
+  "CHECK: an expectation outside its CI.\n"
+})
+```
+
+The fractions span ~2 orders of magnitude, so a single linear forest plot can show
+magnitude *or* intervals but not both. Panel **A** (log axis) carries magnitude;
+panel **B** (standardized deviation, ±1.96 band) carries the pass criterion —
+scale-free.
+
+```{r forest, fig.width=10, fig.height=3.2}
+plot_fraction_forest(res$table,
+  title = sprintf(
+    "BC2S3 vs single-locus expectation (n=%d, native v5 map)",
+    params$n
+  )
+)
+```
+
+`N_eff` (not the marker count) is the ergodicity-limited effective sample size:
+with ~33 crossovers/genome the per-NIL fraction averages over few independent
+blocks, so the right SE is `sd(f_i)/√N`, not a per-marker binomial. This is the
+same ergodicity distinction developed in
+[the wideseq coverage-ergodicity note](wideseq-coverage-ergodicity.html).
+
+## 3. Marker-resolution sweep (deferred)
+
+::: {.callout-note title="Deferred to a native-map re-run"}
+The exploratory version swept marker density (Cohen's *d* of the Het fraction vs
+spacing) to show Het is undercounted only below ~0.5 Mb spacing — a
+truth-*measurement* floor distinct from low-coverage Het miscalling. That sweep
+was computed on the maize consensus map; reproducing it on the TeoNAM native grid
+needs a density-varying marker grid (zealhmm's `build_marker_grid` currently
+integer-overflows on bp-scale maize spans — a small fix to make before running).
+Left as future work; the layer-1 truth validation above (§1–§2) does not depend on
+it.
+:::
+
+## Conclusion
+
+On the TeoNAM native v5 map, the `simcross` BC2S3 simulator reproduces the
+single-locus genotype fractions — all three states inside their 95% CIs, donor
+dosage 0.125 — so the truth-generator behind the coverage-degradation sweeps is
+unbiased at the single-locus margin. The only known deviation is a
+marker-resolution undercount of Het at coarse spacing (deferred sweep, §3). Layer 1
+(truth) is validated; caller observation/recovery under coverage is the calibration
+and sweep notebooks.
