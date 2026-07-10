@@ -289,6 +289,13 @@ Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223
   `results_list_new_name.rds` in Nirwan Tandukar's app repo
   `github.com/nirwan1265/BZea_Introgression_Finder` (the calls behind the inversion paper's
   `inv4m_introgression` label). Names carry a `.B` bulk suffix → strip to match pedigree.
+  **Provenance (Nirwan DM 2025-08-15; a lineage SEPARATE from this repo's BzeaSeq/wideseq work,
+  and not reproducible here):** Nirwan ran GATK HaplotypeCaller → joint genotyping on the BZea BAMs
+  (`/rsstu/.../DOE_CAREER/BZea/joint_genotype/all_samps/9_final_samples/more_filtered/BZea.vcf.gz`,
+  raw, ~98% missing) → MAF ≥ 0.05 + quality filter + rename → **Beagle imputation by Asher (P.
+  Balint-Kurti's lab)** → `BZea_MAF_0.05_qfiltered_newnames_imputed.vcf.gz` (196,120 SNPs) → RTIGER.
+  It is **excluded from the release** (legacy, Beagle-imputed, no pipeline on hand; regenerate with
+  recalibrated RTIGER on the SNP50K side if ever needed).
 - `rtiger_50K_calls.csv` — **50K (current)** RTIGER 3-state segments (see `zeal_rtiger_mosaic.R`).
 - `CLY25_ZEAL.csv`, `Bzea_metadata.csv` — spatially-corrected NC2025 phenotypes + donor metadata,
   staged from the inv4m Drive repo (`scripts/inversion_paper`).
@@ -317,8 +324,9 @@ NILs) ship in three encodings: PLINK `.bed/.bim/.fam` (canonical binary 012), ti
 cohort VCF** `bzea_50K_cohort.vcf.gz` (`bcftools mpileup | call -mv`, HWE-prior MAP; 1439
 samples) shipped **verbatim** + a PLINK build from it + the gwas_nil analysis subset
 (`zeal_gphwe_gt.rds`). **No single-sample GL genotypes are shared.** Shared
-`markers/snp50k_markers.tsv` + `lines/snp50k_lines.tsv`; the **250K (previous)** set as
-2-state (`B73`/`Introgression`) segment TSV + rds; `MANIFEST.tsv` carries sha256 per file.
+`markers/snp50k_markers.tsv` + `lines/snp50k_lines.tsv`; `MANIFEST.tsv` carries sha256 per file.
+The legacy **250K** RTIGER introgression set is **not** in the release (regenerate with
+recalibrated RTIGER if ever needed).
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
 into `data/zeal/` (gitignored) and consumed by `scripts/zeal_gphwe_gt.R`. The README states the

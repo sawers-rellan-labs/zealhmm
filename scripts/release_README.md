@@ -37,9 +37,6 @@ snp50k/
   bzea_snp50k_gphwe.vcf.gz(.csi)              authoritative bcftools cohort VCF (1439), verbatim
   bzea_snp50k_gphwe.{bed,bim,fam}             PLINK 1 binary from that VCF
   bzea_snp50k_gphwe_gwasnil.rds               the gwas_nil analysis subset (1403), 0/1/2
-250k/
-  bzea_250k_rtiger_introgression_segments.tsv.gz   previous 2-state segments
-  bzea_250k_rtiger_introgression.rds
 MANIFEST.tsv                       file, bytes, sha256
 ```
 
@@ -53,12 +50,8 @@ MANIFEST.tsv                       file, bytes, sha256
 | `lbimpute_mosaic` | ancestry | LB-Impute | |
 | `gphwe` | **genotype** | `bcftools mpileup \| call -mv` (HWE-prior MAP) | authoritative cohort VCF (1439) + PLINK; the observed-evidence layer |
 
-### 250K (previous)
-
-The genotypes behind the **inv4m paper** — an older RTIGER call set on a larger
-GATK/QC variant panel (Nirwan Tandukar's introgression finder). **2-state only**
-(`B73` / `Introgression`), shipped as per-line segments. Kept for cross-comparison;
-prefer the SNP50K 3-state calls above for new work.
+The legacy **250K** RTIGER introgression set (inv4m paper) is intentionally **not** part of
+this release — it would be regenerated with recalibrated RTIGER if needed.
 
 ## Encoding
 
@@ -67,5 +60,5 @@ prefer the SNP50K 3-state calls above for new work.
 
 ## Provenance & citation
 
-SNP50K counts and callers: `zealhmm` (`DATA.md`). Package: `nilHMM` (≥0.3.0). 250K:
-`nirwan1265/BZea_Introgression_Finder`. _Cite: <DOI pending CyVerse deposit>._
+SNP50K counts and callers: `zealhmm` (`DATA.md`). Package: `nilHMM` (≥0.3.0).
+_Cite: <DOI pending CyVerse deposit>._
