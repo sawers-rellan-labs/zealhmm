@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-09">
+<meta name="dcterms.date" content="2026-07-10">
 
 <title>Simulation-calibrated ancestry calling: two-stage parameter search – zealhmm</title>
 <style>
@@ -4080,12 +4080,6 @@ vertical-align: -.125em;
   <li><a href="#fragment-size-fit-supplementary" id="toc-fragment-size-fit-supplementary" class="nav-link" data-scroll-target="#fragment-size-fit-supplementary">4. Fragment-size fit (supplementary)</a></li>
   <li><a href="#genotype-frequency-vs-the-one-locus-expectation-supplementary" id="toc-genotype-frequency-vs-the-one-locus-expectation-supplementary" class="nav-link" data-scroll-target="#genotype-frequency-vs-the-one-locus-expectation-supplementary">5. Genotype-frequency vs the one-locus expectation (supplementary)</a></li>
   <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
-  <li><a href="#the-simulation-and-its-truth-2.4-1" id="toc-the-simulation-and-its-truth-2.4-1" class="nav-link" data-scroll-target="#the-simulation-and-its-truth-2.4-1">1. The simulation and its truth (§2.4)</a></li>
-  <li><a href="#two-stage-calibration-1" id="toc-two-stage-calibration-1" class="nav-link" data-scroll-target="#two-stage-calibration-1">2. Two-stage calibration</a></li>
-  <li><a href="#benchmark-at-the-calibrated-parameters-2.5-3.2-1" id="toc-benchmark-at-the-calibrated-parameters-2.5-3.2-1" class="nav-link" data-scroll-target="#benchmark-at-the-calibrated-parameters-2.5-3.2-1">3. Benchmark at the calibrated parameters (§2.5, §3.2)</a></li>
-  <li><a href="#fragment-size-fit-supplementary-1" id="toc-fragment-size-fit-supplementary-1" class="nav-link" data-scroll-target="#fragment-size-fit-supplementary-1">4. Fragment-size fit (supplementary)</a></li>
-  <li><a href="#genotype-frequency-vs-the-one-locus-expectation-supplementary-1" id="toc-genotype-frequency-vs-the-one-locus-expectation-supplementary-1" class="nav-link" data-scroll-target="#genotype-frequency-vs-the-one-locus-expectation-supplementary-1">5. Genotype-frequency vs the one-locus expectation (supplementary)</a></li>
-  <li><a href="#next-steps-1" id="toc-next-steps-1" class="nav-link" data-scroll-target="#next-steps-1">Next steps</a></li>
   </ul>
 </nav>
     </div>
@@ -4112,7 +4106,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 9, 2026</p>
+      <p class="date">July 10, 2026</p>
     </div>
   </div>
   
@@ -4387,134 +4381,10 @@ RTIGER rigidity log sweep (powers of 2, feasibility-capped):</code></pre>
 <li>Add the BrB regime and carry the per-source calibrated parameters to <code>source-method-comparison.qmd</code>.</li>
 <li>Sharpen the objective’s soft plateau near the optimum with a KS or breakpoint-match tie-breaker.</li>
 </ul>
-<pre><code>
 
 
+<!-- -->
 
-:::{#quarto-navigation-envelope .hidden}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1zaWRlYmFyLXRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXItdGl0bGU=&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6emVhbGhtbQ==&quot;}
-[https://github.com/sawers-rellan-labs/zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL3Nhd2Vycy1yZWxsYW4tbGFicy96ZWFsaG1t&quot;}
-[Home]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6SG9tZQ==&quot;}
-[/index.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L2luZGV4Lmh0bWw=&quot;}
-[Data provenance]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6RGF0YSBwcm92ZW5hbmNl&quot;}
-[/DATA.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L0RBVEEuaHRtbA==&quot;}
-:::
-
-
-
-:::{#quarto-meta-markdown .hidden}
-[Simulation-calibrated ancestry calling: two-stage parameter search – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGF0aXRsZQ==&quot;}
-[Simulation-calibrated ancestry calling: two-stage parameter search – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkdGl0bGU=&quot;}
-[Simulation-calibrated ancestry calling: two-stage parameter search – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZHRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlbmFtZQ==&quot;}
-[Materials &amp; Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkZGVzYw==&quot;}
-[Materials &amp; Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZGRkZXNj&quot;}
-[Teosinte-introgression QTL recovery — TeoNAM &amp; ZEAL/BZea]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlZGVzYw==&quot;}
-:::
-
-
-
-
-&lt;!-- --&gt;
-
-::: {.quarto-embedded-source-code}
-```````````````````{.markdown shortcodes=&quot;false&quot;}
----
-title: &quot;Simulation-calibrated ancestry calling: two-stage parameter search&quot;
-subtitle: &quot;Materials &amp; Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth&quot;
-author: &quot;Fausto Rodríguez-Zapata&quot;
-date: today
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    embed-resources: true
-execute:
-  warning: false
-  message: false
-  echo: true
----
-
-**Thesis.** Ancestry-caller segmentation parameters (`rrate` for nNIL, `rigidity`
-for RTIGER) can be **calibrated from cheap Broman `simcross` simulations** where
-the donor mosaic is known truth, rather than tuned by eye on real data.
-
-**Method — a two-stage search** (`R/calibrate.R`, driven by
-`scripts/02_calibrate.R`):
-
-1. **Log sweep** — score a coarse log-spaced grid against truth to *bracket* the
-   optimum (`sweep_calibrate` → one shared `nilHMM::caller_sweep` fit + scoring).
-2. **Golden-ratio refine** — golden-section search inside the bracket on the
-   continuous `log10(parameter)` to *localize* it (`golden_refine`).
-
-The objective is **donor-fragment Dice** (reciprocal-overlap of called vs true
-introgression blocks) — it penalizes both missed donor and the spurious 1-marker
-blocks that over-fragmentation produces, unlike marker recall which saturates.
-
-::: {.callout-note title=&quot;Compute is separated from this note&quot;}
-`scripts/02_calibrate.R` runs the sim, calibration, and benchmark, writing summary
-CSVs to `results/sim/` (gitignored). This note only loads and plots them.
-Regenerate with `Rscript scripts/02_calibrate.R --generate`.
-:::
-
-```{r setup}
-suppressMessages({
-  library(data.table)
-  library(ggplot2)
-})
-SIM &lt;- here::here(&quot;results/sim&quot;)
-f &lt;- function(x) file.path(SIM, x)
-# Pinned BC2S2 params snapshot: the generic calib_params.csv gets overwritten by
-# BC1S4 runs (character `design` row breaks this BC2S2 note), so read a dated copy.
-CALIB &lt;- &quot;calib_params_bc2s2_20260706024342.csv&quot;
-have &lt;- file.exists(f(CALIB))
-if (have) {
-  P &lt;- fread(f(CALIB))
-  par &lt;- setNames(P$value, P$key)
-  nnil_sw &lt;- fread(f(&quot;nnil_rrate_sweep.csv&quot;))
-  rtig_sw &lt;- fread(f(&quot;rtiger_rigidity_sweep.csv&quot;))
-  nnil_rf &lt;- fread(f(&quot;nnil_rrate_refine.csv&quot;))
-  rtig_rf &lt;- fread(f(&quot;rtiger_rigidity_refine.csv&quot;))
-  bench &lt;- fread(f(&quot;benchmark.csv&quot;))
-  frag &lt;- fread(f(&quot;frag_sizes.csv&quot;))
-  geno &lt;- fread(f(&quot;geno_fractions.csv&quot;))
-}</code></pre>
-</section>
-<section id="the-simulation-and-its-truth-2.4-1" class="level1">
-<h1>1. The simulation and its truth (§2.4)</h1>
-<p><strong>BC2S2</strong>, n = 1500, <code>simcross</code> on the maize consensus map (~1783 cM, Stahl interference m = 10 / p = 0), 50 000 markers, degraded to the skim regime (~0.43× / ~72% missing). Truth = the donor mosaic. The simulated genome composition should match the single-locus (Mendelian) expectation:</p>
-<p><code>{r truth, eval=have} data.table(   metric = c(&quot;REF&quot;, &quot;HET&quot;, &quot;ALT&quot;, &quot;donor dosage&quot;),   simulated = round(par[c(&quot;REF_truth&quot;, &quot;HET_truth&quot;, &quot;ALT_truth&quot;, &quot;dosage_truth&quot;)], 4),   expected = round(par[c(&quot;REF_expect&quot;, &quot;HET_expect&quot;, &quot;ALT_expect&quot;, &quot;dosage_expect&quot;)], 4) )</code></p>
-</section>
-<section id="two-stage-calibration-1" class="level1">
-<h1>2. Two-stage calibration</h1>
-<p>For each caller the coarse <strong>log sweep</strong> (line) brackets the optimum, and the <strong>golden-ratio refine</strong> (points) homes in; the dashed line is the refined parameter carried to the benchmark.</p>
-<p><code>{r calib-fig, eval=have, fig.width=9, fig.height=4} calib_panel &lt;- function(sweep, refine, star, xlab, xtrans) {   ggplot(sweep, aes(value)) +     geom_line(aes(y = donor_frag_dice, colour = &quot;donor-fragment Dice&quot;)) +     geom_line(aes(y = donor_frag_FDR, colour = &quot;donor-fragment FDR&quot;)) +     geom_point(data = refine, aes(value, objective, colour = &quot;golden probes&quot;), size = 1.6) +     geom_vline(xintercept = star, linetype = &quot;dashed&quot;) +     xtrans +     labs(x = xlab, y = &quot;score&quot;, colour = NULL) +     theme(legend.position = &quot;top&quot;) } p_nnil &lt;- calib_panel(nnil_sw, nnil_rf, par[&quot;rrate_star&quot;], &quot;nNIL rrate&quot;, scale_x_log10()) +   ggtitle(sprintf(&quot;nNIL — refined rrate = %.2g&quot;, par[&quot;rrate_star&quot;])) p_rtig &lt;- calib_panel(   rtig_sw, rtig_rf, par[&quot;rigidity_star&quot;], &quot;RTIGER rigidity&quot;,   scale_x_continuous(trans = &quot;log2&quot;) ) +   ggtitle(sprintf(&quot;RTIGER — refined rigidity = %d&quot;, as.integer(par[&quot;rigidity_star&quot;]))) patchwork_ok &lt;- requireNamespace(&quot;patchwork&quot;, quietly = TRUE) if (patchwork_ok) {   print(patchwork::wrap_plots(p_nnil, p_rtig)) } else {   print(p_nnil)   print(p_rtig) }</code></p>
-<p><code>{r calib-tables, eval=have} # The log-sweep curves (Dice peaks then over-fragments as FDR/breakpoints climb). show &lt;- function(s, pcol) {   s[, .(     value = signif(value, 3), donor_frag_dice = round(donor_frag_dice, 3),     donor_frag_FDR = round(donor_frag_FDR, 3), donor_marker_recall = round(donor_marker_recall, 3),     n_breakpoints, truth_bp, ks = round(ks_fragsize, 3)   )] } cat(&quot;nNIL rrate log sweep:\n&quot;) print(show(nnil_sw)) cat(&quot;\nRTIGER rigidity log sweep (powers of 2, feasibility-capped):\n&quot;) print(show(rtig_sw))</code></p>
-</section>
-<section id="benchmark-at-the-calibrated-parameters-2.5-3.2-1" class="level1">
-<h1>3. Benchmark at the calibrated parameters (§2.5, §3.2)</h1>
-<p>Each caller run at its refined optimum on a held-out set, scored vs truth:</p>
-<p><code>{r benchmark, eval=have} bench[]</code></p>
-</section>
-<section id="fragment-size-fit-supplementary-1" class="level1">
-<h1>4. Fragment-size fit (supplementary)</h1>
-<p>Donor-block size distributions vs the BC2S2 truth (the calibrated callers should track the truth’s fragment sizes; KS in the benchmark table).</p>
-<p><code>{r fragsize, eval=have, fig.width=7, fig.height=4} ggplot(frag, aes(mb, colour = src)) +   stat_ecdf() +   scale_x_log10() +   labs(x = &quot;donor block size (Mb)&quot;, y = &quot;ECDF&quot;, title = &quot;Fragment-size fit vs truth&quot;)</code></p>
-</section>
-<section id="genotype-frequency-vs-the-one-locus-expectation-supplementary-1" class="level1">
-<h1>5. Genotype-frequency vs the one-locus expectation (supplementary)</h1>
-<p><code>{r genofreq, eval=have, fig.width=7, fig.height=4} ggplot(melt(geno[, .(src, HET, ALT)], id.vars = &quot;src&quot;), aes(src, value)) +   geom_violin(scale = &quot;width&quot;) +   facet_wrap(~variable, scales = &quot;free_y&quot;) +   geom_hline(data = data.table(     variable = c(&quot;HET&quot;, &quot;ALT&quot;), y = c(par[&quot;HET_expect&quot;], par[&quot;ALT_expect&quot;])   ), aes(yintercept = y), linetype = &quot;dashed&quot;) +   labs(x = NULL, y = &quot;genome fraction&quot;, title = &quot;Genotype frequency vs one-locus expectation (dashed)&quot;) +   theme(axis.text.x = element_text(angle = 30, hjust = 1))</code></p>
-</section>
-<section id="next-steps-1" class="level1">
-<h1>Next steps</h1>
-<ul>
-<li>Add the BrB regime and carry the per-source calibrated parameters to <code>source-method-comparison.qmd</code>.</li>
-<li>Sharpen the objective’s soft plateau near the optimum with a KS or breakpoint-match tie-breaker.</li>
-</ul>
-<pre><code></code></pre>
-<p>:::</p>
 </section>
 
 </main> <!-- /main -->
@@ -4968,7 +4838,172 @@ if (have) {
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Simulation-calibrated ancestry calling: two-stage parameter search&quot;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Materials &amp; Methods §2.4–2.5 + Results §3.1–3.2 — calibrate on simcross, validate on truth&quot;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>**Thesis.** Ancestry-caller segmentation parameters (<span class="in">`rrate`</span> for nNIL, <span class="in">`rigidity`</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>for RTIGER) can be **calibrated from cheap Broman `simcross` simulations** where</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>the donor mosaic is known truth, rather than tuned by eye on real data.</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>**Method — a two-stage search** (<span class="in">`R/calibrate.R`</span>, driven by</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/02_calibrate.R`</span>):</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Log sweep** — score a coarse log-spaced grid against truth to *bracket* the</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>   optimum (<span class="in">`sweep_calibrate`</span> → one shared <span class="in">`nilHMM::caller_sweep`</span> fit + scoring).</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Golden-ratio refine** — golden-section search inside the bracket on the</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>   continuous <span class="in">`log10(parameter)`</span> to *localize* it (<span class="in">`golden_refine`</span>).</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>The objective is **donor-fragment Dice** (reciprocal-overlap of called vs true</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>introgression blocks) — it penalizes both missed donor and the spurious 1-marker</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>blocks that over-fragmentation produces, unlike marker recall which saturates.</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title=&quot;Compute is separated from this note&quot;}</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/02_calibrate.R`</span> runs the sim, calibration, and benchmark, writing summary</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>CSVs to <span class="in">`results/sim/`</span> (gitignored). This note only loads and plots them.</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>Regenerate with <span class="in">`Rscript scripts/02_calibrate.R --generate`</span>.</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a>SIM <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;results/sim&quot;</span>)</span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">file.path</span>(SIM, x)</span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Pinned BC2S2 params snapshot: the generic calib_params.csv gets overwritten by</span></span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a><span class="co"># BC1S4 runs (character `design` row breaks this BC2S2 note), so read a dated copy.</span></span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a>CALIB <span class="ot">&lt;-</span> <span class="st">&quot;calib_params_bc2s2_20260706024342.csv&quot;</span></span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>have <span class="ot">&lt;-</span> <span class="fu">file.exists</span>(<span class="fu">f</span>(CALIB))</span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (have) {</span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a>  P <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(CALIB))</span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a>  par <span class="ot">&lt;-</span> <span class="fu">setNames</span>(P<span class="sc">$</span>value, P<span class="sc">$</span>key)</span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a>  nnil_sw <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;nnil_rrate_sweep.csv&quot;</span>))</span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a>  rtig_sw <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;rtiger_rigidity_sweep.csv&quot;</span>))</span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a>  nnil_rf <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;nnil_rrate_refine.csv&quot;</span>))</span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a>  rtig_rf <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;rtiger_rigidity_refine.csv&quot;</span>))</span>
+<span id="cb17-57"><a href="#cb17-57" aria-hidden="true" tabindex="-1"></a>  bench <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;benchmark.csv&quot;</span>))</span>
+<span id="cb17-58"><a href="#cb17-58" aria-hidden="true" tabindex="-1"></a>  frag <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;frag_sizes.csv&quot;</span>))</span>
+<span id="cb17-59"><a href="#cb17-59" aria-hidden="true" tabindex="-1"></a>  geno <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">f</span>(<span class="st">&quot;geno_fractions.csv&quot;</span>))</span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-61"><a href="#cb17-61" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-62"><a href="#cb17-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a><span class="fu"># 1. The simulation and its truth (§2.4)</span></span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a>**BC2S2**, n = 1500, <span class="in">`simcross`</span> on the maize consensus map (~1783 cM, Stahl</span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a>interference m = 10 / p = 0), 50 000 markers, degraded to the skim regime</span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>(~0.43× / ~72% missing). Truth = the donor mosaic. The simulated genome</span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>composition should match the single-locus (Mendelian) expectation:</span>
+<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a><span class="in">```{r truth, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(<span class="st">&quot;REF&quot;</span>, <span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>, <span class="st">&quot;donor dosage&quot;</span>),</span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">simulated =</span> <span class="fu">round</span>(par[<span class="fu">c</span>(<span class="st">&quot;REF_truth&quot;</span>, <span class="st">&quot;HET_truth&quot;</span>, <span class="st">&quot;ALT_truth&quot;</span>, <span class="st">&quot;dosage_truth&quot;</span>)], <span class="dv">4</span>),</span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">expected =</span> <span class="fu">round</span>(par[<span class="fu">c</span>(<span class="st">&quot;REF_expect&quot;</span>, <span class="st">&quot;HET_expect&quot;</span>, <span class="st">&quot;ALT_expect&quot;</span>, <span class="st">&quot;dosage_expect&quot;</span>)], <span class="dv">4</span>)</span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a><span class="fu"># 2. Two-stage calibration</span></span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>For each caller the coarse **log sweep** (line) brackets the optimum, and the</span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>**golden-ratio refine** (points) homes in; the dashed line is the refined</span>
+<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>parameter carried to the benchmark.</span>
+<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-fig, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=9, fig.height=4}</span></span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>calib_panel <span class="ot">&lt;-</span> <span class="cf">function</span>(sweep, refine, star, xlab, xtrans) {</span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(sweep, <span class="fu">aes</span>(value)) <span class="sc">+</span></span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> donor_frag_dice, <span class="at">colour =</span> <span class="st">&quot;donor-fragment Dice&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> donor_frag_FDR, <span class="at">colour =</span> <span class="st">&quot;donor-fragment FDR&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">data =</span> refine, <span class="fu">aes</span>(value, objective, <span class="at">colour =</span> <span class="st">&quot;golden probes&quot;</span>), <span class="at">size =</span> <span class="fl">1.6</span>) <span class="sc">+</span></span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> star, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a>    xtrans <span class="sc">+</span></span>
+<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> xlab, <span class="at">y =</span> <span class="st">&quot;score&quot;</span>, <span class="at">colour =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>p_nnil <span class="ot">&lt;-</span> <span class="fu">calib_panel</span>(nnil_sw, nnil_rf, par[<span class="st">&quot;rrate_star&quot;</span>], <span class="st">&quot;nNIL rrate&quot;</span>, <span class="fu">scale_x_log10</span>()) <span class="sc">+</span></span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">sprintf</span>(<span class="st">&quot;nNIL — refined rrate = %.2g&quot;</span>, par[<span class="st">&quot;rrate_star&quot;</span>]))</span>
+<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a>p_rtig <span class="ot">&lt;-</span> <span class="fu">calib_panel</span>(</span>
+<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a>  rtig_sw, rtig_rf, par[<span class="st">&quot;rigidity_star&quot;</span>], <span class="st">&quot;RTIGER rigidity&quot;</span>,</span>
+<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">trans =</span> <span class="st">&quot;log2&quot;</span>)</span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">sprintf</span>(<span class="st">&quot;RTIGER — refined rigidity = %d&quot;</span>, <span class="fu">as.integer</span>(par[<span class="st">&quot;rigidity_star&quot;</span>])))</span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a>patchwork_ok <span class="ot">&lt;-</span> <span class="fu">requireNamespace</span>(<span class="st">&quot;patchwork&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (patchwork_ok) {</span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(p_nnil, p_rtig))</span>
+<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(p_nnil)</span>
+<span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(p_rtig)</span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{r calib-tables, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="co"># The log-sweep curves (Dice peaks then over-fragments as FDR/breakpoints climb).</span></span>
+<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a>show <span class="ot">&lt;-</span> <span class="cf">function</span>(s, pcol) {</span>
+<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a>  s[, .(</span>
+<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a>    <span class="at">value =</span> <span class="fu">signif</span>(value, <span class="dv">3</span>), <span class="at">donor_frag_dice =</span> <span class="fu">round</span>(donor_frag_dice, <span class="dv">3</span>),</span>
+<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a>    <span class="at">donor_frag_FDR =</span> <span class="fu">round</span>(donor_frag_FDR, <span class="dv">3</span>), <span class="at">donor_marker_recall =</span> <span class="fu">round</span>(donor_marker_recall, <span class="dv">3</span>),</span>
+<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a>    n_breakpoints, truth_bp, <span class="at">ks =</span> <span class="fu">round</span>(ks_fragsize, <span class="dv">3</span>)</span>
+<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a>  )]</span>
+<span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;nNIL rrate log sweep:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">show</span>(nnil_sw))</span>
+<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">RTIGER rigidity log sweep (powers of 2, feasibility-capped):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">show</span>(rtig_sw))</span>
+<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a><span class="fu"># 3. Benchmark at the calibrated parameters (§2.5, §3.2)</span></span>
+<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a>Each caller run at its refined optimum on a held-out set, scored vs truth:</span>
+<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{r benchmark, eval=(exists(&quot;have&quot;) &amp;&amp; have)}</span></span>
+<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a>bench[]</span>
+<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-134"><a href="#cb17-134" aria-hidden="true" tabindex="-1"></a><span class="fu"># 4. Fragment-size fit (supplementary)</span></span>
+<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a>Donor-block size distributions vs the BC2S2 truth (the calibrated callers should</span>
+<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a>track the truth&#39;s fragment sizes; KS in the benchmark table).</span>
+<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fragsize, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=7, fig.height=4}</span></span>
+<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(frag, <span class="fu">aes</span>(mb, <span class="at">colour =</span> src)) <span class="sc">+</span></span>
+<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_ecdf</span>() <span class="sc">+</span></span>
+<span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;donor block size (Mb)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;ECDF&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Fragment-size fit vs truth&quot;</span>)</span>
+<span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5. Genotype-frequency vs the one-locus expectation (supplementary)</span></span>
+<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a><span class="in">```{r genofreq, eval=(exists(&quot;have&quot;) &amp;&amp; have), fig.width=7, fig.height=4}</span></span>
+<span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(geno[, .(src, HET, ALT)], <span class="at">id.vars =</span> <span class="st">&quot;src&quot;</span>), <span class="fu">aes</span>(src, value)) <span class="sc">+</span></span>
+<span id="cb17-150"><a href="#cb17-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_violin</span>(<span class="at">scale =</span> <span class="st">&quot;width&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-151"><a href="#cb17-151" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-152"><a href="#cb17-152" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">data =</span> <span class="fu">data.table</span>(</span>
+<span id="cb17-153"><a href="#cb17-153" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">c</span>(<span class="st">&quot;HET&quot;</span>, <span class="st">&quot;ALT&quot;</span>), <span class="at">y =</span> <span class="fu">c</span>(par[<span class="st">&quot;HET_expect&quot;</span>], par[<span class="st">&quot;ALT_expect&quot;</span>])</span>
+<span id="cb17-154"><a href="#cb17-154" aria-hidden="true" tabindex="-1"></a>  ), <span class="fu">aes</span>(<span class="at">yintercept =</span> y), <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">&quot;genome fraction&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Genotype frequency vs one-locus expectation (dashed)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-158"><a href="#cb17-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-159"><a href="#cb17-159" aria-hidden="true" tabindex="-1"></a><span class="fu"># Next steps</span></span>
+<span id="cb17-160"><a href="#cb17-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-161"><a href="#cb17-161" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add the BrB regime and carry the per-source calibrated parameters to</span>
+<span id="cb17-162"><a href="#cb17-162" aria-hidden="true" tabindex="-1"></a>  <span class="in">`source-method-comparison.qmd`</span>.</span>
+<span id="cb17-163"><a href="#cb17-163" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Sharpen the objective&#39;s soft plateau near the optimum with a KS or</span>
+<span id="cb17-164"><a href="#cb17-164" aria-hidden="true" tabindex="-1"></a>  breakpoint-match tie-breaker.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

@@ -67,7 +67,7 @@ interference m = 10 / p = 0), 50 000 markers, degraded to the skim regime
 (~0.43× / ~72% missing). Truth = the donor mosaic. The simulated genome
 composition should match the single-locus (Mendelian) expectation:
 
-```{r truth, eval=have}
+```{r truth, eval=(exists("have") && have)}
 data.table(
   metric = c("REF", "HET", "ALT", "donor dosage"),
   simulated = round(par[c("REF_truth", "HET_truth", "ALT_truth", "dosage_truth")], 4),
@@ -81,7 +81,7 @@ For each caller the coarse **log sweep** (line) brackets the optimum, and the
 **golden-ratio refine** (points) homes in; the dashed line is the refined
 parameter carried to the benchmark.
 
-```{r calib-fig, eval=have, fig.width=9, fig.height=4}
+```{r calib-fig, eval=(exists("have") && have), fig.width=9, fig.height=4}
 calib_panel <- function(sweep, refine, star, xlab, xtrans) {
   ggplot(sweep, aes(value)) +
     geom_line(aes(y = donor_frag_dice, colour = "donor-fragment Dice")) +
@@ -108,7 +108,7 @@ if (patchwork_ok) {
 }
 ```
 
-```{r calib-tables, eval=have}
+```{r calib-tables, eval=(exists("have") && have)}
 # The log-sweep curves (Dice peaks then over-fragments as FDR/breakpoints climb).
 show <- function(s, pcol) {
   s[, .(
@@ -127,7 +127,7 @@ print(show(rtig_sw))
 
 Each caller run at its refined optimum on a held-out set, scored vs truth:
 
-```{r benchmark, eval=have}
+```{r benchmark, eval=(exists("have") && have)}
 bench[]
 ```
 
@@ -136,7 +136,7 @@ bench[]
 Donor-block size distributions vs the BC2S2 truth (the calibrated callers should
 track the truth's fragment sizes; KS in the benchmark table).
 
-```{r fragsize, eval=have, fig.width=7, fig.height=4}
+```{r fragsize, eval=(exists("have") && have), fig.width=7, fig.height=4}
 ggplot(frag, aes(mb, colour = src)) +
   stat_ecdf() +
   scale_x_log10() +
@@ -145,7 +145,7 @@ ggplot(frag, aes(mb, colour = src)) +
 
 # 5. Genotype-frequency vs the one-locus expectation (supplementary)
 
-```{r genofreq, eval=have, fig.width=7, fig.height=4}
+```{r genofreq, eval=(exists("have") && have), fig.width=7, fig.height=4}
 ggplot(melt(geno[, .(src, HET, ALT)], id.vars = "src"), aes(src, value)) +
   geom_violin(scale = "width") +
   facet_wrap(~variable, scales = "free_y") +
@@ -162,4 +162,3 @@ ggplot(melt(geno[, .(src, HET, ALT)], id.vars = "src"), aes(src, value)) +
   `source-method-comparison.qmd`.
 - Sharpen the objective's soft plateau near the optimum with a KS or
   breakpoint-match tie-breaker.
-```

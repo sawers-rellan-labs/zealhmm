@@ -193,4 +193,3 @@ knitr::kable(gt[order(-OLS)], caption = "Candidate-gene peak -log10P (±500 kb):
   open model-specification points discussed in the interpolated notebook; a LOCO
   over-correction diagnostic is not needed here (no interpolation pseudo-replication),
   and is left as optional future work.
-```

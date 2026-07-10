@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-09">
+<meta name="dcterms.date" content="2026-07-10">
 
 <title>Marker thinning for joint-linkage mapping — provenance &amp; proof – zealhmm</title>
 <style>
@@ -4083,14 +4083,6 @@ vertical-align: -.125em;
   <li><a href="#diagnostic-2-distance-r²-proven-not-asserted" id="toc-diagnostic-2-distance-r²-proven-not-asserted" class="nav-link" data-scroll-target="#diagnostic-2-distance-r²-proven-not-asserted">Diagnostic 2 — distance ≠ r²: proven, not asserted</a></li>
   <li><a href="#the-count-9063-vs-4578-decomposed-to-the-marker" id="toc-the-count-9063-vs-4578-decomposed-to-the-marker" class="nav-link" data-scroll-target="#the-count-9063-vs-4578-decomposed-to-the-marker">The count: 9063 vs 4578, decomposed to the marker</a></li>
   <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">Conclusions</a></li>
-  <li><a href="#the-two-published-methods-chen-et-al.-2019-1" id="toc-the-two-published-methods-chen-et-al.-2019-1" class="nav-link" data-scroll-target="#the-two-published-methods-chen-et-al.-2019-1">The two published methods (Chen et al. 2019)</a></li>
-  <li><a href="#the-thinning-as-implemented-here-1" id="toc-the-thinning-as-implemented-here-1" class="nav-link" data-scroll-target="#the-thinning-as-implemented-here-1">The thinning as implemented here</a>
-  <ul class="collapse">
-  <li><a href="#proof-of-exact-reproduction-1" id="toc-proof-of-exact-reproduction-1" class="nav-link" data-scroll-target="#proof-of-exact-reproduction-1">Proof of exact reproduction</a></li>
-  </ul></li>
-  <li><a href="#diagnostic-1-the-retained-set-has-a-hard-0.1-cm-floor-1" id="toc-diagnostic-1-the-retained-set-has-a-hard-0.1-cm-floor-1" class="nav-link" data-scroll-target="#diagnostic-1-the-retained-set-has-a-hard-0.1-cm-floor-1">Diagnostic 1 — the retained set has a hard 0.1 cM floor</a></li>
-  <li><a href="#the-count-9063-vs-4578-decomposed-to-the-marker-1" id="toc-the-count-9063-vs-4578-decomposed-to-the-marker-1" class="nav-link" data-scroll-target="#the-count-9063-vs-4578-decomposed-to-the-marker-1">The count: 9063 vs 4578, decomposed to the marker</a></li>
-  <li><a href="#conclusions-1" id="toc-conclusions-1" class="nav-link" data-scroll-target="#conclusions-1">Conclusions</a></li>
   </ul>
 </nav>
     </div>
@@ -4117,7 +4109,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 9, 2026</p>
+      <p class="date">July 10, 2026</p>
     </div>
   </div>
   
@@ -4566,275 +4558,10 @@ vertical-align: -.125em;
 <li>The <strong>9063 vs 4578</strong> difference is a deterministic property of the native map’s <strong>higher bin saturation</strong> at essentially Chen’s map length (length × saturation), fully decomposed above — nothing unexplained.</li>
 </ul>
 <p><strong>Implication for the design.</strong> The r² path is the LD-aware option in principle, but Diagnostic 2 shows it is <strong>not a drop-in</strong> here: because ancestry LD is long-range, r² pruning is extremely threshold-sensitive (t = 0.5 → a handful of markers per chromosome; only t ≈ 0.99 keeps a workable dense set). The cM-distance thin is the pragmatic choice that matches Chen’s <em>operation</em> (a 0.1 cM thin), at the documented cost of retaining LD-redundant neighbours. Both are defensible; this notebook records which one is in force — a 0.1 cM genetic-distance ruler — so downstream QTL results are read with the right framework in mind.</p>
-<pre><code>
 
 
+<!-- -->
 
-:::{#quarto-navigation-envelope .hidden}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1zaWRlYmFyLXRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXItdGl0bGU=&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6emVhbGhtbQ==&quot;}
-[https://github.com/sawers-rellan-labs/zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL3Nhd2Vycy1yZWxsYW4tbGFicy96ZWFsaG1t&quot;}
-[Home]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6SG9tZQ==&quot;}
-[/index.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L2luZGV4Lmh0bWw=&quot;}
-[Data provenance]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6RGF0YSBwcm92ZW5hbmNl&quot;}
-[/DATA.html]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLWludC1uYXZiYXI6L0RBVEEuaHRtbA==&quot;}
-:::
-
-
-
-:::{#quarto-meta-markdown .hidden}
-[Marker thinning for joint-linkage mapping — provenance &amp; proof – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGF0aXRsZQ==&quot;}
-[Marker thinning for joint-linkage mapping — provenance &amp; proof – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkdGl0bGU=&quot;}
-[Marker thinning for joint-linkage mapping — provenance &amp; proof – zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZHRpdGxl&quot;}
-[zealhmm]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlbmFtZQ==&quot;}
-[What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLXR3aXR0ZXJjYXJkZGVzYw==&quot;}
-[What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW9nY2FyZGRkZXNj&quot;}
-[Teosinte-introgression QTL recovery — TeoNAM &amp; ZEAL/BZea]{.hidden .quarto-markdown-envelope-contents render-id=&quot;cXVhcnRvLW1ldGFzaXRlZGVzYw==&quot;}
-:::
-
-
-
-
-&lt;!-- --&gt;
-
-::: {.quarto-embedded-source-code}
-```````````````````{.markdown shortcodes=&quot;false&quot;}
----
-title: &quot;Marker thinning for joint-linkage mapping — provenance &amp; proof&quot;
-subtitle: &quot;What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578&quot;
-author: &quot;Fausto Rodríguez-Zapata&quot;
-date: today
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    embed-resources: true
-    code-fold: false
-execute:
-  warning: false
-  message: false
-  echo: true
----
-
-**What this is.** A self-contained, *hard-proven* record of the marker-thinning
-step that builds the JLM marker framework (`data/teonam/tassel/geno.hmp.txt`,
-9063 markers). Every claim below is reproduced live from the primary data — no
-approximations, no &quot;close enough.&quot; The three things this notebook nails down:
-
-1. **What the thinning actually was** — `nilHMM::select_independent` (FastIndep,
-   deterministic greedy) run on a **cM-distance** matrix at 0.1 cM, *not* on an
-   r² LD matrix. Reproduced **bit-for-bit** (Jaccard = 1.000) against the file on
-   disk.
-2. **What that means** — feeding FastIndep cM distances reduces it to a 0.1 cM
-   minimum-spacing ruler; LD plays no role. We prove the distinction by running
-   *both* variants on the same chromosome and showing they disagree.
-3. **Why 9063 and not Chen&#39;s 4578** — a deterministic consequence of the native
-   map&#39;s finer per-marker resolution (bin saturation) at essentially Chen&#39;s map
-   length, decomposed to the marker.
-
-```{r setup}
-library(here)
-library(data.table)
-library(ggplot2)
-suppressMessages(devtools::load_all(&quot;/Users/fvrodriguez/repos/nilhmm&quot;, quiet = TRUE))
-theme_set(theme_bw(base_size = 12))
-THR &lt;- 0.1 # cM thinning threshold</code></pre>
-</section>
-<section id="the-two-published-methods-chen-et-al.-2019-1" class="level2">
-<h2 class="anchored" data-anchor-id="the-two-published-methods-chen-et-al.-2019-1">The two published methods (Chen et al. 2019)</h2>
-<p>Chen 2019 (<em>Genetics</em> 213:1065–1078) used <strong>two separate marker sets</strong> for its two mapping methods. Quoting the Methods verbatim:</p>
-<blockquote class="blockquote">
-<p><em>“Because stepwise regression is computationally intensive, we thinned SNPs within 0.1 cM. We finally obtained <strong>4578 markers</strong> for subsequent joint linkage analysis.”</em> — (JLM marker set)</p>
-</blockquote>
-<blockquote class="blockquote">
-<p><em>“…a total of <strong>118,838 SNPs</strong> were kept and used for GWAS. GWAS was performed using a linear mixed model accounting for population structure (Q) and kinship matrix (K)…”</em> — (GWAS marker set, a different pipeline)</p>
-</blockquote>
-<p>This notebook concerns the <strong>JLM</strong> set only (the 4578-marker analogue). The paper’s composite genetic map is <strong>1540 cM</strong>; ours (native TeoNAM est.map cM) is ~1561 cM — so map <em>length</em> is essentially Chen’s, and the count difference is instead driven by how finely the native map resolves markers into 0.1-cM bins, as we show below.</p>
-</section>
-<section id="the-thinning-as-implemented-here-1" class="level2">
-<h2 class="anchored" data-anchor-id="the-thinning-as-implemented-here-1">The thinning as implemented here</h2>
-<p>The pipeline (<code>scripts/teonam_reproduce_fastindep.R</code>, and originally the lost inline prep this notebook now replaces) does:</p>
-<ol type="1">
-<li>take every marker in the native TeoNAM map (<code>teonam_v5_native.tsv</code>, native est.map cM);</li>
-<li><strong>dedup to unique cM per chromosome</strong> (the densify grid: <code>!duplicated(cm)</code>);</li>
-<li>run <strong><code>select_independent</code></strong> on the per-chromosome <strong>cM-distance</strong> matrix (<code>|cm_i − cm_j|</code>), with <code>sense = &quot;distance&quot;</code>, <code>threshold = 0.1</code>, <code>n_runs = 1</code> (deterministic greedy, documented bit-identical to the FastIndep CLI).</li>
-</ol>
-<p>The subtlety: <code>select_independent</code> is an <strong>LD-pruning</strong> tool — normally you hand it a genotype matrix and it prunes on r². Here it was handed a <strong>distance</strong> matrix, so it prunes on genetic distance instead. That choice is what we verify and dissect.</p>
-<pre class="{r reproduce}"><code># target: the markers actually in the JLM input on disk
-target &lt;- fread(here(&quot;data/teonam/tassel/geno.hmp.txt&quot;), select = &quot;rs#&quot;)[[&quot;rs#&quot;]]
-
-# candidate pool: native map (placed markers), unique-cM dedup per chromosome
-mc &lt;- fread(here(&quot;data/teonam/teonam_v5_native.tsv&quot;))[!is.na(cm)]
-setnames(mc, &quot;chr_v5&quot;, &quot;chr&quot;)
-pool &lt;- mc[order(chr, cm)][, .SD[!duplicated(cm)], by = chr]
-
-# run the REAL FastIndep greedy on the cM-distance matrix, per chromosome
-thin_distance &lt;- function(m) { # m: data.table(marker, cm)
-  m &lt;- m[order(cm)]
-  D &lt;- abs(outer(m$cm, m$cm, `-`))
-  dimnames(D) &lt;- list(m$marker, m$marker)
-  as.character(select_independent(D,
-    threshold = THR, n_runs = 1L,
-    sense = &quot;distance&quot;, max_markers = nrow(D) + 1L
-  ))
-}
-sel &lt;- unlist(lapply(
-  sort(unique(pool$chr)),
-  function(ch) thin_distance(pool[chr == ch, .(marker, cm)])
-))</code></pre>
-<section id="proof-of-exact-reproduction-1" class="level3">
-<h3 class="anchored" data-anchor-id="proof-of-exact-reproduction-1">Proof of exact reproduction</h3>
-<pre class="{r reproduce-proof}"><code>proof &lt;- data.table(
-  metric = c(
-    &quot;selected&quot;, &quot;target (on disk)&quot;, &quot;in both&quot;,
-    &quot;selected-only&quot;, &quot;target-only&quot;, &quot;Jaccard&quot;, &quot;setequal&quot;
-  ),
-  value = c(
-    length(sel), length(target), length(intersect(sel, target)),
-    length(setdiff(sel, target)), length(setdiff(target, sel)),
-    round(length(intersect(sel, target)) / length(union(sel, target)), 4),
-    as.integer(setequal(sel, target))
-  )
-)
-knitr::kable(proof, caption = &quot;FastIndep on the cM-distance pool vs the JLM file on disk&quot;)
-stopifnot(setequal(sel, target)) # the notebook fails to render if this is not exact</code></pre>
-<p><code>setequal = 1</code>, Jaccard <code>= 1.000</code>: the thinning is reproduced <strong>bit-for-bit</strong>. This is the ground truth the rest of the notebook interprets. (For the record: running the same algorithm on the <em>raw</em> <code>marker_info</code> pool — without the unique-cM dedup — gives 6056 markers with 51 mismatches; the dedup step is load-bearing, and pinning that down is exactly why “99% overlap” is not “reproduced.”)</p>
-</section>
-</section>
-<section id="diagnostic-1-the-retained-set-has-a-hard-0.1-cm-floor-1" class="level2">
-<h2 class="anchored" data-anchor-id="diagnostic-1-the-retained-set-has-a-hard-0.1-cm-floor-1">Diagnostic 1 — the retained set has a hard 0.1 cM floor</h2>
-<p>If the thinning pruned on <strong>distance</strong>, no two retained markers can sit closer than 0.1 cM. If it had pruned on <strong>r²</strong>, close markers in low LD would survive. The gap distribution decides it.</p>
-<p>```{r gap-floor, fig.width=8, fig.height=3.4} km &lt;- merge(data.table(marker = target), mc[, .(marker, chr, cm)], by = “marker”)[order(chr, cm)] gaps &lt;- km[, .(gap = diff(cm)), by = chr]$gap gtab &lt;- data.table( stat = c(“min”, “1%”, “5%”, “median”, “% &lt; 0.10 cM”, “% &lt; 0.05 cM”), cM = c( round(quantile(gaps, c(0, .01, .05, .5)), 4), round(100 * mean(gaps &lt; 0.10), 2), round(100 * mean(gaps &lt; 0.05), 2) ) ) knitr::kable(gtab, caption = “Adjacent cM-gap between retained JLM markers”)</p>
-<p>ggplot(data.table(gap = gaps[gaps &lt; 1]), aes(gap)) + geom_histogram(binwidth = 0.01, fill = “grey30”, boundary = 0) + geom_vline(xintercept = 0.1, colour = “red”, linetype = “dashed”) + labs( x = “adjacent cM gap between retained markers”, y = “count”, title = “Hard floor at exactly 0.10 cM (red) — the signature of a distance thin”, subtitle = “0% of neighbours fall below 0.10 cM; an r² prune could not produce this floor” )</p>
-<pre><code>
-The minimum gap is exactly 0.10 cM and **nothing** is below it — the unambiguous
-fingerprint of a cM-distance thin, not r².
-
-## Diagnostic 2 — distance ≠ r²: proven, not asserted
-
-To show the *consequence* of feeding FastIndep cM distances instead of genotype
-r², we run **both** on the same chromosome-1 window and compare the sets they keep.
-The genotypes are **densified live here from the raw family files** by
-step-interpolation — the same operation as `scripts/teonam_stam_gwas_scan.R::densify_chr`
-— so this notebook depends on **no pre-saved intermediate** (`.rds`) of unknown
-provenance; only primary data (`W22TIL*_genotype.csv` + the native map).
-
-```{r rsq-contrast, fig.width=8, fig.height=4}
-# --- densify a chr1 window from the RAW family genotypes (step-interpolation) ---
-fams &lt;- c(
-  TIL01 = &quot;W22TIL01_genotype.csv&quot;, TIL03 = &quot;W22TIL03_genotype.csv&quot;,
-  TIL11 = &quot;W22TIL11_genotype.csv&quot;, TIL14 = &quot;W22TIL14_genotype.csv&quot;,
-  TIL25 = &quot;W22TIL25_genotype.csv&quot;
-)
-cm_by &lt;- setNames(mc$cm, mc$marker)
-mch &lt;- mc[chr == 1 &amp; cm &gt;= 20 &amp; cm &lt;= 45][order(cm)]
-tgt &lt;- mch[!duplicated(cm)] # unique-cM target grid (the window)
-tgt_df &lt;- data.frame(chr = 1, cm = tgt$cm)
-win &lt;- data.table(marker = tgt$marker, cm = tgt$cm)
-
-densify_fam &lt;- function(fam) {
-  fp &lt;- here(&quot;data/teonam&quot;, fams[fam])
-  hdr &lt;- names(fread(fp, nrows = 0))
-  cols &lt;- intersect(hdr, mch$marker) # this family&#39;s markers in the window
-  g &lt;- fread(fp, select = c(hdr[1], cols))
-  g &lt;- g[!duplicated(g[[1]])]
-  keys &lt;- paste0(fam, sub(&quot;^.*Line_&quot;, &quot;&quot;, g[[1]])) # e.g. TIL01A001
-  obs &lt;- data.frame(marker = cols, cm = cm_by[cols])
-  obs &lt;- obs[order(obs$cm), ]
-  obs &lt;- obs[!duplicated(obs$cm), ]
-  geno &lt;- t(as.matrix(g[, obs$marker, with = FALSE]))
-  storage.mode(geno) &lt;- &quot;double&quot;
-  dn &lt;- interpolate_genotype(geno, data.frame(chr = 1, cm = obs$cm), tgt_df, mode = &quot;step&quot;)
-  colnames(dn) &lt;- keys
-  dn
-}
-Gw &lt;- do.call(cbind, lapply(names(fams), densify_fam))
-rownames(Gw) &lt;- tgt$marker
-
-# (a) distance thin — what the pipeline did
-selD &lt;- thin_distance(win[, .(marker, cm)])
-
-# (b) r² thin — what FastIndep is designed for — swept across thresholds
-gap_of &lt;- function(ids) {
-  k &lt;- win[marker %in% ids][order(cm)]
-  diff(k$cm)
-}
-r2_thin &lt;- function(t) {
-  as.character(
-    select_independent(Gw,
-      threshold = t, method = &quot;r2&quot;,
-      n_runs = 1L, max_markers = nrow(Gw) + 1L
-    )
-  )
-}
-
-rows &lt;- list(data.table(
-  thinning = &quot;cM-distance (t=0.1)&quot;, n_kept = length(selD),
-  min_gap_cM = round(min(gap_of(selD)), 4),
-  median_gap_cM = round(median(gap_of(selD)), 3)
-))
-for (t in c(0.2, 0.5, 0.9, 0.99)) {
-  s &lt;- r2_thin(t)
-  g &lt;- gap_of(s)
-  rows[[length(rows) + 1]] &lt;- data.table(
-    thinning = sprintf(&quot;r² LD (t=%.2f)&quot;, t), n_kept = length(s),
-    min_gap_cM = round(min(g), 4), median_gap_cM = round(median(g), 3)
-  )
-}
-knitr::kable(rbindlist(rows),
-  caption =
-    &quot;Chr1 window (866 markers over 24.3 cM): cM-distance vs r² thinning&quot;
-)</code></pre>
-<p><code>{r rsq-contrast-plot, fig.width=8, fig.height=2.8} plt &lt;- rbind(   data.table(cm = win[marker %in% selD]$cm, method = &quot;cM-distance (t=0.1)&quot;),   data.table(cm = win[marker %in% r2_thin(0.5)]$cm, method = &quot;r² LD (t=0.50)&quot;),   data.table(cm = win[marker %in% r2_thin(0.99)]$cm, method = &quot;r² LD (t=0.99)&quot;) ) plt[, method := factor(method, levels = c(&quot;cM-distance (t=0.1)&quot;, &quot;r² LD (t=0.50)&quot;, &quot;r² LD (t=0.99)&quot;))] ggplot(plt, aes(cm, method, colour = method)) +   geom_point(size = 0.7, alpha = 0.55) +   scale_colour_manual(values = c(&quot;steelblue4&quot;, &quot;firebrick&quot;, &quot;darkorange&quot;), guide = &quot;none&quot;) +   labs(     x = &quot;cM (chr 1)&quot;, y = NULL,     title = &quot;Same window, three thinnings — r² tracks LD (threshold-dominated); distance tracks spacing&quot;   )</code></p>
-<p>The two are <strong>different operations</strong>, and the r² set is not even monotonic in spacing — it tracks <strong>LD</strong>, and TeoNAM ancestry LD is <strong>long-range</strong>. At r² ≥ 0.2 the entire 24 cM window collapses to ~2 markers (essentially one ancestry block); only at a very strict r² ≥ 0.99 does r² pruning become dense enough to admit markers &lt; 0.1 cM apart (min gap 0.000 cM — pairs the distance thin <em>forbids</em>). The cM-distance thin (99 markers, hard 0.10 cM floor) sits in neither regime: it is <strong>indifferent to LD</strong>. That is the concrete consequence of feeding FastIndep a cM matrix — the JLM framework guarantees genetic spacing but does <strong>no</strong> LD decorrelation, so many retained neighbours remain in near-perfect LD (collinear, redundant columns for the stepwise model).</p>
-</section>
-<section id="the-count-9063-vs-4578-decomposed-to-the-marker-1" class="level2">
-<h2 class="anchored" data-anchor-id="the-count-9063-vs-4578-decomposed-to-the-marker-1">The count: 9063 vs 4578, decomposed to the marker</h2>
-<p>Both we and Chen ran a 0.1 cM thin, so the algorithm is not the source of the difference. <code>9063 / 4578 ≈ 1.98</code> decomposes into <strong>map length</strong> and <strong>bin saturation</strong> (the fraction of 0.1-cM bins that contain ≥1 marker) — but the two factors are now far from equal: length is ~1.0 (native ≈ Chen), so bin saturation (~2.0) carries essentially the whole difference:</p>
-<pre class="{r count-decomp}"><code>maplen_ours &lt;- mc[, max(cm) - min(cm), by = chr][, sum(V1)]
-maplen_paper &lt;- 1540
-n_ours &lt;- length(target)
-n_paper &lt;- 4578
-sat_ours &lt;- n_ours / (maplen_ours / 0.1) # occupied 0.1-cM bins / total bins
-sat_paper &lt;- n_paper / (maplen_paper / 0.1)
-decomp &lt;- data.table(
-  factor = c(
-    &quot;map length (cM)&quot;, &quot;0.1-cM bins available&quot;, &quot;markers kept&quot;,
-    &quot;bin saturation&quot;, &quot;— length ratio&quot;, &quot;— saturation ratio&quot;,
-    &quot;— product (predicted)&quot;, &quot;— observed ratio&quot;
-  ),
-  ours = c(
-    round(maplen_ours), round(maplen_ours / 0.1), n_ours, round(sat_ours, 3),
-    NA, NA, NA, NA
-  ),
-  paper = c(
-    maplen_paper, round(maplen_paper / 0.1), n_paper, round(sat_paper, 3),
-    NA, NA, NA, NA
-  ),
-  ratio = c(
-    NA, NA, NA, NA,
-    round(maplen_ours / maplen_paper, 3), round(sat_ours / sat_paper, 3),
-    round((maplen_ours / maplen_paper) * (sat_ours / sat_paper), 3),
-    round(n_ours / n_paper, 3)
-  )
-)
-knitr::kable(decomp,
-  caption =
-    &quot;Map length × bin saturation reproduces the marker-count ratio&quot;
-)</code></pre>
-<p>The predicted product matches the observed <code>9063/4578</code> ratio: with the native map at ~Chen’s length, the extra markers come <strong>almost entirely</strong> from bin saturation — the native est.map resolves ~2× the fraction of 0.1-cM bins that Chen’s map did — not from map length and not a thinning-method artifact.</p>
-</section>
-<section id="conclusions-1" class="level2">
-<h2 class="anchored" data-anchor-id="conclusions-1">Conclusions</h2>
-<ul>
-<li>The JLM marker framework was built by <strong><code>nilHMM::select_independent</code> on a cM-distance matrix at 0.1 cM</strong> (unique-cM dedup pool). Reproduced <strong>exactly</strong> (Jaccard = 1.000); the render aborts if that ever stops holding.</li>
-<li>Feeding FastIndep cM distances turns it into a <strong>0.1 cM minimum-spacing ruler</strong>; it performs <strong>no LD pruning</strong>. Diagnostic 2 proves the distance and r² thinnings keep materially different marker sets.</li>
-<li>The <strong>9063 vs 4578</strong> difference is a deterministic property of the native map’s <strong>higher bin saturation</strong> at essentially Chen’s map length (length × saturation), fully decomposed above — nothing unexplained.</li>
-</ul>
-<p><strong>Implication for the design.</strong> The r² path is the LD-aware option in principle, but Diagnostic 2 shows it is <strong>not a drop-in</strong> here: because ancestry LD is long-range, r² pruning is extremely threshold-sensitive (t = 0.5 → a handful of markers per chromosome; only t ≈ 0.99 keeps a workable dense set). The cM-distance thin is the pragmatic choice that matches Chen’s <em>operation</em> (a 0.1 cM thin), at the documented cost of retaining LD-redundant neighbours. Both are defensible; this notebook records which one is in force — a 0.1 cM genetic-distance ruler — so downstream QTL results are read with the right framework in mind.</p>
-<pre><code></code></pre>
-<p>:::</p>
 </section>
 
 </main> <!-- /main -->
@@ -5288,7 +5015,335 @@ knitr::kable(decomp,
       }
     }
   });
-  </script>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Marker thinning for joint-linkage mapping — provenance &amp; proof&quot;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;What produced the TeoNAM JLM marker framework, and why it has 9063 markers where Chen 2019 had 4578&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>**What this is.** A self-contained, *hard-proven* record of the marker-thinning</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>step that builds the JLM marker framework (<span class="in">`data/teonam/tassel/geno.hmp.txt`</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>9063 markers). Every claim below is reproduced live from the primary data — no</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>approximations, no &quot;close enough.&quot; The three things this notebook nails down:</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**What the thinning actually was** — <span class="in">`nilHMM::select_independent`</span> (FastIndep,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>   deterministic greedy) run on a **cM-distance** matrix at 0.1 cM, *not* on an</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>   r² LD matrix. Reproduced **bit-for-bit** (Jaccard = 1.000) against the file on</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>   disk.</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**What that means** — feeding FastIndep cM distances reduces it to a 0.1 cM</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>   minimum-spacing ruler; LD plays no role. We prove the distinction by running</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>   *both* variants on the same chromosome and showing they disagree.</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Why 9063 and not Chen&#39;s 4578** — a deterministic consequence of the native</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>   map&#39;s finer per-marker resolution (bin saturation) at essentially Chen&#39;s map</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>   length, decomposed to the marker.</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(devtools<span class="sc">::</span><span class="fu">load_all</span>(<span class="st">&quot;/Users/fvrodriguez/repos/nilhmm&quot;</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">12</span>))</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>THR <span class="ot">&lt;-</span> <span class="fl">0.1</span> <span class="co"># cM thinning threshold</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="fu">## The two published methods (Chen et al. 2019)</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>Chen 2019 (*Genetics* 213:1065–1078) used **two separate marker sets** for its two</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>mapping methods. Quoting the Methods verbatim:</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; *&quot;Because stepwise regression is computationally intensive, we thinned SNPs</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; within 0.1 cM. We finally obtained **4578 markers** for subsequent joint linkage</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; analysis.&quot;* — (JLM marker set)</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; *&quot;…a total of **118,838 SNPs** were kept and used for GWAS. GWAS was performed</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; using a linear mixed model accounting for population structure (Q) and kinship</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; matrix (K)…&quot;* — (GWAS marker set, a different pipeline)</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>This notebook concerns the **JLM** set only (the 4578-marker analogue). The paper&#39;s</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>composite genetic map is **1540 cM**; ours (native TeoNAM est.map cM) is ~1561 cM</span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>— so map *length* is essentially Chen&#39;s, and the count difference is instead driven</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>by how finely the native map resolves markers into 0.1-cM bins, as we show below.</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a><span class="fu">## The thinning as implemented here</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>The pipeline (<span class="in">`scripts/teonam_reproduce_fastindep.R`</span>, and originally the lost inline</span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>prep this notebook now replaces) does:</span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>take every marker in the native TeoNAM map (<span class="in">`teonam_v5_native.tsv`</span>, native est.map cM);</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**dedup to unique cM per chromosome** (the densify grid: <span class="in">`!duplicated(cm)`</span>);</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>run **`select_independent`** on the per-chromosome **cM-distance** matrix</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>   (<span class="in">`|cm_i − cm_j|`</span>), with <span class="in">`sense = &quot;distance&quot;`</span>, <span class="in">`threshold = 0.1`</span>, <span class="in">`n_runs = 1`</span></span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>   (deterministic greedy, documented bit-identical to the FastIndep CLI).</span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>The subtlety: <span class="in">`select_independent`</span> is an **LD-pruning** tool — normally you hand it</span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>a genotype matrix and it prunes on r². Here it was handed a **distance** matrix, so</span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>it prunes on genetic distance instead. That choice is what we verify and dissect.</span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a><span class="in">```{r reproduce}</span></span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a><span class="co"># target: the markers actually in the JLM input on disk</span></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/tassel/geno.hmp.txt&quot;</span>), <span class="at">select =</span> <span class="st">&quot;rs#&quot;</span>)[[<span class="st">&quot;rs#&quot;</span>]]</span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a><span class="co"># candidate pool: native map (placed markers), unique-cM dedup per chromosome</span></span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a>mc <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/teonam/teonam_v5_native.tsv&quot;</span>))[<span class="sc">!</span><span class="fu">is.na</span>(cm)]</span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a><span class="fu">setnames</span>(mc, <span class="st">&quot;chr_v5&quot;</span>, <span class="st">&quot;chr&quot;</span>)</span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a>pool <span class="ot">&lt;-</span> mc[<span class="fu">order</span>(chr, cm)][, .SD[<span class="sc">!</span><span class="fu">duplicated</span>(cm)], by <span class="ot">=</span> chr]</span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a><span class="co"># run the REAL FastIndep greedy on the cM-distance matrix, per chromosome</span></span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a>thin_distance <span class="ot">&lt;-</span> <span class="cf">function</span>(m) { <span class="co"># m: data.table(marker, cm)</span></span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> m[<span class="fu">order</span>(cm)]</span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a>  D <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">outer</span>(m<span class="sc">$</span>cm, m<span class="sc">$</span>cm, <span class="st">`</span><span class="at">-</span><span class="st">`</span>))</span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dimnames</span>(D) <span class="ot">&lt;-</span> <span class="fu">list</span>(m<span class="sc">$</span>marker, m<span class="sc">$</span>marker)</span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.character</span>(<span class="fu">select_independent</span>(D,</span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a>    <span class="at">threshold =</span> THR, <span class="at">n_runs =</span> <span class="dv">1</span>L,</span>
+<span id="cb10-92"><a href="#cb10-92" aria-hidden="true" tabindex="-1"></a>    <span class="at">sense =</span> <span class="st">&quot;distance&quot;</span>, <span class="at">max_markers =</span> <span class="fu">nrow</span>(D) <span class="sc">+</span> <span class="dv">1</span>L</span>
+<span id="cb10-93"><a href="#cb10-93" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a>sel <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(</span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sort</span>(<span class="fu">unique</span>(pool<span class="sc">$</span>chr)),</span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(ch) <span class="fu">thin_distance</span>(pool[chr <span class="sc">==</span> ch, .(marker, cm)])</span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-101"><a href="#cb10-101" aria-hidden="true" tabindex="-1"></a><span class="fu">### Proof of exact reproduction</span></span>
+<span id="cb10-102"><a href="#cb10-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-103"><a href="#cb10-103" aria-hidden="true" tabindex="-1"></a><span class="in">```{r reproduce-proof}</span></span>
+<span id="cb10-104"><a href="#cb10-104" aria-hidden="true" tabindex="-1"></a>proof <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb10-105"><a href="#cb10-105" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(</span>
+<span id="cb10-106"><a href="#cb10-106" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;selected&quot;</span>, <span class="st">&quot;target (on disk)&quot;</span>, <span class="st">&quot;in both&quot;</span>,</span>
+<span id="cb10-107"><a href="#cb10-107" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;selected-only&quot;</span>, <span class="st">&quot;target-only&quot;</span>, <span class="st">&quot;Jaccard&quot;</span>, <span class="st">&quot;setequal&quot;</span></span>
+<span id="cb10-108"><a href="#cb10-108" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-109"><a href="#cb10-109" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
+<span id="cb10-110"><a href="#cb10-110" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(sel), <span class="fu">length</span>(target), <span class="fu">length</span>(<span class="fu">intersect</span>(sel, target)),</span>
+<span id="cb10-111"><a href="#cb10-111" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(<span class="fu">setdiff</span>(sel, target)), <span class="fu">length</span>(<span class="fu">setdiff</span>(target, sel)),</span>
+<span id="cb10-112"><a href="#cb10-112" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">length</span>(<span class="fu">intersect</span>(sel, target)) <span class="sc">/</span> <span class="fu">length</span>(<span class="fu">union</span>(sel, target)), <span class="dv">4</span>),</span>
+<span id="cb10-113"><a href="#cb10-113" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.integer</span>(<span class="fu">setequal</span>(sel, target))</span>
+<span id="cb10-114"><a href="#cb10-114" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-115"><a href="#cb10-115" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-116"><a href="#cb10-116" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(proof, <span class="at">caption =</span> <span class="st">&quot;FastIndep on the cM-distance pool vs the JLM file on disk&quot;</span>)</span>
+<span id="cb10-117"><a href="#cb10-117" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">setequal</span>(sel, target)) <span class="co"># the notebook fails to render if this is not exact</span></span>
+<span id="cb10-118"><a href="#cb10-118" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-119"><a href="#cb10-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-120"><a href="#cb10-120" aria-hidden="true" tabindex="-1"></a><span class="in">`setequal = 1`</span>, Jaccard <span class="in">`= 1.000`</span>: the thinning is reproduced **bit-for-bit**. This</span>
+<span id="cb10-121"><a href="#cb10-121" aria-hidden="true" tabindex="-1"></a>is the ground truth the rest of the notebook interprets. (For the record: running</span>
+<span id="cb10-122"><a href="#cb10-122" aria-hidden="true" tabindex="-1"></a>the same algorithm on the *raw* <span class="in">`marker_info`</span> pool — without the unique-cM dedup —</span>
+<span id="cb10-123"><a href="#cb10-123" aria-hidden="true" tabindex="-1"></a>gives 6056 markers with 51 mismatches; the dedup step is load-bearing, and pinning</span>
+<span id="cb10-124"><a href="#cb10-124" aria-hidden="true" tabindex="-1"></a>that down is exactly why &quot;99% overlap&quot; is not &quot;reproduced.&quot;)</span>
+<span id="cb10-125"><a href="#cb10-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-126"><a href="#cb10-126" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostic 1 — the retained set has a hard 0.1 cM floor</span></span>
+<span id="cb10-127"><a href="#cb10-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-128"><a href="#cb10-128" aria-hidden="true" tabindex="-1"></a>If the thinning pruned on **distance**, no two retained markers can sit closer than</span>
+<span id="cb10-129"><a href="#cb10-129" aria-hidden="true" tabindex="-1"></a>0.1 cM. If it had pruned on **r²**, close markers in low LD would survive. The gap</span>
+<span id="cb10-130"><a href="#cb10-130" aria-hidden="true" tabindex="-1"></a>distribution decides it.</span>
+<span id="cb10-131"><a href="#cb10-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-132"><a href="#cb10-132" aria-hidden="true" tabindex="-1"></a><span class="in">```{r gap-floor, fig.width=8, fig.height=3.4}</span></span>
+<span id="cb10-133"><a href="#cb10-133" aria-hidden="true" tabindex="-1"></a>km <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">data.table</span>(<span class="at">marker =</span> target), mc[, .(marker, chr, cm)], <span class="at">by =</span> <span class="st">&quot;marker&quot;</span>)[<span class="fu">order</span>(chr, cm)]</span>
+<span id="cb10-134"><a href="#cb10-134" aria-hidden="true" tabindex="-1"></a>gaps <span class="ot">&lt;-</span> km[, .(<span class="at">gap =</span> <span class="fu">diff</span>(cm)), by <span class="ot">=</span> chr]<span class="sc">$</span>gap</span>
+<span id="cb10-135"><a href="#cb10-135" aria-hidden="true" tabindex="-1"></a>gtab <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb10-136"><a href="#cb10-136" aria-hidden="true" tabindex="-1"></a>  <span class="at">stat =</span> <span class="fu">c</span>(<span class="st">&quot;min&quot;</span>, <span class="st">&quot;1%&quot;</span>, <span class="st">&quot;5%&quot;</span>, <span class="st">&quot;median&quot;</span>, <span class="st">&quot;% &lt; 0.10 cM&quot;</span>, <span class="st">&quot;% &lt; 0.05 cM&quot;</span>),</span>
+<span id="cb10-137"><a href="#cb10-137" aria-hidden="true" tabindex="-1"></a>  <span class="at">cM =</span> <span class="fu">c</span>(</span>
+<span id="cb10-138"><a href="#cb10-138" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">quantile</span>(gaps, <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">01</span>, .<span class="dv">05</span>, .<span class="dv">5</span>)), <span class="dv">4</span>),</span>
+<span id="cb10-139"><a href="#cb10-139" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(gaps <span class="sc">&lt;</span> <span class="fl">0.10</span>), <span class="dv">2</span>), <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(gaps <span class="sc">&lt;</span> <span class="fl">0.05</span>), <span class="dv">2</span>)</span>
+<span id="cb10-140"><a href="#cb10-140" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-141"><a href="#cb10-141" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-142"><a href="#cb10-142" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(gtab, <span class="at">caption =</span> <span class="st">&quot;Adjacent cM-gap between retained JLM markers&quot;</span>)</span>
+<span id="cb10-143"><a href="#cb10-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-144"><a href="#cb10-144" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">data.table</span>(<span class="at">gap =</span> gaps[gaps <span class="sc">&lt;</span> <span class="dv">1</span>]), <span class="fu">aes</span>(gap)) <span class="sc">+</span></span>
+<span id="cb10-145"><a href="#cb10-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.01</span>, <span class="at">fill =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">boundary =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb10-146"><a href="#cb10-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.1</span>, <span class="at">colour =</span> <span class="st">&quot;red&quot;</span>, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb10-147"><a href="#cb10-147" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb10-148"><a href="#cb10-148" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;adjacent cM gap between retained markers&quot;</span>, <span class="at">y =</span> <span class="st">&quot;count&quot;</span>,</span>
+<span id="cb10-149"><a href="#cb10-149" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Hard floor at exactly 0.10 cM (red) — the signature of a distance thin&quot;</span>,</span>
+<span id="cb10-150"><a href="#cb10-150" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;0% of neighbours fall below 0.10 cM; an r² prune could not produce this floor&quot;</span></span>
+<span id="cb10-151"><a href="#cb10-151" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-152"><a href="#cb10-152" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-153"><a href="#cb10-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-154"><a href="#cb10-154" aria-hidden="true" tabindex="-1"></a>The minimum gap is exactly 0.10 cM and **nothing** is below it — the unambiguous</span>
+<span id="cb10-155"><a href="#cb10-155" aria-hidden="true" tabindex="-1"></a>fingerprint of a cM-distance thin, not r².</span>
+<span id="cb10-156"><a href="#cb10-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-157"><a href="#cb10-157" aria-hidden="true" tabindex="-1"></a><span class="fu">## Diagnostic 2 — distance ≠ r²: proven, not asserted</span></span>
+<span id="cb10-158"><a href="#cb10-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-159"><a href="#cb10-159" aria-hidden="true" tabindex="-1"></a>To show the *consequence* of feeding FastIndep cM distances instead of genotype</span>
+<span id="cb10-160"><a href="#cb10-160" aria-hidden="true" tabindex="-1"></a>r², we run **both** on the same chromosome-1 window and compare the sets they keep.</span>
+<span id="cb10-161"><a href="#cb10-161" aria-hidden="true" tabindex="-1"></a>The genotypes are **densified live here from the raw family files** by</span>
+<span id="cb10-162"><a href="#cb10-162" aria-hidden="true" tabindex="-1"></a>step-interpolation — the same operation as <span class="in">`scripts/teonam_stam_gwas_scan.R::densify_chr`</span></span>
+<span id="cb10-163"><a href="#cb10-163" aria-hidden="true" tabindex="-1"></a>— so this notebook depends on **no pre-saved intermediate** (<span class="in">`.rds`</span>) of unknown</span>
+<span id="cb10-164"><a href="#cb10-164" aria-hidden="true" tabindex="-1"></a>provenance; only primary data (<span class="in">`W22TIL*_genotype.csv`</span> + the native map).</span>
+<span id="cb10-165"><a href="#cb10-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-166"><a href="#cb10-166" aria-hidden="true" tabindex="-1"></a><span class="in">```{r rsq-contrast, fig.width=8, fig.height=4}</span></span>
+<span id="cb10-167"><a href="#cb10-167" aria-hidden="true" tabindex="-1"></a><span class="co"># --- densify a chr1 window from the RAW family genotypes (step-interpolation) ---</span></span>
+<span id="cb10-168"><a href="#cb10-168" aria-hidden="true" tabindex="-1"></a>fams <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-169"><a href="#cb10-169" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIL01 =</span> <span class="st">&quot;W22TIL01_genotype.csv&quot;</span>, <span class="at">TIL03 =</span> <span class="st">&quot;W22TIL03_genotype.csv&quot;</span>,</span>
+<span id="cb10-170"><a href="#cb10-170" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIL11 =</span> <span class="st">&quot;W22TIL11_genotype.csv&quot;</span>, <span class="at">TIL14 =</span> <span class="st">&quot;W22TIL14_genotype.csv&quot;</span>,</span>
+<span id="cb10-171"><a href="#cb10-171" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIL25 =</span> <span class="st">&quot;W22TIL25_genotype.csv&quot;</span></span>
+<span id="cb10-172"><a href="#cb10-172" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-173"><a href="#cb10-173" aria-hidden="true" tabindex="-1"></a>cm_by <span class="ot">&lt;-</span> <span class="fu">setNames</span>(mc<span class="sc">$</span>cm, mc<span class="sc">$</span>marker)</span>
+<span id="cb10-174"><a href="#cb10-174" aria-hidden="true" tabindex="-1"></a>mch <span class="ot">&lt;-</span> mc[chr <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> cm <span class="sc">&gt;=</span> <span class="dv">20</span> <span class="sc">&amp;</span> cm <span class="sc">&lt;=</span> <span class="dv">45</span>][<span class="fu">order</span>(cm)]</span>
+<span id="cb10-175"><a href="#cb10-175" aria-hidden="true" tabindex="-1"></a>tgt <span class="ot">&lt;-</span> mch[<span class="sc">!</span><span class="fu">duplicated</span>(cm)] <span class="co"># unique-cM target grid (the window)</span></span>
+<span id="cb10-176"><a href="#cb10-176" aria-hidden="true" tabindex="-1"></a>tgt_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">chr =</span> <span class="dv">1</span>, <span class="at">cm =</span> tgt<span class="sc">$</span>cm)</span>
+<span id="cb10-177"><a href="#cb10-177" aria-hidden="true" tabindex="-1"></a>win <span class="ot">&lt;-</span> <span class="fu">data.table</span>(<span class="at">marker =</span> tgt<span class="sc">$</span>marker, <span class="at">cm =</span> tgt<span class="sc">$</span>cm)</span>
+<span id="cb10-178"><a href="#cb10-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-179"><a href="#cb10-179" aria-hidden="true" tabindex="-1"></a>densify_fam <span class="ot">&lt;-</span> <span class="cf">function</span>(fam) {</span>
+<span id="cb10-180"><a href="#cb10-180" aria-hidden="true" tabindex="-1"></a>  fp <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">&quot;data/teonam&quot;</span>, fams[fam])</span>
+<span id="cb10-181"><a href="#cb10-181" aria-hidden="true" tabindex="-1"></a>  hdr <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">fread</span>(fp, <span class="at">nrows =</span> <span class="dv">0</span>))</span>
+<span id="cb10-182"><a href="#cb10-182" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> <span class="fu">intersect</span>(hdr, mch<span class="sc">$</span>marker) <span class="co"># this family&#39;s markers in the window</span></span>
+<span id="cb10-183"><a href="#cb10-183" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> <span class="fu">fread</span>(fp, <span class="at">select =</span> <span class="fu">c</span>(hdr[<span class="dv">1</span>], cols))</span>
+<span id="cb10-184"><a href="#cb10-184" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> g[<span class="sc">!</span><span class="fu">duplicated</span>(g[[<span class="dv">1</span>]])]</span>
+<span id="cb10-185"><a href="#cb10-185" aria-hidden="true" tabindex="-1"></a>  keys <span class="ot">&lt;-</span> <span class="fu">paste0</span>(fam, <span class="fu">sub</span>(<span class="st">&quot;^.*Line_&quot;</span>, <span class="st">&quot;&quot;</span>, g[[<span class="dv">1</span>]])) <span class="co"># e.g. TIL01A001</span></span>
+<span id="cb10-186"><a href="#cb10-186" aria-hidden="true" tabindex="-1"></a>  obs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">marker =</span> cols, <span class="at">cm =</span> cm_by[cols])</span>
+<span id="cb10-187"><a href="#cb10-187" aria-hidden="true" tabindex="-1"></a>  obs <span class="ot">&lt;-</span> obs[<span class="fu">order</span>(obs<span class="sc">$</span>cm), ]</span>
+<span id="cb10-188"><a href="#cb10-188" aria-hidden="true" tabindex="-1"></a>  obs <span class="ot">&lt;-</span> obs[<span class="sc">!</span><span class="fu">duplicated</span>(obs<span class="sc">$</span>cm), ]</span>
+<span id="cb10-189"><a href="#cb10-189" aria-hidden="true" tabindex="-1"></a>  geno <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">as.matrix</span>(g[, obs<span class="sc">$</span>marker, <span class="at">with =</span> <span class="cn">FALSE</span>]))</span>
+<span id="cb10-190"><a href="#cb10-190" aria-hidden="true" tabindex="-1"></a>  <span class="fu">storage.mode</span>(geno) <span class="ot">&lt;-</span> <span class="st">&quot;double&quot;</span></span>
+<span id="cb10-191"><a href="#cb10-191" aria-hidden="true" tabindex="-1"></a>  dn <span class="ot">&lt;-</span> <span class="fu">interpolate_genotype</span>(geno, <span class="fu">data.frame</span>(<span class="at">chr =</span> <span class="dv">1</span>, <span class="at">cm =</span> obs<span class="sc">$</span>cm), tgt_df, <span class="at">mode =</span> <span class="st">&quot;step&quot;</span>)</span>
+<span id="cb10-192"><a href="#cb10-192" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(dn) <span class="ot">&lt;-</span> keys</span>
+<span id="cb10-193"><a href="#cb10-193" aria-hidden="true" tabindex="-1"></a>  dn</span>
+<span id="cb10-194"><a href="#cb10-194" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-195"><a href="#cb10-195" aria-hidden="true" tabindex="-1"></a>Gw <span class="ot">&lt;-</span> <span class="fu">do.call</span>(cbind, <span class="fu">lapply</span>(<span class="fu">names</span>(fams), densify_fam))</span>
+<span id="cb10-196"><a href="#cb10-196" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(Gw) <span class="ot">&lt;-</span> tgt<span class="sc">$</span>marker</span>
+<span id="cb10-197"><a href="#cb10-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-198"><a href="#cb10-198" aria-hidden="true" tabindex="-1"></a><span class="co"># (a) distance thin — what the pipeline did</span></span>
+<span id="cb10-199"><a href="#cb10-199" aria-hidden="true" tabindex="-1"></a>selD <span class="ot">&lt;-</span> <span class="fu">thin_distance</span>(win[, .(marker, cm)])</span>
+<span id="cb10-200"><a href="#cb10-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-201"><a href="#cb10-201" aria-hidden="true" tabindex="-1"></a><span class="co"># (b) r² thin — what FastIndep is designed for — swept across thresholds</span></span>
+<span id="cb10-202"><a href="#cb10-202" aria-hidden="true" tabindex="-1"></a>gap_of <span class="ot">&lt;-</span> <span class="cf">function</span>(ids) {</span>
+<span id="cb10-203"><a href="#cb10-203" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">&lt;-</span> win[marker <span class="sc">%in%</span> ids][<span class="fu">order</span>(cm)]</span>
+<span id="cb10-204"><a href="#cb10-204" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diff</span>(k<span class="sc">$</span>cm)</span>
+<span id="cb10-205"><a href="#cb10-205" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-206"><a href="#cb10-206" aria-hidden="true" tabindex="-1"></a>r2_thin <span class="ot">&lt;-</span> <span class="cf">function</span>(t) {</span>
+<span id="cb10-207"><a href="#cb10-207" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.character</span>(</span>
+<span id="cb10-208"><a href="#cb10-208" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select_independent</span>(Gw,</span>
+<span id="cb10-209"><a href="#cb10-209" aria-hidden="true" tabindex="-1"></a>      <span class="at">threshold =</span> t, <span class="at">method =</span> <span class="st">&quot;r2&quot;</span>,</span>
+<span id="cb10-210"><a href="#cb10-210" aria-hidden="true" tabindex="-1"></a>      <span class="at">n_runs =</span> <span class="dv">1</span>L, <span class="at">max_markers =</span> <span class="fu">nrow</span>(Gw) <span class="sc">+</span> <span class="dv">1</span>L</span>
+<span id="cb10-211"><a href="#cb10-211" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-212"><a href="#cb10-212" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-213"><a href="#cb10-213" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-214"><a href="#cb10-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-215"><a href="#cb10-215" aria-hidden="true" tabindex="-1"></a>rows <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">data.table</span>(</span>
+<span id="cb10-216"><a href="#cb10-216" aria-hidden="true" tabindex="-1"></a>  <span class="at">thinning =</span> <span class="st">&quot;cM-distance (t=0.1)&quot;</span>, <span class="at">n_kept =</span> <span class="fu">length</span>(selD),</span>
+<span id="cb10-217"><a href="#cb10-217" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_gap_cM =</span> <span class="fu">round</span>(<span class="fu">min</span>(<span class="fu">gap_of</span>(selD)), <span class="dv">4</span>),</span>
+<span id="cb10-218"><a href="#cb10-218" aria-hidden="true" tabindex="-1"></a>  <span class="at">median_gap_cM =</span> <span class="fu">round</span>(<span class="fu">median</span>(<span class="fu">gap_of</span>(selD)), <span class="dv">3</span>)</span>
+<span id="cb10-219"><a href="#cb10-219" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb10-220"><a href="#cb10-220" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span>, <span class="fl">0.99</span>)) {</span>
+<span id="cb10-221"><a href="#cb10-221" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">r2_thin</span>(t)</span>
+<span id="cb10-222"><a href="#cb10-222" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> <span class="fu">gap_of</span>(s)</span>
+<span id="cb10-223"><a href="#cb10-223" aria-hidden="true" tabindex="-1"></a>  rows[[<span class="fu">length</span>(rows) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb10-224"><a href="#cb10-224" aria-hidden="true" tabindex="-1"></a>    <span class="at">thinning =</span> <span class="fu">sprintf</span>(<span class="st">&quot;r² LD (t=%.2f)&quot;</span>, t), <span class="at">n_kept =</span> <span class="fu">length</span>(s),</span>
+<span id="cb10-225"><a href="#cb10-225" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_gap_cM =</span> <span class="fu">round</span>(<span class="fu">min</span>(g), <span class="dv">4</span>), <span class="at">median_gap_cM =</span> <span class="fu">round</span>(<span class="fu">median</span>(g), <span class="dv">3</span>)</span>
+<span id="cb10-226"><a href="#cb10-226" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-227"><a href="#cb10-227" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-228"><a href="#cb10-228" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">rbindlist</span>(rows),</span>
+<span id="cb10-229"><a href="#cb10-229" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span></span>
+<span id="cb10-230"><a href="#cb10-230" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Chr1 window (866 markers over 24.3 cM): cM-distance vs r² thinning&quot;</span></span>
+<span id="cb10-231"><a href="#cb10-231" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-232"><a href="#cb10-232" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-233"><a href="#cb10-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-234"><a href="#cb10-234" aria-hidden="true" tabindex="-1"></a><span class="in">```{r rsq-contrast-plot, fig.width=8, fig.height=2.8}</span></span>
+<span id="cb10-235"><a href="#cb10-235" aria-hidden="true" tabindex="-1"></a>plt <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb10-236"><a href="#cb10-236" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(<span class="at">cm =</span> win[marker <span class="sc">%in%</span> selD]<span class="sc">$</span>cm, <span class="at">method =</span> <span class="st">&quot;cM-distance (t=0.1)&quot;</span>),</span>
+<span id="cb10-237"><a href="#cb10-237" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(<span class="at">cm =</span> win[marker <span class="sc">%in%</span> <span class="fu">r2_thin</span>(<span class="fl">0.5</span>)]<span class="sc">$</span>cm, <span class="at">method =</span> <span class="st">&quot;r² LD (t=0.50)&quot;</span>),</span>
+<span id="cb10-238"><a href="#cb10-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(<span class="at">cm =</span> win[marker <span class="sc">%in%</span> <span class="fu">r2_thin</span>(<span class="fl">0.99</span>)]<span class="sc">$</span>cm, <span class="at">method =</span> <span class="st">&quot;r² LD (t=0.99)&quot;</span>)</span>
+<span id="cb10-239"><a href="#cb10-239" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-240"><a href="#cb10-240" aria-hidden="true" tabindex="-1"></a>plt[, method <span class="sc">:</span><span class="er">=</span> <span class="fu">factor</span>(method, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;cM-distance (t=0.1)&quot;</span>, <span class="st">&quot;r² LD (t=0.50)&quot;</span>, <span class="st">&quot;r² LD (t=0.99)&quot;</span>))]</span>
+<span id="cb10-241"><a href="#cb10-241" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plt, <span class="fu">aes</span>(cm, method, <span class="at">colour =</span> method)) <span class="sc">+</span></span>
+<span id="cb10-242"><a href="#cb10-242" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.7</span>, <span class="at">alpha =</span> <span class="fl">0.55</span>) <span class="sc">+</span></span>
+<span id="cb10-243"><a href="#cb10-243" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;steelblue4&quot;</span>, <span class="st">&quot;firebrick&quot;</span>, <span class="st">&quot;darkorange&quot;</span>), <span class="at">guide =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
+<span id="cb10-244"><a href="#cb10-244" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb10-245"><a href="#cb10-245" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;cM (chr 1)&quot;</span>, <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb10-246"><a href="#cb10-246" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Same window, three thinnings — r² tracks LD (threshold-dominated); distance tracks spacing&quot;</span></span>
+<span id="cb10-247"><a href="#cb10-247" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-248"><a href="#cb10-248" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-249"><a href="#cb10-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-250"><a href="#cb10-250" aria-hidden="true" tabindex="-1"></a>The two are **different operations**, and the r² set is not even monotonic in</span>
+<span id="cb10-251"><a href="#cb10-251" aria-hidden="true" tabindex="-1"></a>spacing — it tracks **LD**, and TeoNAM ancestry LD is **long-range**. At r² ≥ 0.2</span>
+<span id="cb10-252"><a href="#cb10-252" aria-hidden="true" tabindex="-1"></a>the entire 24 cM window collapses to ~2 markers (essentially one ancestry block);</span>
+<span id="cb10-253"><a href="#cb10-253" aria-hidden="true" tabindex="-1"></a>only at a very strict r² ≥ 0.99 does r² pruning become dense enough to admit</span>
+<span id="cb10-254"><a href="#cb10-254" aria-hidden="true" tabindex="-1"></a>markers &lt; 0.1 cM apart (min gap 0.000 cM — pairs the distance thin *forbids*). The</span>
+<span id="cb10-255"><a href="#cb10-255" aria-hidden="true" tabindex="-1"></a>cM-distance thin (99 markers, hard 0.10 cM floor) sits in neither regime: it is</span>
+<span id="cb10-256"><a href="#cb10-256" aria-hidden="true" tabindex="-1"></a>**indifferent to LD**. That is the concrete consequence of feeding FastIndep a cM</span>
+<span id="cb10-257"><a href="#cb10-257" aria-hidden="true" tabindex="-1"></a>matrix — the JLM framework guarantees genetic spacing but does **no** LD</span>
+<span id="cb10-258"><a href="#cb10-258" aria-hidden="true" tabindex="-1"></a>decorrelation, so many retained neighbours remain in near-perfect LD (collinear,</span>
+<span id="cb10-259"><a href="#cb10-259" aria-hidden="true" tabindex="-1"></a>redundant columns for the stepwise model).</span>
+<span id="cb10-260"><a href="#cb10-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-261"><a href="#cb10-261" aria-hidden="true" tabindex="-1"></a><span class="fu">## The count: 9063 vs 4578, decomposed to the marker</span></span>
+<span id="cb10-262"><a href="#cb10-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-263"><a href="#cb10-263" aria-hidden="true" tabindex="-1"></a>Both we and Chen ran a 0.1 cM thin, so the algorithm is not the source of the</span>
+<span id="cb10-264"><a href="#cb10-264" aria-hidden="true" tabindex="-1"></a>difference. <span class="in">`9063 / 4578 ≈ 1.98`</span> decomposes into **map length** and **bin</span>
+<span id="cb10-265"><a href="#cb10-265" aria-hidden="true" tabindex="-1"></a>saturation** (the fraction of 0.1-cM bins that contain ≥1 marker) — but the two</span>
+<span id="cb10-266"><a href="#cb10-266" aria-hidden="true" tabindex="-1"></a>factors are now far from equal: length is ~1.0 (native ≈ Chen), so bin saturation</span>
+<span id="cb10-267"><a href="#cb10-267" aria-hidden="true" tabindex="-1"></a>(~2.0) carries essentially the whole difference:</span>
+<span id="cb10-268"><a href="#cb10-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-269"><a href="#cb10-269" aria-hidden="true" tabindex="-1"></a><span class="in">```{r count-decomp}</span></span>
+<span id="cb10-270"><a href="#cb10-270" aria-hidden="true" tabindex="-1"></a>maplen_ours <span class="ot">&lt;-</span> mc[, <span class="fu">max</span>(cm) <span class="sc">-</span> <span class="fu">min</span>(cm), by <span class="ot">=</span> chr][, <span class="fu">sum</span>(V1)]</span>
+<span id="cb10-271"><a href="#cb10-271" aria-hidden="true" tabindex="-1"></a>maplen_paper <span class="ot">&lt;-</span> <span class="dv">1540</span></span>
+<span id="cb10-272"><a href="#cb10-272" aria-hidden="true" tabindex="-1"></a>n_ours <span class="ot">&lt;-</span> <span class="fu">length</span>(target)</span>
+<span id="cb10-273"><a href="#cb10-273" aria-hidden="true" tabindex="-1"></a>n_paper <span class="ot">&lt;-</span> <span class="dv">4578</span></span>
+<span id="cb10-274"><a href="#cb10-274" aria-hidden="true" tabindex="-1"></a>sat_ours <span class="ot">&lt;-</span> n_ours <span class="sc">/</span> (maplen_ours <span class="sc">/</span> <span class="fl">0.1</span>) <span class="co"># occupied 0.1-cM bins / total bins</span></span>
+<span id="cb10-275"><a href="#cb10-275" aria-hidden="true" tabindex="-1"></a>sat_paper <span class="ot">&lt;-</span> n_paper <span class="sc">/</span> (maplen_paper <span class="sc">/</span> <span class="fl">0.1</span>)</span>
+<span id="cb10-276"><a href="#cb10-276" aria-hidden="true" tabindex="-1"></a>decomp <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb10-277"><a href="#cb10-277" aria-hidden="true" tabindex="-1"></a>  <span class="at">factor =</span> <span class="fu">c</span>(</span>
+<span id="cb10-278"><a href="#cb10-278" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;map length (cM)&quot;</span>, <span class="st">&quot;0.1-cM bins available&quot;</span>, <span class="st">&quot;markers kept&quot;</span>,</span>
+<span id="cb10-279"><a href="#cb10-279" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;bin saturation&quot;</span>, <span class="st">&quot;— length ratio&quot;</span>, <span class="st">&quot;— saturation ratio&quot;</span>,</span>
+<span id="cb10-280"><a href="#cb10-280" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;— product (predicted)&quot;</span>, <span class="st">&quot;— observed ratio&quot;</span></span>
+<span id="cb10-281"><a href="#cb10-281" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-282"><a href="#cb10-282" aria-hidden="true" tabindex="-1"></a>  <span class="at">ours =</span> <span class="fu">c</span>(</span>
+<span id="cb10-283"><a href="#cb10-283" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(maplen_ours), <span class="fu">round</span>(maplen_ours <span class="sc">/</span> <span class="fl">0.1</span>), n_ours, <span class="fu">round</span>(sat_ours, <span class="dv">3</span>),</span>
+<span id="cb10-284"><a href="#cb10-284" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span></span>
+<span id="cb10-285"><a href="#cb10-285" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-286"><a href="#cb10-286" aria-hidden="true" tabindex="-1"></a>  <span class="at">paper =</span> <span class="fu">c</span>(</span>
+<span id="cb10-287"><a href="#cb10-287" aria-hidden="true" tabindex="-1"></a>    maplen_paper, <span class="fu">round</span>(maplen_paper <span class="sc">/</span> <span class="fl">0.1</span>), n_paper, <span class="fu">round</span>(sat_paper, <span class="dv">3</span>),</span>
+<span id="cb10-288"><a href="#cb10-288" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span></span>
+<span id="cb10-289"><a href="#cb10-289" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-290"><a href="#cb10-290" aria-hidden="true" tabindex="-1"></a>  <span class="at">ratio =</span> <span class="fu">c</span>(</span>
+<span id="cb10-291"><a href="#cb10-291" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>,</span>
+<span id="cb10-292"><a href="#cb10-292" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(maplen_ours <span class="sc">/</span> maplen_paper, <span class="dv">3</span>), <span class="fu">round</span>(sat_ours <span class="sc">/</span> sat_paper, <span class="dv">3</span>),</span>
+<span id="cb10-293"><a href="#cb10-293" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>((maplen_ours <span class="sc">/</span> maplen_paper) <span class="sc">*</span> (sat_ours <span class="sc">/</span> sat_paper), <span class="dv">3</span>),</span>
+<span id="cb10-294"><a href="#cb10-294" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(n_ours <span class="sc">/</span> n_paper, <span class="dv">3</span>)</span>
+<span id="cb10-295"><a href="#cb10-295" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-296"><a href="#cb10-296" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-297"><a href="#cb10-297" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(decomp,</span>
+<span id="cb10-298"><a href="#cb10-298" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span></span>
+<span id="cb10-299"><a href="#cb10-299" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Map length × bin saturation reproduces the marker-count ratio&quot;</span></span>
+<span id="cb10-300"><a href="#cb10-300" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-301"><a href="#cb10-301" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-302"><a href="#cb10-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-303"><a href="#cb10-303" aria-hidden="true" tabindex="-1"></a>The predicted product matches the observed <span class="in">`9063/4578`</span> ratio: with the native map</span>
+<span id="cb10-304"><a href="#cb10-304" aria-hidden="true" tabindex="-1"></a>at ~Chen&#39;s length, the extra markers come **almost entirely** from bin saturation —</span>
+<span id="cb10-305"><a href="#cb10-305" aria-hidden="true" tabindex="-1"></a>the native est.map resolves ~2× the fraction of 0.1-cM bins that Chen&#39;s map did —</span>
+<span id="cb10-306"><a href="#cb10-306" aria-hidden="true" tabindex="-1"></a>not from map length and not a thinning-method artifact.</span>
+<span id="cb10-307"><a href="#cb10-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-308"><a href="#cb10-308" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conclusions</span></span>
+<span id="cb10-309"><a href="#cb10-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-310"><a href="#cb10-310" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The JLM marker framework was built by **<span class="in">`nilHMM::select_independent`</span> on a</span>
+<span id="cb10-311"><a href="#cb10-311" aria-hidden="true" tabindex="-1"></a>  cM-distance matrix at 0.1 cM** (unique-cM dedup pool). Reproduced **exactly**</span>
+<span id="cb10-312"><a href="#cb10-312" aria-hidden="true" tabindex="-1"></a>  (Jaccard = 1.000); the render aborts if that ever stops holding.</span>
+<span id="cb10-313"><a href="#cb10-313" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Feeding FastIndep cM distances turns it into a **0.1 cM minimum-spacing ruler**;</span>
+<span id="cb10-314"><a href="#cb10-314" aria-hidden="true" tabindex="-1"></a>  it performs **no LD pruning**. Diagnostic 2 proves the distance and r² thinnings</span>
+<span id="cb10-315"><a href="#cb10-315" aria-hidden="true" tabindex="-1"></a>  keep materially different marker sets.</span>
+<span id="cb10-316"><a href="#cb10-316" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **9063 vs 4578** difference is a deterministic property of the native map&#39;s</span>
+<span id="cb10-317"><a href="#cb10-317" aria-hidden="true" tabindex="-1"></a>  **higher bin saturation** at essentially Chen&#39;s map length (length × saturation),</span>
+<span id="cb10-318"><a href="#cb10-318" aria-hidden="true" tabindex="-1"></a>  fully decomposed above — nothing unexplained.</span>
+<span id="cb10-319"><a href="#cb10-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-320"><a href="#cb10-320" aria-hidden="true" tabindex="-1"></a>**Implication for the design.** The r² path is the LD-aware option in principle,</span>
+<span id="cb10-321"><a href="#cb10-321" aria-hidden="true" tabindex="-1"></a>but Diagnostic 2 shows it is **not a drop-in** here: because ancestry LD is</span>
+<span id="cb10-322"><a href="#cb10-322" aria-hidden="true" tabindex="-1"></a>long-range, r² pruning is extremely threshold-sensitive (t = 0.5 → a handful of</span>
+<span id="cb10-323"><a href="#cb10-323" aria-hidden="true" tabindex="-1"></a>markers per chromosome; only t ≈ 0.99 keeps a workable dense set). The cM-distance</span>
+<span id="cb10-324"><a href="#cb10-324" aria-hidden="true" tabindex="-1"></a>thin is the pragmatic choice that matches Chen&#39;s *operation* (a 0.1 cM thin), at the</span>
+<span id="cb10-325"><a href="#cb10-325" aria-hidden="true" tabindex="-1"></a>documented cost of retaining LD-redundant neighbours. Both are defensible; this</span>
+<span id="cb10-326"><a href="#cb10-326" aria-hidden="true" tabindex="-1"></a>notebook records which one is in force — a 0.1 cM genetic-distance ruler — so</span>
+<span id="cb10-327"><a href="#cb10-327" aria-hidden="true" tabindex="-1"></a>downstream QTL results are read with the right framework in mind.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

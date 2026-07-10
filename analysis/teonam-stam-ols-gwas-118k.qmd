@@ -206,4 +206,3 @@ ggplot(m, aes(x, -log10(P), colour = factor(CHR %% 2))) +
 - Model is **OLS (fixed effects), no kinship term** — the peak-height / $\lambda_{GC}$
   comparison against Chen's `Q + K` mixed model is deferred to a dedicated inflation
   notebook (the 118K MLM analog is not yet built).
-```
