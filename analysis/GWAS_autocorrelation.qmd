@@ -438,7 +438,8 @@ cutoff should match.
 
 Different ancestry callers impose different levels of smoothing through their segmentation parameters. Each parameter acts as a **low-pass filter** with a tunable cutoff:
 
-- **nNIL / binhmm** bin the signal over a fixed physical window (~1 Mb).
+- **binhmm** bins the signal into a fixed ~1 Mb window (an ad-hoc pre-smoothing), then runs a 3-state Gaussian HMM on the binned track — *two* stacked smoothing scales.
+- **nNIL** sets a per-marker recombination rate `rrate` (the HMM self-transition), so its smoothing is the transition prior, not a fixed window.
 - **RTIGER** enforces a minimum segment length of `rigidity` markers.
 - **LB-Impute** sets a linkage-decay distance `recombdist` (cM).
 
@@ -500,15 +501,17 @@ The framework is **falsifiable**: a caller that produced a smoother, more autoco
 The expected effect of local ancestry projection is:
 
 $$
+\begin{gathered}
 \text{better ancestry inference}
 \rightarrow
 \text{better genotype prediction}
 \rightarrow
 \text{lower predictor uncertainty}
-\rightarrow
+\rightarrow \\
 \text{less noisy GWAS statistics}
 \rightarrow
 \text{greater spatial autocorrelation}.
+\end{gathered}
 $$
 
 The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.
