@@ -138,25 +138,46 @@ $$
 
 where $A(x)$ represents the local ancestry state.
 
-**What $\operatorname{Var}(A)$ is, concretely.** For a **two-state** ancestry
-predictor (recurrent vs donor — e.g. the binary teosinte/B73 collapse), $A$ is a
-single Bernoulli draw and its variance is the binomial variance at the design's
-*realized* state frequencies,
+**What $\operatorname{Var}(A)$ is, concretely.** nilHMM calls a **three-state**
+ancestry dosage $A\in\{0,1,2\}$ (REF-hom / het / donor-hom) — the case this paper
+is about — so the relevant quantity is the full genotype-frequency variance
+$\operatorname{Var}(A)=E[A^2]-E[A]^2$ over the design's *realized* frequencies
+$(f_{\mathrm{REF}},f_{\mathrm{HET}},f_{\mathrm{ALT}})$, **not** the Hardy--Weinberg
+$2p(1-p)$.
+
+For **BC2S3**, iterating the backcross-then-selfing single-locus transition
+matrices from the F1 (donor-allele frequency $p=2^{-(n_{\mathrm{bc}}+1)}=2^{-3}=0.125$)
+gives the genotype frequencies
 
 $$
-\operatorname{Var}(A)=p_{\mathrm{REF}}\,p_{\mathrm{ALT}},
+(f_{\mathrm{REF}},\,f_{\mathrm{HET}},\,f_{\mathrm{ALT}})=(0.859375,\;0.03125,\;0.109375).
 $$
 
-**not** the Hardy--Weinberg $2p(1-p)$. The factor of 2 in $2p(1-p)$ is the diploid
-random-union-of-gametes assumption — two *independent* allele draws; a backcross
-plus selfing scheme correlates the within-individual alleles, so that factor does
-not apply. For a diploid ancestry **dosage** $A\in\{0,1,2\}$ the variance is instead
-the full genotype-frequency variance $E[A^2]-E[A]^2$ over the design frequencies
-$(f_{\mathrm{REF}},f_{\mathrm{HET}},f_{\mathrm{ALT}})$; for BC2S3
-$(0.859,0.031,0.109)$ this is $\approx 0.405$ — larger than the HWE value
-$2p(1-p)\approx 0.219$ because selfing inflates homozygosity, and not equal to
-$p_{\mathrm{REF}}p_{\mathrm{ALT}}\approx 0.109$ either. Either way $\operatorname{Var}(A)$
-is fixed by the breeding design, not by an allele-frequency equilibrium.
+The dosage moments follow directly:
+
+$$
+\begin{aligned}
+E[A]   &= 0\cdot f_{\mathrm{REF}} + 1\cdot f_{\mathrm{HET}} + 2\cdot f_{\mathrm{ALT}}
+        = 0.03125 + 0.21875 = 0.25,\\[2pt]
+E[A^2] &= 0^2\!\cdot f_{\mathrm{REF}} + 1^2\!\cdot f_{\mathrm{HET}} + 2^2\!\cdot f_{\mathrm{ALT}}
+        = 0.03125 + 0.43750 = 0.46875,\\[2pt]
+\operatorname{Var}(A) &= E[A^2]-E[A]^2 = 0.46875 - 0.25^2 = 0.46875 - 0.0625 = 0.40625.
+\end{aligned}
+$$
+
+So $\operatorname{Var}(A)\approx 0.406$ — about $1.86\times$ the Hardy--Weinberg
+value $2p(1-p)=2(0.125)(0.875)=0.21875$. The inflation is the breeding design:
+three selfing generations convert heterozygotes to homozygotes, piling probability
+onto the extreme dosages $0$ and $2$ that sit farthest from the mean. The factor of
+2 in $2p(1-p)$ assumes two *independent* allele draws (random union of gametes);
+backcrossing plus selfing correlates the within-individual alleles, so HWE does not
+apply.
+
+Collapsing to a **two-state** predictor (donor vs recurrent — the binary
+teosinte/B73 model) instead gives a single Bernoulli draw with variance
+$p_{\mathrm{REF}}\,p_{\mathrm{ALT}}=0.875\times0.125=0.109$, exactly half the HWE
+dosage value. Either way, $\operatorname{Var}(A)$ is fixed by the breeding design,
+not by an allele-frequency equilibrium.
 
 The association signal becomes:
 
