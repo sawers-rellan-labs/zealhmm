@@ -10,7 +10,7 @@
 #                    (values = the bcftools calls, not a reconstruction). NO single-sample GL.
 # All objects share ONE panel (intersection of callable lines; 8 near-empty libs dropped).
 #
-# plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 250K RTIGER
+# plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 200K RTIGER
 # introgression set is NOT shipped — it would be regenerated with recalibrated RTIGER.)
 #
 # IMPORTANT (see TERMINOLOGY.md): a mosaic is ANCESTRY, not a genotype. The PLINK/VCF

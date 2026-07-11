@@ -332,7 +332,7 @@ To reproduce anywhere with the mount instead of the HPC, run the same R script w
 
 Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223, chr4:181,637,780):
 
-- `rtiger_250K_calls_introfinder.rds` — **250K (previous)** RTIGER segment calls, one table per NIL
+- `rtiger_200K_calls_introfinder.rds` — **200K (previous)** RTIGER segment calls, one table per NIL
   (`V1` chr, `V2` start, `V3` end, `V4` state ∈ {`B73`, `Introgression`}). Staged from
   `results_list_new_name.rds` in Nirwan Tandukar's app repo
   `github.com/nirwan1265/BZea_Introgression_Finder` (the calls behind the inversion paper's
@@ -374,7 +374,7 @@ the native `.rds`. Four are **ancestry mosaics** (`rtiger/nnil/binhmm/lbimpute`)
 calls from `bzea_50K_cohort.vcf.gz`, extracted for the panel (values = the bcftools calls, not a
 reconstruction). **No single-sample GL genotypes are shared.** Shared `markers/snp50k_markers.tsv`
 + `lines/snp50k_lines.tsv`; `MANIFEST.tsv` carries sha256 per file.
-The legacy **250K** RTIGER introgression set is **not** in the release (regenerate with
+The legacy **200K** RTIGER introgression set is **not** in the release (regenerate with
 recalibrated RTIGER if ever needed).
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`

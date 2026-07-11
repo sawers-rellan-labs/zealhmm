@@ -18,7 +18,7 @@ between **observed genotypes** (inputs) and **inferred ancestry** (our output).
 **Why the wall matters:** a mosaic *overrides* the genotype — a teosinte-ancestry block reports
 state `2` even at an invariant site (allele identical to B73), and it collapses observed hets into
 an ancestry state. So a mosaic is **not** a genotype and must never be filed, labeled, or served as
-one. "Imputed genotype" is also banned: it's ambiguous (the 250K set was *already* Beagle-imputed)
+one. "Imputed genotype" is also banned: it's ambiguous (the 200K set was *already* Beagle-imputed)
 and it blurs the wall.
 
 Never call our output "genotypes." Genotypes are inputs; the mosaic is what we infer.
@@ -92,11 +92,11 @@ Dead and removed: the `mosaic:` prefix, the bare `mosaic`=rtiger alias, `persnp`
 | name | what | states | provenance |
 |------|------|--------|-----------|
 | **SNP50K** | current teosinte-vs-B73 panel (~52 K sites, B73 v5), read counts → `call_gt`/callers | 3-state 0/1/2 | Fausto; `bzea-genotype-call-sets` |
-| **250K** (inv4m / introfinder) | *previous* RTIGER introgression calls | **2-state** (B73 / introgression) | Nirwan; always label "previous" |
+| **200K** (inv4m / introfinder) | *previous* RTIGER introgression calls | **2-state** (B73 / introgression) | Nirwan; always label "previous" |
 | **wideseq** (~27.6 M) | dense teosinte panel (Schnable 2023, MAF ≥ 0.05) — the expansion base | counts | for the Poisson-QC union with SNP50K |
 
 Spelling: **SNP50K** (not `50K`/`snp50k`/`SNP 50K`), **wideseq** (not `27M`/`wideseq_ref`),
-**250K** (always tagged "previous"; it is 2-state).
+**200K** (always tagged "previous"; it is 2-state).
 
 ## Germplasm
 
