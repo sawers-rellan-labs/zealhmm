@@ -4636,15 +4636,17 @@ L_{\mathrm{signal}}\approx L_{\mathrm{ancestry\ tract}},
 <h1>Central Hypothesis</h1>
 <p>The expected effect of local ancestry projection is:</p>
 <p><span class="math display">\[
+\begin{gathered}
 \text{better ancestry inference}
 \rightarrow
 \text{better genotype prediction}
 \rightarrow
 \text{lower predictor uncertainty}
-\rightarrow
+\rightarrow \\
 \text{less noisy GWAS statistics}
 \rightarrow
 \text{greater spatial autocorrelation}.
+\end{gathered}
 \]</span></p>
 <p>The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.</p>
 <p>Stated as one falsifiable claim:</p>
@@ -5636,53 +5638,55 @@ L_{\mathrm{signal}}\approx L_{\mathrm{ancestry\ tract}},
 <span id="cb1-501"><a href="#cb1-501" aria-hidden="true" tabindex="-1"></a>The expected effect of local ancestry projection is:</span>
 <span id="cb1-502"><a href="#cb1-502" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-503"><a href="#cb1-503" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-504"><a href="#cb1-504" aria-hidden="true" tabindex="-1"></a>\text{better ancestry inference}</span>
-<span id="cb1-505"><a href="#cb1-505" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
-<span id="cb1-506"><a href="#cb1-506" aria-hidden="true" tabindex="-1"></a>\text{better genotype prediction}</span>
-<span id="cb1-507"><a href="#cb1-507" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
-<span id="cb1-508"><a href="#cb1-508" aria-hidden="true" tabindex="-1"></a>\text{lower predictor uncertainty}</span>
-<span id="cb1-509"><a href="#cb1-509" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
-<span id="cb1-510"><a href="#cb1-510" aria-hidden="true" tabindex="-1"></a>\text{less noisy GWAS statistics}</span>
-<span id="cb1-511"><a href="#cb1-511" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
-<span id="cb1-512"><a href="#cb1-512" aria-hidden="true" tabindex="-1"></a>\text{greater spatial autocorrelation}.</span>
-<span id="cb1-513"><a href="#cb1-513" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-514"><a href="#cb1-514" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-515"><a href="#cb1-515" aria-hidden="true" tabindex="-1"></a>The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.</span>
+<span id="cb1-504"><a href="#cb1-504" aria-hidden="true" tabindex="-1"></a>\begin{gathered}</span>
+<span id="cb1-505"><a href="#cb1-505" aria-hidden="true" tabindex="-1"></a>\text{better ancestry inference}</span>
+<span id="cb1-506"><a href="#cb1-506" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
+<span id="cb1-507"><a href="#cb1-507" aria-hidden="true" tabindex="-1"></a>\text{better genotype prediction}</span>
+<span id="cb1-508"><a href="#cb1-508" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
+<span id="cb1-509"><a href="#cb1-509" aria-hidden="true" tabindex="-1"></a>\text{lower predictor uncertainty}</span>
+<span id="cb1-510"><a href="#cb1-510" aria-hidden="true" tabindex="-1"></a>\rightarrow <span class="sc">\\</span></span>
+<span id="cb1-511"><a href="#cb1-511" aria-hidden="true" tabindex="-1"></a>\text{less noisy GWAS statistics}</span>
+<span id="cb1-512"><a href="#cb1-512" aria-hidden="true" tabindex="-1"></a>\rightarrow</span>
+<span id="cb1-513"><a href="#cb1-513" aria-hidden="true" tabindex="-1"></a>\text{greater spatial autocorrelation}.</span>
+<span id="cb1-514"><a href="#cb1-514" aria-hidden="true" tabindex="-1"></a>\end{gathered}</span>
+<span id="cb1-515"><a href="#cb1-515" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-516"><a href="#cb1-516" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-517"><a href="#cb1-517" aria-hidden="true" tabindex="-1"></a>Stated as one falsifiable claim:</span>
+<span id="cb1-517"><a href="#cb1-517" aria-hidden="true" tabindex="-1"></a>The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.</span>
 <span id="cb1-518"><a href="#cb1-518" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-519"><a href="#cb1-519" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-520"><a href="#cb1-520" aria-hidden="true" tabindex="-1"></a>\boxed{\text{HMM parameters that best reconstruct the Mendelian ancestry mosaic produce the most accurate GWAS landscape.}}</span>
+<span id="cb1-519"><a href="#cb1-519" aria-hidden="true" tabindex="-1"></a>Stated as one falsifiable claim:</span>
+<span id="cb1-520"><a href="#cb1-520" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-521"><a href="#cb1-521" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-522"><a href="#cb1-522" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-523"><a href="#cb1-523" aria-hidden="true" tabindex="-1"></a>The final objective is therefore not maximum smoothness. It is maximum recovery of the biological spatial structure imposed by recombination and linkage while preserving true causal resolution. The rise in autocorrelation after ancestry projection is *not* evidence of artificial smoothing — under H2 it is the visible consequence of correct inheritance model → genotype reconstruction → reduced uncertainty → recovery of genomic covariance → cleaner peaks.</span>
+<span id="cb1-522"><a href="#cb1-522" aria-hidden="true" tabindex="-1"></a>\boxed{\text{HMM parameters that best reconstruct the Mendelian ancestry mosaic produce the most accurate GWAS landscape.}}</span>
+<span id="cb1-523"><a href="#cb1-523" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-524"><a href="#cb1-524" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-525"><a href="#cb1-525" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-525"><a href="#cb1-525" aria-hidden="true" tabindex="-1"></a>The final objective is therefore not maximum smoothness. It is maximum recovery of the biological spatial structure imposed by recombination and linkage while preserving true causal resolution. The rise in autocorrelation after ancestry projection is *not* evidence of artificial smoothing — under H2 it is the visible consequence of correct inheritance model → genotype reconstruction → reduced uncertainty → recovery of genomic covariance → cleaner peaks.</span>
 <span id="cb1-526"><a href="#cb1-526" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-527"><a href="#cb1-527" aria-hidden="true" tabindex="-1"></a><span class="fu"># Testable Predictions</span></span>
+<span id="cb1-527"><a href="#cb1-527" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-528"><a href="#cb1-528" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-529"><a href="#cb1-529" aria-hidden="true" tabindex="-1"></a>If local ancestry inference successfully reconstructs the latent ancestry process, then ancestry-based GWAS should exhibit</span>
+<span id="cb1-529"><a href="#cb1-529" aria-hidden="true" tabindex="-1"></a><span class="fu"># Testable Predictions</span></span>
 <span id="cb1-530"><a href="#cb1-530" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased lag-one autocorrelation,</span>
-<span id="cb1-532"><a href="#cb1-532" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased integrated autocorrelation,</span>
-<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced wavelet detail energy,</span>
-<span id="cb1-534"><a href="#cb1-534" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced high-frequency Fourier power,</span>
-<span id="cb1-535"><a href="#cb1-535" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>fewer isolated significant markers,</span>
-<span id="cb1-536"><a href="#cb1-536" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>broader coherent association peaks,</span>
-<span id="cb1-537"><a href="#cb1-537" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased statistical power,</span>
-<span id="cb1-538"><a href="#cb1-538" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>unchanged or improved localization accuracy.</span>
-<span id="cb1-539"><a href="#cb1-539" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-540"><a href="#cb1-540" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a>If local ancestry inference successfully reconstructs the latent ancestry process, then ancestry-based GWAS should exhibit</span>
+<span id="cb1-532"><a href="#cb1-532" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased lag-one autocorrelation,</span>
+<span id="cb1-534"><a href="#cb1-534" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased integrated autocorrelation,</span>
+<span id="cb1-535"><a href="#cb1-535" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced wavelet detail energy,</span>
+<span id="cb1-536"><a href="#cb1-536" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced high-frequency Fourier power,</span>
+<span id="cb1-537"><a href="#cb1-537" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>fewer isolated significant markers,</span>
+<span id="cb1-538"><a href="#cb1-538" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>broader coherent association peaks,</span>
+<span id="cb1-539"><a href="#cb1-539" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased statistical power,</span>
+<span id="cb1-540"><a href="#cb1-540" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>unchanged or improved localization accuracy.</span>
 <span id="cb1-541"><a href="#cb1-541" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-542"><a href="#cb1-542" aria-hidden="true" tabindex="-1"></a><span class="fu"># Discussion</span></span>
+<span id="cb1-542"><a href="#cb1-542" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-543"><a href="#cb1-543" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-544"><a href="#cb1-544" aria-hidden="true" tabindex="-1"></a>The principal conceptual contribution is a change in perspective. A Manhattan plot should not be viewed merely as a collection of independent hypothesis tests. Instead, it is a noisy observation of an underlying spatial stochastic process.</span>
+<span id="cb1-544"><a href="#cb1-544" aria-hidden="true" tabindex="-1"></a><span class="fu"># Discussion</span></span>
 <span id="cb1-545"><a href="#cb1-545" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-546"><a href="#cb1-546" aria-hidden="true" tabindex="-1"></a>The purpose of local ancestry inference is therefore not simply to smooth genotype calls, but to reconstruct the latent ancestry process that generated them. If ancestry inference improves, the geometry of the GWAS landscape should become more coherent.</span>
+<span id="cb1-546"><a href="#cb1-546" aria-hidden="true" tabindex="-1"></a>The principal conceptual contribution is a change in perspective. A Manhattan plot should not be viewed merely as a collection of independent hypothesis tests. Instead, it is a noisy observation of an underlying spatial stochastic process.</span>
 <span id="cb1-547"><a href="#cb1-547" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-548"><a href="#cb1-548" aria-hidden="true" tabindex="-1"></a>Autocorrelation provides perhaps the most intuitive quantitative measure of this improvement because it directly answers the biological question: **to what extent does the evidence at one genomic position predict the evidence at neighboring positions?** Unlike Fourier or wavelet measures, it possesses a straightforward interpretation while remaining mathematically connected to both through the Wiener–Khinchin theorem.</span>
+<span id="cb1-548"><a href="#cb1-548" aria-hidden="true" tabindex="-1"></a>The purpose of local ancestry inference is therefore not simply to smooth genotype calls, but to reconstruct the latent ancestry process that generated them. If ancestry inference improves, the geometry of the GWAS landscape should become more coherent.</span>
 <span id="cb1-549"><a href="#cb1-549" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-550"><a href="#cb1-550" aria-hidden="true" tabindex="-1"></a>This framework suggests a downstream criterion for evaluating local ancestry HMMs: not solely by how accurately they reconstruct ancestry, but by how effectively they increase the spatial coherence — and ultimately the statistical power — of genome-wide association studies, read at each caller&#39;s biologically calibrated resolution.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb1-550"><a href="#cb1-550" aria-hidden="true" tabindex="-1"></a>Autocorrelation provides perhaps the most intuitive quantitative measure of this improvement because it directly answers the biological question: **to what extent does the evidence at one genomic position predict the evidence at neighboring positions?** Unlike Fourier or wavelet measures, it possesses a straightforward interpretation while remaining mathematically connected to both through the Wiener–Khinchin theorem.</span>
+<span id="cb1-551"><a href="#cb1-551" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-552"><a href="#cb1-552" aria-hidden="true" tabindex="-1"></a>This framework suggests a downstream criterion for evaluating local ancestry HMMs: not solely by how accurately they reconstruct ancestry, but by how effectively they increase the spatial coherence — and ultimately the statistical power — of genome-wide association studies, read at each caller&#39;s biologically calibrated resolution.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

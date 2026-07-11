@@ -501,15 +501,17 @@ The framework is **falsifiable**: a caller that produced a smoother, more autoco
 The expected effect of local ancestry projection is:
 
 $$
+\begin{gathered}
 \text{better ancestry inference}
 \rightarrow
 \text{better genotype prediction}
 \rightarrow
 \text{lower predictor uncertainty}
-\rightarrow
+\rightarrow \\
 \text{less noisy GWAS statistics}
 \rightarrow
 \text{greater spatial autocorrelation}.
+\end{gathered}
 $$
 
 The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.
