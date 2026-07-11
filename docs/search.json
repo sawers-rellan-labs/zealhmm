@@ -1598,9 +1598,9 @@
   {
     "objectID": "analysis/GWAS_autocorrelation.html",
     "href": "analysis/GWAS_autocorrelation.html",
-    "title": "Evaluating Local Ancestry HMMs Through the Geometry of the GWAS Association Landscape",
+    "title": "Local Ancestry Projection, GWAS Signal Geometry, and the Sources of Association Dispersion",
     "section": "",
-    "text": "Genome-wide association studies (GWAS) performed using low-coverage sequencing data are affected by uncertainty arising from sequencing errors, genotype calling errors, and imperfect imputation. Traditionally, Hidden Markov Models (HMMs) for local ancestry inference are evaluated using metrics such as ancestry state accuracy, switch error, or breakpoint localization. While these measures assess the quality of ancestry reconstruction, they do not directly evaluate the downstream objective for which the inferred ancestry is ultimately used.\nThis work proposes evaluating HMMs from a different perspective: by examining the geometry of the resulting GWAS association landscape.\nThe central hypothesis is that a more accurate reconstruction of the latent ancestry process should produce a GWAS profile that is spatially more coherent, less noisy, and therefore possesses greater statistical power.\n\n\n\n\n\n\nNoteEmpirical motivation — two results in this repo\n\n\n\nThis framework was prompted by two observations in the TeoNAM STAM coverage-degradation notebook:\n\nthe interpolated-grid step collapses the GWAS significance dispersion onto an almost-single profile — an artifact of neighbour interpolation rather than a biological signal; and\nthe RTIGER coverage-degradation sweep shows that introducing uncertainty through a subpar ancestry method (neighbour interpolation) inflates the het fraction and the significance-profile noise.\n\nThe measures below formalize what those results show empirically: the spatial geometry of the GWAS profile is itself a diagnostic of ancestry-inference quality."
+    "text": "Genome-wide association studies performed in experimental mapping populations differ fundamentally from GWAS performed in natural populations.\nThe allele distribution in a mapping population is not determined by Hardy–Weinberg equilibrium. Instead, it is determined by the breeding design, founder genotypes, segregation scheme, and recombination history.\nTherefore, classical population-genetic approximations based on\n\\[\n2p(1-p)\n\\]\nare not generally appropriate.\nThe expected GWAS signal should instead be described in terms of the variance of the actual genetic predictor segregating in the mapping population.\n\n\n\n\n\n\nNoteEmpirical motivation — two results in this repo\n\n\n\nThis framework was prompted by two observations in the TeoNAM STAM coverage-degradation notebook:\n\nthe interpolated-grid step collapses the GWAS significance dispersion onto an almost-single profile — an artifact of neighbour interpolation rather than a biological signal; and\nthe RTIGER coverage-degradation sweep shows that introducing uncertainty through a subpar ancestry method (neighbour interpolation) inflates the het fraction and the significance-profile noise.\n\nThe framework below formalizes what those results show empirically: the spatial geometry of the GWAS profile is itself a diagnostic of ancestry-inference quality."
   },
   {
     "objectID": "analysis/GWAS_autocorrelation.html#motivation",
@@ -1612,16 +1612,16 @@
   {
     "objectID": "analysis/GWAS_autocorrelation.html#wavelet-detail-energy",
     "href": "analysis/GWAS_autocorrelation.html#wavelet-detail-energy",
-    "title": "Evaluating Local Ancestry HMMs Through the Geometry of the GWAS Association Landscape",
+    "title": "Local Ancestry Projection, GWAS Signal Geometry, and the Sources of Association Dispersion",
     "section": "Wavelet Detail Energy",
-    "text": "Wavelet Detail Energy\nWavelet decompositions separate local high-frequency fluctuations from large-scale structure.\nHigh detail energy indicates local roughness and therefore increased noise."
+    "text": "Wavelet Detail Energy\nWavelet decompositions separate local high-frequency fluctuations from large-scale structure. High detail energy indicates local roughness and therefore increased noise."
   },
   {
     "objectID": "analysis/GWAS_autocorrelation.html#fourier-high-frequency-energy",
     "href": "analysis/GWAS_autocorrelation.html#fourier-high-frequency-energy",
-    "title": "Evaluating Local Ancestry HMMs Through the Geometry of the GWAS Association Landscape",
+    "title": "Local Ancestry Projection, GWAS Signal Geometry, and the Sources of Association Dispersion",
     "section": "Fourier High-Frequency Energy",
-    "text": "Fourier High-Frequency Energy\nBecause random fluctuations introduce rapid oscillations,\nnoise increases the proportion of spectral power contained in high frequencies.\nThe normalized quantity\n\\[\n\\frac{\\sum_{f&gt;f_c}P(f)}\n{\\sum_fP(f)}\n\\]\nprovides one measure of roughness."
+    "text": "Fourier High-Frequency Energy\nBecause random fluctuations introduce rapid oscillations, noise increases the proportion of spectral power contained in high frequencies. The normalized quantity\n\\[\n\\frac{\\sum_{f&gt;f_c}P(f)}\n{\\sum_fP(f)}\n\\]\nprovides one measure of roughness (a band-limited version of it — power between two physical cutoffs — is what the caller-noisiness table computes)."
   },
   {
     "objectID": "analysis/GWAS_autocorrelation.html#spatial-autocorrelation",
@@ -1629,5 +1629,12 @@
     "title": "Evaluating Local Ancestry HMMs Through the Geometry of the GWAS Association Landscape",
     "section": "Spatial Autocorrelation",
     "text": "Spatial Autocorrelation\nThe most intuitive measure is spatial autocorrelation,\n\\[\n\\rho(d)\n=\n\\operatorname{cor}(S(x),S(x+d)),\n\\]\nwhere \\(d\\) denotes genomic distance.\nIf neighboring markers exhibit similar association evidence,\nautocorrelation remains high.\nIf marker-level errors dominate,\nautocorrelation rapidly decays.\nUnlike spectral measures, autocorrelation possesses an immediate biological interpretation.\nA lag-one autocorrelation near one implies that neighboring markers carry nearly identical evidence.\nA lag-one autocorrelation near zero indicates that neighboring markers behave almost independently."
+  },
+  {
+    "objectID": "analysis/GWAS_autocorrelation.html#autocorrelation-summaries",
+    "href": "analysis/GWAS_autocorrelation.html#autocorrelation-summaries",
+    "title": "Local Ancestry Projection, GWAS Signal Geometry, and the Sources of Association Dispersion",
+    "section": "Autocorrelation summaries",
+    "text": "Autocorrelation summaries\nThe lag-one autocorrelation\n\\[\n\\rho_1\n=\n\\operatorname{cor}(S_i,S_{i+1}),\n\\]\nand the integrated autocorrelation\n\\[\nQ\n=\n\\sum_{k=1}^{K}\\rho(k)\n\\]\nsummarize coherence in the lag domain. A lag-one autocorrelation near one implies neighboring markers carry nearly identical evidence; near zero, they behave almost independently. Models producing larger \\(Q\\) generate more coherent landscapes."
   }
 ]
