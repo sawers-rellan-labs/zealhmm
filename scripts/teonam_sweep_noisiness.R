@@ -121,12 +121,36 @@ wav_band <- function(sw, cov) {
   round(num / den, 4)
 }
 
+# --- lag-1 spatial autocorrelation of the -log10P marker track ----------------
+# Wiener-Khinchin dual of the band-power: the periodogram is the FT of the ACF, so
+# a caller with more high-frequency (noise-band) power has a lower marker-to-marker
+# autocorrelation. Measured directly on the marker series (per chr, ordered by BP),
+# NOT the FFT grid, so it is an independent cross-check. Weighted mean over chrs.
+acf_lag1 <- function(sw, cov) {
+  s <- sw[coverage == cov & is.finite(P) & P > 0]
+  s[, logP := -log10(P)]
+  v <- lapply(1:10, function(cc) {
+    z <- s[CHR == cc][order(BP)]
+    if (nrow(z) < 32) {
+      return(c(NA, NA))
+    }
+    a <- as.numeric(stats::acf(z$logP, lag.max = 1, plot = FALSE)$acf[2])
+    c(a * nrow(z), nrow(z)) # weight by n markers
+  })
+  M <- do.call(rbind, v)
+  M <- M[stats::complete.cases(M), , drop = FALSE]
+  round(sum(M[, 1]) / sum(M[, 2]), 4)
+}
+
 sweeps <- lapply(CALLERS, function(c) fread(sprintf("results/sim/teonam/%s_gwas_%s_118k_sweep.csv", TTAG, c)))
 names(sweeps) <- CALLERS
 covs <- sort(unique(sweeps[[1]]$coverage))
 
 head_tab <- rbindlist(lapply(CALLERS, function(c) {
-  data.table(caller = c, fft_band = fft_band(sweeps[[c]], Inf), wav_band = wav_band(sweeps[[c]], Inf))
+  data.table(
+    caller = c, fft_band = fft_band(sweeps[[c]], Inf),
+    wav_band = wav_band(sweeps[[c]], Inf), acf_lag1 = acf_lag1(sweeps[[c]], Inf)
+  )
 }))[order(fft_band)]
 cat("=== NOISE-BAND power at lambda=Inf (fraction in the (R, P10) band), sorted ===\n")
 print(head_tab)
