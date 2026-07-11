@@ -62,6 +62,7 @@ same two metrics: mean coverage (`lambda`) and observed missingness
 
 Derived from `WGSmetrics_summary.tsv` (`picard CollectWgsMetrics` output),
 reduced to a per-sample summary by `scripts/make_missing_data_summaries.R`:
+
 $\lambda = \texttt{MEAN\_COVERAGE}$, $\texttt{missing\_obs} = 1 - \texttt{PCT\_1X}$.
 
 ```{r wgs-load}
