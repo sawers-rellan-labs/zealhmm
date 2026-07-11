@@ -93,7 +93,10 @@ load_consensus_map <- function(path = here::here("data/ref/maize_map_v5_clean.rd
 #' Build a physical marker grid: n_markers spread by span, cM per marker
 #' @export
 build_marker_grid <- function(map, n_markers = 2500L, chr_prefix = "chr") {
-  spans <- map[, .(min_bp = min(bp), max_bp = max(bp), span = max(bp) - min(bp)), by = chr]
+  # span as double: on bp-scale maize maps `n_markers * span` and `sum(span)`
+  # overflow 32-bit integer arithmetic (span ~3e8, sum ~2e9 > .Machine$integer.max),
+  # yielding NA quotas. Double arithmetic keeps the quota computation exact.
+  spans <- map[, .(min_bp = min(bp), max_bp = max(bp), span = as.numeric(max(bp) - min(bp))), by = chr]
   spans[, quota := pmax(2L, as.integer(round(n_markers * span / sum(span))))]
   data.table::rbindlist(lapply(seq_len(nrow(spans)), function(i) {
     ch <- spans$chr[i]
