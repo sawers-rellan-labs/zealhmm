@@ -52,7 +52,7 @@ MANIFEST.tsv                       file, bytes, sha256
 | `lbimpute_mosaic` | ancestry | LB-Impute |
 | `hwe_post_gt` | **genotype** | `bcftools mpileup \| call -mv` (HWE-prior MAP) — real cohort calls, panel-subset |
 
-The legacy **250K** RTIGER introgression set (inv4m paper; a separate GATK → Beagle-imputed
+The legacy **200K** RTIGER introgression set (inv4m paper; a separate GATK → Beagle-imputed
 lineage, not from this pipeline) is intentionally **not** in this release — regenerate with
 recalibrated RTIGER if it is ever needed.
 

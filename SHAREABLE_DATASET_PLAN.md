@@ -19,7 +19,7 @@ landing (CyVerse Data Store). Three components:
 1. **50K dataset, in its caller variations** — the SNP50K ancestry mosaics produced by each
    nilHMM/RTIGER caller, as **binary 0/1/2 ancestry-state matrices** (0 = B73 hom,
    1 = het, 2 = teosinte hom), **plus the `gphwe` genotype** (bcftools cohort VCF).
-2. ~~**250K dataset**~~ — **dropped** (2026-07-09): legacy inv4m-paper RTIGER set; would be
+2. ~~**200K dataset**~~ — **dropped** (2026-07-09): legacy inv4m-paper RTIGER set; would be
    regenerated with recalibrated RTIGER if ever needed, not shipped.
 3. **Expanded wideseq-union dataset** — genotype/ancestry at the **union of (Poisson-QC'd
    wideseq 27 M positions) ∪ (SNP50K positions)**, derived from the low-coverage read counts.
@@ -47,7 +47,7 @@ ancestry mosaic" G1 calls for.
 | SNP50K markers | `markers_snp50k_v5.tsv`, `markers_snp50k_cm.tsv` | marker,chr,pos(,cM) | v5 bp + native cM |
 | **50K mosaics (variations)** | `zeal_{rtiger,nnil,binhmm,lbimpute}_mosaic.rds` | 0/1/2 marker×line | one per caller — the G1.1 payload |
 | per-SNP genotype (`_gt`) | `zeal_ml_gt.rds` | 0/1/2 hardcall | `call_gt(prior="flat")` via `zeal_gt.R`; retired `persnp` |
-| **250K calls** | `rtiger_250K_calls_introfinder.rds` | per-line segment tbls (2-state) | 1,077 lines; from Nirwan's finder |
+| **200K calls** | `rtiger_200K_calls_introfinder.rds` | per-line segment tbls (2-state) | 1,077 lines; from Nirwan's finder |
 | 50K RTIGER segments | `rtiger_50K_calls.csv` | 3-state segments | Fausto's calls |
 | samplesheet | `samplesheet_3way.csv` | line metadata | `skim_id/brbseq_id/in_snp50k/gwas_nil/...` |
 | kinship | `zeal_K_vanraden_*.rds` | K per caller | GWAS |
@@ -78,7 +78,7 @@ The single worst overload:
 | Per-site genotype from counts (no HMM) | **`<method>_gt`** via `call_gt` | `persnp` retired → `ml_gt` (`zeal_gt.R`) |
 | Caller set | `rtiger`, `nnil`, `binhmm`, `lbimpute` | one spelling everywhere |
 | 50K marker set | **SNP50K** | `50K` / `snp50k` / `SNP 50K` → pick one (`SNP50K`) |
-| 250K call set | **250K (inv4m / introfinder)** | always tag "previous"; it is 2-state |
+| 200K call set | **200K (inv4m / introfinder)** | always tag "previous"; it is 2-state |
 | Dense teosinte panel | **wideseq (~27.6 M)** | `27M` / `wideseq_ref` → "wideseq" |
 | Germplasm units | **taxa** (Zv/Zx/Zl/Zd/Zh); accessions `Zx.####` | never "species"; see `bzea-taxa-naming` |
 | States | 0 = B73(REF), 1 = HET, 2 = teosinte(ALT) | fixed order + palette (`R/plotting.R`) |
@@ -104,7 +104,7 @@ lbimpute`_mosaic): PLINK `.bed/.bim/.fam` + tidy `_012.tsv.gz` + `.rds`. Genotyp
 the authoritative bcftools cohort VCF `bzea_50K_cohort.vcf.gz` (`mpileup | call -mv`, HWE-prior
 MAP; 1439) shipped verbatim + PLINK + the gwas_nil rds. Shared `markers/`+`lines/` tables; `README`
 + sha256 `MANIFEST`. 49,002 sites, B73 v5. README carries the mosaic≠genotype wall.
-**G1.2 (250K) dropped** — legacy; regenerate with recalibrated RTIGER if needed. **No single-sample
+**G1.2 (200K) dropped** — legacy; regenerate with recalibrated RTIGER if needed. **No single-sample
 GL shared** (the mistaken `ml_gt` was removed; see PR #6).
 
 - B1. Define a **release schema**: per caller, a plain-text 0/1/2 matrix + a marker table
@@ -113,7 +113,7 @@ GL shared** (the mistaken `ml_gt` was removed; see PR #6).
   standard) **plus** the RDS mosaics for R users.
 - B2. `scripts/zeal_export_release.R` — read `zeal_*_mosaic.rds` → write, per caller:
   `bzea_snp50k_<caller>.{bed,bim,fam}` and a tidy `bzea_snp50k_<caller>_012.tsv.gz`.
-- B3. Stage the **250K** set into the same release layout (2-state, clearly labeled "previous").
+- B3. Stage the **200K** set into the same release layout (2-state, clearly labeled "previous").
 - B4. `README` + `MANIFEST.tsv` (sha256 per file) for the release bundle.
 
 ### Phase C — Wideseq-union expansion with Poisson QC (G1.3)
@@ -139,7 +139,7 @@ Proposed repo: **`bzea-genotype-browser`** (separate git repo; deploy to shinyap
   `hwe_post_gt` (genotype) — as compact binary (PLINK `.bed` or indexed RDS/`fst`), sized for
   shinyapps.io.
 - D2. UI: pick chromosome + start (bp), window ≤ **1 Mb** (hard cap), object selector
-  (rtiger/nnil/binhmm/lbimpute mosaic + hwe_post_gt genotype), sample subset. (250K dropped.)
+  (rtiger/nnil/binhmm/lbimpute mosaic + hwe_post_gt genotype), sample subset. (200K dropped.)
 - D3. Export: assemble the requested fragment on the fly → **VCF** and **HapMap** download.
   Reuse the release exporter's encoding as a shared function.
 - D4. Provenance panel + link to the CyVerse release and this repo.
@@ -163,7 +163,7 @@ Proposed repo: **`bzea-genotype-browser`** (separate git repo; deploy to shinyap
   now* and the app's base.
 
 ### Phase E — Archive & cite (G1)
-- E1. Push the full release bundle (50K variations + 250K + wideseq-union PLINK/VCF + manifest +
+- E1. Push the full release bundle (50K variations + 200K + wideseq-union PLINK/VCF + manifest +
   README) to **CyVerse Data Store**; request a DOI landing.
 - E2. Cross-link: `zealhmm` `DATA.md` → CyVerse DOI → app repo. Add a "Data availability" blurb.
 
@@ -172,12 +172,12 @@ Proposed repo: **`bzea-genotype-browser`** (separate git repo; deploy to shinyap
 ## 5. Sequencing & priority
 
 1. **Phase A** (fast, unblocks naming) →
-2. **Phase B** (50K + 250K packaging — highest value, all inputs already on disk) →
+2. **Phase B** (50K + 200K packaging — highest value, all inputs already on disk) →
 3. **Phase D** (app; can start against B's 50K export while C runs) →
 4. **Phase C** (wideseq-union; the heaviest compute; needs the mount) →
 5. **Phase E** (archive + DOI once C lands).
 
-The 50K/250K release (B) + app (D) can ship **before** the wideseq expansion (C); C then lands
+The 50K/200K release (B) + app (D) can ship **before** the wideseq expansion (C); C then lands
 as a versioned update to the same CyVerse collection.
 
 ---
@@ -187,7 +187,7 @@ as a versioned update to the same CyVerse collection.
 - **App payload size** — shinyapps.io free tier is ~1 GB image; the SNP50K 012 mosaic across
   callers must fit (PLINK `.bed` of ~52 K sites × ~1,400 lines is small; fine). The wideseq
   union is NOT shipped in-app — served from a fragment index or kept archive-only.
-- **250K ↔ 50K reconciliation** in the app (2-state vs 3-state) — surface both, don't merge.
+- **200K ↔ 50K reconciliation** in the app (2-state vs 3-state) — surface both, don't merge.
 - **Which caller is "the" release mosaic** vs shipping all four — default: ship all four, mark
   `rtiger` as reference.
 

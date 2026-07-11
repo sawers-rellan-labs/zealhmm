@@ -154,9 +154,9 @@ listing:
     field-display-names: {title: "Notebook", description: "Description"}
     sort: false
     contents:
-      - title: "Inv4m genotype · 50K vs 250K"
+      - title: "Inv4m genotype · 50K vs 200K"
         path: analysis/zeal-inv4m-rtiger-genotype.qmd
-        description: "Genotype at the Inv4m tagging SNP (PZE04175660223) from the 250K (previous, Nirwan) and 50K (current, Fausto) RTIGER call sets: confusion matrix, BC2S3 goodness-of-fit, and the flowering-time LMM on each"
+        description: "Genotype at the Inv4m tagging SNP (PZE04175660223) from the 200K (previous, Nirwan) and 50K (current, Fausto) RTIGER call sets: confusion matrix, BC2S3 goodness-of-fit, and the flowering-time LMM on each"
 ---
 
 Analysis notebooks grouped by **dataset**, and within each dataset by the **paper**
