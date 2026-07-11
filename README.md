@@ -17,9 +17,8 @@ teosinte-introgression population.
 
 ## Papers this repo serves
 
-The notebooks are organized on the docs site into three groups — **nilHMM methods**
-(foundations + engine), **TeoNAM**, and **ZEAL/BZea** — and within the dataset groups by
-the **paper** the work supports (full list under [Notebooks](#notebooks)):
+The notebooks are organized on the docs site by **dataset** (TeoNAM, ZEAL/BZea) and,
+within each, by the **paper** the work supports:
 
 1. **nilHMM R package paper** (Oxford Bioinformatics) — **priority; written here.** A
    methods paper: the read-based genotype model, the shared HMM engine, simulation
@@ -70,61 +69,8 @@ zealhmm/
   #   results/  derived tables/figures
 ```
 
-## Notebooks
-
-The docs landing page (`index.qmd`) is the authoritative index; this mirrors it, grouped
-as on the site (dataset → paper).
-
-**nilHMM methods**
-
-- *§1 Foundations — genotype calling:*
-  [Genotype likelihoods](analysis/genotype_likelihoods_and_hmm.qmd) ·
-  [Resolving dosage](analysis/snp50k_genotype_identifiability.qmd) ·
-  [Emission by depth](analysis/emission_by_depth_regime.qmd)
-- *§1 Foundations — missing data:*
-  [Coverage theory](analysis/missing-data-coverage-theory.qmd) ·
-  [Floor model](analysis/missing-data-floor-model.qmd) ·
-  [Model comparison](analysis/missing-data-model-comparison.qmd) ·
-  [Ergodicity assumption](analysis/wideseq-coverage-ergodicity.qmd)
-- *Engine & calibration:*
-  [Single-locus validation](analysis/single-locus-validation.qmd) ·
-  [Ancestry callers](analysis/callers-and-methods.qmd) ·
-  [Simulation calibration](analysis/simulation-calibration.qmd) ·
-  [GWAS-landscape geometry](analysis/GWAS_autocorrelation.qmd)
-
-**TeoNAM — nilHMM R package paper**
-
-- *QTL recovery:*
-  [STAM · GWAS + coverage sweep (native)](analysis/teonam-qtl-recovery.qmd) ·
-  [STAM · GWAS + coverage sweep (118K)](analysis/teonam-qtl-recovery-118k.qmd) ·
-  [STAM · MLM five-caller sweep (118K)](analysis/teonam-qtl-recovery-mlm-118k.qmd) ·
-  [DTA · MLM five-caller sweep (118K)](analysis/teonam-qtl-recovery-dta-mlm-118k.qmd)
-- *Fig-4C reproduction:*
-  [STAM · MLM (Q + K), 118K](analysis/teonam-stam-mlm-gwas-118k.qmd) ·
-  [STAM · MLM (Q + K), interpolated](analysis/teonam-stam-mlm-gwas-interpolated.qmd)
-- *Calibration & map:*
-  [Caller calibration](analysis/teonam-caller-calibration.qmd) ·
-  [Genetic map](analysis/teonam-genetic-map.qmd) ·
-  [Marker thinning](analysis/marker-thinning.qmd)
-- *Supplement:*
-  [STAM · OLS computation (118K)](analysis/teonam-stam-ols-gwas-118k.qmd) ·
-  [STAM · OLS computation (family-imputed)](analysis/teonam-stam-ols-gwas-family-imputed.qmd)
-
-**ZEAL / BZea**
-
-- *nilHMM R package paper:*
-  [RTIGER vs nilHMM](analysis/rtiger_vs_nilhmm_reproduction.qmd) ·
-  [nilHMM painting](analysis/nilhmm_sanity_check_paint.qmd) ·
-  [Source/method comparison](analysis/source-method-comparison.qmd)
-- *ZEAL population paper:*
-  [DTA · MLM + JLM](analysis/zeal-qtl-recovery-dta-mlm-snp50k.qmd) ·
-  [DTA · FDR ≤ 0.05](analysis/zeal-qtl-recovery-dta-mlm-snp50k-fdr.qmd) ·
-  [PH · FDR ≤ 0.05](analysis/zeal-qtl-recovery-ph-mlm-snp50k-fdr.qmd) ·
-  [DTS · FDR ≤ 0.05](analysis/zeal-qtl-recovery-dts-mlm-snp50k-fdr.qmd) ·
-  [StPi · FDR ≤ 0.05](analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd) ·
-  [StPu · FDR ≤ 0.05](analysis/zeal-qtl-recovery-stpu-mlm-snp50k-fdr.qmd)
-- *Inv4m paper (in review):*
-  [Inv4m genotype · 50K vs 200K](analysis/zeal-inv4m-rtiger-genotype.qmd)
+The docs landing page (`index.qmd`) is the authoritative index of notebooks, grouped
+dataset → paper.
 
 ## Reproduce
 
