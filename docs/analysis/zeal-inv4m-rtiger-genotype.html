@@ -5462,7 +5462,7 @@ loaded via a namespace (and not attached):
 <span id="cb14-158"><a href="#cb14-158" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-159"><a href="#cb14-159" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-160"><a href="#cb14-160" aria-hidden="true" tabindex="-1"></a>**Reading it.** The two RTIGER call sets agree on donor **presence** for</span>
-<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a><span class="in">`r sprintf(&quot;%.1f%%&quot;, 100 * n_match / n_tot)`</span> of lines. Where the 200K set calls <span class="in">`Introgression`</span>,</span>
+<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a><span class="in">`r if (exists(&quot;n_match&quot;)) sprintf(&quot;%.1f%%&quot;, 100 * n_match / n_tot) else &quot;—&quot;`</span> of lines. Where the 200K set calls <span class="in">`Introgression`</span>,</span>
 <span id="cb14-162"><a href="#cb14-162" aria-hidden="true" tabindex="-1"></a>the 50K set resolves the zygosity into heterozygous (the majority) and homozygous-donor. The few</span>
 <span id="cb14-163"><a href="#cb14-163" aria-hidden="true" tabindex="-1"></a>off-diagonal lines are small, roughly symmetric disagreements at the detection margin, expected for</span>
 <span id="cb14-164"><a href="#cb14-164" aria-hidden="true" tabindex="-1"></a>two callers built on different reference variant sets.</span>

@@ -158,7 +158,7 @@ dcast(cm, g50_3 ~ g250, value.var = "N")[order(-match(g50_3, c("REF", "HET", "AL
 ```
 
 **Reading it.** The two RTIGER call sets agree on donor **presence** for
-`r sprintf("%.1f%%", 100 * n_match / n_tot)` of lines. Where the 200K set calls `Introgression`,
+`r if (exists("n_match")) sprintf("%.1f%%", 100 * n_match / n_tot) else "—"` of lines. Where the 200K set calls `Introgression`,
 the 50K set resolves the zygosity into heterozygous (the majority) and homozygous-donor. The few
 off-diagonal lines are small, roughly symmetric disagreements at the detection margin, expected for
 two callers built on different reference variant sets.
