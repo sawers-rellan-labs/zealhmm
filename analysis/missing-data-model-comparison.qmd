@@ -43,88 +43,13 @@ suppressMessages({
 
 ## Helper functions
 
-These wrap the per-dataset workflow from part 2 so the same fit and plots can be
-applied to every dataset. (In the original notebook they were sourced from a
-project helper file; they are reproduced here so this note is self-contained.)
+These wrap the per-dataset workflow from part 2 so the same fit and plots apply
+to every dataset. They live in `R/missing_data_models.R` (ported verbatim from
+the original `modeling_functions.R`) and are sourced here, so the fit and the
+figure share one canonical definition and cannot drift from a retyped copy.
 
 ```{r helpers}
-# Fit the exponential-with-floor model to a per-sample data frame that already
-# has columns `lambda` (mean coverage) and `missing_obs` (observed missingness).
-# Returns the fit object, the fitted parameters, and the data with predictions.
-fit_exp_floor_model <- function(per_sample) {
-  per_sample <- per_sample %>%
-    mutate(missing_poisson = exp(-lambda))
-
-  dat <- per_sample %>%
-    filter(
-      is.finite(lambda), is.finite(missing_obs),
-      missing_obs > 0, missing_obs < 1
-    )
-
-  # Starting values: linear fits for the floor intercept and the decay rate
-  pi_est <- coef(lm(missing_obs ~ missing_poisson, data = per_sample))[1]
-  k_est <- -coef(lm(log(missing_obs) ~ lambda, data = dat))[2]
-
-  fit <- nlsLM(
-    missing_obs ~ pi + (1 - pi) * exp(-k * lambda),
-    data  = dat,
-    start = list(pi = unname(pi_est), k = unname(k_est)),
-    lower = c(0, 0),
-    upper = c(1, 10)
-  )
-
-  params <- as.list(coef(fit))
-  per_sample$missing_exp_floor <- predict(fit, newdata = per_sample)
-
-  list(fit = fit, params = params, data = per_sample)
-}
-
-# Coverage histogram for a per-sample data frame (used as an inlay).
-generate_coverage_histogram <- function(per_sample) {
-  per_sample %>%
-    ggplot(aes(x = lambda)) +
-    xlab("Coverage") +
-    ylab("Sample Count") +
-    geom_histogram(aes(fill = after_stat(x))) +
-    geom_vline(
-      xintercept = mean(per_sample$lambda, na.rm = TRUE),
-      color = "red"
-    ) +
-    scale_fill_viridis_c() +
-    ggpubr::theme_classic2(base_size = 8) +
-    theme(legend.position = "none")
-}
-
-# Validation plot: observed vs floor-model expected missingness, 1:1 line,
-# floor as a dashed vertical line, with the coverage histogram as an inlay.
-generate_floor_model_plot <- function(model_results, coverage_hist_plot,
-                                      plot_title = "") {
-  ps <- model_results$data
-  pi <- model_results$params$pi
-  xy_limits <- c(0.2, 1.0)
-
-  scatter <- ps %>%
-    ggplot(aes(x = missing_exp_floor, y = missing_obs, col = lambda)) +
-    geom_point() +
-    geom_vline(xintercept = pi, linetype = "dashed") +
-    geom_abline(slope = 1, intercept = 0, color = "red") +
-    scale_color_viridis_c(limits = c(0, 1.5)) +
-    guides(col = guide_colorbar(title = "Coverage")) +
-    scale_x_continuous(limits = xy_limits, breaks = (2:10) / 10) +
-    scale_y_continuous(limits = xy_limits, breaks = (2:10) / 10) +
-    coord_fixed(ratio = 1) +
-    xlab("Expected Missing (Floor Model)") +
-    ylab("Observed Missing") +
-    ggtitle(plot_title) +
-    ggpubr::theme_classic2(base_size = 12) +
-    theme(legend.position = "top")
-
-  cowplot::ggdraw() +
-    cowplot::draw_plot(scatter) +
-    cowplot::draw_plot(cowplot::as_grob(coverage_hist_plot),
-      x = 0.55, y = 0.16, width = 0.2, height = 0.25
-    )
-}
+source(here("R/missing_data_models.R"))
 ```
 
 # 1 Data loading and processing
@@ -208,7 +133,7 @@ cat("Decay (k):", round(snp50K_model_results$params$k, 3), "\n")
 Generate the validation plots for all three models and display them
 side-by-side.
 
-```{r compare-plots}
+```{r compare-plots, fig.width=18, fig.height=6}
 hist_wgs <- generate_coverage_histogram(wgs_model_results$data)
 hist_bzea <- generate_coverage_histogram(bzea_model_results$data)
 hist_snp50K <- generate_coverage_histogram(snp50K_model_results$data)
