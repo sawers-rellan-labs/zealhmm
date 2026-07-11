@@ -40,7 +40,7 @@ produces the figures, tables, and rendered notes it consumes.
 |------|---------|-------------|--------|
 | §1 Motivation + foundations | Low coverage; single-read genotype calling; missing-data model (Poisson + floor) | genotype calling: `genotype_likelihoods_and_hmm.qmd`, `snp50k_genotype_identifiability.qmd`, `emission_by_depth_regime.qmd`; missing-data model: `missing-data-coverage-theory.qmd`, `missing-data-floor-model.qmd`, `missing-data-model-comparison.qmd`, `wideseq-coverage-ergodicity.qmd` | notebooks rendered; §-prose to write |
 | §2 Shared HMM engine | One duration-aware 3-state engine; each caller (nNIL, RTIGER, binhmm, ATLAS) a different setup | `callers-and-methods.qmd`; single-locus check `single-locus-validation.qmd`; engine fidelity `rtiger_vs_nilhmm_reproduction.qmd`; 2-source × caller demo `nilhmm_sanity_check_paint.qmd` | ready |
-| §3 Calibration **+ TeoNAM reproduction** | simcross → params (two-stage search); **the comparison of GWAS profiles under simulated coverage is the results center** | `simulation-calibration.qmd`, `GWAS_autocorrelation.qmd`; `teonam-qtl-recovery{,-118k}.qmd` ⭐, `teonam-qtl-recovery-mlm-118k.qmd`, `teonam-qtl-recovery-dta-mlm-118k.qmd`; Fig-4C `teonam-stam-mlm-gwas-118k.qmd`, `teonam-stam-mlm-gwas-interpolated.qmd`; map/calibration `teonam-caller-calibration.qmd`, `teonam-genetic-map.qmd`, `marker-thinning.qmd`; OLS supp `teonam-stam-ols-gwas-118k.qmd`, `teonam-stam-ols-gwas-family-imputed.qmd` | core done; nNIL/LB-Impute calib open |
+| §3 Calibration **+ TeoNAM reproduction** | simcross → params (two-stage search); **the comparison of GWAS profiles under simulated coverage is the results center** | `simulation-calibration.qmd`, `GWAS_autocorrelation.qmd`; `teonam-qtl-recovery{,-118k}.qmd` ⭐, `teonam-qtl-recovery-mlm-118k.qmd`, `teonam-qtl-recovery-dta-mlm-118k.qmd`; Fig-4C `teonam-stam-mlm-gwas-118k.qmd`, `teonam-stam-mlm-gwas-interpolated.qmd`; map/calibration `teonam-caller-calibration.qmd`, `teonam-genetic-map.qmd`, `marker-thinning.qmd`; OLS supp `teonam-stam-ols-gwas-118k.qmd`, `teonam-stam-ols-gwas-family-imputed.qmd` | done |
 | §4 Application | Cross-modality comparison on the narrow cohort of lines with **both** skim + BRB-seq | qualitative: `nilhmm_sanity_check_paint.qmd` (available now); quantitative: `source-method-comparison.qmd` | ⏸ blocked on the ~400 paired-cohort manifest (plan B5) |
 
 The chromosome-painting figure (`nilhmm_sanity_check_paint`) ships two renderings: a
@@ -95,8 +95,7 @@ renders off-mount. Seeds for `simcross` are pinned in `R/simulate.R`.
 
 - **§2 (engine)** and the **TeoNAM reproduction** (§3 results center) are wired to the
   package and rendered.
-- **§3 calibration** core is done; per-coverage **nNIL** and **LB-Impute** calibration
-  remain open (`agent/HANDOVER.md`).
+- **§3 calibration** is done — including per-coverage **nNIL** and **LB-Impute** calibration.
 - **§1 (foundations)** must still be written.
 - **§4 (paired cohort)** is scaffolded and **blocked** on the ~400 paired-cohort
   manifest (plan B5), tracked in [`DATA.md`](DATA.md).
