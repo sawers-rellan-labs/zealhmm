@@ -303,7 +303,17 @@ Models producing larger values of $Q$ generate more coherent association landsca
 
 Smoothness alone cannot determine model quality.
 
-An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution.
+**The smoothing scale is set by the caller, not discovered from the data.** The callers do not start from the same roughness: each imposes an intrinsic smoothing length through its segmentation parameter, which acts as a **low-pass filter** on the ancestry — and therefore on the GWAS — profile.
+
+- **nNIL / binhmm** bin the signal over a fixed physical window (~1 Mb).
+- **RTIGER** enforces a minimum segment length of `rigidity` markers.
+- **LB-Impute** sets a linkage-decay distance `recombdist` (cM).
+
+Each parameter is a cutoff below which structure is suppressed. So the degree of smoothness is *chosen*: a longer window or higher rigidity trivially raises autocorrelation and lowers band-limited noise whether or not the reconstruction is more faithful. Coherence therefore cannot be maximized blindly across callers — it must be read at each caller's **calibrated** parameter, the low-pass cutoff matched to the true introgression-fragment scale by minimum donor-fragment FDR ([caller calibration](teonam-caller-calibration.html)), so that a coherent profile reflects fidelity to the real block structure rather than the strength of an arbitrary filter.
+
+**The right cutoff is set by the biology, not chosen freely.** The recombination rate of the cross fixes the introgression **fragment-size distribution** (in BC2S3, ~33 crossovers per genome), and the smallest *real* fragments define the shortest wavelength a caller should preserve. Structure below that scale cannot be a genuine ancestry block — it is over-fragmentation noise to filter out; structure above it is signal to keep. This is exactly the noise band used to score noisiness (wavelengths between the grid resolution $R$ and the 10th-percentile resolvable tract $P_{10}$) and the target the calibration aims at: the ideal low-pass cutoff *is* the fragment scale — neither finer (over-fragmentation, spurious peaks) nor coarser (over-smoothing, lost breakpoints). Recombination rate and fragment distribution, not analyst preference, set where the filter should sit.
+
+An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution — the low-pass filter turned all the way up.
 
 Therefore,
 

@@ -4474,7 +4474,15 @@ Q
 <section id="avoiding-oversmoothing" class="level1">
 <h1>Avoiding Oversmoothing</h1>
 <p>Smoothness alone cannot determine model quality.</p>
-<p>An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution.</p>
+<p><strong>The smoothing scale is set by the caller, not discovered from the data.</strong> The callers do not start from the same roughness: each imposes an intrinsic smoothing length through its segmentation parameter, which acts as a <strong>low-pass filter</strong> on the ancestry — and therefore on the GWAS — profile.</p>
+<ul>
+<li><strong>nNIL / binhmm</strong> bin the signal over a fixed physical window (~1 Mb).</li>
+<li><strong>RTIGER</strong> enforces a minimum segment length of <code>rigidity</code> markers.</li>
+<li><strong>LB-Impute</strong> sets a linkage-decay distance <code>recombdist</code> (cM).</li>
+</ul>
+<p>Each parameter is a cutoff below which structure is suppressed. So the degree of smoothness is <em>chosen</em>: a longer window or higher rigidity trivially raises autocorrelation and lowers band-limited noise whether or not the reconstruction is more faithful. Coherence therefore cannot be maximized blindly across callers — it must be read at each caller’s <strong>calibrated</strong> parameter, the low-pass cutoff matched to the true introgression-fragment scale by minimum donor-fragment FDR (<a href="teonam-caller-calibration.html">caller calibration</a>), so that a coherent profile reflects fidelity to the real block structure rather than the strength of an arbitrary filter.</p>
+<p><strong>The right cutoff is set by the biology, not chosen freely.</strong> The recombination rate of the cross fixes the introgression <strong>fragment-size distribution</strong> (in BC2S3, ~33 crossovers per genome), and the smallest <em>real</em> fragments define the shortest wavelength a caller should preserve. Structure below that scale cannot be a genuine ancestry block — it is over-fragmentation noise to filter out; structure above it is signal to keep. This is exactly the noise band used to score noisiness (wavelengths between the grid resolution <span class="math inline">\(R\)</span> and the 10th-percentile resolvable tract <span class="math inline">\(P_{10}\)</span>) and the target the calibration aims at: the ideal low-pass cutoff <em>is</em> the fragment scale — neither finer (over-fragmentation, spurious peaks) nor coarser (over-smoothing, lost breakpoints). Recombination rate and fragment distribution, not analyst preference, set where the filter should sit.</p>
+<p>An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution — the low-pass filter turned all the way up.</p>
 <p>Therefore,</p>
 <p>autocorrelation should be interpreted jointly with</p>
 <ul>
@@ -5284,83 +5292,93 @@ Q
 <span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a>Smoothness alone cannot determine model quality.</span>
 <span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution.</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>**The smoothing scale is set by the caller, not discovered from the data.** The callers do not start from the same roughness: each imposes an intrinsic smoothing length through its segmentation parameter, which acts as a **low-pass filter** on the ancestry — and therefore on the GWAS — profile.</span>
 <span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>Therefore,</span>
-<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>autocorrelation should be interpreted jointly with</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**nNIL / binhmm** bin the signal over a fixed physical window (~1 Mb).</span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**RTIGER** enforces a minimum segment length of <span class="in">`rigidity`</span> markers.</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LB-Impute** sets a linkage-decay distance <span class="in">`recombdist`</span> (cM).</span>
 <span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ancestry accuracy,</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>Each parameter is a cutoff below which structure is suppressed. So the degree of smoothness is *chosen*: a longer window or higher rigidity trivially raises autocorrelation and lowers band-limited noise whether or not the reconstruction is more faithful. Coherence therefore cannot be maximized blindly across callers — it must be read at each caller&#39;s **calibrated** parameter, the low-pass cutoff matched to the true introgression-fragment scale by minimum donor-fragment FDR (<span class="co">[</span><span class="ot">caller calibration</span><span class="co">](teonam-caller-calibration.html)</span>), so that a coherent profile reflects fidelity to the real block structure rather than the strength of an arbitrary filter.</span>
 <span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>breakpoint localization,</span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a>**The right cutoff is set by the biology, not chosen freely.** The recombination rate of the cross fixes the introgression **fragment-size distribution** (in BC2S3, ~33 crossovers per genome), and the smallest *real* fragments define the shortest wavelength a caller should preserve. Structure below that scale cannot be a genuine ancestry block — it is over-fragmentation noise to filter out; structure above it is signal to keep. This is exactly the noise band used to score noisiness (wavelengths between the grid resolution $R$ and the 10th-percentile resolvable tract $P_{10}$) and the target the calibration aims at: the ideal low-pass cutoff *is* the fragment scale — neither finer (over-fragmentation, spurious peaks) nor coarser (over-smoothing, lost breakpoints). Recombination rate and fragment distribution, not analyst preference, set where the filter should sit.</span>
 <span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>recovery of simulated QTL,</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution — the low-pass filter turned all the way up.</span>
 <span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>detection power,</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a>Therefore,</span>
 <span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>localization precision.</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a>autocorrelation should be interpreted jointly with</span>
 <span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a>The objective is not maximal smoothness,</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ancestry accuracy,</span>
 <span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a>but maximal biological coherence while preserving genuine recombination events.</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>breakpoint localization,</span>
 <span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>recovery of simulated QTL,</span>
 <span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="fu"># Testable Predictions</span></span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>detection power,</span>
 <span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a>If local ancestry inference successfully reconstructs the latent ancestry process,</span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>localization precision.</span>
 <span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>then ancestry-based GWAS should exhibit</span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>The objective is not maximal smoothness,</span>
 <span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased lag-one autocorrelation,</span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a>but maximal biological coherence while preserving genuine recombination events.</span>
 <span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased integrated autocorrelation,</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced wavelet detail energy,</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="fu"># Testable Predictions</span></span>
 <span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced high-frequency Fourier power, </span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>If local ancestry inference successfully reconstructs the latent ancestry process,</span>
 <span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>fewer isolated significant markers,</span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a>then ancestry-based GWAS should exhibit</span>
 <span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>broader coherent association peaks,</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased lag-one autocorrelation,</span>
 <span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased statistical power,</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased integrated autocorrelation,</span>
 <span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>unchanged or improved localization accuracy.</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced wavelet detail energy,</span>
 <span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduced high-frequency Fourier power, </span>
 <span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a><span class="fu"># Discussion</span></span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>fewer isolated significant markers,</span>
 <span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a>The principal conceptual contribution is a change in perspective.</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>broader coherent association peaks,</span>
 <span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a>A Manhattan plot should not be viewed merely as a collection of independent hypothesis tests.</span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increased statistical power,</span>
 <span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a>Instead,</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>unchanged or improved localization accuracy.</span>
 <span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a>it is a noisy observation of an underlying spatial stochastic process.</span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a>The purpose of local ancestry inference is therefore not simply to smooth genotype calls,</span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a><span class="fu"># Discussion</span></span>
 <span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a>but to reconstruct the latent ancestry process that generated them.</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a>The principal conceptual contribution is a change in perspective.</span>
 <span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a>If ancestry inference improves,</span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a>A Manhattan plot should not be viewed merely as a collection of independent hypothesis tests.</span>
 <span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>the geometry of the GWAS landscape should become more coherent.</span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>Instead,</span>
 <span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a>Autocorrelation provides perhaps the most intuitive quantitative measure of this improvement because it directly answers the biological question:</span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a>it is a noisy observation of an underlying spatial stochastic process.</span>
 <span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a>**To what extent does the evidence at one genomic position predict the evidence at neighboring positions?**</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a>The purpose of local ancestry inference is therefore not simply to smooth genotype calls,</span>
 <span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a>Unlike Fourier or wavelet measures,</span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a>but to reconstruct the latent ancestry process that generated them.</span>
 <span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>autocorrelation possesses a straightforward interpretation while remaining mathematically connected to both through the Wiener–Khinchin theorem.</span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>If ancestry inference improves,</span>
 <span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>This framework suggests a new downstream criterion for evaluating local ancestry HMMs:</span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>the geometry of the GWAS landscape should become more coherent.</span>
 <span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a>not solely by how accurately they reconstruct ancestry,</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a>Autocorrelation provides perhaps the most intuitive quantitative measure of this improvement because it directly answers the biological question:</span>
 <span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a>but by how effectively they increase the spatial coherence—and ultimately the statistical power—of genome-wide association studies.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a>**To what extent does the evidence at one genomic position predict the evidence at neighboring positions?**</span>
+<span id="cb1-383"><a href="#cb1-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-384"><a href="#cb1-384" aria-hidden="true" tabindex="-1"></a>Unlike Fourier or wavelet measures,</span>
+<span id="cb1-385"><a href="#cb1-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-386"><a href="#cb1-386" aria-hidden="true" tabindex="-1"></a>autocorrelation possesses a straightforward interpretation while remaining mathematically connected to both through the Wiener–Khinchin theorem.</span>
+<span id="cb1-387"><a href="#cb1-387" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-388"><a href="#cb1-388" aria-hidden="true" tabindex="-1"></a>This framework suggests a new downstream criterion for evaluating local ancestry HMMs:</span>
+<span id="cb1-389"><a href="#cb1-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-390"><a href="#cb1-390" aria-hidden="true" tabindex="-1"></a>not solely by how accurately they reconstruct ancestry,</span>
+<span id="cb1-391"><a href="#cb1-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-392"><a href="#cb1-392" aria-hidden="true" tabindex="-1"></a>but by how effectively they increase the spatial coherence—and ultimately the statistical power—of genome-wide association studies.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
