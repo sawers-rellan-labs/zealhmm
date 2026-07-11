@@ -4599,53 +4599,6 @@ window.Quarto = {
 </table>
 </div>
 </div>
-<p>The fitted parameters, for reference:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 10%">
-<col style="width: 13%">
-<col style="width: 18%">
-<col style="width: 23%">
-<col style="width: 18%">
-<col style="width: 15%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Dataset</th>
-<th>N Samples</th>
-<th>Mean Coverage</th>
-<th>Mean Missingness</th>
-<th>Floor (<span class="math inline">\(\pi\)</span>)</th>
-<th>Decay (<span class="math inline">\(k\)</span>)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>WGS</td>
-<td>1437</td>
-<td>0.39</td>
-<td>0.744</td>
-<td>0.446</td>
-<td>1.661</td>
-</tr>
-<tr class="even">
-<td>Wideseq</td>
-<td>1434</td>
-<td>0.59</td>
-<td>0.670</td>
-<td>0.346</td>
-<td>1.256</td>
-</tr>
-<tr class="odd">
-<td>SNP50K</td>
-<td>1439</td>
-<td>0.43</td>
-<td>0.703</td>
-<td>0.161</td>
-<td>1.042</td>
-</tr>
-</tbody>
-</table>
 </section>
 <section id="interpretation" class="level1">
 <h1>5 Interpretation</h1>
@@ -5311,26 +5264,18 @@ window.Quarto = {
 <span id="cb29-201"><a href="#cb29-201" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb29-202"><a href="#cb29-202" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb29-203"><a href="#cb29-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-204"><a href="#cb29-204" aria-hidden="true" tabindex="-1"></a>The fitted parameters, for reference:</span>
+<span id="cb29-204"><a href="#cb29-204" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5 Interpretation</span></span>
 <span id="cb29-205"><a href="#cb29-205" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-206"><a href="#cb29-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dataset <span class="pp">|</span> N Samples <span class="pp">|</span> Mean Coverage <span class="pp">|</span> Mean Missingness <span class="pp">|</span> Floor ($\pi$) <span class="pp">|</span> Decay ($k$) <span class="pp">|</span></span>
-<span id="cb29-207"><a href="#cb29-207" aria-hidden="true" tabindex="-1"></a><span class="pp">| -------</span> <span class="pp">| ---------</span> <span class="pp">| -------------</span> <span class="pp">| ----------------</span> <span class="pp">| -------------</span> <span class="pp">| -----------</span> <span class="pp">|</span></span>
-<span id="cb29-208"><a href="#cb29-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> WGS     <span class="pp">|</span> 1437      <span class="pp">|</span> 0.39          <span class="pp">|</span> 0.744            <span class="pp">|</span> 0.446         <span class="pp">|</span> 1.661       <span class="pp">|</span></span>
-<span id="cb29-209"><a href="#cb29-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Wideseq <span class="pp">|</span> 1434      <span class="pp">|</span> 0.59          <span class="pp">|</span> 0.670            <span class="pp">|</span> 0.346         <span class="pp">|</span> 1.256       <span class="pp">|</span></span>
-<span id="cb29-210"><a href="#cb29-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> SNP50K  <span class="pp">|</span> 1439      <span class="pp">|</span> 0.43          <span class="pp">|</span> 0.703            <span class="pp">|</span> 0.161         <span class="pp">|</span> 1.042       <span class="pp">|</span></span>
-<span id="cb29-211"><a href="#cb29-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-212"><a href="#cb29-212" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5 Interpretation</span></span>
-<span id="cb29-213"><a href="#cb29-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-214"><a href="#cb29-214" aria-hidden="true" tabindex="-1"></a>The floor $\pi$ moves in the expected direction with SNP ascertainment: the</span>
-<span id="cb29-215"><a href="#cb29-215" aria-hidden="true" tabindex="-1"></a>unfiltered whole-genome view carries the highest irreducible missingness</span>
-<span id="cb29-216"><a href="#cb29-216" aria-hidden="true" tabindex="-1"></a>($\pi = 0.446$), the 27 M teosinte-variant Wideseq panel sits in the middle</span>
-<span id="cb29-217"><a href="#cb29-217" aria-hidden="true" tabindex="-1"></a>($\pi = 0.346$), and the curated 50 K SNP panel — chosen to be well-behaved and</span>
-<span id="cb29-218"><a href="#cb29-218" aria-hidden="true" tabindex="-1"></a>mappable — has the lowest floor ($\pi = 0.161$). Filtering to informative,</span>
-<span id="cb29-219"><a href="#cb29-219" aria-hidden="true" tabindex="-1"></a>mappable sites removes much of the irreducible missingness, exactly as the</span>
-<span id="cb29-220"><a href="#cb29-220" aria-hidden="true" tabindex="-1"></a>mechanistic interpretation of $\pi$ (repetitive/structural/unmappable sequence)</span>
-<span id="cb29-221"><a href="#cb29-221" aria-hidden="true" tabindex="-1"></a>predicts. The decay rate $k$ likewise decreases toward 1 (the Poisson value) as</span>
-<span id="cb29-222"><a href="#cb29-222" aria-hidden="true" tabindex="-1"></a>the panel is cleaned, consistent with the filtered data behaving more like the</span>
-<span id="cb29-223"><a href="#cb29-223" aria-hidden="true" tabindex="-1"></a>idealized random-sampling baseline from <span class="in">`missing-data-coverage-theory.qmd`</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb29-206"><a href="#cb29-206" aria-hidden="true" tabindex="-1"></a>The floor $\pi$ moves in the expected direction with SNP ascertainment: the</span>
+<span id="cb29-207"><a href="#cb29-207" aria-hidden="true" tabindex="-1"></a>unfiltered whole-genome view carries the highest irreducible missingness</span>
+<span id="cb29-208"><a href="#cb29-208" aria-hidden="true" tabindex="-1"></a>($\pi = 0.446$), the 27 M teosinte-variant Wideseq panel sits in the middle</span>
+<span id="cb29-209"><a href="#cb29-209" aria-hidden="true" tabindex="-1"></a>($\pi = 0.346$), and the curated 50 K SNP panel — chosen to be well-behaved and</span>
+<span id="cb29-210"><a href="#cb29-210" aria-hidden="true" tabindex="-1"></a>mappable — has the lowest floor ($\pi = 0.161$). Filtering to informative,</span>
+<span id="cb29-211"><a href="#cb29-211" aria-hidden="true" tabindex="-1"></a>mappable sites removes much of the irreducible missingness, exactly as the</span>
+<span id="cb29-212"><a href="#cb29-212" aria-hidden="true" tabindex="-1"></a>mechanistic interpretation of $\pi$ (repetitive/structural/unmappable sequence)</span>
+<span id="cb29-213"><a href="#cb29-213" aria-hidden="true" tabindex="-1"></a>predicts. The decay rate $k$ likewise decreases toward 1 (the Poisson value) as</span>
+<span id="cb29-214"><a href="#cb29-214" aria-hidden="true" tabindex="-1"></a>the panel is cleaned, consistent with the filtered data behaving more like the</span>
+<span id="cb29-215"><a href="#cb29-215" aria-hidden="true" tabindex="-1"></a>idealized random-sampling baseline from <span class="in">`missing-data-coverage-theory.qmd`</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

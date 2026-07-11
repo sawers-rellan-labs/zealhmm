@@ -201,14 +201,6 @@ knitr::kable(
 )
 ```
 
-The fitted parameters, for reference:
-
-| Dataset | N Samples | Mean Coverage | Mean Missingness | Floor ($\pi$) | Decay ($k$) |
-| ------- | --------- | ------------- | ---------------- | ------------- | ----------- |
-| WGS     | 1437      | 0.39          | 0.744            | 0.446         | 1.661       |
-| Wideseq | 1434      | 0.59          | 0.670            | 0.346         | 1.256       |
-| SNP50K  | 1439      | 0.43          | 0.703            | 0.161         | 1.042       |
-
 # 5 Interpretation
 
 The floor $\pi$ moves in the expected direction with SNP ascertainment: the
