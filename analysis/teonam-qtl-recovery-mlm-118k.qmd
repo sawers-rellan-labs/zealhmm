@@ -329,5 +329,17 @@ knitr::kable(bp, caption = sprintf("Noise band: resolution R = %d kb, P10 resolv
 
 ```{r noisiness-headline}
 nz <- fread(here("results/sim/teonam/sweep_noisiness_118k.csv"))
-knitr::kable(nz, caption = "Noise-band power fraction at lambda=Inf (each caller's ceiling), least->most noisy. FFT (headline) and Haar-wavelet measures agree.")
+knitr::kable(nz, caption = "Noise-band power fraction at lambda=Inf (each caller's ceiling), least->most noisy. FFT (headline), Haar-wavelet, and lag-1 spatial autocorrelation (acf_lag1).")
 ```
+
+**Noisiness is the inverse of spatial autocorrelation.** The `acf_lag1` column — the
+lag-1 autocorrelation of the −log₁₀P marker track, measured directly (not from the
+FFT) — ranks the callers in exactly the *reverse* order of the band-power: `binhmm`
+/ `rtiger` are both least noisy and most autocorrelated (acf ≈ 0.999), `control` /
+`nNIL` noisiest and least (acf ≈ 0.959). This is not a coincidence but
+**Wiener–Khinchin**: the periodogram is the Fourier transform of the
+autocorrelation function, so band-limited high-frequency power and short-range
+autocorrelation are two views of the same second-order structure. Either one
+selects the same "reasonably good" callers. The framework behind this diagnostic —
+using the GWAS association landscape's spatial geometry to rank ancestry callers —
+is developed in [GWAS association-landscape geometry](GWAS_autocorrelation.html).

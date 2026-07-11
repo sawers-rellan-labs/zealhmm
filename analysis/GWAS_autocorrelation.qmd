@@ -1,0 +1,382 @@
+---
+title: "Evaluating Local Ancestry HMMs Through the Geometry of the GWAS Association Landscape"
+subtitle: "Evaluating local-ancestry HMMs by the spatial geometry of the GWAS association landscape"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+## Motivation
+
+Genome-wide association studies (GWAS) performed using low-coverage sequencing data are affected by uncertainty arising from sequencing errors, genotype calling errors, and imperfect imputation. Traditionally, Hidden Markov Models (HMMs) for local ancestry inference are evaluated using metrics such as ancestry state accuracy, switch error, or breakpoint localization. While these measures assess the quality of ancestry reconstruction, they do not directly evaluate the downstream objective for which the inferred ancestry is ultimately used.
+
+This work proposes evaluating HMMs from a different perspective: by examining the geometry of the resulting GWAS association landscape.
+
+The central hypothesis is that a more accurate reconstruction of the latent ancestry process should produce a GWAS profile that is spatially more coherent, less noisy, and therefore possesses greater statistical power.
+
+::: {.callout-note title="Empirical motivation — two results in this repo"}
+This framework was prompted by two observations in the TeoNAM STAM
+coverage-degradation notebook:
+
+- the [interpolated-grid step](teonam-qtl-recovery.html#step-interpolated-grid-artifact-only)
+  collapses the GWAS significance *dispersion* onto an almost-single profile — an
+  artifact of neighbour interpolation rather than a biological signal; and
+- the [RTIGER coverage-degradation sweep](teonam-qtl-recovery.html#rtiger-ancestry-vs-sequencing-coverage-degradation-sweep)
+  shows that introducing uncertainty through a subpar ancestry method (neighbour
+  interpolation) inflates the het fraction and the significance-profile noise.
+
+The measures below formalize what those results show empirically: the *spatial
+geometry* of the GWAS profile is itself a diagnostic of ancestry-inference quality.
+:::
+
+---
+
+# GWAS as a Spatial Random Field
+
+A Manhattan plot is traditionally viewed as a collection of independent hypothesis tests evaluated at genomic markers.
+
+Instead, consider the association statistic as a function of genomic position,
+
+$$
+S(x),
+$$
+
+where $x$ denotes genomic coordinate and $S(x)$ may represent
+
+$$
+-\log(P)
+$$
+
+or any equivalent measure of statistical evidence.
+
+Under this interpretation, the Manhattan plot becomes a sampled realization of an underlying stochastic process.
+
+Rather than asking whether an individual marker is significant, we may ask whether the entire function exhibits the spatial continuity expected from biological inheritance.
+
+---
+
+# The Geometry of Association Signals
+
+True causal loci rarely produce isolated significant markers.
+
+Because neighboring markers share linkage disequilibrium (LD) and often the same ancestry state, genuine associations produce coherent peaks extending over genomic regions.
+
+Conversely, sequencing errors and genotype uncertainty generate high-frequency fluctuations, producing isolated spikes that fragment the association profile.
+
+Thus, the visual distinction between a noisy Manhattan plot and a clean one is fundamentally geometric.
+
+Noisy GWAS resemble saturated point clouds extending from the baseline to the significance threshold.
+
+High-quality GWAS resemble smooth landscapes in which neighboring markers carry similar statistical evidence.
+
+---
+
+# Local Ancestry as a Latent Process
+
+Assume that ancestry along a chromosome is a latent piecewise-constant process
+
+$$
+A(x),
+$$
+
+whose discontinuities correspond to historical recombination events.
+
+The observed genotype may be modeled as
+
+$$
+G(x)=A(x)+\varepsilon(x),
+$$
+
+where
+
+- $A(x)$ is the true ancestry,
+- $\varepsilon(x)$ represents sequencing, genotyping and imputation errors.
+
+The Hidden Markov Model estimates
+
+$$
+\hat A(x)=E[A(x)\mid G].
+$$
+
+Unlike classical smoothing methods, the HMM does not simply smooth observations.
+
+Instead, it estimates the posterior expectation of a biologically constrained latent process.
+
+The continuity arises from the recombination model rather than from an arbitrary smoothing parameter.
+
+If phenotype depends upon ancestry,
+
+$$
+Y=\beta A(x)+\eta,
+$$
+
+then replacing raw genotype observations by inferred ancestry decreases measurement error whenever
+
+$$
+\operatorname{Var}(\hat A-A)
+<
+\operatorname{Var}(G-A).
+$$
+
+Consequently, association statistics computed from inferred ancestry should better reflect the underlying biological process.
+
+---
+
+# Viewing Noise as Loss of Spatial Coherence
+
+Noise may be interpreted as the destruction of local similarity.
+
+In a noisy GWAS,
+
+neighboring markers fluctuate independently.
+
+In a clean GWAS,
+
+neighboring markers remain similar because they share ancestry and linkage disequilibrium.
+
+This perspective naturally leads to the concept of spatial coherence.
+
+Rather than measuring only statistical significance, we measure how predictable one genomic position is from its neighbors.
+
+---
+
+# Measures of Spatial Coherence
+
+Several quantities characterize the smoothness of the GWAS landscape.
+
+## Wavelet Detail Energy
+
+Wavelet decompositions separate local high-frequency fluctuations from large-scale structure.
+
+High detail energy indicates local roughness and therefore increased noise.
+
+---
+
+## Fourier High-Frequency Energy
+
+Because random fluctuations introduce rapid oscillations,
+
+noise increases the proportion of spectral power contained in high frequencies.
+
+The normalized quantity
+
+$$
+\frac{\sum_{f>f_c}P(f)}
+{\sum_fP(f)}
+$$
+
+provides one measure of roughness.
+
+---
+
+## Spatial Autocorrelation
+
+The most intuitive measure is spatial autocorrelation,
+
+$$
+\rho(d)
+=
+\operatorname{cor}(S(x),S(x+d)),
+$$
+
+where $d$ denotes genomic distance.
+
+If neighboring markers exhibit similar association evidence,
+
+autocorrelation remains high.
+
+If marker-level errors dominate,
+
+autocorrelation rapidly decays.
+
+Unlike spectral measures, autocorrelation possesses an immediate biological interpretation.
+
+A lag-one autocorrelation near one implies that neighboring markers carry nearly identical evidence.
+
+A lag-one autocorrelation near zero indicates that neighboring markers behave almost independently.
+
+---
+
+# Relationship to Linkage Disequilibrium
+
+Autocorrelation of the GWAS statistic is conceptually similar to LD decay.
+
+LD measures correlation between genotypes,
+
+$$
+r^2
+=
+\operatorname{cor}^2(G_i,G_j),
+$$
+
+whereas GWAS autocorrelation measures correlation between association statistics,
+
+$$
+\rho(d)
+=
+\operatorname{cor}(S_i,S_j).
+$$
+
+Although these quantities are distinct,
+
+both arise from the continuity of ancestry and therefore are expected to decay over similar genomic distances.
+
+The correlation length of the GWAS profile may therefore be interpreted as an effective coherence distance analogous to LD decay.
+
+---
+
+# Relationship Between Autocorrelation, FFT and Wavelets
+
+Autocorrelation is not an independent concept from spectral analysis.
+
+By the Wiener–Khinchin theorem,
+
+the autocorrelation function and the power spectrum form a Fourier transform pair.
+
+Consequently,
+
+- increased high-frequency spectral energy implies reduced autocorrelation,
+
+- reduced high-frequency energy implies increased autocorrelation.
+
+Wavelet detail energy,
+
+high-frequency Fourier power,
+
+and spatial autocorrelation therefore quantify different manifestations of the same underlying property:
+
+the regularity of the association landscape.
+
+---
+
+# Selecting Hidden Markov Models
+
+Suppose several HMM parameterizations are available.
+
+Each produces a different ancestry reconstruction,
+
+which in turn produces a different GWAS profile.
+
+Rather than evaluating HMMs solely through ancestry reconstruction,
+
+we may also evaluate them through the geometry of the downstream association landscape.
+
+For each HMM,
+
+1. infer local ancestry,
+
+2. perform GWAS,
+
+3. compute measures of spatial coherence.
+
+Possible summary statistics include
+
+lag-one autocorrelation
+
+$$
+\rho_1
+=
+\operatorname{cor}(S_i,S_{i+1}),
+$$
+
+or integrated autocorrelation
+
+$$
+Q
+=
+\sum_{k=1}^{K}\rho(k).
+$$
+
+Models producing larger values of $Q$ generate more coherent association landscapes.
+
+---
+
+# Avoiding Oversmoothing
+
+Smoothness alone cannot determine model quality.
+
+An HMM that predicts a single ancestry state across an entire chromosome would produce extremely large autocorrelation while completely eliminating mapping resolution.
+
+Therefore,
+
+autocorrelation should be interpreted jointly with
+
+- ancestry accuracy,
+
+- breakpoint localization,
+
+- recovery of simulated QTL,
+
+- detection power,
+
+- localization precision.
+
+The objective is not maximal smoothness,
+
+but maximal biological coherence while preserving genuine recombination events.
+
+---
+
+# Testable Predictions
+
+If local ancestry inference successfully reconstructs the latent ancestry process,
+
+then ancestry-based GWAS should exhibit
+
+- increased lag-one autocorrelation,
+
+- increased integrated autocorrelation,
+
+- reduced wavelet detail energy,
+
+- reduced high-frequency Fourier power, 
+
+- fewer isolated significant markers,
+
+- broader coherent association peaks,
+
+- increased statistical power,
+
+- unchanged or improved localization accuracy.
+
+---
+
+# Discussion
+
+The principal conceptual contribution is a change in perspective.
+
+A Manhattan plot should not be viewed merely as a collection of independent hypothesis tests.
+
+Instead,
+
+it is a noisy observation of an underlying spatial stochastic process.
+
+The purpose of local ancestry inference is therefore not simply to smooth genotype calls,
+
+but to reconstruct the latent ancestry process that generated them.
+
+If ancestry inference improves,
+
+the geometry of the GWAS landscape should become more coherent.
+
+Autocorrelation provides perhaps the most intuitive quantitative measure of this improvement because it directly answers the biological question:
+
+**To what extent does the evidence at one genomic position predict the evidence at neighboring positions?**
+
+Unlike Fourier or wavelet measures,
+
+autocorrelation possesses a straightforward interpretation while remaining mathematically connected to both through the Wiener–Khinchin theorem.
+
+This framework suggests a new downstream criterion for evaluating local ancestry HMMs:
+
+not solely by how accurately they reconstruct ancestry,
+
+but by how effectively they increase the spatial coherence—and ultimately the statistical power—of genome-wide association studies.
