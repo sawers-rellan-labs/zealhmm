@@ -460,6 +460,41 @@ An HMM that predicted a single ancestry state across an entire chromosome would 
 
 ---
 
+# Distinguishing Recovery from Artificial Smoothing
+
+That coherence improves after ancestry projection admits two explanations that look alike but predict differently.
+
+**H1 — model-imposed smoothing.** The HMM acts mainly as a low-pass filter $\hat A(x)=F_\theta(G_{\mathrm{obs}}(x))$: stronger smoothing (higher rigidity, longer minimum segment, coarser bin) monotonically raises autocorrelation and lowers FFT noise *even if the inferred mosaic is wrong*. The "best" model would then be the most aggressive filter.
+
+**H2 — authentic mosaic recovery.** The HMM removes genotype uncertainty while preserving real recombination events, $G_{\mathrm{obs}}\to\hat A(x)\to\hat G(x)\to\text{GWAS}$. Underfitting makes false switches; overfitting erases true structure; performance peaks at an *intermediate biological resolution*.
+
+The mechanism under H2 is genotype reconstruction, not filtering. With genotype uncertainty the effect estimate is attenuated,
+
+$$
+\hat\beta = \beta\,\frac{\operatorname{Cov}(\hat G,G)}{\operatorname{Var}(\hat G)},
+$$
+
+and as $\hat G(x)\to G_{\mathrm{true}}(x)$ the attenuation vanishes — the Manhattan plot cleans up because the *predictor* improves. This is Mendelian noise-removal made probabilistic: rather than discarding inheritance-inconsistent markers, the HMM projects uncertain observations onto the states its recombination model allows.
+
+## A three-axis test
+
+For each parameter set $\theta$, measure three *independent* quantities:
+
+1. **Ancestry-reconstruction accuracy** against simulated truth, $E_A(\theta)=P(\hat A_\theta\neq A_{\mathrm{true}})$ — state accuracy, donor recall, false-switch rate, breakpoint error, tract-length distribution.
+2. **GWAS-landscape coherence**, $\rho(d)$ or the band-limited FFT noise $N_{\mathrm{FFT}}=\sum_{f>f_c}P(f)/\sum_f P(f)$ — the caller-noisiness table's `acf_lag1` / `fft_band`.
+3. **Biological mapping performance** $M(\theta)$: recovery of simulated QTL, peak-localization error, effect-size recovery, false-positive rate.
+
+## What discriminates the hypotheses
+
+- **Under H1:** $\arg\max_\theta \rho(\theta)\neq\arg\min_\theta E_A(\theta)$ — the smoothest profile is *not* the most accurate reconstruction, and coherence keeps rising with more smoothing.
+- **Under H2:** $\arg\min_\theta E_A(\theta)\approx\arg\max_\theta M(\theta)$ — accuracy and mapping performance peak *together*, at the resolution matching the true ancestry-block scale; beyond it, over-smoothing loses breakpoints and mapping precision falls.
+
+So the correct optimization target is **not** $\max_\theta \rho(\theta)$ (which rewards over-smoothing) but maximum recovery of the true genotype states, with coherence a *downstream consequence*. This is exactly why the caller comparison is read at each caller's calibrated (minimum-FDR) cutoff rather than at maximal smoothness.
+
+The framework is **falsifiable**: a caller that produced a smoother, more autocorrelated GWAS profile *without* a lower ancestry-reconstruction error would support H1 (model-imposed filtering), not H2 (recovery).
+
+---
+
 # Central Hypothesis
 
 The expected effect of local ancestry projection is:
@@ -478,7 +513,13 @@ $$
 
 The HMM improves the GWAS landscape not because ancestry is the causal factor, but because ancestry provides information about the genotype states that generate the phenotype.
 
-The final objective is therefore not maximum smoothness. It is maximum recovery of the biological spatial structure imposed by recombination and linkage while preserving true causal resolution.
+Stated as one falsifiable claim:
+
+$$
+\boxed{\text{HMM parameters that best reconstruct the Mendelian ancestry mosaic produce the most accurate GWAS landscape.}}
+$$
+
+The final objective is therefore not maximum smoothness. It is maximum recovery of the biological spatial structure imposed by recombination and linkage while preserving true causal resolution. The rise in autocorrelation after ancestry projection is *not* evidence of artificial smoothing — under H2 it is the visible consequence of correct inheritance model → genotype reconstruction → reduced uncertainty → recovery of genomic covariance → cleaner peaks.
 
 ---
 
