@@ -25,10 +25,11 @@ within each, by the **paper** the work supports:
    calibration, the TeoNAM reproduction, and a cross-modality application. See below.
 2. **ZEAL population paper** — *second; the ZEAL trait analyses here are its
    exploratory work.* A reflection of the Chen 2019 TeoNAM analysis applied to the
-   B73 × teosinte BC2S3 population (DTA / DTS / PH / StPi).
-3. **Inv4m inversion–flowering paper** — *already written, in review.* This repo only
+   B73 × teosinte BC2S3 population (DTA / DTS / PH, and the binary stem traits
+   StPi / StPu — modeled as empirical logits, no spatial correction).
+3. **Inv4m inversion paper** — *already written, in review.*  This repo only
    supplies it updated genotypes (`analysis/zeal-inv4m-rtiger-genotype.qmd`); it is not
-   authored here.
+   authored here. https://github.com/sawers-rellan-labs/inv4m
 
 The **nilHMM manuscript lives in its own repo** (RILAB LaTeX → Overleaf); this repo
 produces the figures, tables, and rendered notes it consumes.

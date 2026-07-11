@@ -31,7 +31,11 @@ pipeline (`zeal_spats_blues.R`) in fact returns **"no fit"** for StPu in both fi
 forced fit ran the "BLUEs" **below 0** (min −0.034, impossible for a 0–1 score). The per-genotype
 value is a bounded **proportion** `k/n` (k pubescent of n plots, pooled across fields), modeled on
 the **logit scale** via the Haldane–Anscombe empirical logit `log((k+0.5)/(n−k+0.5))` — finite at
-`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction. This
+`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction —
+validated empirically: a plot-level binomial GAM with a 2-D spatial smooth (`te(Range, Row)`)
+reorders genotypes by only **ρ ≥ 0.995** vs the same model without the smooth (both fields; spatial
+edf up to 10; `scripts/zeal_binary_spatial_rho_check.R`), so the field surface does not move the
+genotype ranking. This
 is a pragmatic logit for the existing linear (EMMAX/TASSEL) pipeline; a full binomial GLMM would be
 the stricter model. With only **72 of 1,423 genotypes ever pubescent (~5%)**, StPu is a
 **very low-prevalence** trait — sparser than StPi — so the logit sharpens the ordering among the

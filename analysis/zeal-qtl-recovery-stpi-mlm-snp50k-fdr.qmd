@@ -29,7 +29,11 @@ P-spline (used for the continuous DTA/DTS/PH traits) is misspecified — fitting
 out of range (13 genotypes > 1, impossible for a 0–1 score). The per-genotype value is a bounded
 **proportion** `k/n` (k pigmented of n plots, pooled across fields), which is modeled on the
 **logit scale** via the Haldane–Anscombe empirical logit `log((k+0.5)/(n−k+0.5))` — finite at
-`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction.
+`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction —
+this is validated empirically: a plot-level binomial GAM with a 2-D spatial smooth
+(`te(Range, Row)`) reorders genotypes by only **ρ ≥ 0.995** vs the same model without the smooth
+(both fields; spatial edf up to 10; `scripts/zeal_binary_spatial_rho_check.R`), so the field surface
+does not move the genotype ranking.
 This is a pragmatic logit for the existing linear (EMMAX/TASSEL) pipeline; a full binomial GLMM
 would be the stricter model. With ~78% of genotypes never pigmented, StPi is a low-prevalence
 trait — the logit sharpens the ordering among the 316 pigmented genotypes but cannot add power the
