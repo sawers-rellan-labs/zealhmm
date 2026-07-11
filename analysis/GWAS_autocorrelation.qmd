@@ -438,7 +438,8 @@ cutoff should match.
 
 Different ancestry callers impose different levels of smoothing through their segmentation parameters. Each parameter acts as a **low-pass filter** with a tunable cutoff:
 
-- **nNIL / binhmm** bin the signal over a fixed physical window (~1 Mb).
+- **binhmm** bins the signal into a fixed ~1 Mb window (an ad-hoc pre-smoothing), then runs a 3-state Gaussian HMM on the binned track — *two* stacked smoothing scales.
+- **nNIL** sets a per-marker recombination rate `rrate` (the HMM self-transition), so its smoothing is the transition prior, not a fixed window.
 - **RTIGER** enforces a minimum segment length of `rigidity` markers.
 - **LB-Impute** sets a linkage-decay distance `recombdist` (cM).
 
