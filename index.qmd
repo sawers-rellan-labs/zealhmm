@@ -142,6 +142,9 @@ listing:
       - title: "PH · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-ph-mlm-snp50k-fdr.qmd
         description: "Plant height: JLM + MLM composite, five-caller comparison, dwarf/GA candidates, FDR ≤ 0.05"
+      - title: "EH · FDR ≤ 0.05"
+        path: analysis/zeal-qtl-recovery-eh-mlm-snp50k-fdr.qmd
+        description: "Ear height: per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, dwarf/GA/BR height candidates (Peiffer 2014), FDR ≤ 0.05"
       - title: "DTS · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-dts-mlm-snp50k-fdr.qmd
         description: "Days to silk (flowering): JLM + MLM composite, five-caller comparison, flowering candidates, FDR ≤ 0.05"
