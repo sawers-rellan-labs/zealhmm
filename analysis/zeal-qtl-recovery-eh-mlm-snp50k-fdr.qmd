@@ -1,6 +1,6 @@
 ---
 title: "ZEAL/BZea Ear-Height (EH) GWAS + JLM on the SNP50K panel — FDR ≤ 0.05"
-subtitle: "The ear-height analog of the PH notebook: same SNP50K ancestry pipeline, phenotype = per-field SpATS ear-height BLUEs, candidate set = the classic maize dwarf/GA/BR height genes (Peiffer et al. 2014). Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
+subtitle: "The ear-height analog of the PH notebook: same SNP50K ancestry pipeline, phenotype = per-field SpATS ear-height BLUEs, candidate set = a curated maize plant-architecture/height gene panel (auxin/GA/BR/Gα + cloned ZmRPH1/ZmDLE1/ZmACS7). Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -36,16 +36,17 @@ only the phenotype changes.
 **Trait context.** Ear height is a **plant-architecture** trait tightly correlated with plant
 height: the ear-bearing node's position is set by the same internode-elongation program, so EH and
 PH share genetic control and, in TeoNAM (Chen 2019), a similarly **polygenic architecture with few
-small-effect QTL**. The candidates here are therefore the same classic maize **dwarf / gibberellin
-(GA) / brassinosteroid (BR) / auxin** genes as for PH (Peiffer *et al.* 2014, *The Genetic
-Architecture of Maize Height*, Genetics 196:1337) — `br1`, `br2` (internode/auxin), `an1`, `d1`,
-`d3`, `d9`, `gid1` (GA), `brd1`, `na2` (BR), `d8` (DELLA/GA signaling). Teosinte is taller and more
+small-effect QTL**. The candidate set is a curated panel of cloned maize **plant-architecture /
+height** genes spanning the hormone pathways that set internode length: **auxin** transport/
+biosynthesis (`br2`, `ZmPIN1a`, `spi1`), **gibberellin (GA)** biosynthesis and signaling (`an1`,
+`d1`, `d3`; DELLA `d8`, `d9`), **brassinosteroid (BR)** biosynthesis (`na1`, `na2`, `brd1`),
+**Gα** signaling (`ct2`), and three recently map-based/transgenically cloned architecture genes:
+`ZmRPH1` (QWRF microtubule-associated protein), `ZmDLE1` (EMS dwarf, distal chr1 Bin1.09; mutant
+cuts **ear height ~63%** vs PH ~35%), and `ZmACS7` (ethylene/ACC-synthase, *Sdw3*; reduces PH and
+increases leaf angle — Li *et al.* 2020, *Plant Physiol* 183:1184). Teosinte is taller and more
 branched than B73, so teosinte ancestry is broadly height-increasing and **partly collinear with
 K**; as in DTA/PH, the mixed model absorbs ancestry-correlated variance, and the model-independent
-**JLM** (nested-in-family stepwise) is the primary QTL tool. Beyond the classic dwarf loci, an
-**ear-height-specific** candidate is added: **`ZmDLE1`** (`Zm00001eb050490`, distal chr1 Bin1.09) —
-its EMS mutant *Zmdle1* reduces **ear height ~63%** vs plant height ~35% through fewer and shorter
-internodes (recent map-based cloning; Zm00001d033231 in v4).
+**JLM** (nested-in-family stepwise) is the primary QTL tool.
 
 ```{r setup}
 library(here)
@@ -92,8 +93,9 @@ iff its BH q ≤ 0.05. If no marker passes FDR, no line is drawn. Candidate/peak
 
 For each maize plant-height candidate (B73 v5), the closest marker to the gene body vs the
 highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Taxon+K)** scan (Panel C).
-Candidates are the dwarf/GA/BR/auxin height genes from Peiffer *et al.* 2014 (v5 coordinates);
-`pathway` records the hormone/growth pathway each acts in.
+Candidates are a curated panel of cloned maize plant-architecture/height genes (auxin, GA, BR, Gα,
+plus the recently cloned `ZmRPH1`/`ZmDLE1`/`ZmACS7`; v5 coordinates); `pathway` records the
+hormone/growth pathway and protein each acts in.
 
 ```{r candidate-markers}
 sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)][, q := qval(P)]
@@ -123,7 +125,7 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = "EH candidates (B73 v5, Peiffer et al. 2014 height genes): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan, with Benjamini–Hochberg q at the window-max marker."
+  caption = "EH candidates (B73 v5; curated maize plant-architecture/height panel): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan, with Benjamini–Hochberg q at the window-max marker."
 )
 ```
 
@@ -183,7 +185,7 @@ in Chen 2019.
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/eh_jlm_native1.txt"), mlm,
   "ZEAL/BZea EH — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("br1", "br2", "an1", "brd1", "d8", "d1", "d9", "na2", "gid1", "d3", "ZmDLE1"),
+  overlap_csv = overlap, label_genes = c("ct2", "ZmRPH1", "br2", "an1", "brd1", "ZmDLE1", "d8", "d1", "na1", "spi1", "d9", "na2", "d3", "ZmPIN1a", "ZmACS7"),
   out_png = here("results/sim/zeal/eh_jlm_lollipop_snp50k.png")
 )
 p_lolli
@@ -260,7 +262,7 @@ ctab2 <- rbindlist(lapply(names(callers), function(nm) {
     `best candidate q (BH)` = min_cand_q(sc)
   )
 }))
-knitr::kable(ctab2, caption = "EH MLM (Taxon+K) by ancestry caller at 0.4×, with n markers at BH FDR ≤ 0.05 and the best (min) q across the EH (Peiffer 2014 height) candidate windows.")
+knitr::kable(ctab2, caption = "EH MLM (Taxon+K) by ancestry caller at 0.4×, with n markers at BH FDR ≤ 0.05 and the best (min) q across the EH plant-architecture candidate windows.")
 ```
 
 ```{r caller-composite, fig.width=9, fig.height=20}
