@@ -24,7 +24,7 @@ source(here("scripts/logging.R"))
 
 OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit
 
-TRAITS <- c("DTA", "DTS", "PH", "StPi", "StPu")
+TRAITS <- c("DTA", "DTS", "PH", "EH", "StPi", "StPu")
 EXCEL_1970 <- 25569L # Excel(1900) serial for 1970-01-01
 plant_serial <- function(d) as.integer(as.Date(d)) + EXCEL_1970
 canon_ped <- function(x) sub("\\.B$", "", x)
@@ -38,11 +38,11 @@ manifest_cly25 <- function() {
   p0 <- plant_serial("2025-04-03")
   ph[, `:=`(
     DTA = as.numeric(DOA) - p0, DTS = as.numeric(DOS) - p0,
-    PH = as.numeric(PH), StPi = as.numeric(StPi), StPu = as.numeric(StPu),
+    PH = as.numeric(PH), EH = as.numeric(EH), StPi = as.numeric(StPi), StPu = as.numeric(StPu),
     Genotype = canon_ped(Description),
     Rep = fifelse(grepl("Rep2", `Who/What`), 2L, 1L)
   )]
-  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, StPi, StPu)], by = "plot_id")
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu)], by = "plot_id")
 }
 
 manifest_cly23 <- function() {
@@ -63,10 +63,10 @@ manifest_cly23 <- function() {
     default = old_genotype
   )]
   ph[, `:=`(
-    DTA = as.numeric(DTA), DTS = as.numeric(DTS), PH = as.numeric(PH),
+    DTA = as.numeric(DTA), DTS = as.numeric(DTS), PH = as.numeric(PH), EH = as.numeric(EH),
     StPi = as.numeric(StPi), StPu = as.numeric(StPu), Rep = as.integer(Rep)
   )]
-  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, StPi, StPu)], by = "plot_id")
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu)], by = "plot_id")
 }
 
 # ---- fit one grid, one trait -> genotype BLUEs (SpATS, genotype FIXED) -------
