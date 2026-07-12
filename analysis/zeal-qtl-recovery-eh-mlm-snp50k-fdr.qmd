@@ -42,7 +42,10 @@ Architecture of Maize Height*, Genetics 196:1337) — `br1`, `br2` (internode/au
 `d3`, `d9`, `gid1` (GA), `brd1`, `na2` (BR), `d8` (DELLA/GA signaling). Teosinte is taller and more
 branched than B73, so teosinte ancestry is broadly height-increasing and **partly collinear with
 K**; as in DTA/PH, the mixed model absorbs ancestry-correlated variance, and the model-independent
-**JLM** (nested-in-family stepwise) is the primary QTL tool.
+**JLM** (nested-in-family stepwise) is the primary QTL tool. Beyond the classic dwarf loci, an
+**ear-height-specific** candidate is added: **`ZmDLE1`** (`Zm00001eb050490`, distal chr1 Bin1.09) —
+its EMS mutant *Zmdle1* reduces **ear height ~63%** vs plant height ~35% through fewer and shorter
+internodes (recent map-based cloning; Zm00001d033231 in v4).
 
 ```{r setup}
 library(here)
@@ -180,7 +183,7 @@ in Chen 2019.
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/eh_jlm_native1.txt"), mlm,
   "ZEAL/BZea EH — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("br1", "br2", "an1", "brd1", "d8", "d1", "d9", "na2", "gid1", "d3"),
+  overlap_csv = overlap, label_genes = c("br1", "br2", "an1", "brd1", "d8", "d1", "d9", "na2", "gid1", "d3", "ZmDLE1"),
   out_png = here("results/sim/zeal/eh_jlm_lollipop_snp50k.png")
 )
 p_lolli
