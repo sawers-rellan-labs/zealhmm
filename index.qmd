@@ -145,6 +145,9 @@ listing:
       - title: "EH · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-eh-mlm-snp50k-fdr.qmd
         description: "Ear height: per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, dwarf/GA/BR height candidates (Peiffer 2014), FDR ≤ 0.05"
+      - title: "SPAD · FDR ≤ 0.05"
+        path: analysis/zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd
+        description: "Leaf greenness (SPAD/chlorophyll, CLY25): single-field SpATS BLUE; JLM + MLM composite, five-caller comparison, chlorophyll biosynthesis/catabolism/LHC/GLK-NAC candidates, FDR ≤ 0.05"
       - title: "DTS · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-dts-mlm-snp50k-fdr.qmd
         description: "Days to silk (flowering): JLM + MLM composite, five-caller comparison, flowering candidates, FDR ≤ 0.05"
