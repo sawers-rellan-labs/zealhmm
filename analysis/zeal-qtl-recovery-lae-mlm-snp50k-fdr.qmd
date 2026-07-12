@@ -1,0 +1,276 @@
+---
+title: "ZEAL/BZea Leaves-Above-Ear (LAE) GWAS + JLM on the SNP50K panel — FDR ≤ 0.05"
+subtitle: "The leaf-number analog of the EN/EH notebooks: same SNP50K ancestry pipeline, phenotype = per-field SpATS leaves-above-ear BLUEs (CLY25 only), candidate = tunicate1 (tu1/ZMM19), a MADS-box gene reported to control leaf/node number. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The leaves-above-ear (LAE) sibling of
+[`zeal-qtl-recovery-en-mlm-snp50k-fdr`](zeal-qtl-recovery-en-mlm-snp50k-fdr.html), built from the
+same real BZea pipeline end-to-end: field LAE → SpATS spatial BLUEs → SNP50K teosinte-ancestry
+dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
+B73×teosinte BC2S3 lines from **5 teosinte taxa**. LAE is the **number of leaves above the
+uppermost ear** — a node/leaf-number count (B73 ≈ 5.7). It was scored **CLY25 only**, so the
+per-genotype value is the single-field SpATS BLUE. Only the phenotype and the candidate change vs
+the EN notebook.
+
+::: {.callout-important}
+## Genotype at 0.4× skim: why ancestry, not per-SNP
+SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
+unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
+**counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is therefore λ_GC-deflated (sparse
+mean-imputation); the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed
+genotype (teosinte presence 0.111, matching the established BzeaSeq ~0.101). This is the
+SNP50K-specific reason ancestry inference is mandatory, and is identical to the DTA/PH/EH/EN
+notebooks — only the phenotype changes.
+:::
+
+**Trait context.** Leaf number above the ear is a **vegetative-architecture / node-number** trait,
+set by the number of phytomers the shoot apical meristem produces above the ear-bearing node and
+tightly linked to flowering time and total leaf number. The single a-priori candidate here is
+**`tu1` (tunicate1 / ZMM19)** — the classical **pod-corn** MADS-box transcription factor (dominant
+*Tu* elongates the glumes so they enclose the kernel), which the cited study
+(*Nat Commun* 2024, doi:10.1038/s41467-024-54148-7) implicates in **leaf/node number**. `tu1` sits
+on **chr 4 at ~183.9 Mb** (v5). As in DTA/EN, teosinte ancestry is broadly node-number-shifting and
+**partly collinear with K**, so the mixed model absorbs ancestry-correlated variance and the
+model-independent **JLM** (nested-in-family stepwise) is the primary QTL tool.
+
+::: {.callout-note}
+## Single-candidate panel
+Unlike the multi-gene trait panels, LAE carries **one** curated candidate (`tu1`), supplied by the
+user from the cited paper and recorded in `data/ref/leaf_number_candidate_genes_v5.csv`. The
+candidate table below therefore has a single row; the genome-wide JLM/MLM scans are unchanged.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+source(here("scripts/teonam_notebook_plots.R")) # shared: plot_manhattan/lollipop, lambda_gc, LOD
+```
+
+```{r load}
+mlm <- fread(here("data/zeal/lae_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv")) # Panel C
+gt <- fread(here("data/zeal/lae_gwas_mlm_hwe_post_gt_donor_accession_snp50k.csv")) # Panel B
+ols <- fread(here("data/zeal/lae_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
+overlap <- here("results/sim/zeal/lae_candidate_overlap.csv")
+lam <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
+}
+ALPHA <- 0.05
+# -log10P threshold at Benjamini-Hochberg FDR <= ALPHA (NA if no marker passes)
+fdr_lod <- function(p, alpha = ALPHA) {
+  p <- p[is.finite(p) & p > 0]
+  q <- p.adjust(p, "BH")
+  if (!any(q <= alpha)) {
+    return(NA_real_)
+  }
+  -log10(max(p[q <= alpha]))
+}
+qval <- function(p) p.adjust(p, "BH") # BH q-values aligned to p
+```
+
+::: {.callout-note}
+## Significance = Benjamini–Hochberg FDR ≤ 0.05
+Every Manhattan's dotted line is drawn at the **−log₁₀P where BH q = 0.05** for that scan (so
+the line's height differs per panel with the p-value distribution); a marker is significant
+iff its BH q ≤ 0.05. If no marker passes FDR, no line is drawn. Candidate/peak tables report q.
+:::
+
+## Candidate gene: closest marker vs window-max marker
+
+For the LAE candidate (B73 v5), the closest marker to the gene body vs the highest −log₁₀P marker
+within ±500 kb in the RTIGER-mosaic **MLM (Taxon+K)** scan (Panel C).
+
+```{r candidate-markers}
+sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)][, q := qval(P)]
+gg <- fread(here("data/teonam/lae_candidate_genes.tsv"))
+gg[, chr := as.integer(chr)][, qtl := ifelse(qtl_chen2019 == "" | is.na(qtl_chen2019), paste0("LAE(chr", chr, ")"), qtl_chen2019)]
+WIN <- 5e5
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  if (!nrow(m)) {
+    return(NULL)
+  }
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d)
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- if (nrow(w)) which.max(w$logP) else NA
+  data.table(
+    gene = gg$symbol[i], pathway = gg$pathway[i], chr = ch, `gene start (v5)` = s,
+    `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
+    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_,
+    `window-max q (BH)` = if (nrow(w)) signif(w$q[kw], 2) else NA_real_,
+    `FDR<=0.05` = if (nrow(w)) w$q[kw] <= ALPHA else NA
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab,
+  format.args = list(big.mark = ","),
+  caption = "LAE candidate (B73 v5; tu1/tunicate1): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan, with Benjamini–Hochberg q at the window-max marker."
+)
+```
+
+## OLS → MLM: structure control
+
+The fixed-effect OLS (Taxon + marker, no K) vs the MLM (Taxon + K) on the RTIGER mosaic, same
+fixed part. OLS is intrinsically inflated (ancestry-block LD, unfixable by any fixed factor);
+K deflates λ toward 1 and removes the ancestry-correlated bulk that a near-isogenic,
+teosinte-ancestry-structured node-number panel carries.
+
+```{r ols-manhattan, fig.width=9, fig.height=4.4}
+plot_manhattan(ols,
+  sprintf("ZEAL/BZea LAE — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = FDR 0.05)", lam(ols$P)),
+  overlap_csv = overlap, lod = fdr_lod(ols$P),
+  out_png = here("results/sim/zeal/lae_gwas_ols_manhattan_fdr_snp50k.png")
+)
+```
+
+The OLS Manhattan (no K) is genome-wide inflated (ancestry-block LD) — the same structure
+artifact the MLM K term removes below.
+
+```{r ols-vs-mlm}
+lam_tab <- data.table(
+  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  markers = c(nrow(ols), nrow(mlm)),
+  lambda_GC = c(lam(ols$P), lam(mlm$P)),
+  `n FDR<=0.05` = c(sum(qval(ols$P) <= ALPHA), sum(qval(mlm$P) <= ALPHA)),
+  max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
+)
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers at BH FDR ≤ 0.05.")
+```
+
+```{r ols-vs-mlm-peaks}
+ov <- fread(overlap)
+peak_at <- function(scan, ch, s) {
+  w <- scan[CHR == ch & abs(BP - s) <= 5e5 & is.finite(P) & P > 0]
+  if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
+}
+cmp <- ov[, .(
+  gene = symbol, chr,
+  `OLS peak` = mapply(peak_at, list(ols), chr, start),
+  `MLM peak` = mapply(peak_at, list(mlm), chr, start)
+)]
+cmp[, `drop (OLS−MLM)` := round(`OLS peak` - `MLM peak`, 2)]
+setorder(cmp, -`OLS peak`)
+knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) at the candidate: OLS vs MLM. K suppresses the ancestry-collinear signal.")
+```
+
+## JLM QTL genomic distribution (Panel A)
+
+LAE QTL from JLM (TASSEL StepwiseOLS, nested in taxon, enter/exit P=1e-4=LOD4). JLM QTL are
+selected by the stepwise enter/exit P (a model-selection gate), independent of the per-scan
+FDR line used for the GWAS Manhattans below. Model-independent — the primary LAE analysis, as
+in Chen 2019.
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- plot_lollipop(
+  here("results/sim/zeal/tassel/lae_jlm_native1.txt"), mlm,
+  "ZEAL/BZea LAE — JLM QTL genomic distribution (nested in taxon)",
+  overlap_csv = overlap, label_genes = c("tu1"),
+  out_png = here("results/sim/zeal/lae_jlm_lollipop_snp50k.png")
+)
+p_lolli
+```
+
+## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+
+```{r manhattan-mlm, fig.width=9, fig.height=4.4}
+p_mlm <- plot_manhattan(mlm,
+  sprintf("ZEAL/BZea LAE — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = FDR 0.05)", lam(mlm$P)),
+  overlap_csv = overlap, lod = fdr_lod(mlm$P), out_png = here("results/sim/zeal/lae_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
+)
+p_mlm
+cat(sprintf("%d markers pass FDR <= 0.05 (BH); FDR line at -log10P = %s\n", sum(qval(mlm$P) <= ALPHA), ifelse(is.na(fdr_lod(mlm$P)), "NA (none)", sprintf("%.2f", fdr_lod(mlm$P)))))
+```
+
+## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+
+Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated — the 70%-missing per-SNP panel at 0.4×
+is sparse — but catches sharp SNP hits the mosaic block-terraces away. Panel C (the ancestry
+mosaic) is the usable, well-calibrated genotype. The B↔C contrast is the notebook's
+per-SNP-scatter vs ancestry-block-smoothing, and the demonstration that ancestry inference is
+mandatory at low coverage — identical in mechanism to the DTA/PH/EH/EN notebooks.
+
+```{r composite, fig.width=9, fig.height=13}
+p_B <- plot_manhattan(gt,
+  sprintf("LAE — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
+  overlap_csv = overlap, lod = fdr_lod(gt$P)
+)
+p_C <- plot_manhattan(mlm,
+  sprintf("LAE — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  overlap_csv = overlap, lod = fdr_lod(mlm$P)
+)
+composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/lae_composite_snp50k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
+composite
+```
+
+## Multi-caller LAE scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+
+The same LAE MLM (Taxon+K) scan on each ancestry caller's recovered genotypes, at the real
+~0.4× depth (not a coverage sweep). The robust, trait-independent finding is **teosinte-presence
+recovery**: the block/bin-aggregated callers (RTIGER 0.111; binhmm 0.101) recover the established
+BzeaSeq fraction (~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nNIL,
+LB-Impute) **under-call**. Genomic inflation is phenotype-dependent (reported per caller below).
+Caller genotypes are population-level and trait-independent; only the phenotype (LAE) changes.
+
+```{r caller-table}
+callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+gg <- fread(here("data/teonam/lae_candidate_genes.tsv"))[, chr := as.integer(chr)]
+# best (min-q) LAE candidate window per caller
+min_cand_q <- function(sc) {
+  q <- qval(sc$P)
+  vals <- unlist(lapply(seq_len(nrow(gg)), function(i) {
+    idx <- which(sc$CHR == gg$chr[i] & abs(sc$BP - gg$start[i]) <= 5e5)
+    if (length(idx)) min(q[idx]) else NA_real_
+  }))
+  if (all(is.na(vals))) NA_real_ else signif(min(vals, na.rm = TRUE), 2)
+}
+ctab2 <- rbindlist(lapply(names(callers), function(nm) {
+  g <- callers[[nm]]
+  sc <- fread(here(sprintf("data/zeal/lae_gwas_mlm_%s_donor_accession_snp50k.csv", g)))
+  mf <- here(sprintf("data/zeal/zeal_%s.rds", g))
+  pres <- if (file.exists(mf)) {
+    st <- readRDS(mf)$state
+    round(mean(st %in% c(1L, 2L), na.rm = TRUE), 3)
+  } else {
+    NA_real_
+  }
+  sc <- sc[is.finite(P) & P > 0]
+  data.table(
+    caller = nm, `teosinte presence` = pres, lambda_GC = lam(sc$P),
+    `n FDR<=0.05` = sum(qval(sc$P) <= ALPHA),
+    `candidate q (BH)` = min_cand_q(sc)
+  )
+}))
+knitr::kable(ctab2, caption = "LAE MLM (Taxon+K) by ancestry caller at 0.4×, with n markers at BH FDR ≤ 0.05 and the q at the tu1 candidate window.")
+```
+
+```{r caller-composite, fig.width=9, fig.height=20}
+panels <- lapply(names(callers), function(nm) {
+  sc <- fread(here(sprintf("data/zeal/lae_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
+  plot_manhattan(sc, sprintf("LAE MLM (Taxon+K) — %s (λ_GC = %.2f; FDR 0.05)", nm, lam(sc$P)), overlap_csv = overlap, lod = fdr_lod(sc$P))
+})
+cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/lae_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
+cc
+```

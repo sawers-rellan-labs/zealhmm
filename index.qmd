@@ -154,6 +154,9 @@ listing:
       - title: "NBR · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-nbr-mlm-snp50k-fdr.qmd
         description: "Brace-root number (shoot-borne nodal roots): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, curated brace-root candidate panel (auxin/ARF/AP2 regulators rtcs1/ZmARF11/ZmRAP2.7 + shoot-borne-root initiation + lateral-root modifiers), FDR ≤ 0.05"
+      - title: "LAE · FDR ≤ 0.05"
+        path: analysis/zeal-qtl-recovery-lae-mlm-snp50k-fdr.qmd
+        description: "Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, single candidate tu1/tunicate1 (ZMM19; Nat Commun 2024), FDR ≤ 0.05"
       - title: "SPAD · spatial BLUE · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd
         description: "Leaf greenness (SPAD/chlorophyll): single spatially-corrected SpATS BLUE from the CLY25 fieldbook SPAD column; 18-gene chlorophyll panel; JLM + MLM, five-caller comparison, FDR ≤ 0.05"
