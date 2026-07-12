@@ -1,0 +1,273 @@
+---
+title: "ZEAL/BZea Kinki (zigzag culm) GWAS + JLM on the SNP50K panel — FDR ≤ 0.05"
+subtitle: "Zigzag-culm analog of the StPi notebook: the same SNP50K ancestry pipeline, with the binary kinked-stem score modeled on the logit scale (empirical logit of the per-genotype kinked-plot proportion, no spatial correction; CLY23 only) and a curated maize culm/meristem-architecture candidate set anchored on gn1/knox4 (Gnarley1) and the classical zg1 interval. Significance is Benjamini–Hochberg FDR ≤ 0.05 (per-scan q-values): the Manhattan line is the −log₁₀P at which BH q = 0.05, and candidate/peak calls report q."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The Kinki (zigzag-culm) sibling of
+[`zeal-qtl-recovery-stpi-mlm-snp50k-fdr`](zeal-qtl-recovery-stpi-mlm-snp50k-fdr.html), built from the
+same real BZea pipeline: field Kinki → **per-genotype empirical logit** → SNP50K
+teosinte-ancestry dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same
+near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. Kinki is the classic maize
+**"zigzag culm"** phenotype (Eyster 1920, *J Hered* 11:349): dwarfed plants with shortened,
+thickened, arching ear-region internodes that give the stalk a kinked, zigzag appearance. It was
+scored **CLY23 only** as an ordinal 0/1/2 severity, binarized here to "kinked" (score ≥ 1); the
+per-genotype phenotype is the proportion of kinked plots, `k/n`.
+
+::: {.callout-important}
+## Phenotype: empirical logit of the kinked-plot proportion (no spatial correction)
+Kinki is an ordinal 0/1/2 severity score, not a continuous measurement, so a SpATS
+genotype-fixed 2-D P-spline (used for the continuous DTA/DTS/PH/EH traits) is misspecified. The
+score is binarized to kinked presence (≥ 1) and the per-genotype value is a bounded **proportion**
+`k/n` (k kinked of n plots), modeled on the **logit scale** via the Haldane–Anscombe empirical
+logit `log((k+0.5)/(n−k+0.5))` — finite at `k=0` and `k=n`, variance-stabilizing, and respecting
+the [0,1] bound. Kinki was scored in **CLY23 only** (a single field, absent in CLY25), so there is
+no cross-field union and no spatial surface to correct — consistent with the binary StPi/StPu
+treatment. This is a pragmatic logit for the existing linear (EMMAX/TASSEL) pipeline; a full
+binomial GLMM would be the stricter model.
+:::
+
+::: {.callout-important}
+## Genotype at 0.4× skim: why ancestry, not per-SNP
+SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
+unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
+**counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is λ_GC-deflated (sparse mean-imputation);
+the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed genotype (teosinte presence
+0.111, matching the established BzeaSeq ~0.101). Only the phenotype changes vs the StPi notebook.
+:::
+
+**Trait context.** The zigzag culm is a **culm / shoot-meristem-architecture** defect: shortened,
+mis-oriented internodes and kinked stalks. The most direct a-priori candidate is **`gn1`/`knox4`
+(Gnarley1)** — a dominant KNOX-homeobox mutant that produces curving/twisting culms with short
+internodes, and the intended comparison gene for this phenotype. The candidate set assembles the
+loci most likely to underlie a kinked-culm phenotype: the **KNOX / KNOX-regulatory** axis (`gn1`,
+`lg3`, and the KNOX-repressor `rs2`, whose recessive loss gives compressed/twisted culms via ectopic
+KNOX), **GA / dwarf internode** genes (`an1`, `d9`, `ct2`), **CLV–WUS meristem-size** receptors
+(`fea2`, `td1`), **auxin / inflorescence-meristem** genes (`bif2`, `ba1`, `spi1`, `ra1`),
+cell-division-plane control (`tan1`), the cytokinin receptor `hsf1`, and pigment/linkage **anchors**
+for the classical **`zg1`** interval on chr 6L (`pl1`, `sm1`) plus the chr3 anchor `a1`. Because
+teosinte ancestry is **partly collinear with K**, the mixed model absorbs ancestry-correlated
+variance, and the model-independent **JLM** (nested-in-family stepwise) is the primary QTL tool.
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+source(here("scripts/teonam_notebook_plots.R")) # shared: plot_manhattan/lollipop, lambda_gc, LOD
+```
+
+```{r load}
+mlm <- fread(here("data/zeal/kinki_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv")) # Panel C
+gt <- fread(here("data/zeal/kinki_gwas_mlm_hwe_post_gt_donor_accession_snp50k.csv")) # Panel B
+ols <- fread(here("data/zeal/kinki_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
+overlap <- here("results/sim/zeal/kinki_candidate_overlap.csv")
+lam <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
+}
+ALPHA <- 0.05
+fdr_lod <- function(p, alpha = ALPHA) {
+  p <- p[is.finite(p) & p > 0]
+  q <- p.adjust(p, "BH")
+  if (!any(q <= alpha)) {
+    return(NA_real_)
+  }
+  -log10(max(p[q <= alpha]))
+}
+qval <- function(p) p.adjust(p, "BH") # BH q-values aligned to p
+```
+
+::: {.callout-note}
+## Significance = Benjamini–Hochberg FDR ≤ 0.05
+Every Manhattan's dotted line is drawn at the **−log₁₀P where BH q = 0.05** for that scan; a
+marker is significant iff its BH q ≤ 0.05. If no marker passes FDR, no line is drawn.
+Candidate/peak tables report q.
+:::
+
+## Candidate genes: closest marker vs window-max marker
+
+For each maize culm/meristem-architecture candidate (B73 v5), the closest marker to the gene body
+vs the highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Taxon+K)** scan (Panel C).
+`pathway` records the biological role each locus acts through (KNOX / GA-dwarf / meristem / anchor).
+
+```{r candidate-markers}
+sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)][, q := qval(P)]
+gg <- fread(here("data/teonam/kinki_candidate_genes.tsv"))
+gg[, chr := as.integer(chr)]
+WIN <- 5e5
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  if (!nrow(m)) {
+    return(NULL)
+  }
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d)
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- if (nrow(w)) which.max(w$logP) else NA
+  data.table(
+    gene = gg$symbol[i], pathway = gg$pathway[i], chr = ch, `gene start (v5)` = s,
+    `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
+    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_,
+    `window-max q (BH)` = if (nrow(w)) signif(w$q[kw], 2) else NA_real_,
+    `FDR<=0.05` = if (nrow(w)) w$q[kw] <= ALPHA else NA
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab,
+  format.args = list(big.mark = ","),
+  caption = "Kinki candidates (B73 v5; culm/meristem-architecture loci): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan, with Benjamini–Hochberg q at the window-max marker."
+)
+```
+
+## OLS → MLM: structure control
+
+The fixed-effect OLS (Taxon + marker, no K) vs the MLM (Taxon + K) on the RTIGER mosaic, same
+fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1.
+
+```{r ols-manhattan, fig.width=9, fig.height=4.4}
+plot_manhattan(ols,
+  sprintf("ZEAL/BZea Kinki — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = FDR 0.05)", lam(ols$P)),
+  overlap_csv = overlap, lod = fdr_lod(ols$P),
+  out_png = here("results/sim/zeal/kinki_gwas_ols_manhattan_fdr_snp50k.png")
+)
+```
+
+```{r ols-vs-mlm}
+lam_tab <- data.table(
+  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  markers = c(nrow(ols), nrow(mlm)),
+  lambda_GC = c(lam(ols$P), lam(mlm$P)),
+  `n FDR<=0.05` = c(sum(qval(ols$P) <= ALPHA), sum(qval(mlm$P) <= ALPHA)),
+  max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
+)
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers at BH FDR ≤ 0.05.")
+```
+
+```{r ols-vs-mlm-peaks}
+ov <- fread(overlap)
+peak_at <- function(scan, ch, s) {
+  w <- scan[CHR == ch & abs(BP - s) <= 5e5 & is.finite(P) & P > 0]
+  if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
+}
+cmp <- ov[, .(
+  gene = symbol, chr,
+  `OLS peak` = mapply(peak_at, list(ols), chr, start),
+  `MLM peak` = mapply(peak_at, list(mlm), chr, start)
+)]
+cmp[, `drop (OLS−MLM)` := round(`OLS peak` - `MLM peak`, 2)]
+setorder(cmp, -`OLS peak`)
+knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs MLM.")
+```
+
+## JLM QTL genomic distribution (Panel A)
+
+Kinki QTL from JLM (TASSEL StepwiseOLS, nested in taxon, enter/exit P=1e-4=LOD4). Model-independent
+— the primary analysis, as in Chen 2019.
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- plot_lollipop(
+  here("results/sim/zeal/tassel/kinki_jlm_native1.txt"), mlm,
+  "ZEAL/BZea Kinki — JLM QTL genomic distribution (nested in taxon)",
+  overlap_csv = overlap, label_genes = c("ct2", "rs2", "bif2", "an1", "hsf1", "gn1", "lg3", "ba1", "spi1", "a1", "fea2", "d9", "td1", "pl1", "sm1", "tan1", "ra1"),
+  out_png = here("results/sim/zeal/kinki_jlm_lollipop_snp50k.png")
+)
+p_lolli
+```
+
+## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+
+```{r manhattan-mlm, fig.width=9, fig.height=4.4}
+p_mlm <- plot_manhattan(mlm,
+  sprintf("ZEAL/BZea Kinki — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = FDR 0.05)", lam(mlm$P)),
+  overlap_csv = overlap, lod = fdr_lod(mlm$P), out_png = here("results/sim/zeal/kinki_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
+)
+p_mlm
+cat(sprintf("%d markers pass FDR <= 0.05 (BH); FDR line at -log10P = %s\n", sum(qval(mlm$P) <= ALPHA), ifelse(is.na(fdr_lod(mlm$P)), "NA (none)", sprintf("%.2f", fdr_lod(mlm$P)))))
+```
+
+## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+
+Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated but catches sharp SNP hits the mosaic
+block-terraces away. Panel C (the ancestry mosaic) is the usable, well-calibrated genotype.
+
+```{r composite, fig.width=9, fig.height=13}
+p_B <- plot_manhattan(gt,
+  sprintf("Kinki — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
+  overlap_csv = overlap, lod = fdr_lod(gt$P)
+)
+p_C <- plot_manhattan(mlm,
+  sprintf("Kinki — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  overlap_csv = overlap, lod = fdr_lod(mlm$P)
+)
+composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/kinki_composite_snp50k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
+composite
+```
+
+## Multi-caller Kinki scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+
+The same Kinki MLM (Taxon+K) scan on each ancestry caller's recovered genotypes, at the real
+~0.4× depth. The robust, trait-independent finding is **teosinte-presence recovery**: the
+block/bin-aggregated callers (RTIGER 0.111; binhmm 0.101) recover the established BzeaSeq fraction
+(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nNIL, LB-Impute)
+**under-call**. Genomic inflation is phenotype-dependent (reported per caller below). Caller
+genotypes are population-level and trait-independent; only the phenotype (Kinki) changes.
+
+```{r caller-table}
+callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+gg <- fread(here("data/teonam/kinki_candidate_genes.tsv"))[, chr := as.integer(chr)]
+min_cand_q <- function(sc) {
+  q <- qval(sc$P)
+  vals <- unlist(lapply(seq_len(nrow(gg)), function(i) {
+    idx <- which(sc$CHR == gg$chr[i] & abs(sc$BP - gg$start[i]) <= 5e5)
+    if (length(idx)) min(q[idx]) else NA_real_
+  }))
+  if (all(is.na(vals))) NA_real_ else signif(min(vals, na.rm = TRUE), 2)
+}
+ctab2 <- rbindlist(lapply(names(callers), function(nm) {
+  g <- callers[[nm]]
+  sc <- fread(here(sprintf("data/zeal/kinki_gwas_mlm_%s_donor_accession_snp50k.csv", g)))
+  mf <- here(sprintf("data/zeal/zeal_%s.rds", g))
+  pres <- if (file.exists(mf)) {
+    st <- readRDS(mf)$state
+    round(mean(st %in% c(1L, 2L), na.rm = TRUE), 3)
+  } else {
+    NA_real_
+  }
+  sc <- sc[is.finite(P) & P > 0]
+  data.table(
+    caller = nm, `teosinte presence` = pres, lambda_GC = lam(sc$P),
+    `n FDR<=0.05` = sum(qval(sc$P) <= ALPHA),
+    `best candidate q (BH)` = min_cand_q(sc)
+  )
+}))
+knitr::kable(ctab2, caption = "Kinki MLM (Taxon+K) by ancestry caller at 0.4×, with n markers at BH FDR ≤ 0.05 and the best (min) q across the culm/meristem candidate windows.")
+```
+
+```{r caller-composite, fig.width=9, fig.height=20}
+panels <- lapply(names(callers), function(nm) {
+  sc <- fread(here(sprintf("data/zeal/kinki_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
+  plot_manhattan(sc, sprintf("Kinki MLM (Taxon+K) — %s (λ_GC = %.2f; FDR 0.05)", nm, lam(sc$P)), overlap_csv = overlap, lod = fdr_lod(sc$P))
+})
+cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/kinki_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
+cc
+```
