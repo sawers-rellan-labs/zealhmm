@@ -137,7 +137,7 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
   }
   tr <- get_transformer(maxis)
   q[, BPn := tr(CHR, BP)]
-  maxlogP <- max(q$logP)
+  maxlogP <- if (nrow(q)) max(q$logP) else LOD # no QTL >= LOD: keep axis finite, draw an empty panel
   brks <- seq(0, floor(maxlogP / 10) * 10, by = 10)
   ytop <- maxlogP * 1.18
 

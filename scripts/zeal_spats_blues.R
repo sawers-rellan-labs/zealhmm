@@ -24,7 +24,7 @@ source(here("scripts/logging.R"))
 
 OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit
 
-TRAITS <- c("DTA", "DTS", "PH", "EH", "StPi", "StPu")
+TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "EN", "Prolif", "LAE", "NBR", "StPi", "StPu")
 EXCEL_1970 <- 25569L # Excel(1900) serial for 1970-01-01
 plant_serial <- function(d) as.integer(as.Date(d)) + EXCEL_1970
 canon_ped <- function(x) sub("\\.B$", "", x)
@@ -39,10 +39,12 @@ manifest_cly25 <- function() {
   ph[, `:=`(
     DTA = as.numeric(DOA) - p0, DTS = as.numeric(DOS) - p0,
     PH = as.numeric(PH), EH = as.numeric(EH), StPi = as.numeric(StPi), StPu = as.numeric(StPu),
+    SPAD = as.numeric(SPAD), EN = as.numeric(EN), Prolif = as.numeric(Prolif),
+    LAE = as.numeric(LAE), NBR = as.numeric(NBR),
     Genotype = canon_ped(Description),
     Rep = fifelse(grepl("Rep2", `Who/What`), 2L, 1L)
   )]
-  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu)], by = "plot_id")
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu, SPAD, EN, Prolif, LAE, NBR)], by = "plot_id")
 }
 
 manifest_cly23 <- function() {
@@ -64,9 +66,10 @@ manifest_cly23 <- function() {
   )]
   ph[, `:=`(
     DTA = as.numeric(DTA), DTS = as.numeric(DTS), PH = as.numeric(PH), EH = as.numeric(EH),
-    StPi = as.numeric(StPi), StPu = as.numeric(StPu), Rep = as.integer(Rep)
+    StPi = as.numeric(StPi), StPu = as.numeric(StPu), Rep = as.integer(Rep),
+    EN = as.numeric(EN), Prolif = as.numeric(Prolif), NBR = as.numeric(NBR)
   )]
-  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu)], by = "plot_id")
+  merge(fm, ph[, .(plot_id, Genotype, Rep, DTA, DTS, PH, EH, StPi, StPu, EN, Prolif, NBR)], by = "plot_id")
 }
 
 # ---- fit one grid, one trait -> genotype BLUEs (SpATS, genotype FIXED) -------
@@ -131,6 +134,7 @@ for (fld in names(fields)) {
   )
   ftrait <- list()
   for (tr in TRAITS) {
+    if (!tr %in% names(man)) next # trait not scored in this field (e.g. SPAD/LAE are CLY25-only)
     grids <- lapply(unique(man$block), function(b) fit_grid_trait(man[block == b], tr, tag = fld))
     grids <- rbindlist(Filter(Negate(is.null), grids))
     if (!nrow(grids)) {
