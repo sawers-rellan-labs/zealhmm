@@ -22,6 +22,22 @@ SPAD meter on one leaf above the primary ear node — a proxy for leaf chlorophy
 scored in **CLY25 only**, so the BLUE is a **single-field** SpATS mean (no cross-field union). Only
 the phenotype changes vs the PH/EH notebooks.
 
+::: {.callout-note}
+## Phenotype provenance (single-SPAD, spatially corrected) — exactly what was used
+- **Column:** `SPAD` in the CLY25 `B5_BZea_eval` fieldbook sheet (`CLY25-Fieldbook.xlsx`) — a
+  SPAD-meter reading on one leaf above the primary ear node, dated **Jul 2025** (`SPAD_date`).
+- **BLUE:** per contiguous map grid, a **SpATS** 2-D P-spline `PSANOVA(Row, Range)` with genotype
+  **fixed** + row/range random effects and |t|>4 outlier removal (`scripts/zeal_spats_blues.R`,
+  `TRAIT=SPAD PHENO=blue`); the genotype value is the mean of its grid BLUEs. GWAS on the
+  RTIGER-mosaic MLM with `FAMILY_COL=donor_accession`.
+- **CLY25 only:** CLY23's `SPAD1` is a placeholder (all `1.0`, no dates) and its real reading
+  `SPAD2` (dated **Aug 2023**) is a different measurement, **not** merged into this single-SPAD
+  BLUE. The two measurement dates are analysed separately in the sibling notebooks
+  [`spad20das`](zeal-qtl-recovery-spad20das-mlm-snp50k-fdr.html) and
+  [`spad36das`](zeal-qtl-recovery-spad36das-mlm-snp50k-fdr.html), which use the zealbrowser
+  phenotype values **as-is** (no additional spatial correction).
+:::
+
 ::: {.callout-important}
 ## Genotype at 0.4× skim: why ancestry, not per-SNP
 SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
