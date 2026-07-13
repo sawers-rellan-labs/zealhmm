@@ -79,9 +79,16 @@ Gc <- matrix(c("A", "H", "B")[G + 1L], nrow = nrow(G))
 colnames(Gc) <- mk$marker
 
 # ---- multi-trait phenotype matrix aligned to the mosaic lines ---------------
-# Each trait's <TRAIT>_mean SpATS BLUE, already fence-cleaned upstream (zeal_spats_blues.R).
+# Most traits are SpATS BLUEs (pheno_<t>_blue.csv); the SPAD-date traits are direct
+# per-line values and the binary stem/kinki traits empirical logits (as in the GWAS
+# drivers). The <TRAIT>_mean column is read case-insensitively.
+PHENO_BY <- c(SPAD20DAS = "direct", SPAD36DAS = "direct", STPI = "elogit", STPU = "elogit", KINKI = "elogit")
+phtype <- function(tr) {
+  p <- unname(PHENO_BY[toupper(tr)])
+  if (is.na(p)) "blue" else p
+}
 Y <- vapply(TRAITS, function(tr) {
-  ph <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", tolower(tr))))
+  ph <- fread(here(sprintf("data/zeal/pheno_%s_%s.csv", tolower(tr), phtype(tr))))
   mcol <- names(ph)[tolower(names(ph)) == tolower(paste0(tr, "_mean"))][1]
   stopifnot(!is.na(mcol))
   setNames(ph[[mcol]], ph$Genotype)[lines$pedigree]

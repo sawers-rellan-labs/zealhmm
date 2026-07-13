@@ -50,6 +50,11 @@
       "/analysis/zeal-rqtl-nbr-lod-profile.html",
       "/analysis/zeal-rqtl-lae-lod-profile.html",
       "/analysis/zeal-rqtl-spad-lod-profile.html",
+      "/analysis/zeal-rqtl-spad20das-lod-profile.html",
+      "/analysis/zeal-rqtl-spad36das-lod-profile.html",
+      "/analysis/zeal-rqtl-stpi-lod-profile.html",
+      "/analysis/zeal-rqtl-stpu-lod-profile.html",
+      "/analysis/zeal-rqtl-kinki-lod-profile.html",
       "/analysis/zeal-inv4m-rtiger-genotype.html"
     ]
   }
