@@ -43,13 +43,25 @@ stopifnot(dir.exists(RQ)) # run: TRAIT=DTA Rscript scripts/zeal_rqtl_scan.R
 
 # Markers are named S<chr_v5>_<pos_v5> (renamed upstream in zeal_rqtl_scan.R), so a
 # peak's v5 position reads straight off its name — no lookup, no v2 confusion.
-CCT_BP <- 96175873L # ZmCCT10 (chr10), Chen's DTA10.1
-CCT_MB <- CCT_BP / 1e6
+TRAIT <- "DTA"
+trait_lc <- tolower(TRAIT)
 bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
 ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
-cct_in <- function(chr, lbp, hbp) {
-  fifelse(chr == 10L, fifelse(CCT_BP >= pmin(lbp, hbp) & CCT_BP <= pmax(lbp, hbp), "yes", "no"), "–")
+
+# flowering-time candidate genes (B73 v5), placed on the TeoNAM cM axis
+cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", trait_lc)))
+cand[, mid := (start + end) / 2]
+.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+cand[, cm := mapply(function(c, b) {
+  n <- .nat[chr_v5 == c & is.finite(cm)][order(pos_v5)]
+  if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = b, rule = 2)$y
+}, chr, mid)]
+# candidate(s) whose gene body falls inside a peak's bp CI
+cand_in_ci <- function(ch, lo, hi) {
+  s <- cand[chr == ch & mid >= min(lo, hi) & mid <= max(lo, hi), symbol]
+  if (length(s)) paste(s, collapse = ", ") else "–"
 }
+CCT_BP <- cand[symbol == "zmcct10", mid] # for the Zd chr10 effect section below
 
 load_scan <- function(tag) {
   one <- fread(file.path(RQ, sprintf("zeal_dta_scanone_%s.csv", tag)))
@@ -97,10 +109,11 @@ knitr::kable(cmp, caption = "Adding the 5-family taxon covariate barely shifts t
 
 ## Genome-wide LOD profile (taxon model, with the no-covariate profile behind it)
 
-Faceted by chromosome. **Blue** = scanone + taxon covariate; **grey** = no covariate. Dashed lines =
-the corresponding 1000-permutation 5% thresholds.
+Faceted by chromosome. **Blue** = scanone + taxon covariate; **grey** = no covariate; dashed = the
+1000-permutation 5% thresholds. **Dotted grey verticals** mark the flowering-time candidate genes
+(v5, placed on the cM axis).
 
-```{r lod-profile, fig.width=11, fig.height=4.4}
+```{r lod-profile, fig.width=11, fig.height=4.6}
 prof <- rbindlist(list(
   cbind(nc$one[, .(marker, chr, pos, lod)], model = "no covariate"),
   cbind(tx$one[, .(marker, chr, pos, lod)], model = "+ taxon")
@@ -108,30 +121,26 @@ prof <- rbindlist(list(
 prof[, model := factor(model, levels = c("no covariate", "+ taxon"))]
 sig <- prof[model == "+ taxon" & lod >= tx$thr5][, .SD[which.max(lod)], by = chr]
 pal <- c("no covariate" = "grey65", "+ taxon" = "#2c6fbb")
-# ZmCCT10 (chr10 96.18 Mb) mapped onto the TeoNAM cM axis -> mark on the chr10 facet
-.n10 <- fread(here("data/teonam/teonam_v5_native.tsv"))[chr_v5 == 10 & is.finite(cm)][order(pos_v5)]
-cct10 <- data.table(chr = 10L, cm = approx(.n10$pos_v5, .n10$cm, xout = 96175873)$y)
 ytop <- max(prof$lod, na.rm = TRUE)
+cl <- cand[chr %in% unique(prof$chr) & is.finite(cm)] # flowering candidates on the cM axis
 p <- ggplot(prof, aes(pos, lod, colour = model)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
   geom_line(linewidth = 0.4) +
   geom_hline(yintercept = nc$thr5, linetype = "dashed", colour = pal[["no covariate"]], linewidth = 0.35) +
   geom_hline(yintercept = tx$thr5, linetype = "dashed", colour = pal[["+ taxon"]], linewidth = 0.35) +
   geom_point(data = sig, colour = "red", size = 1.6) +
   ggrepel::geom_text_repel(
-    data = sig, aes(label = sprintf("%s\n%.0f cM · LOD %.1f", marker, pos, lod)),
-    size = 2.6, colour = "red", min.segment.length = 0, box.padding = 0.6, show.legend = FALSE
+    data = cl, aes(x = cm, y = ytop * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
   ) +
-  geom_vline(data = cct10, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey30", linewidth = 0.35) +
-  geom_point(data = cct10, aes(x = cm, y = ytop * 1.22), inherit.aes = FALSE, shape = 25, fill = "black", colour = "black", size = 2.4) +
-  geom_text(data = cct10, aes(x = cm, y = ytop * 1.33, label = "ZmCCT10"), inherit.aes = FALSE, size = 2.7, colour = "grey20") +
-  expand_limits(y = ytop * 1.42) +
+  expand_limits(y = ytop * 1.45) +
   facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
   scale_colour_manual(values = pal, name = NULL) +
   labs(
     x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
     title = "ZEAL/BZea DTA — R/qtl (bcsft) scanone, Haley–Knott (TeoNAM JLM grid)",
     subtitle = sprintf(
-      "%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f",
+      "%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f · dotted = flowering candidates",
       format(NMARK, big.mark = ","), nc$thr5, tx$thr5
     )
   ) +
@@ -149,7 +158,7 @@ p
 ## Significant peaks (taxon model, α = 0.05)
 
 R/qtl's `summary()` reports **at most one peak per chromosome**. That is the table below — position
-and the **1.5-LOD confidence interval in v5 Mb**, plus whether **ZmCCT10** (96.2 Mb) falls inside.
+and the **1.5-LOD confidence interval in v5 Mb**, plus any **flowering candidate** whose gene body falls inside.
 
 ```{r peaks}
 cipk <- fread(file.path(RQ, "zeal_dta_peaks_ci_taxon.csv"))
@@ -159,9 +168,9 @@ knitr::kable(
     `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
     LOD = round(lod, 2), pval, marker,
     `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
-    `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+    `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
   )],
-  caption = "Genome-wide significant QTL, taxon model (1000-perm threshold). One peak per chromosome (R/qtl summary), with the 1.5-LOD interval in v5 Mb and whether ZmCCT10 (chr10, 96.2 Mb) falls inside it."
+  caption = "Genome-wide significant QTL, taxon model (1000-perm threshold). One peak per chromosome (R/qtl summary), with the 1.5-LOD interval in v5 Mb and any flowering candidate whose gene body falls inside."
 )
 ```
 
@@ -173,7 +182,7 @@ A single chromosome can carry **more than one** DTA QTL. To resolve them, `scrip
 sub-peak's **1.5-LOD-drop interval**, and resolves overlapping sub-peaks into a maximal set of
 **non-overlapping** QTL via an interval graph (igraph independent vertex sets). Positions and the
 1.5-LOD-drop confidence intervals are shown in **v5 Mb** (markers are v5-named, so `pos (Mb)` reads
-off the name), with the **ZmCCT10-in-CI** flag. Peak splitting from genotyping noise is handled
+off the name), with the **candidate-in-CI** flag. Peak splitting from genotyping noise is handled
 **before** the scan, not here: the hard RTIGER/projected calls carry het/hom-teosinte miscalls that
 punch artificial LOD dives (which would split a QTL and clip its CI). `calc.genoprob` runs the R/qtl
 HMM with a realistic `error.prob` so those calls are down-weighted, and the scans use the resulting
@@ -191,7 +200,7 @@ refined <- function(tag) {
     `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
     LOD = round(lod, 2), `perm 5% thr` = round(thresh, 2), marker,
     `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
-    `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+    `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
   )]
 }
 rt <- refined("taxon")
@@ -263,12 +272,12 @@ btpk <- bt[,
       marker = marker[i], `max LOD` = round(L, 2), `perm 5% thr` = round(thr5[1], 2),
       sig = fifelse(L > thr5[1], "yes", "no"),
       `1.5-LOD CI (Mb)` = sprintf("%.1f–%.1f", lbp / 1e6, hbp / 1e6),
-      `ZmCCT10 in CI` = fifelse(ch == 10L, fifelse(CCT_BP >= lbp & CCT_BP <= hbp, "yes", "no"), "–")
+      `candidate in CI` = cand_in_ci(ch, lbp, hbp)
     )
   },
   by = taxon
 ][order(-`max LOD`)]
-knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: frac introgressed > 0.05 & ≥3 per present class), with the per-taxon 1000-permutation 5% threshold. 1.5-LOD interval in v5 Mb and whether ZmCCT10 (chr10) falls inside. 'sig' = the family's peak exceeds its own threshold. One peak per taxon.")
+knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: frac introgressed > 0.05 & ≥3 per present class), with the per-taxon 1000-permutation 5% threshold. 1.5-LOD interval in v5 Mb and any flowering candidate inside. 'sig' = the family's peak exceeds its own threshold. One peak per taxon.")
 ```
 
 ### Per-taxon multi-peak refinement
@@ -288,7 +297,7 @@ if (nrow(btr) == 0) {
       `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
       LOD = round(lod, 2), `perm 5% thr` = round(thr5, 2), marker,
       `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
-      `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
     )],
     caption = sprintf(
       "Refined per-taxon multi-peak QTL (%d QTL across %d families), 1.5-LOD-drop CIs in v5 Mb.",
