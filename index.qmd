@@ -211,6 +211,21 @@ listing:
       - title: "SPAD · R/qtl"
         path: analysis/zeal-rqtl-spad-lod-profile.qmd
         description: "Leaf greenness (SPAD): R/qtl LOD profile + per-family scans; chlorophyll candidate panel"
+      - title: "SPAD 20DAS · R/qtl"
+        path: analysis/zeal-rqtl-spad20das-lod-profile.qmd
+        description: "Leaf greenness at 20 days after sowing (as-is per-line value): R/qtl LOD profile + per-family scans; chlorophyll candidate panel"
+      - title: "SPAD 36DAS · R/qtl"
+        path: analysis/zeal-rqtl-spad36das-lod-profile.qmd
+        description: "Leaf greenness at 36 days after sowing (as-is per-line value): R/qtl LOD profile + per-family scans; chlorophyll candidate panel"
+      - title: "StPi · R/qtl"
+        path: analysis/zeal-rqtl-stpi-lod-profile.qmd
+        description: "Stem pigment (anthocyanin): binary 0–1 score as empirical logit; R/qtl LOD profile + per-family scans; anthocyanin-pathway candidate panel"
+      - title: "StPu · R/qtl"
+        path: analysis/zeal-rqtl-stpu-lod-profile.qmd
+        description: "Stem pubescence (macrohairs): binary 0–1 score as empirical logit; R/qtl LOD profile + per-family scans; mhl1/inv9f + trichome candidate panel"
+      - title: "Kinki · R/qtl"
+        path: analysis/zeal-rqtl-kinki-lod-profile.qmd
+        description: "Kinki (zigzag culm): binarized ordinal severity as empirical logit; R/qtl LOD profile + per-family scans; culm/meristem-architecture candidate panel"
   - id: zeal-inv4m
     type: table
     fields: [title, description]
