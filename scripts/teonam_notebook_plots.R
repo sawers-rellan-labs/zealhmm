@@ -149,7 +149,9 @@ plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = 
   mp <- -log10(min(m$P))
   ticks <- pretty(c(0, mp))
   unit <- diff(ticks)[1]
-  ytop <- max(ticks) + unit
+  # tall headroom band above the peaks so the 45-deg candidate labels can stagger without
+  # colliding (SPAD carries 22 candidates; horizontal labels overprint into an unreadable row).
+  ytop <- max(ticks) + 2.4 * unit
 
   p <- fastman_gg(
     m = m, snp = "SNP", col = c("black", "gray75"), maxP = mp,
@@ -160,8 +162,9 @@ plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = 
     geom_point(data = ov, aes(x = BPn, y = y), inherit.aes = FALSE, shape = 8, size = 3, stroke = 1, color = "red") +
     ggrepel::geom_text_repel(
       data = ov, aes(x = BPn, y = y, label = symbol), inherit.aes = FALSE,
-      fontface = "italic", size = 5, segment.color = "grey50", min.segment.length = 0,
-      box.padding = 0.5, max.overlaps = Inf, ylim = c(mp + 0.3 * unit, ytop)
+      fontface = "italic", size = 4.3, angle = 45, hjust = 0, segment.color = "grey50",
+      min.segment.length = 0, box.padding = 0.4, max.overlaps = Inf,
+      ylim = c(mp + 0.3 * unit, ytop)
     ) +
     ggtitle(title) +
     theme_classic(base_size = 18) +
