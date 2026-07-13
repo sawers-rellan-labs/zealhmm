@@ -19,7 +19,9 @@ ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
 source(file.path(ROOT, "scripts/logging.R"))
 source(file.path(ROOT, "scripts/emmax_qk.R"))
+source(file.path(ROOT, "scripts/zeal_gwas_perm.R"))
 NPC <- 5L
+NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 
 g <- readRDS("data/teonam/teonam_gwas118k_dosage_polar.rds")
 dos <- g$dos # AUTHENTIC per-SNP, markers x lines, 0/1/2, ~2.7% NA
@@ -94,7 +96,8 @@ build_null <- function(X) {
 X_q <- cbind(1, prcomp(M[, vpc, drop = FALSE], center = TRUE, scale. = FALSE, rank. = NPC)$x[, seq_len(NPC)])
 X_fam <- model.matrix(~fam)
 scan_q <- emmax_qk_scan(G, build_null(X_q), CHR, BP)
-scan_fam <- emmax_qk_scan(G, build_null(X_fam), CHR, BP)[order(CHR, BP)]
+null_fam <- build_null(X_fam)
+scan_fam <- emmax_qk_scan(G, null_fam, CHR, BP)[order(CHR, BP)]
 
 # candidate-gene peaks for both
 ov <- fread(sprintf("results/sim/teonam/%s_candidate_overlap.csv", TTAG))
@@ -114,3 +117,12 @@ print(cmp)
 
 fwrite(scan_fam, sprintf("data/teonam/%s_gwas_mlm_family_118k.csv", TTAG))
 log_info("wrote data/teonam/%s_gwas_mlm_family_118k.csv (max -log10P = %.2f)", TTAG, max(-log10(scan_fam[is.finite(P) & P > 0, P])))
+
+# --- genome-wide FWER permutation threshold (raw 118K Family+K point Manhattan) ---
+if (NPERM > 0) {
+  mn <- perm_max_mlm(G, null_fam, CHR, nperm = NPERM, seed = 1L)
+  thr <- upsert_gwas_threshold(
+    file.path(ROOT, "data/teonam/gwas_perm_thresholds.csv"), TRAIT, "mlm", "raw118k", "Family", mn, NPERM
+  )
+  log_info("MLM (Family+K) FWER perm threshold (%d perm): 5%%=%.2f 10%%=%.2f", NPERM, thr[1], thr[2])
+}

@@ -13,6 +13,8 @@ suppressMessages({
   library(readxl)
 })
 source("/Users/fvrodriguez/repos/zealhmm/scripts/logging.R")
+source("/Users/fvrodriguez/repos/zealhmm/scripts/zeal_gwas_perm.R")
+NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 
 g118 <- readRDS("data/teonam/teonam_gwas118k_dosage.rds")
 dos <- g118$dos # integer matrix [markers x lines], NA where untyped
@@ -71,3 +73,18 @@ log_info("%s", paste(
   " median n/marker:", median(scan$n)
 ))
 print(head(scan[order(P)], 10))
+
+# --- genome-wide FWER permutation threshold (raw 118K OLS point Manhattan) ---
+if (NPERM > 0) {
+  Gmk <- dos[mk_idx, , drop = FALSE]
+  storage.mode(Gmk) <- "double"
+  if (anyNA(Gmk)) {
+    rmn <- rowMeans(Gmk, na.rm = TRUE)
+    rmn[!is.finite(rmn)] <- 0
+    na <- which(is.na(Gmk), arr.ind = TRUE)
+    Gmk[na] <- rmn[na[, 1]]
+  }
+  mn <- perm_max_ols(Gmk, fam, y, nperm = NPERM, seed = 1L)
+  thr <- upsert_gwas_threshold("data/teonam/gwas_perm_thresholds.csv", TRAIT, "ols", "raw118k", "Family", mn, NPERM)
+  log_info("OLS FWER perm threshold (%d perm): 5%%=%.2f 10%%=%.2f", NPERM, thr[1], thr[2])
+}
