@@ -91,6 +91,14 @@ that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), st
 tables report whether the marker clears the 5% FWER line.
 :::
 
+## Candidate gene registry
+
+Curated evidence for each **candidate** (tier, causal direction, evidence type, phenotype, and a DOI link) from the tracked registry (`reference/candidate_genes.csv` × `candidate_evidence.csv`). These are the genes starred on the Manhattans and labelled on the lollipop; loci without B73 v5 coordinates still appear here but are not plotted.
+
+```{r candidate-registry}
+candidate_table(TR)
+```
+
 ## Candidate genes: closest marker vs window-max marker
 
 For each maize ear-number / prolificacy candidate (B73 v5), the closest marker to the gene body vs
@@ -186,7 +194,7 @@ in Chen 2019.
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/en_jlm_native1.txt"), mlm,
   "ZEAL/BZea EN — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("gt1", "tb1", "tru1", "ub2", "ra2", "fea3", "fea2", "ub3", "td1", "ra1", "ra3", "abi17"),
+  overlap_csv = overlap,
   out_png = here("results/sim/zeal/en_jlm_lollipop_snp50k.png")
 )
 p_lolli

@@ -87,6 +87,14 @@ that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), st
 tables report whether the marker clears the 5% FWER line.
 :::
 
+## Candidate gene registry
+
+Curated evidence for each **candidate** (tier, causal direction, evidence type, phenotype, and a DOI link) from the tracked registry (`reference/candidate_genes.csv` × `candidate_evidence.csv`). These are the genes starred on the Manhattans and labelled on the lollipop; loci without B73 v5 coordinates still appear here but are not plotted.
+
+```{r candidate-registry}
+candidate_table(TR)
+```
+
 ## Candidate genes: closest marker vs window-max marker
 
 ```{r candidate-markers}
@@ -163,7 +171,7 @@ knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/spad20das_jlm_native1.txt"), mlm,
   "ZEAL/BZea SPAD 20DAS — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("chlh1", "gtr3", "urod", "oy1", "por1", "por2", "pph", "nye1", "nye2", "sgrl1", "lls1", "nyc1", "lhcb10", "cab1", "cab2", "nactf132", "g2", "glk1", "nactf108", "sweet1b", "bhlh65", "pco076489"),
+  overlap_csv = overlap,
   out_png = here("results/sim/zeal/spad20das_jlm_lollipop_snp50k.png")
 )
 p_lolli

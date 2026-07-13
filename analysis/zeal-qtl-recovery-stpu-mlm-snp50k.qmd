@@ -127,6 +127,14 @@ that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), st
 tables report whether the marker clears the 5% FWER line.
 :::
 
+## Candidate gene registry
+
+Curated evidence for each **candidate** (tier, causal direction, evidence type, phenotype, and a DOI link) from the tracked registry (`reference/candidate_genes.csv` × `candidate_evidence.csv`). These are the genes starred on the Manhattans and labelled on the lollipop; loci without B73 v5 coordinates still appear here but are not plotted.
+
+```{r candidate-registry}
+candidate_table(TR)
+```
+
 ## Candidate loci: closest marker vs window-max marker
 
 For each StPu trichome/macrohair candidate (B73 v5) — the uncloned macrohair QTL `mhl1` inside the
@@ -245,7 +253,7 @@ StPu QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutat
 p_lolli <- add_qmh_bands(plot_lollipop(
   here("results/sim/zeal/tassel/stpu_jlm_native1.txt"), mlm,
   "ZEAL/BZea StPu — JLM QTL genomic distribution (nested in taxon); red bands = prior qMH intervals",
-  overlap_csv = overlap, label_genes = c("mhl1", "OCL4", "gl15", "ub2", "sbp22", "tga1", "ub3", "wox3a", "tsh4", "sbp11", "wox3b", "smr4"),
+  overlap_csv = overlap,
   out_png = here("results/sim/zeal/stpu_jlm_lollipop_snp50k.png")
 ), mlm)
 p_lolli

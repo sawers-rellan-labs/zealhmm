@@ -181,7 +181,10 @@ plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = 
 
 #' Chen 2019 Fig 4A: JLM QTL genomic distribution as a lollipop. `overlap_csv` =
 #' candidate table (symbol, chr, start); `label_genes` = symbols to label in bold-italic.
-plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, out_png = NULL, label_dist = 5e5, lod = NULL) {
+#' `label_genes` defaults to EVERY candidate in the overlay (registry-driven, so a new
+#' candidate added to reference/candidate_*.csv auto-labels once the overlay is regenerated
+#' — no per-notebook hard-coded list to maintain); pass a vector to restrict.
+plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes = NULL, out_png = NULL, label_dist = 5e5, lod = NULL) {
   if (is.null(lod)) lod <- jlm_threshold(jlm_txt) # per-trait perm threshold (Chen-style)
   scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
   scan <- scan[is.finite(scan$P) & scan$P > 0, ]
@@ -192,6 +195,7 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
   q <- data.table(SNP = j$Name, CHR = as.integer(j$Locus), BP = as.integer(j$Position), logP = -log10(as.numeric(j$`pr>F`)))
   q <- q[logP >= lod]
   ov <- fread(overlap_csv)
+  if (is.null(label_genes)) label_genes <- unique(ov$symbol) # registry-driven default: label all overlay candidates
   ov <- ov[symbol %in% label_genes]
   # Label a QTL with a candidate gene only when the gene actually co-locates with it
   # (nearest QTL within label_dist bp = the same +/-500 kb window the candidate/OLS tables
@@ -301,4 +305,69 @@ plot_sweep_line <- function(sweep_csv, title, legend = TRUE, base_size = 14,
       legend.margin = margin(1, 3, 1, 3)
     ) +
     guides(color = guide_legend(override.aes = list(linewidth = 1.2)))
+}
+
+#' Rich candidate-gene reference table for a trait, built from the tracked registry
+#' (reference/candidate_evidence.csv joined to candidate_genes.csv on gene_id). Each
+#' mapping notebook calls candidate_table(TR) to SHOW the curated evidence — tier,
+#' causation direction, evidence type, phenotype/note, and a DOI link — not just the
+#' coordinates the thin per-trait TSV carries. Registry-only loci with no v5 coordinates
+#' (e.g. rt1) still appear, flagged "unmapped (not plotted)". `trait` is matched
+#' case-insensitively against the lowercase trait keys (dta, spad20das, stpi, ...).
+candidate_table <- function(trait, caption = NULL) {
+  # want_trait is a local scalar; the `trait ==` filter below resolves `trait` to the
+  # data.table column (not this function's argument, which it shadows) — the same
+  # column-vs-`..var` scoping the threshold helpers above rely on.
+  want_trait <- tolower(trait)
+  ev <- fread(here::here("reference/candidate_evidence.csv"), na.strings = "", colClasses = "character")
+  gn <- fread(here::here("reference/candidate_genes.csv"), na.strings = "", colClasses = "character")
+  ev <- ev[trait == want_trait]
+  if (!nrow(ev)) {
+    return(knitr::kable(data.table(note = sprintf("no registry candidates for %s", toupper(want_trait)))))
+  }
+  d <- gn[ev, on = "gene_id"] # right join: keep every evidence row, attach gene coords/names
+  d[, chr_n := suppressWarnings(as.integer(chr))]
+  d[, start_n := suppressWarnings(as.numeric(start))]
+  setorder(d, chr_n, start_n, na.last = TRUE) # mapped loci by position, unmapped last
+
+  clean <- function(x) {
+    x[is.na(x)] <- ""
+    x <- gsub("[\r\n]+", " ", x)
+    gsub("|", "\\|", x, fixed = TRUE) # escape pipes so a cell can't break the markdown table
+  }
+  sym <- clean(d$symbol)
+  ali <- clean(d$alias)
+  gene <- ifelse(nzchar(ali), sprintf("*%s* (%s)", sym, ali), sprintf("*%s*", sym))
+  locus <- ifelse(is.finite(d$chr_n) & is.finite(d$start_n),
+    sprintf("%d:%.1f Mb", d$chr_n, d$start_n / 1e6),
+    "unmapped (not plotted)"
+  )
+  note <- clean(d$phenotype)
+  note <- ifelse(nzchar(note), note, clean(d$functional_note))
+  ref <- ifelse(nzchar(clean(d$doi)),
+    sprintf("[%s](https://doi.org/%s)", clean(d$doi), clean(d$doi)),
+    ifelse(nzchar(clean(d$reference)), clean(d$reference), "TODO")
+  )
+  out <- data.table(
+    gene = gene,
+    `full name` = clean(d$full_name),
+    locus = locus,
+    tier = clean(d$tier),
+    direction = clean(d$causation_direction),
+    evidence = clean(d$evidence_type),
+    `phenotype / note` = note,
+    reference = ref
+  )
+  if (is.null(caption)) {
+    n_map <- sum(is.finite(d$chr_n) & is.finite(d$start_n))
+    caption <- sprintf(
+      paste0(
+        "Candidate genes for %s from the tracked registry (reference/candidate_*.csv): ",
+        "%d loci (%d mapped to B73 v5, %d unmapped). DOI links where curated; ",
+        "\"TODO\" = evidence not yet curated."
+      ),
+      toupper(want_trait), nrow(d), n_map, nrow(d) - n_map
+    )
+  }
+  knitr::kable(out, format = "markdown", caption = caption)
 }
