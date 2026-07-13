@@ -362,6 +362,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   
 
   window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-zeal-rqtl .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-zeal-rqtl'] = new List('listing-zeal-rqtl', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
     const listingTargetEl = window.document.querySelector('#listing-zeal-inv4m .list');
     if (!listingTargetEl) {
       // No listing discovered, do not attach.
@@ -519,7 +547,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783719157493" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="553" data-listing-title-sort="Coverage theory" data-listing-filename-sort="missing-data-coverage-theory.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783719157493" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="553" data-listing-title-sort="Coverage theory" data-listing-filename-sort="missing-data-coverage-theory.qmd">
 <td>
 <a href="./analysis/missing-data-coverage-theory.html" class="title listing-title">Coverage theory</a>
 </td>
@@ -529,7 +557,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783719157493" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1569" data-listing-title-sort="Floor model" data-listing-filename-sort="missing-data-floor-model.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783719157493" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1569" data-listing-title-sort="Floor model" data-listing-filename-sort="missing-data-floor-model.qmd">
 <td>
 <a href="./analysis/missing-data-floor-model.html" class="title listing-title">Floor model</a>
 </td>
@@ -539,7 +567,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783748999298" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="670" data-listing-title-sort="Model comparison" data-listing-filename-sort="missing-data-model-comparison.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783748999298" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="670" data-listing-title-sort="Model comparison" data-listing-filename-sort="missing-data-model-comparison.qmd">
 <td>
 <a href="./analysis/missing-data-model-comparison.html" class="title listing-title">Model comparison</a>
 </td>
@@ -549,7 +577,7 @@ Description
 
 </tr>
 
-<tr data-index="3" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1668" data-listing-title-sort="Ergodicity assumption" data-listing-filename-sort="wideseq-coverage-ergodicity.qmd">
+<tr data-index="3" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1668" data-listing-title-sort="Ergodicity assumption" data-listing-filename-sort="wideseq-coverage-ergodicity.qmd">
 <td>
 <a href="./analysis/wideseq-coverage-ergodicity.html" class="title listing-title">Ergodicity assumption</a>
 </td>
@@ -600,7 +628,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2669" data-listing-title-sort="Genotype likelihoods" data-listing-filename-sort="genotype_likelihoods_and_hmm.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2669" data-listing-title-sort="Genotype likelihoods" data-listing-filename-sort="genotype_likelihoods_and_hmm.qmd">
 <td>
 <a href="./analysis/genotype_likelihoods_and_hmm.html" class="title listing-title">Genotype likelihoods</a>
 </td>
@@ -610,7 +638,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2299" data-listing-title-sort="Resolving dosage" data-listing-filename-sort="snp50k_genotype_identifiability.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783723301887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2299" data-listing-title-sort="Resolving dosage" data-listing-filename-sort="snp50k_genotype_identifiability.qmd">
 <td>
 <a href="./analysis/snp50k_genotype_identifiability.html" class="title listing-title">Resolving dosage</a>
 </td>
@@ -620,7 +648,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783723301886" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1153" data-listing-title-sort="Emission by depth" data-listing-filename-sort="emission_by_depth_regime.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783723301886" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1153" data-listing-title-sort="Emission by depth" data-listing-filename-sort="emission_by_depth_regime.qmd">
 <td>
 <a href="./analysis/emission_by_depth_regime.html" class="title listing-title">Emission by depth</a>
 </td>
@@ -671,7 +699,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783737941452" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="975" data-listing-title-sort="Single-locus validation" data-listing-filename-sort="single-locus-validation.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783737941452" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="975" data-listing-title-sort="Single-locus validation" data-listing-filename-sort="single-locus-validation.qmd">
 <td>
 <a href="./analysis/single-locus-validation.html" class="title listing-title">Single-locus validation</a>
 </td>
@@ -681,7 +709,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783204613227" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="633" data-listing-title-sort="Ancestry callers" data-listing-filename-sort="callers-and-methods.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783204613227" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="633" data-listing-title-sort="Ancestry callers" data-listing-filename-sort="callers-and-methods.qmd">
 <td>
 <a href="./analysis/callers-and-methods.html" class="title listing-title">Ancestry callers</a>
 </td>
@@ -691,7 +719,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="713" data-listing-title-sort="Simulation calibration" data-listing-filename-sort="simulation-calibration.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="713" data-listing-title-sort="Simulation calibration" data-listing-filename-sort="simulation-calibration.qmd">
 <td>
 <a href="./analysis/simulation-calibration.html" class="title listing-title">Simulation calibration</a>
 </td>
@@ -701,7 +729,7 @@ Description
 
 </tr>
 
-<tr data-index="3" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783744341922" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2750" data-listing-title-sort="GWAS-landscape geometry" data-listing-filename-sort="GWAS_autocorrelation.qmd">
+<tr data-index="3" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783744341922" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2750" data-listing-title-sort="GWAS-landscape geometry" data-listing-filename-sort="GWAS_autocorrelation.qmd">
 <td>
 <a href="./analysis/GWAS_autocorrelation.html" class="title listing-title">GWAS-landscape geometry</a>
 </td>
@@ -758,7 +786,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783635986616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4092" data-listing-title-sort="STAM · GWAS + coverage sweep (native)" data-listing-filename-sort="teonam-qtl-recovery.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783635986616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4092" data-listing-title-sort="STAM · GWAS + coverage sweep (native)" data-listing-filename-sort="teonam-qtl-recovery.qmd">
 <td>
 <a href="./analysis/teonam-qtl-recovery.html" class="title listing-title">STAM · GWAS + coverage sweep (native)</a>
 </td>
@@ -768,7 +796,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783635986616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3684" data-listing-title-sort="STAM · GWAS + coverage sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-118k.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783635986616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3684" data-listing-title-sort="STAM · GWAS + coverage sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-118k.qmd">
 <td>
 <a href="./analysis/teonam-qtl-recovery-118k.html" class="title listing-title">STAM · GWAS + coverage sweep (118K)</a>
 </td>
@@ -778,7 +806,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783731631404" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2286" data-listing-title-sort="STAM · MLM five-caller sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-mlm-118k.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783731631404" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2286" data-listing-title-sort="STAM · MLM five-caller sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-mlm-118k.qmd">
 <td>
 <a href="./analysis/teonam-qtl-recovery-mlm-118k.html" class="title listing-title">STAM · MLM five-caller sweep (118K)</a>
 </td>
@@ -788,7 +816,7 @@ Description
 
 </tr>
 
-<tr data-index="3" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783733565437" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2289" data-listing-title-sort="DTA · MLM five-caller sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-dta-mlm-118k.qmd">
+<tr data-index="3" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783733565437" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2289" data-listing-title-sort="DTA · MLM five-caller sweep (118K)" data-listing-filename-sort="teonam-qtl-recovery-dta-mlm-118k.qmd">
 <td>
 <a href="./analysis/teonam-qtl-recovery-dta-mlm-118k.html" class="title listing-title">DTA · MLM five-caller sweep (118K)</a>
 </td>
@@ -839,7 +867,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1113" data-listing-title-sort="STAM · MLM (Q + K), 118K" data-listing-filename-sort="teonam-stam-mlm-gwas-118k.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1113" data-listing-title-sort="STAM · MLM (Q + K), 118K" data-listing-filename-sort="teonam-stam-mlm-gwas-118k.qmd">
 <td>
 <a href="./analysis/teonam-stam-mlm-gwas-118k.html" class="title listing-title">STAM · MLM (Q + K), 118K</a>
 </td>
@@ -849,7 +877,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783450982319" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2191" data-listing-title-sort="STAM · MLM (Q + K), interpolated" data-listing-filename-sort="teonam-stam-mlm-gwas-interpolated.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783450982319" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2191" data-listing-title-sort="STAM · MLM (Q + K), interpolated" data-listing-filename-sort="teonam-stam-mlm-gwas-interpolated.qmd">
 <td>
 <a href="./analysis/teonam-stam-mlm-gwas-interpolated.html" class="title listing-title">STAM · MLM (Q + K), interpolated</a>
 </td>
@@ -899,7 +927,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783724327970" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1005" data-listing-title-sort="Caller calibration" data-listing-filename-sort="teonam-caller-calibration.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783724327970" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1005" data-listing-title-sort="Caller calibration" data-listing-filename-sort="teonam-caller-calibration.qmd">
 <td>
 <a href="./analysis/teonam-caller-calibration.html" class="title listing-title">Caller calibration</a>
 </td>
@@ -909,7 +937,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783458026260" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="286" data-listing-title-sort="Genetic map" data-listing-filename-sort="teonam-genetic-map.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783458026260" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="286" data-listing-title-sort="Genetic map" data-listing-filename-sort="teonam-genetic-map.qmd">
 <td>
 <a href="./analysis/teonam-genetic-map.html" class="title listing-title">Genetic map</a>
 </td>
@@ -919,7 +947,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783727716018" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1996" data-listing-title-sort="Marker thinning" data-listing-filename-sort="marker-thinning.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783727716018" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1996" data-listing-title-sort="Marker thinning" data-listing-filename-sort="marker-thinning.qmd">
 <td>
 <a href="./analysis/marker-thinning.html" class="title listing-title">Marker thinning</a>
 </td>
@@ -970,7 +998,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="952" data-listing-title-sort="STAM · OLS computation (118K)" data-listing-filename-sort="teonam-stam-ols-gwas-118k.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="952" data-listing-title-sort="STAM · OLS computation (118K)" data-listing-filename-sort="teonam-stam-ols-gwas-118k.qmd">
 <td>
 <a href="./analysis/teonam-stam-ols-gwas-118k.html" class="title listing-title">STAM · OLS computation (118K)</a>
 </td>
@@ -980,7 +1008,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="902" data-listing-title-sort="STAM · OLS computation (family-imputed)" data-listing-filename-sort="teonam-stam-ols-gwas-family-imputed.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783727716019" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="902" data-listing-title-sort="STAM · OLS computation (family-imputed)" data-listing-filename-sort="teonam-stam-ols-gwas-family-imputed.qmd">
 <td>
 <a href="./analysis/teonam-stam-ols-gwas-family-imputed.html" class="title listing-title">STAM · OLS computation (family-imputed)</a>
 </td>
@@ -1060,7 +1088,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783204628033" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="281" data-listing-title-sort="Source/method comparison" data-listing-filename-sort="source-method-comparison.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783204628033" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="281" data-listing-title-sort="Source/method comparison" data-listing-filename-sort="source-method-comparison.qmd">
 <td>
 <a href="./analysis/source-method-comparison.html" class="title listing-title">Source/method comparison</a>
 </td>
@@ -1111,7 +1139,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1262" data-listing-title-sort="DTA · MLM + JLM" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1262" data-listing-title-sort="DTA · MLM + JLM" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-dta-mlm-snp50k.html" class="title listing-title">DTA · MLM + JLM</a>
 </td>
@@ -1121,7 +1149,7 @@ Description
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1523" data-listing-title-sort="DTA · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k-fdr.qmd">
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1523" data-listing-title-sort="DTA · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-dta-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-dta-mlm-snp50k-fdr.html" class="title listing-title">DTA · FDR ≤ 0.05</a>
 </td>
@@ -1131,7 +1159,7 @@ Description
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1699" data-listing-title-sort="PH · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-ph-mlm-snp50k-fdr.qmd">
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1699" data-listing-title-sort="PH · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-ph-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-ph-mlm-snp50k-fdr.html" class="title listing-title">PH · FDR ≤ 0.05</a>
 </td>
@@ -1141,7 +1169,7 @@ Description
 
 </tr>
 
-<tr data-index="3" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783885990472" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1667" data-listing-title-sort="EH · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-eh-mlm-snp50k-fdr.qmd">
+<tr data-index="3" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783885990472" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1667" data-listing-title-sort="EH · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-eh-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-eh-mlm-snp50k-fdr.html" class="title listing-title">EH · FDR ≤ 0.05</a>
 </td>
@@ -1151,7 +1179,7 @@ Description
 
 </tr>
 
-<tr data-index="4" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783893178011" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1670" data-listing-title-sort="EN · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-en-mlm-snp50k-fdr.qmd">
+<tr data-index="4" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783893178011" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1670" data-listing-title-sort="EN · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-en-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-en-mlm-snp50k-fdr.html" class="title listing-title">EN · FDR ≤ 0.05</a>
 </td>
@@ -1161,7 +1189,7 @@ Description
 
 </tr>
 
-<tr data-index="5" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783893178012" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1636" data-listing-title-sort="Prolif · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-prolif-mlm-snp50k-fdr.qmd">
+<tr data-index="5" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783893178012" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1636" data-listing-title-sort="Prolif · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-prolif-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-prolif-mlm-snp50k-fdr.html" class="title listing-title">Prolif · FDR ≤ 0.05</a>
 </td>
@@ -1171,7 +1199,7 @@ Description
 
 </tr>
 
-<tr data-index="6" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783893178012" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1671" data-listing-title-sort="NBR · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-nbr-mlm-snp50k-fdr.qmd">
+<tr data-index="6" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783893178012" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1671" data-listing-title-sort="NBR · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-nbr-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-nbr-mlm-snp50k-fdr.html" class="title listing-title">NBR · FDR ≤ 0.05</a>
 </td>
@@ -1181,17 +1209,17 @@ Description
 
 </tr>
 
-<tr data-index="7" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783893515150" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1591" data-listing-title-sort="LAE · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-lae-mlm-snp50k-fdr.qmd">
+<tr data-index="7" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783893675115" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1591" data-listing-title-sort="LAE · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-lae-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-lae-mlm-snp50k-fdr.html" class="title listing-title">LAE · FDR ≤ 0.05</a>
 </td>
 <td>
-<span class="listing-description">Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, single candidate tu1/tunicate1 (ZMM19; Nat Commun 2024), FDR ≤ 0.05</span>
+<span class="listing-description">Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, TU1-centric leaf-number candidate panel (tu1/tunicate1 ZMM19 upstream + its plastochron/meristem targets), FDR ≤ 0.05</span>
 </td>
 
 </tr>
 
-<tr data-index="8" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1569" data-listing-title-sort="SPAD · spatial BLUE · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd">
+<tr data-index="8" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1569" data-listing-title-sort="SPAD · spatial BLUE · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-spad-mlm-snp50k-fdr.html" class="title listing-title">SPAD · spatial BLUE · FDR ≤ 0.05</a>
 </td>
@@ -1201,7 +1229,7 @@ Description
 
 </tr>
 
-<tr data-index="9" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1231" data-listing-title-sort="SPAD 20DAS · as-is · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad20das-mlm-snp50k-fdr.qmd">
+<tr data-index="9" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1231" data-listing-title-sort="SPAD 20DAS · as-is · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad20das-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-spad20das-mlm-snp50k-fdr.html" class="title listing-title">SPAD 20DAS · as-is · FDR ≤ 0.05</a>
 </td>
@@ -1211,7 +1239,7 @@ Description
 
 </tr>
 
-<tr data-index="10" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1231" data-listing-title-sort="SPAD 36DAS · as-is · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad36das-mlm-snp50k-fdr.qmd">
+<tr data-index="10" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783889078840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1231" data-listing-title-sort="SPAD 36DAS · as-is · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-spad36das-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-spad36das-mlm-snp50k-fdr.html" class="title listing-title">SPAD 36DAS · as-is · FDR ≤ 0.05</a>
 </td>
@@ -1221,7 +1249,7 @@ Description
 
 </tr>
 
-<tr data-index="11" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1413" data-listing-title-sort="DTS · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-dts-mlm-snp50k-fdr.qmd">
+<tr data-index="11" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783645554718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1413" data-listing-title-sort="DTS · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-dts-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-dts-mlm-snp50k-fdr.html" class="title listing-title">DTS · FDR ≤ 0.05</a>
 </td>
@@ -1231,7 +1259,7 @@ Description
 
 </tr>
 
-<tr data-index="12" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783760882363" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1561" data-listing-title-sort="StPi · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd">
+<tr data-index="12" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783760882363" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1561" data-listing-title-sort="StPi · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-stpi-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-stpi-mlm-snp50k-fdr.html" class="title listing-title">StPi · FDR ≤ 0.05</a>
 </td>
@@ -1241,7 +1269,7 @@ Description
 
 </tr>
 
-<tr data-index="13" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783760882364" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2161" data-listing-title-sort="StPu · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-stpu-mlm-snp50k-fdr.qmd">
+<tr data-index="13" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783760882364" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2161" data-listing-title-sort="StPu · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-stpu-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-stpu-mlm-snp50k-fdr.html" class="title listing-title">StPu · FDR ≤ 0.05</a>
 </td>
@@ -1251,7 +1279,7 @@ Description
 
 </tr>
 
-<tr data-index="14" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783893178011" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1597" data-listing-title-sort="Kinki · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-kinki-mlm-snp50k-fdr.qmd">
+<tr data-index="14" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783893178011" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1597" data-listing-title-sort="Kinki · FDR ≤ 0.05" data-listing-filename-sort="zeal-qtl-recovery-kinki-mlm-snp50k-fdr.qmd">
 <td>
 <a href="./analysis/zeal-qtl-recovery-kinki-mlm-snp50k-fdr.html" class="title listing-title">Kinki · FDR ≤ 0.05</a>
 </td>
@@ -1265,6 +1293,137 @@ Description
 </table>
 <div class="listing-no-matching d-none">No matching items</div>
 </div>
+<section id="rqtl-linkage-mapping-route" class="level4">
+<h4 class="anchored" data-anchor-id="rqtl-linkage-mapping-route">R/qtl (linkage-mapping) route</h4>
+<p>The classic linkage-mapping contrast to the MLM/JLM GWAS above: R/qtl (<code>bcsft</code>) interval mapping by Haley–Knott on the RTIGER ancestry mosaic projected onto the TeoNAM JLM 0.1-cM grid, with multi-peak deconvolution and per-family scans. All traits are scanned in <strong>one joint run</strong> (<code>scripts/zeal_rqtl_scan.R</code>) sharing a single 1000-permutation null, then each notebook reads its per-trait results.</p>
+<div id="listing-zeal-rqtl" class="quarto-listing quarto-listing-container-table">
+<div class="listing-actions-group">
+   <div class="input-group input-group-sm quarto-listing-sort">
+    <span class="input-group-text"><i class="bi bi-sort-down"></i></span>
+    <select id="listing-zeal-rqtl-sort" class="form-select" aria-label="Order By" onchange="window['quarto-listings']['listing-zeal-rqtl'].sort(this.options[this.selectedIndex].value, { order: this.options[this.selectedIndex].getAttribute('data-direction')})">
+      <option value="" disabled="" selected="" hidden="">Order By</option>
+      <option value="index" data-direction="asc">Default</option>
+      <option value="listing-title-sort" data-direction="asc">
+        Notebook
+      </option>
+    </select>
+  </div>
+    <div class="input-group input-group-sm quarto-listing-filter">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="search form-control" placeholder="Filter">
+    </div>
+</div>
+<table class="quarto-listing-table table">
+<thead>
+<tr>
+
+<th>
+<a class="sort" data-sort="listing-title-sort" onclick="if (this.classList.contains('sort-asc')) { this.classList.add('sort-desc'); this.classList.remove('sort-asc') } else { this.classList.add('sort-asc'); this.classList.remove('sort-desc')} return false;">Notebook</a>
+</th>
+
+<th>
+Description
+</th>
+
+</tr>
+</thead>
+<tbody class="list">
+
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783926869986" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3082" data-listing-title-sort="DTA · R/qtl" data-listing-filename-sort="zeal-rqtl-dta-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-dta-lod-profile.html" class="title listing-title">DTA · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Days to anthesis: classic R/qtl (bcsft) interval mapping (Haley–Knott) on the RTIGER mosaic projected onto the TeoNAM JLM grid; LOD profile + airmine multi-peak refinement + per-family scans; flowering candidate panel (ZmCCT10/9, zcn8/12, dlf1, tu1) — recovers ZmCCT10 on chr10</span>
+</td>
+
+</tr>
+
+<tr data-index="1" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783926869986" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1976" data-listing-title-sort="DTS · R/qtl" data-listing-filename-sort="zeal-rqtl-dts-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-dts-lod-profile.html" class="title listing-title">DTS · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Days to silk: same R/qtl pipeline; flowering candidate panel; chr10 support interval spans ZmCCT10</span>
+</td>
+
+</tr>
+
+<tr data-index="2" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783926869986" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="PH · R/qtl" data-listing-filename-sort="zeal-rqtl-ph-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-ph-lod-profile.html" class="title listing-title">PH · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Plant height: R/qtl LOD profile + multi-peak + per-family scans; dwarf/GA/BR height candidate panel</span>
+</td>
+
+</tr>
+
+<tr data-index="3" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938400548" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="EH · R/qtl" data-listing-filename-sort="zeal-rqtl-eh-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-eh-lod-profile.html" class="title listing-title">EH · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Ear height: R/qtl LOD profile + per-family scans; dwarf/GA/BR height candidate panel</span>
+</td>
+
+</tr>
+
+<tr data-index="4" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938400767" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="EN · R/qtl" data-listing-filename-sort="zeal-rqtl-en-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-en-lod-profile.html" class="title listing-title">EN · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Ear number: R/qtl LOD profile + per-family scans; ear-number / prolificacy candidate panel (gt1/tb1/tru1 + inflorescence architecture)</span>
+</td>
+
+</tr>
+
+<tr data-index="5" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938401459" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="Prolif · R/qtl" data-listing-filename-sort="zeal-rqtl-prolif-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-prolif-lod-profile.html" class="title listing-title">Prolif · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Prolificacy (&gt;1 ear): R/qtl LOD profile + per-family scans; shares the ear-number / prolificacy candidate panel</span>
+</td>
+
+</tr>
+
+<tr data-index="6" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938401217" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="NBR · R/qtl" data-listing-filename-sort="zeal-rqtl-nbr-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-nbr-lod-profile.html" class="title listing-title">NBR · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Brace-root number: R/qtl LOD profile + per-family scans; brace-root candidate panel</span>
+</td>
+
+</tr>
+
+<tr data-index="7" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938400996" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="LAE · R/qtl" data-listing-filename-sort="zeal-rqtl-lae-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-lae-lod-profile.html" class="title listing-title">LAE · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Leaves above ear: R/qtl LOD profile + per-family scans; TU1-centric leaf-number candidate panel (tu1/tunicate1 + plastochron/meristem targets)</span>
+</td>
+
+</tr>
+
+<tr data-index="8" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783938401664" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1972" data-listing-title-sort="SPAD · R/qtl" data-listing-filename-sort="zeal-rqtl-spad-lod-profile.qmd">
+<td>
+<a href="./analysis/zeal-rqtl-spad-lod-profile.html" class="title listing-title">SPAD · R/qtl</a>
+</td>
+<td>
+<span class="listing-description">Leaf greenness (SPAD): R/qtl LOD profile + per-family scans; chlorophyll candidate panel</span>
+</td>
+
+</tr>
+
+</tbody>
+</table>
+<div class="listing-no-matching d-none">No matching items</div>
+</div>
+</section>
 </section>
 <section id="inv4m-paper-in-review" class="level3">
 <h3 class="anchored" data-anchor-id="inv4m-paper-in-review">Inv4m paper (in review)</h3>
@@ -1302,7 +1461,7 @@ Description
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1783828800000" data-listing-file-modified-sort="1783750004925" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2152" data-listing-title-sort="Inv4m genotype · 50K vs 200K" data-listing-filename-sort="zeal-inv4m-rtiger-genotype.qmd">
+<tr data-index="0" data-listing-date-sort="1783915200000" data-listing-file-modified-sort="1783750004925" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2152" data-listing-title-sort="Inv4m genotype · 50K vs 200K" data-listing-filename-sort="zeal-inv4m-rtiger-genotype.qmd">
 <td>
 <a href="./analysis/zeal-inv4m-rtiger-genotype.html" class="title listing-title">Inv4m genotype · 50K vs 200K</a>
 </td>
@@ -1934,7 +2093,7 @@ Description
 <span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Brace-root number (shoot-borne nodal roots): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, curated brace-root candidate panel (auxin/ARF/AP2 regulators rtcs1/ZmARF11/ZmRAP2.7 + shoot-borne-root initiation + lateral-root modifiers), FDR ≤ 0.05"</span></span>
 <span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "LAE · FDR ≤ 0.05"</span></span>
 <span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-qtl-recovery-lae-mlm-snp50k-fdr.qmd</span></span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, single candidate tu1/tunicate1 (ZMM19; Nat Commun 2024), FDR ≤ 0.05"</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, TU1-centric leaf-number candidate panel (tu1/tunicate1 ZMM19 upstream + its plastochron/meristem targets), FDR ≤ 0.05"</span></span>
 <span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "SPAD · spatial BLUE · FDR ≤ 0.05"</span></span>
 <span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd</span></span>
 <span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Leaf greenness (SPAD/chlorophyll): single spatially-corrected SpATS BLUE from the CLY25 fieldbook SPAD column; 18-gene chlorophyll panel; JLM + MLM, five-caller comparison, FDR ≤ 0.05"</span></span>
@@ -1956,112 +2115,155 @@ Description
 <span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "Kinki · FDR ≤ 0.05"</span></span>
 <span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-qtl-recovery-kinki-mlm-snp50k-fdr.qmd</span></span>
 <span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Kinki (zigzag culm; Eyster 1920): CLY23-only ordinal severity binarized and modeled as empirical logit (no spatial correction); JLM + MLM composite, five-caller comparison, culm/meristem-architecture candidates anchored on gn1/knox4 + classical zg1 interval, FDR ≤ 0.05"</span></span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="co">  - id: zeal-inv4m</span></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="co">  - id: zeal-rqtl</span></span>
 <span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="co">    type: table</span></span>
 <span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="co">    fields: [title, description]</span></span>
 <span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="co">    field-display-names: {title: "Notebook", description: "Description"}</span></span>
 <span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a><span class="co">    sort: false</span></span>
 <span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="co">    contents:</span></span>
-<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "Inv4m genotype · 50K vs 200K"</span></span>
-<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-inv4m-rtiger-genotype.qmd</span></span>
-<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Genotype at the Inv4m tagging SNP (PZE04175660223) from the 200K (previous, Nirwan) and 50K (current, Fausto) RTIGER call sets: confusion matrix, BC2S3 goodness-of-fit, and the flowering-time LMM on each"</span></span>
-<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>Analysis notebooks grouped by **dataset**, and within each dataset by the **paper**</span>
-<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>the work supports. Two papers are being written here — the **nilHMM R package paper**</span>
-<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>(priority) and the **ZEAL population paper** — plus the **Inv4m paper** (already</span>
-<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>written, in review), which this repo supplies updated genotypes to.</span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="fu">## nilHMM methods</span></span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — missing data</span></span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>The Poisson and exponential-with-floor model of missing data, fit to the BZea</span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>population.</span>
-<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>::: {#foundations}</span>
-<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — genotype calling</span></span>
-<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>Single-read genotype likelihoods and the prior's role in low-coverage calling, the</span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</span>
-<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>::: {#foundations-calling}</span>
-<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="fu">### Engine &amp; calibration</span></span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>The shared HMM engine and its <span class="in">`simcross`</span> calibration — common to every dataset below.</span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>::: {#methods}</span>
-<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="fu">## TeoNAM</span></span>
-<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>W22 × 5 teosinte inbreds; 1,257 BC1S4 RILs (Chen 2019).</span>
-<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a><span class="fu">### nilHMM R package paper</span></span>
-<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Coverage-degradation reproduction — the results core</span></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "DTA · R/qtl"</span></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-dta-lod-profile.qmd</span></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Days to anthesis: classic R/qtl (bcsft) interval mapping (Haley–Knott) on the RTIGER mosaic projected onto the TeoNAM JLM grid; LOD profile + airmine multi-peak refinement + per-family scans; flowering candidate panel (ZmCCT10/9, zcn8/12, dlf1, tu1) — recovers ZmCCT10 on chr10"</span></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "DTS · R/qtl"</span></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-dts-lod-profile.qmd</span></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Days to silk: same R/qtl pipeline; flowering candidate panel; chr10 support interval spans ZmCCT10"</span></span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "PH · R/qtl"</span></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-ph-lod-profile.qmd</span></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Plant height: R/qtl LOD profile + multi-peak + per-family scans; dwarf/GA/BR height candidate panel"</span></span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "EH · R/qtl"</span></span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-eh-lod-profile.qmd</span></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Ear height: R/qtl LOD profile + per-family scans; dwarf/GA/BR height candidate panel"</span></span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "EN · R/qtl"</span></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-en-lod-profile.qmd</span></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Ear number: R/qtl LOD profile + per-family scans; ear-number / prolificacy candidate panel (gt1/tb1/tru1 + inflorescence architecture)"</span></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "Prolif · R/qtl"</span></span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-prolif-lod-profile.qmd</span></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Prolificacy (&gt;1 ear): R/qtl LOD profile + per-family scans; shares the ear-number / prolificacy candidate panel"</span></span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "NBR · R/qtl"</span></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-nbr-lod-profile.qmd</span></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Brace-root number: R/qtl LOD profile + per-family scans; brace-root candidate panel"</span></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "LAE · R/qtl"</span></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-lae-lod-profile.qmd</span></span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Leaves above ear: R/qtl LOD profile + per-family scans; TU1-centric leaf-number candidate panel (tu1/tunicate1 + plastochron/meristem targets)"</span></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "SPAD · R/qtl"</span></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-rqtl-spad-lod-profile.qmd</span></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Leaf greenness (SPAD): R/qtl LOD profile + per-family scans; chlorophyll candidate panel"</span></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a><span class="co">  - id: zeal-inv4m</span></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="co">    type: table</span></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="co">    fields: [title, description]</span></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a><span class="co">    field-display-names: {title: "Notebook", description: "Description"}</span></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a><span class="co">    sort: false</span></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a><span class="co">    contents:</span></span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a><span class="co">      - title: "Inv4m genotype · 50K vs 200K"</span></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a><span class="co">        path: analysis/zeal-inv4m-rtiger-genotype.qmd</span></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="co">        description: "Genotype at the Inv4m tagging SNP (PZE04175660223) from the 200K (previous, Nirwan) and 50K (current, Fausto) RTIGER call sets: confusion matrix, BC2S3 goodness-of-fit, and the flowering-time LMM on each"</span></span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>Analysis notebooks grouped by **dataset**, and within each dataset by the **paper**</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>the work supports. Two papers are being written here — the **nilHMM R package paper**</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>(priority) and the **ZEAL population paper** — plus the **Inv4m paper** (already</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>written, in review), which this repo supplies updated genotypes to.</span>
 <span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>Reproduce Chen 2019 on real genotypes, then degrade coverage and re-call ancestry</span>
-<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a>with each caller: the GWAS-profile-under-simulated-coverage comparison.</span>
-<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>::: {#teonam-recovery}</span>
-<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Fig-4C model reproduction</span></span>
-<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>Chen's actual Fig-4C mixed model (Q = 5 PCs + K = Centered-IBS, P3D).</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="fu">## nilHMM methods</span></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — missing data</span></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>The Poisson and exponential-with-floor model of missing data, fit to the BZea</span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>population.</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>::: {#foundations}</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>::: {#teonam-fig4c}</span>
-<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Calibration, map &amp; marker framework</span></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a><span class="fu">### §1 Foundations — genotype calling</span></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>Single-read genotype likelihoods and the prior's role in low-coverage calling, the</span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a>depth-driven emission choice, and why the SNP50K skim cannot resolve zygosity.</span>
 <span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>::: {#teonam-calmap}</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>::: {#foundations-calling}</span>
 <span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Supplementary — OLS computation &amp; QC</span></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="fu">### Engine &amp; calibration</span></span>
 <span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>The per-marker OLS computation behind the scans, reproducible from primary data.</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>The shared HMM engine and its <span class="in">`simcross`</span> calibration — common to every dataset below.</span>
 <span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>::: {#teonam-supp}</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>::: {#methods}</span>
 <span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a><span class="fu">## ZEAL / BZea</span></span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a><span class="fu">## TeoNAM</span></span>
 <span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>::: {style="text-align:center; margin-bottom:1.5rem;"}</span>
-<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a><span class="al">![](zeal.png)</span>{fig-alt="ZEAL — Zea Exotic Allele Library" width="200"}</span>
-<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>*Zea Exotic Allele Library*</span>
-<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>W22 × 5 teosinte inbreds; 1,257 BC1S4 RILs (Chen 2019).</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="fu">### nilHMM R package paper</span></span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Coverage-degradation reproduction — the results core</span></span>
 <span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>B73 × teosinte BC2S3 near-isogenic lines; SNP50K panel at ~0.4× skim.</span>
-<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a><span class="fu">### nilHMM R package paper</span></span>
-<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>The ZEAL data used as method demonstration — caller agreement, ancestry painting</span>
-<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a>across sources, and the paired skim + BRB-seq cross-modality comparison.</span>
-<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a>::: {#zeal-methods}</span>
-<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>Reproduce Chen 2019 on real genotypes, then degrade coverage and re-call ancestry</span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a>with each caller: the GWAS-profile-under-simulated-coverage comparison.</span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>::: {#teonam-recovery}</span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Fig-4C model reproduction</span></span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>Chen's actual Fig-4C mixed model (Q = 5 PCs + K = Centered-IBS, P3D).</span>
 <span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a><span class="fu">### ZEAL population paper</span></span>
-<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>Trait QTL recovery on the ZEAL/BZea population (a reflection of the TeoNAM analysis):</span>
-<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>JLM + MLM composites with five-caller comparison, at FDR ≤ 0.05.</span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>::: {#teonam-fig4c}</span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Calibration, map &amp; marker framework</span></span>
 <span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a>::: {#zeal-pop}</span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a>::: {#teonam-calmap}</span>
 <span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a><span class="fu">### Inv4m paper (in review)</span></span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Supplementary — OLS computation &amp; QC</span></span>
 <span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>Updated-genotype support for the *Inv4m* inversion–flowering paper.</span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>The per-marker OLS computation behind the scans, reproducible from primary data.</span>
 <span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>::: {#zeal-inv4m}</span>
-<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>::: {#teonam-supp}</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a><span class="fu">## ZEAL / BZea</span></span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>::: {style="text-align:center; margin-bottom:1.5rem;"}</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a><span class="al">![](zeal.png)</span>{fig-alt="ZEAL — Zea Exotic Allele Library" width="200"}</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>*Zea Exotic Allele Library*</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a>B73 × teosinte BC2S3 near-isogenic lines; SNP50K panel at ~0.4× skim.</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a><span class="fu">### nilHMM R package paper</span></span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a>The ZEAL data used as method demonstration — caller agreement, ancestry painting</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>across sources, and the paired skim + BRB-seq cross-modality comparison.</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a>::: {#zeal-methods}</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a><span class="fu">### ZEAL population paper</span></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>Trait QTL recovery on the ZEAL/BZea population (a reflection of the TeoNAM analysis):</span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a>JLM + MLM composites with five-caller comparison, at FDR ≤ 0.05.</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a>::: {#zeal-pop}</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="fu">#### R/qtl (linkage-mapping) route</span></span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>The classic linkage-mapping contrast to the MLM/JLM GWAS above: R/qtl (<span class="in">`bcsft`</span>) interval mapping by</span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>Haley–Knott on the RTIGER ancestry mosaic projected onto the TeoNAM JLM 0.1-cM grid, with multi-peak</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a>deconvolution and per-family scans. All traits are scanned in **one joint run** (<span class="in">`scripts/zeal_rqtl_scan.R`</span>)</span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>sharing a single 1000-permutation null, then each notebook reads its per-trait results.</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>::: {#zeal-rqtl}</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a><span class="fu">### Inv4m paper (in review)</span></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>Updated-genotype support for the *Inv4m* inversion–flowering paper.</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a>::: {#zeal-inv4m}</span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

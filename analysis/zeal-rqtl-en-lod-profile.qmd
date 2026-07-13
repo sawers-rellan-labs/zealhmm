@@ -1,0 +1,296 @@
+---
+title: "ZEAL/BZea EN — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
+subtitle: "R/qtl interval mapping (Haley–Knott) for EN on the BC2S3 RTIGER ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold (a single shared permutation null across all traits). Candidates = the EN candidate-gene panel (B73 v5)."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The EN R/qtl scan — a sibling of the DTA/DTS/PH notebooks. All ZEAL traits go
+through one joint run (`scripts/zeal_rqtl_scan.R`): a single `bcsft` (BC₂S₃) cross, one
+`calc.genoprob`, one Haley–Knott `scanone`, and **one shared 1000-permutation null** across the whole
+panel; this notebook reads the pre-computed `zeal_en_*` slices. Multi-peak detection and
+per-family scans as in the other R/qtl notebooks.
+
+::: {.callout-important}
+## Marker set, map, and genotype — read this first
+- **No ZEAL genetic map is estimated** (excess heterozygotes make a ZEAL `est.map` unreliable), so
+  **every cM is a TeoNAM distance**; the marker set + map is the TeoNAM JLM grid, and the ZEAL
+  RTIGER mosaic is **projected** onto it (nearest block). Markers are named `S<chr>_<pos_v5>`.
+- Genotypes are **HMM-error-corrected before the scan** (`calc.genoprob(error.prob=0.01)`); the
+  per-taxon additive scan uses the HMM **expected dosage**. Peak CIs are the 1.5-LOD support on the
+  real markers (matching R/qtl `lodint`).
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+
+TRAIT <- "EN"
+trait_lc <- tolower(TRAIT)
+PFX <- sprintf("zeal_%s", trait_lc)
+RQ <- here("results/sim/zeal/rqtl")
+stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_rqtl_scan.R
+
+bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
+ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
+
+# candidate genes (B73 v5) for this trait, placed on the TeoNAM cM axis
+cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", trait_lc)))
+cand[, mid := (start + end) / 2]
+.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+cand[, cm := mapply(function(c, b) {
+  n <- .nat[chr_v5 == c & is.finite(cm)][order(pos_v5)]
+  if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = b, rule = 2)$y
+}, chr, mid)]
+cand_in_ci <- function(ch, lo, hi) {
+  s <- cand[chr == ch & mid >= min(lo, hi) & mid <= max(lo, hi), symbol]
+  if (length(s)) paste(s, collapse = ", ") else "–"
+}
+
+load_scan <- function(tag) {
+  one <- fread(file.path(RQ, sprintf("%s_scanone_%s.csv", PFX, tag)))
+  perms <- readRDS(file.path(RQ, sprintf("%s_perms_%s.rds", PFX, tag)))
+  th <- summary(perms, alpha = c(0.05, 0.10))
+  list(one = one, thr5 = as.numeric(th[1]), thr10 = as.numeric(th[2]))
+}
+nc <- load_scan("nocovar")
+tx <- load_scan("taxon")
+cross <- readRDS(file.path(RQ, sprintf("%s_cross.rds", PFX)))
+NMARK <- totmar(cross)
+```
+
+```{r meta}
+g <- pull.geno(cross)
+meta <- data.table(
+  metric = c(sprintf("individuals (%s)", TRAIT), "markers (TeoNAM JLM grid)", "chromosomes", "H / het", "B / teosinte"),
+  value = c(
+    sum(!is.na(pull.pheno(cross, TRAIT))), NMARK, nchr(cross),
+    sprintf("%.3f", mean(g == 2, na.rm = TRUE)), sprintf("%.3f", mean(g == 3, na.rm = TRUE))
+  )
+)
+knitr::kable(meta, caption = "Run composition. Markers = the TeoNAM JLM 0.1-cM grid; genotypes = ZEAL mosaic projected onto it.")
+```
+
+## No covariate vs taxon covariate
+
+```{r compare-table}
+peakrow <- function(tag) fread(file.path(RQ, sprintf("%s_peaks_%s.csv", PFX, tag)))
+cmp <- data.table(
+  model = c("no covariate", "+ taxon (5-family)"),
+  `perm 5% LOD` = round(c(nc$thr5, tx$thr5), 2),
+  `perm 10% LOD` = round(c(nc$thr10, tx$thr10), 2),
+  `max LOD` = round(c(max(nc$one$lod), max(tx$one$lod)), 2),
+  `n QTL (FWER 0.05)` = c(nrow(peakrow("nocovar")), nrow(peakrow("taxon")))
+)
+knitr::kable(cmp, caption = "No covariate vs the 5-family taxon covariate: permutation thresholds, max LOD, and one-per-chromosome QTL counts.")
+```
+
+## Genome-wide LOD profile (taxon model, with the no-covariate profile behind it)
+
+Faceted by chromosome. **Blue** = scanone + taxon covariate; **grey** = no covariate; dashed = the
+1000-permutation 5% thresholds. **Dotted grey verticals** mark the candidate genes (v5, on the cM axis).
+
+```{r lod-profile, fig.width=11, fig.height=4.6}
+prof <- rbindlist(list(
+  cbind(nc$one[, .(marker, chr, pos, lod)], model = "no covariate"),
+  cbind(tx$one[, .(marker, chr, pos, lod)], model = "+ taxon")
+))[is.finite(lod)]
+prof[, model := factor(model, levels = c("no covariate", "+ taxon"))]
+sig <- prof[model == "+ taxon" & lod >= tx$thr5][, .SD[which.max(lod)], by = chr]
+pal <- c("no covariate" = "grey65", "+ taxon" = "#2c6fbb")
+ytop <- max(prof$lod, na.rm = TRUE)
+cl <- cand[chr %in% unique(prof$chr) & is.finite(cm)]
+p <- ggplot(prof, aes(pos, lod, colour = model)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = nc$thr5, linetype = "dashed", colour = pal[["no covariate"]], linewidth = 0.35) +
+  geom_hline(yintercept = tx$thr5, linetype = "dashed", colour = pal[["+ taxon"]], linewidth = 0.35) +
+  geom_point(data = sig, colour = "red", size = 1.6) +
+  ggrepel::geom_text_repel(
+    data = cl, aes(x = cm, y = ytop * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+  ) +
+  expand_limits(y = ytop * 1.45) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal, name = NULL) +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
+    title = sprintf("ZEAL/BZea %s — R/qtl (bcsft) scanone, Haley–Knott (TeoNAM JLM grid)", TRAIT),
+    subtitle = sprintf("%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f · dotted = candidate genes", format(NMARK, big.mark = ","), nc$thr5, tx$thr5)
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, sprintf("%s_lod_profile.png", PFX)), p, width = 11, height = 4.6, dpi = 200, bg = "white")
+p
+```
+
+## Significant peaks (taxon model, α = 0.05) — one per chromosome, with candidate colocalization
+
+```{r peaks}
+cipk <- fread(file.path(RQ, sprintf("%s_peaks_ci_taxon.csv", PFX)))
+if (nrow(cipk) == 0) {
+  cat("No genome-wide significant peaks.")
+} else {
+  knitr::kable(
+    cipk[order(chr, -lod), .(
+      chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), pval, marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+    )],
+    caption = "Genome-wide significant QTL (taxon model), 1.5-LOD CI in v5 Mb, with any candidate gene inside."
+  )
+}
+```
+
+### Multi-peak refinement (airmine `refine_peaks`)
+
+```{r refined-peaks}
+refined <- function(tag) {
+  r <- fread(file.path(RQ, sprintf("%s_peaks_refined_%s.csv", PFX, tag)))
+  if (nrow(r) == 0) {
+    return(r)
+  }
+  r[order(chr, -lod), .(
+    chr,
+    `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+    LOD = round(lod, 2), `perm 5% thr` = round(thresh, 2), marker,
+    `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+    `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+  )]
+}
+rt <- refined("taxon")
+if (nrow(rt) == 0) cat("No refined peaks.") else knitr::kable(rt, caption = sprintf("Refined multi-peak QTL, taxon model (%d QTL across %d chromosomes).", nrow(rt), uniqueN(rt$chr)))
+```
+
+## Per-taxon (family-resolved), additive-only with QC
+
+```{r per-taxon, fig.width=11, fig.height=4.6}
+bt <- fread(file.path(RQ, sprintf("%s_scanone_by_taxon.csv", PFX)))[is.finite(lod)]
+pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(data = unique(bt[, .(taxon, thr5)]), aes(yintercept = thr5, colour = taxon), linetype = "dotted", linewidth = 0.4, show.legend = FALSE) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal5, name = "taxon") +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD (additive)",
+    title = sprintf("ZEAL/BZea %s — per-taxon additive scan (TeoNAM JLM grid)", TRAIT),
+    subtitle = "HMM expected dosage; per-family filters (frac introgressed > 0.05 & ≥3 per present class); dotted = candidate genes"
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, sprintf("%s_lod_by_taxon.png", PFX)), pt, width = 11, height = 4.6, dpi = 200, bg = "white")
+pt
+```
+
+```{r per-taxon-peaks}
+btpk <- bt[,
+  {
+    i <- which.max(lod)
+    ch <- chr[i]
+    L <- lod[i]
+    ins <- .SD[chr == ch][lod >= L - 1.5]
+    lo <- min(bp_of(ins$marker))
+    hi <- max(bp_of(ins$marker))
+    .(
+      chr = ch, `pos (cM)` = round(pos[i], 1), `pos (Mb)` = round(bp_of(marker[i]) / 1e6, 1),
+      marker = marker[i], `max LOD` = round(L, 2), `perm 5% thr` = round(thr5[1], 2),
+      sig = fifelse(L > thr5[1], "yes", "no"),
+      `1.5-LOD CI (Mb)` = sprintf("%.1f–%.1f", lo / 1e6, hi / 1e6),
+      `candidate in CI` = cand_in_ci(ch, lo, hi)
+    )
+  },
+  by = taxon
+][order(-`max LOD`)]
+knitr::kable(btpk, caption = "Genome-wide additive peak per taxon, with the per-taxon 1000-perm 5% threshold and any candidate gene in the CI. 'sig' = the family's peak exceeds its own threshold.")
+```
+
+### Per-taxon multi-peak refinement
+
+```{r per-taxon-refined}
+btr <- fread(file.path(RQ, sprintf("%s_peaks_refined_by_taxon.csv", PFX)))
+if (nrow(btr) == 0) {
+  cat("No per-taxon refined peaks cleared the per-family thresholds.")
+} else {
+  knitr::kable(
+    btr[order(taxon, chr, -lod), .(
+      taxon, chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), `perm 5% thr` = round(thr5, 2), marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+    )],
+    caption = sprintf("Refined per-taxon multi-peak QTL (%d QTL across %d families).", nrow(btr), uniqueN(btr$taxon))
+  )
+}
+```
+
+## Allele effect at the strongest per-taxon peak, by taxon
+
+```{r effect, fig.width=10, fig.height=4.2}
+if (nrow(btpk[sig == "yes"]) == 0) {
+  cat("No per-taxon peak clears its threshold; no effect plot.")
+} else {
+  top <- btpk[sig == "yes"][which.max(`max LOD`)]
+  mk <- top$marker
+  gm <- pull.geno(cross)[, mk]
+  yv <- as.numeric(pull.pheno(cross, TRAIT))
+  ids <- as.character(pull.pheno(cross, "id"))
+  ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
+  d <- data.table(
+    taxon = ss[match(ids, pedigree), taxon],
+    geno = factor(c("A/A", "A/B", "B/B")[gm], levels = c("A/A", "A/B", "B/B")), y = yv
+  )[!is.na(y) & !is.na(geno) & taxon %in% names(pal5)]
+  summ <- d[, .(mean = mean(y), se = sd(y) / sqrt(.N), n = .N), by = .(taxon, geno)]
+  shown <- summ[n >= 3]
+  ncand <- cand[chr == top$chr][which.min(abs(mid - bp_of(mk)))]
+  ncand_txt <- if (nrow(ncand)) sprintf("; nearest candidate %s ~%.1f Mb", ncand$symbol, ncand$mid / 1e6) else ""
+  ef <- ggplot(d, aes(geno, y, colour = taxon)) +
+    geom_jitter(width = 0.12, alpha = 0.12, size = 0.5) +
+    geom_line(data = shown, aes(y = mean, group = taxon), linewidth = 0.7) +
+    geom_point(data = shown, aes(y = mean), size = 2.2) +
+    geom_errorbar(data = shown, aes(y = mean, ymin = mean - se, ymax = mean + se), width = 0.15) +
+    geom_text(data = summ, aes(label = n), y = min(d$y), vjust = 0, size = 2.5, show.legend = FALSE) +
+    facet_wrap(~taxon, nrow = 1) +
+    scale_colour_manual(values = pal5, guide = "none") +
+    labs(
+      x = sprintf("genotype at %s (chr%d ~%.1f Mb%s)", mk, top$chr, bp_of(mk) / 1e6, ncand_txt),
+      y = sprintf("%s (BLUE)", TRAIT),
+      title = sprintf("Allele effect at the strongest per-taxon %s peak — %s, by taxon", TRAIT, mk),
+      subtitle = "per-genotype mean ± SE (grey = individual lines; n at base); estimate drawn for classes with n ≥ 3"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(panel.grid.minor = element_blank())
+  ggsave(file.path(RQ, sprintf("%s_%s_effect.png", PFX, mk)), ef, width = 10, height = 4.2, dpi = 200, bg = "white")
+  print(ef)
+}
+```
+
+**Read.** Effect size and statistical support (LOD/n) are separate. `A/A` = B73, `A/B` = het,
+`B/B` = homozygous teosinte. Colocalization with a candidate (the "candidate in CI" columns) is
+suggestive, not proof — the CIs are multi-Mb at this mapping resolution.

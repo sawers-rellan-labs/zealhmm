@@ -156,7 +156,7 @@ listing:
         description: "Brace-root number (shoot-borne nodal roots): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, curated brace-root candidate panel (auxin/ARF/AP2 regulators rtcs1/ZmARF11/ZmRAP2.7 + shoot-borne-root initiation + lateral-root modifiers), FDR ≤ 0.05"
       - title: "LAE · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-lae-mlm-snp50k-fdr.qmd
-        description: "Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, single candidate tu1/tunicate1 (ZMM19; Nat Commun 2024), FDR ≤ 0.05"
+        description: "Leaves above ear (leaf/node number, CLY25): per-field SpATS BLUE; JLM + MLM composite, five-caller comparison, TU1-centric leaf-number candidate panel (tu1/tunicate1 ZMM19 upstream + its plastochron/meristem targets), FDR ≤ 0.05"
       - title: "SPAD · spatial BLUE · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-spad-mlm-snp50k-fdr.qmd
         description: "Leaf greenness (SPAD/chlorophyll): single spatially-corrected SpATS BLUE from the CLY25 fieldbook SPAD column; 18-gene chlorophyll panel; JLM + MLM, five-caller comparison, FDR ≤ 0.05"
@@ -178,6 +178,39 @@ listing:
       - title: "Kinki · FDR ≤ 0.05"
         path: analysis/zeal-qtl-recovery-kinki-mlm-snp50k-fdr.qmd
         description: "Kinki (zigzag culm; Eyster 1920): CLY23-only ordinal severity binarized and modeled as empirical logit (no spatial correction); JLM + MLM composite, five-caller comparison, culm/meristem-architecture candidates anchored on gn1/knox4 + classical zg1 interval, FDR ≤ 0.05"
+  - id: zeal-rqtl
+    type: table
+    fields: [title, description]
+    field-display-names: {title: "Notebook", description: "Description"}
+    sort: false
+    contents:
+      - title: "DTA · R/qtl"
+        path: analysis/zeal-rqtl-dta-lod-profile.qmd
+        description: "Days to anthesis: classic R/qtl (bcsft) interval mapping (Haley–Knott) on the RTIGER mosaic projected onto the TeoNAM JLM grid; LOD profile + airmine multi-peak refinement + per-family scans; flowering candidate panel (ZmCCT10/9, zcn8/12, dlf1, tu1) — recovers ZmCCT10 on chr10"
+      - title: "DTS · R/qtl"
+        path: analysis/zeal-rqtl-dts-lod-profile.qmd
+        description: "Days to silk: same R/qtl pipeline; flowering candidate panel; chr10 support interval spans ZmCCT10"
+      - title: "PH · R/qtl"
+        path: analysis/zeal-rqtl-ph-lod-profile.qmd
+        description: "Plant height: R/qtl LOD profile + multi-peak + per-family scans; dwarf/GA/BR height candidate panel"
+      - title: "EH · R/qtl"
+        path: analysis/zeal-rqtl-eh-lod-profile.qmd
+        description: "Ear height: R/qtl LOD profile + per-family scans; dwarf/GA/BR height candidate panel"
+      - title: "EN · R/qtl"
+        path: analysis/zeal-rqtl-en-lod-profile.qmd
+        description: "Ear number: R/qtl LOD profile + per-family scans; ear-number / prolificacy candidate panel (gt1/tb1/tru1 + inflorescence architecture)"
+      - title: "Prolif · R/qtl"
+        path: analysis/zeal-rqtl-prolif-lod-profile.qmd
+        description: "Prolificacy (>1 ear): R/qtl LOD profile + per-family scans; shares the ear-number / prolificacy candidate panel"
+      - title: "NBR · R/qtl"
+        path: analysis/zeal-rqtl-nbr-lod-profile.qmd
+        description: "Brace-root number: R/qtl LOD profile + per-family scans; brace-root candidate panel"
+      - title: "LAE · R/qtl"
+        path: analysis/zeal-rqtl-lae-lod-profile.qmd
+        description: "Leaves above ear: R/qtl LOD profile + per-family scans; TU1-centric leaf-number candidate panel (tu1/tunicate1 + plastochron/meristem targets)"
+      - title: "SPAD · R/qtl"
+        path: analysis/zeal-rqtl-spad-lod-profile.qmd
+        description: "Leaf greenness (SPAD): R/qtl LOD profile + per-family scans; chlorophyll candidate panel"
   - id: zeal-inv4m
     type: table
     fields: [title, description]
@@ -276,6 +309,16 @@ Trait QTL recovery on the ZEAL/BZea population (a reflection of the TeoNAM analy
 JLM + MLM composites with five-caller comparison, at FDR ≤ 0.05.
 
 ::: {#zeal-pop}
+:::
+
+#### R/qtl (linkage-mapping) route
+
+The classic linkage-mapping contrast to the MLM/JLM GWAS above: R/qtl (`bcsft`) interval mapping by
+Haley–Knott on the RTIGER ancestry mosaic projected onto the TeoNAM JLM 0.1-cM grid, with multi-peak
+deconvolution and per-family scans. All traits are scanned in **one joint run** (`scripts/zeal_rqtl_scan.R`)
+sharing a single 1000-permutation null, then each notebook reads its per-trait results.
+
+::: {#zeal-rqtl}
 :::
 
 ### Inv4m paper (in review)

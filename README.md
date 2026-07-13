@@ -25,8 +25,13 @@ within each, by the **paper** the work supports:
    calibration, the TeoNAM reproduction, and a cross-modality application. See below.
 2. **ZEAL population paper** — *second; the ZEAL trait analyses here are its
    exploratory work.* A reflection of the Chen 2019 TeoNAM analysis applied to the
-   B73 × teosinte BC2S3 population (DTA / DTS / PH / EH, and the binary stem traits
-   StPi / StPu — modeled as empirical logits, no spatial correction).
+   B73 × teosinte BC2S3 population across the trait panel — flowering (DTA / DTS),
+   morphology (PH / EH / EN / Prolif / NBR / LAE), leaf greenness (SPAD), the binary
+   stem traits StPi / StPu, and Kinki (empirical logits, no spatial correction). Two
+   complementary routes: **MLM + JLM GWAS** on the SNP50K ancestry callers (FDR ≤ 0.05,
+   `zeal-qtl-recovery-<trait>-mlm-snp50k-fdr`) and **classic R/qtl linkage mapping**
+   (`bcsft` Haley–Knott on the TeoNAM JLM grid, one joint scan sharing a single
+   permutation null, `zeal-rqtl-<trait>-lod-profile`).
 3. **Inv4m inversion paper** — *already written, in review.*  This repo only
    supplies it updated genotypes (`analysis/zeal-inv4m-rtiger-genotype.qmd`); it is not
    authored here. https://github.com/sawers-rellan-labs/inv4m
