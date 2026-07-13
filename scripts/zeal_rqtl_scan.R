@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL DTA — classic R/qtl (bcsft) interval mapping on the RTIGER ancestry mosaic.
+# ZEAL trait scan — classic R/qtl (bcsft) interval mapping on the RTIGER ancestry
+# mosaic. Trait selected by env TRAIT (DTA | DTS | PH | ...); reads the matching
+# data/zeal/pheno_<trait>_blue.csv (column <TRAIT>_mean) and writes zeal_<trait>_*.
 #
 # Design: ZEAL/BZea is a BC2S3 (B73 x 5 teosinte taxa). Genotype = RTIGER mosaic
 # states 0/1/2 recoded B73=A / het=H / teosinte=B.
@@ -23,10 +25,10 @@
 # interval-graph deconvolution (refine_peaks) to recover multiple linked QTL on a
 # single chromosome. Applied to the whole-genome scans AND the per-taxon scans.
 #
-# Env: NPERM (default 1000), NCORES (default detectCores()-2), MAF_MIN (default 0.05)
-# Out: results/sim/zeal/rqtl/  (cross rds, scanone csv, perms rds, peaks csv,
-#      peaks_ci csv [lodint CIs], peaks_refined csv [multi-peak], timing)
-# Run: Rscript scripts/zeal_rqtl_dta.R
+# Env: TRAIT (default DTA), NPERM (default 1000), NCORES (default detectCores()-2)
+# Out: results/sim/zeal/rqtl/  (zeal_<trait>_ cross rds, scanone csv, perms rds,
+#      peaks csv, peaks_ci csv [lodint CIs], peaks_refined csv [multi-peak], timing)
+# Run: TRAIT=DTS Rscript scripts/zeal_rqtl_scan.R
 # =============================================================================
 
 suppressMessages({
@@ -38,6 +40,9 @@ source(here("scripts/logging.R"))
 source(here("scripts/detect_peaks.R")) # get_peak_table / refine_peaks (airmine multi-peak)
 set.seed(1234567890)
 
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA")) # DTA | DTS | PH | ...
+trait_lc <- tolower(TRAIT)
+PFX <- sprintf("zeal_%s", trait_lc) # output filename prefix
 NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 INTRO_MIN <- as.numeric(Sys.getenv("INTRO_MIN", "0.05")) # per-family min fraction introgressed (HET or ALT)
 MIN_CLASS <- as.integer(Sys.getenv("MIN_CLASS", "3")) # per-family min samples in any present genotype class
@@ -51,7 +56,8 @@ mo <- readRDS(here("data/zeal/zeal_rtiger_mosaic.rds"))
 mk <- as.data.table(mo$markers)[, .(marker, chr = as.integer(chr), pos = as.integer(pos))]
 st <- mo$state
 lines <- as.data.table(mo$lines)
-ph <- fread(here("data/zeal/pheno_dta_blue.csv"))[, .(pedigree = Genotype, DTA = DTA_mean)]
+ph <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", trait_lc)))
+ph <- ph[, .(pedigree = Genotype, y = get(paste0(TRAIT, "_mean")))]
 
 # ---- marker set + map = the TeoNAM JLM 0.1cM set (9,063 markers), TeoNAM cM ----
 # ALL of this ZEAL R/qtl work uses the SAME marker grid + genetic map as the TeoNAM
@@ -106,11 +112,11 @@ Gc <- matrix(c("A", "H", "B")[G + 1L], nrow = nrow(G))
 colnames(Gc) <- mk$marker
 
 # ---- phenotype aligned to mosaic lines -------------------------------------
-# DTA_mean BLUE is already per-taxa fence-cleaned at the raw-plot level upstream
-# (zeal_spats_blues.R: per field x taxa 3xIQR upper fence before SpATS), so no
+# The <TRAIT>_mean BLUE is already per-taxa fence-cleaned at the raw-plot level
+# upstream (zeal_spats_blues.R: per field x taxa 3xIQR fence before SpATS), so no
 # further phenotype cleaning here.
-dta <- ph[match(lines$pedigree, pedigree), DTA]
-log_info("DTA matched for %d of %d lines (BLUEs fence-cleaned upstream)", sum(!is.na(dta)), length(dta))
+y <- ph[match(lines$pedigree, pedigree), y]
+log_info("%s matched for %d of %d lines (BLUEs fence-cleaned upstream)", TRAIT, sum(!is.na(y)), length(y))
 
 # ---- taxon covariate (5-family factor: Zd/Zh/Zl/Zv/Zx), aligned to lines ----
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
@@ -127,13 +133,13 @@ covar <- vapply(lv[-1], function(l) as.integer(tax == l), integer(length(tax)))
 colnames(covar) <- lv[-1]
 
 # ---- write R/qtl csv (row1 header, row2 chr, row3 cM, then individuals) -----
-csv <- file.path(OUT, "zeal_dta_cross.csv")
+csv <- file.path(OUT, sprintf("%s_cross.csv", PFX))
 top <- rbind(
-  c("id", "DTA", mk$marker),
+  c("id", TRAIT, mk$marker),
   c("", "", as.character(mk$chr)),
   c("", "", sprintf("%.6f", mk$cm))
 )
-bodym <- cbind(lines$pedigree, ifelse(is.na(dta), "", sprintf("%.4f", dta)), Gc)
+bodym <- cbind(lines$pedigree, ifelse(is.na(y), "", sprintf("%.4f", y)), Gc)
 fwrite(as.data.table(rbind(top, bodym)), csv, col.names = FALSE, quote = FALSE)
 log_info("wrote cross csv: %s (%d ind x %d markers)", csv, nrow(G), nrow(mk))
 
@@ -160,33 +166,33 @@ log_info(
 # supports only 2-genotype crosses, and errorlod deletion barely moved the dive because
 # it is a gradual het/hom cline, not isolated flips. The soft probabilities fix it.)
 cross <- calc.genoprob(cross, step = 1, error.prob = ERR_PROB, map.function = "haldane")
-saveRDS(cross, file.path(OUT, "zeal_dta_cross.rds"))
+saveRDS(cross, file.path(OUT, sprintf("%s_cross.rds", PFX)))
 
 # ---- scanone + TIMED permutations: no-covariate vs taxon-covariate ---------
 run_scan <- function(tag, addcov) {
-  one <- scanone(cross, pheno.col = "DTA", method = "hk", addcovar = addcov)
-  fwrite(data.table(marker = rownames(one), one), file.path(OUT, sprintf("zeal_dta_scanone_%s.csv", tag)))
+  one <- scanone(cross, pheno.col = TRAIT, method = "hk", addcovar = addcov)
+  fwrite(data.table(marker = rownames(one), one), file.path(OUT, sprintf("%s_scanone_%s.csv", PFX, tag)))
   log_info("[%s] starting %d permutations on %d cores ...", tag, NPERM, NCORES)
   t0 <- proc.time()
   perms <- scanone(cross,
-    pheno.col = "DTA", method = "hk", addcovar = addcov,
+    pheno.col = TRAIT, method = "hk", addcovar = addcov,
     n.perm = NPERM, n.cluster = NCORES, verbose = FALSE
   )
   el <- (proc.time() - t0)[["elapsed"]]
-  saveRDS(perms, file.path(OUT, sprintf("zeal_dta_perms_%s.rds", tag)))
+  saveRDS(perms, file.path(OUT, sprintf("%s_perms_%s.rds", PFX, tag)))
   th <- summary(perms, alpha = c(0.05, 0.10))
   peaks <- summary(one, perms = perms, alpha = 0.05, format = "tabByChr", pvalues = TRUE)
-  fwrite(as.data.table(peaks, keep.rownames = "locus"), file.path(OUT, sprintf("zeal_dta_peaks_%s.csv", tag)))
+  fwrite(as.data.table(peaks, keep.rownames = "locus"), file.path(OUT, sprintf("%s_peaks_%s.csv", PFX, tag)))
   # airmine peak detection: lodint CIs (one-per-chr) + multi-peak refinement
   ci_tab <- get_peak_table(one, perms, mk, alpha = 0.05)
   ref_tab <- refine_peaks(ci_tab, one, mk)
   fwrite(
     if (is.null(ci_tab)) data.table() else as.data.table(ci_tab),
-    file.path(OUT, sprintf("zeal_dta_peaks_ci_%s.csv", tag))
+    file.path(OUT, sprintf("%s_peaks_ci_%s.csv", PFX, tag))
   )
   fwrite(
     if (is.null(ref_tab)) data.table() else as.data.table(ref_tab),
-    file.path(OUT, sprintf("zeal_dta_peaks_refined_%s.csv", tag))
+    file.path(OUT, sprintf("%s_peaks_refined_%s.csv", PFX, tag))
   )
   log_info(
     "[%s] PERM TIMING: %.1f s (%.4f s/perm) | 5%%=%.2f 10%%=%.2f | maxLOD=%.2f | nQTL=%d | CI-peaks=%d refined=%d",
@@ -198,9 +204,9 @@ run_scan <- function(tag, addcov) {
   list(tag = tag, elapsed = el, thr = th, peaks = peaks, refined = ref_tab, maxlod = max(one$lod, na.rm = TRUE))
 }
 
-log_info("=== DTA scan: no-covariate ===")
+log_info("=== %s scan: no-covariate ===", TRAIT)
 r0 <- run_scan("nocovar", NULL)
-log_info("=== DTA scan: taxon covariate (%d families) ===", ncol(covar))
+log_info("=== %s scan: taxon covariate (%d families) ===", TRAIT, ncol(covar))
 r1 <- run_scan("taxon", covar)
 
 # Per-taxon predictors, both markers x lines in mk order:
@@ -216,23 +222,26 @@ st_dose <- do.call(rbind, lapply(names(cross$geno), function(ch) {
 
 # ---- per-taxon ADDITIVE-ONLY scan (family-resolved; cf. Andosol bcfst_by_donor.R) --
 # Each taxon's NILs are scanned separately to show WHICH families carry each QTL.
-# Model = ADDITIVE ONLY: LOD from lm(DTA ~ teosinte dosage 0/1/2), 1 df, so a near-
-# empty homozygous-teosinte class cannot rank-deficient-blow-up the LOD (the 3-class
-# bcsft model did). Two per-family marker filters, both required:
+# Model = ADDITIVE, regressed on the HMM EXPECTED teosinte dosage E[g] = P(het) +
+# 2*P(hom-teo) (continuous 0-2, from calc.genoprob) -- NOT the hard 0/1/2 calls. The
+# soft dosage carries the same pre-scan error correction as the whole-genome HK scan;
+# calc.genoprob CORRECTS (soft-weights) the projected calls, it does not re-genotype.
+# LOD is the 1-df regression of the trait on that dosage. The HARD calls (st_hard) are
+# used ONLY for the two per-family QC filters, both required:
 #   (a) fraction introgressed (HET or ALT) > INTRO_MIN -- HET or ALT because the
 #       RTIGER caller calls het over hom-ALT, so ALT-only undercounts introgression;
-#   (b) >= MIN_CLASS samples in EVERY present genotype class -- so no single 1-2
-#       sample class (e.g. the Zl chr1 B/B=1, DTA 115 outlier) can drive a peak.
+#   (b) >= MIN_CLASS samples in EVERY present hard genotype class -- so no single 1-2
+#       sample class (e.g. a lone B/B with an extreme value) can drive a peak.
 log_info("=== per-taxon ADDITIVE-only scans (frac_intro>%.2f & class>=%d) ===", INTRO_MIN, MIN_CLASS)
 by_taxon <- rbindlist(lapply(levels(tax), function(t) {
-  idx <- which(tax == t & !is.na(dta))
+  idx <- which(tax == t & !is.na(y))
   if (length(idx) < 20) {
     log_info("  %s: skipped (n=%d)", t, length(idx))
     return(NULL)
   }
-  yv <- dta[idx]
+  yv <- y[idx]
   if (sd(yv) == 0) {
-    log_info("  %s: skipped (no DTA variation)", t)
+    log_info("  %s: skipped (no %s variation)", t, TRAIT)
     return(NULL)
   }
   Gh <- st_hard[, idx, drop = FALSE] # hard calls, for the QC class-count filters only
@@ -263,7 +272,7 @@ by_taxon <- rbindlist(lapply(levels(tax), function(t) {
   )
   data.table(taxon = t, marker = mk$marker[keep], chr = mk$chr[keep], pos = mk$cm[keep], lod = lod, n = n, thr5 = thr5)
 }))
-fwrite(by_taxon, file.path(OUT, "zeal_dta_scanone_by_taxon.csv"))
+fwrite(by_taxon, file.path(OUT, sprintf("%s_scanone_by_taxon.csv", PFX)))
 log_info("per-taxon (additive): %d taxa scanned, %d rows", uniqueN(by_taxon$taxon), nrow(by_taxon))
 
 # ---- per-taxon multi-peak refinement (airmine find_subpeaks on each family) ----
@@ -299,7 +308,7 @@ if (nrow(by_taxon) > 0) {
       )
     }))
   }), fill = TRUE)
-  fwrite(by_taxon_ref, file.path(OUT, "zeal_dta_peaks_refined_by_taxon.csv"))
+  fwrite(by_taxon_ref, file.path(OUT, sprintf("%s_peaks_refined_by_taxon.csv", PFX)))
   log_info(
     "per-taxon refined: %d QTL across %d taxa",
     nrow(by_taxon_ref), if (nrow(by_taxon_ref) > 0) uniqueN(by_taxon_ref$taxon) else 0L

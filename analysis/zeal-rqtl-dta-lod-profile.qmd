@@ -17,7 +17,7 @@ execute:
 **What this is.** A first R/qtl look at ZEAL/BZea DTA — the classic linkage-mapping route as a
 contrast to the EMMAX-MLM / TASSEL-JLM pipeline in the other ZEAL notebooks. A `bcsft` cross
 (BC₂S₃), interval mapping by Haley–Knott, and a **1000-permutation** genome-wide threshold. Inputs
-produced by `scripts/zeal_rqtl_dta.R`.
+produced by `scripts/zeal_rqtl_scan.R` (TRAIT=DTA).
 
 ::: {.callout-important}
 ## Marker set, map, and genotype — read this first
@@ -39,9 +39,9 @@ library(qtl)
 library(ggplot2)
 library(ggrepel)
 RQ <- here("results/sim/zeal/rqtl")
-stopifnot(dir.exists(RQ)) # run scripts/zeal_rqtl_dta.R first
+stopifnot(dir.exists(RQ)) # run: TRAIT=DTA Rscript scripts/zeal_rqtl_scan.R
 
-# Markers are named S<chr_v5>_<pos_v5> (renamed upstream in zeal_rqtl_dta.R), so a
+# Markers are named S<chr_v5>_<pos_v5> (renamed upstream in zeal_rqtl_scan.R), so a
 # peak's v5 position reads straight off its name — no lookup, no v2 confusion.
 CCT_BP <- 96175873L # ZmCCT10 (chr10), Chen's DTA10.1
 CCT_MB <- CCT_BP / 1e6
