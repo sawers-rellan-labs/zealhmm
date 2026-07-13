@@ -1,0 +1,332 @@
+---
+title: "ZEAL/BZea Stem-Pubescence (StPu) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+subtitle: "Macrohair/pubescence sibling of the StPi notebook: the same SNP50K ancestry pipeline, with the binary stem-pubescence (macrohair-presence) score modeled on the logit scale (empirical logit of the per-genotype pubescent-plot proportion, no spatial correction), and the maize macrohairless1 (mhl1) locus — an uncloned QTL inside the inv9f mexicana inversion on chromosome 9 — as the lead candidate. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The stem-pubescence (StPu) sibling of
+[`zeal-qtl-recovery-stpi-mlm-snp50k`](zeal-qtl-recovery-stpi-mlm-snp50k.html), built from the
+same real BZea pipeline: field StPu → **per-genotype empirical logit** → SNP50K teosinte-ancestry
+dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
+B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPu is a **binary 0/1** macrohair-presence call
+per plot (pubescent stem / not); the per-genotype phenotype is the **proportion of pubescent plots**,
+`k/n`, and only **72 of 1,423 genotypes (~5%)** are ever pubescent. Like StPi (and unlike the
+continuous DTA/DTS/PH), it is modeled on the logit scale, not with a SpATS spatial BLUE.
+
+::: {.callout-important}
+## Phenotype: empirical logit of the pubescent-plot proportion (no spatial correction)
+StPu is a binary 0/1 macrohair-presence plot score, not a continuous measurement, so a SpATS
+genotype-fixed 2-D P-spline (used for the continuous DTA/DTS/PH traits) is misspecified — the SpATS
+pipeline (`zeal_spats_blues.R`) in fact returns **"no fit"** for StPu in both fields, and an earlier
+forced fit ran the "BLUEs" **below 0** (min −0.034, impossible for a 0–1 score). The per-genotype
+value is a bounded **proportion** `k/n` (k pubescent of n plots, pooled across fields), modeled on
+the **logit scale** via the Haldane–Anscombe empirical logit `log((k+0.5)/(n−k+0.5))` — finite at
+`k=0` and `k=n`, variance-stabilizing, and respecting the [0,1] bound. No spatial correction —
+validated empirically: a plot-level binomial GAM with a 2-D spatial smooth (`te(Range, Row)`)
+reorders genotypes by only **ρ ≥ 0.995** vs the same model without the smooth (both fields; spatial
+edf up to 10; `scripts/zeal_binary_spatial_rho_check.R`), so the field surface does not move the
+genotype ranking. This
+is a pragmatic logit for the existing linear (EMMAX/TASSEL) pipeline; a full binomial GLMM would be
+the stricter model. With only **72 of 1,423 genotypes ever pubescent (~5%)**, StPu is a
+**very low-prevalence** trait — sparser than StPi — so the logit sharpens the ordering among the
+pubescent genotypes but cannot add power the sparse phenotype lacks. Built by `zeal_stpu_direct.R`
+(the StPi-style `zeal_stpi_direct.R` analog).
+:::
+
+::: {.callout-important}
+## Genotype at 0.4× skim: why ancestry, not per-SNP
+SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
+unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
+**counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is λ_GC-deflated (sparse mean-imputation);
+the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed genotype (teosinte presence
+0.111, matching the established BzeaSeq ~0.101). Only the phenotype changes vs the DTA notebook.
+:::
+
+**Trait context.** Stem pubescence is a **macrohair** trait: macrohairs (MHs) are the prominent
+epidermal hairs that mark adult vegetative identity and have long been implicated in insect
+resistance. The major regulator is **macrohairless1 (`mhl1`)** on the long arm of chromosome 9
+(Moose, Lauter & Carlson 2004): recessive *mhl1* alleles eliminate leaf-blade macrohairs, and a
+*mexicana*-derived neomorphic allele extends macrohairs from the blade onto the sheath — the "hairy
+sheath" pubescence phenotype rare in maize inbreds but common in teosinte. **`mhl1` has never been
+cloned** (no causal gene), so it is mapped as a QTL: the three-point map places it between
+`glossy15` (`gl15`, proximal) and `umc1120` (distal) on 9L. It falls inside **`inv9f`**, a ~3 Mb
+*mexicana*-introgression inversion (v4 chr9:108,615,836–111,785,557 → v5 **chr9:110,501,231–113,605,354**;
+Crow *et al.* 2021) that shows a steep *mexicana*-ancestry cline with elevation. In v5 the inversion
+sits between the flanking anchors `gl15` (Zm00001eb387280, ~101.0 Mb, proximal — an AP2-like
+juvenile→adult regulator upstream of `mhl1`) and `umc1120` (Zm00001eb392660, ~127.2 Mb) / `bk2`
+(brittle stalk2, Zm00001eb393070, ~128.9 Mb) distally. The candidate here is therefore the
+**`mhl1`/`inv9f` interval itself**, not a single cloned gene. A second, cloned trichome candidate is
+**`OCL4`** (Zm00001eb024680, chr1), an HD-ZIP IV transcription factor required for trichome
+patterning and anther development in maize (Vernoud *et al.* 2009).
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+source(here("scripts/teonam_notebook_plots.R")) # shared: plot_manhattan/lollipop, lambda_gc, LOD
+
+# Overlay the published macrohair-density QTL (B73v4 lifted to v5) as translucent red bands.
+# Uses the same cumulative-position transformer the Manhattan/lollipop use, built from the SAME
+# scan passed to the plot, so bands align exactly with the plotted points.
+add_qmh_bands <- function(p, scan) {
+  s <- as.data.frame(scan)
+  s <- s[is.finite(s$P) & s$P > 0, c("SNP", "CHR", "BP", "P")]
+  tr <- get_transformer(s)
+  q <- fread(here("data/teonam/stpu_prior_mh_qtl.tsv"))
+  q$xmin <- tr(q$chr, q$ci_lo_bp)
+  q$xmax <- tr(q$chr, q$ci_hi_bp)
+  band <- geom_rect(
+    data = q, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+    inherit.aes = FALSE, fill = "#d62728", alpha = 0.10
+  )
+  p$layers <- c(band, p$layers) # draw beneath the points/line
+  p
+}
+```
+
+```{r load}
+mlm <- fread(here("data/zeal/stpu_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv")) # Panel C
+gt <- fread(here("data/zeal/stpu_gwas_mlm_hwe_post_gt_donor_accession_snp50k.csv")) # Panel B
+ols <- fread(here("data/zeal/stpu_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
+overlap <- here("results/sim/zeal/stpu_candidate_overlap.csv")
+lam <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
+}
+# Significance = genome-wide FWER from a 1000-permutation null (scripts/zeal_gwas_perm.R),
+# stored per (trait, model, geno) in data/zeal/gwas_perm_thresholds.csv.
+TR <- "STPU"
+thr <- function(model, geno, a = 0.05) gwas_thr(TR, model, geno, a)
+thr_ols <- thr("ols", "rtiger_mosaic")
+thr_mlm <- thr("mlm", "rtiger_mosaic")
+thr_gt <- thr("mlm", "hwe_post_gt")
+nsig <- function(p, t) sum(-log10(p) > t, na.rm = TRUE)
+```
+
+::: {.callout-note}
+## Significance = 1000-permutation genome-wide FWER (5%)
+Every Manhattan's dotted line is the **−log₁₀P exceeded by only 5% of 1000 permutations** of
+that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), stored per
+(trait, model, geno) in `data/zeal/gwas_perm_thresholds.csv`. A marker is significant iff its
+−log₁₀P clears that line. The line's height differs per panel with the null. Candidate/peak
+tables report whether the marker clears the 5% FWER line.
+:::
+
+## Candidate loci: closest marker vs window-max marker
+
+For each StPu trichome/macrohair candidate (B73 v5) — the uncloned macrohair QTL `mhl1` inside the
+`inv9f` inversion; the AP2 phase-change factor `gl15` (proximal flank of `mhl1`); the HD-ZIP IV TF
+`OCL4`; the WOX3 homeobox genes `wox3a` (ZmWOX3A) / `wox3b`; the SIAMESE-related CDK inhibitor
+`smr4` (ZmSMR4); and the SBP-box/SPL family (`tga1`, `tsh4`, `ub2`, `ub3`, and the peak-proximal
+`sbp11`/`sbp22`) — the closest marker to the gene body vs the highest
+−log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Taxon+K)** scan (Panel C). `pathway`
+records the locus role.
+
+```{r candidate-markers}
+sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)]
+gg <- fread(here("data/teonam/stpu_candidate_genes.tsv"))
+gg[, chr := as.integer(chr)]
+WIN <- 5e5
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  if (!nrow(m)) {
+    return(NULL)
+  }
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d)
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- if (nrow(w)) which.max(w$logP) else NA
+  data.table(
+    gene = gg$symbol[i], pathway = gg$pathway[i], chr = ch, `gene start (v5)` = s,
+    `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
+    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_,
+    `clears perm 5%` = if (nrow(w)) (w$logP[kw] >= thr_mlm) else NA
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab,
+  format.args = list(big.mark = ","),
+  caption = sprintf("StPu candidate (B73 v5): closest vs window-max (±500 kb) marker across the mhl1/inv9f interval, RTIGER-mosaic MLM (Taxon+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+)
+```
+
+## OLS → MLM: structure control on a pubescence trait
+
+The fixed-effect OLS (Taxon + marker, no K) vs the MLM (Taxon + K) on the RTIGER mosaic, same
+fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1.
+
+```{r ols-manhattan, fig.width=9, fig.height=4.4}
+plot_manhattan(ols,
+  sprintf("ZEAL/BZea StPu — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  overlap_csv = overlap, lod = thr_ols,
+  out_png = here("results/sim/zeal/stpu_gwas_ols_manhattan_fdr_snp50k.png")
+)
+```
+
+```{r ols-vs-mlm}
+lam_tab <- data.table(
+  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  markers = c(nrow(ols), nrow(mlm)),
+  lambda_GC = c(lam(ols$P), lam(mlm$P)),
+  `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
+  max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
+)
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+```
+
+```{r ols-vs-mlm-peaks}
+ov <- fread(overlap)
+peak_at <- function(scan, ch, s) {
+  w <- scan[CHR == ch & abs(BP - s) <= 5e5 & is.finite(P) & P > 0]
+  if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
+}
+cmp <- ov[, .(
+  gene = symbol, chr,
+  `OLS peak` = mapply(peak_at, list(ols), chr, start),
+  `MLM peak` = mapply(peak_at, list(mlm), chr, start)
+)]
+cmp[, `drop (OLS−MLM)` := round(`OLS peak` - `MLM peak`, 2)]
+setorder(cmp, -`OLS peak`)
+knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) at the candidate: OLS vs MLM.")
+```
+
+## Prior macrohair (MH) QTL overlay (B73 v4 → v5)
+
+Published macrohair-density QTL (Perez-Limón *et al.* 2022, *G3* 12(3):jkab447; a B73×Palomero
+Toluqueño highland-maize mapping population) — peak, Bayes support interval, additive
+variance explained, and the analyses detecting each — lifted from B73 v4 to v5 and overlaid as red
+bands on the JLM and RTIGER-mosaic Manhattans below. None of the StPu permutation-FWER peaks fall inside a qMH
+interval; the one biologically coherent overlap is **qMH9 ⊃ `mhl1`/`inv9f`** (its Bayes interval
+spans most of 9L), and the chr8 StPu peak lies ~2.4 Mb proximal to the tight, high-variance **qMH8**.
+
+```{r prior-mh-qtl}
+qmh <- fread(here("data/teonam/stpu_prior_mh_qtl.tsv"))
+sc9 <- copy(mlm)[is.finite(P) & P > 0]
+mhl_iv <- c(110501231, 113605354) # mhl1/inv9f interval (v5)
+best_in <- function(ch, lo, hi) {
+  w <- sc9[CHR == ch & BP >= lo & BP <= hi]
+  if (nrow(w)) round(max(-log10(w$P)), 2) else NA_real_
+}
+tabq <- qmh[, .(
+  qtl, chr,
+  `peak v5 (Mb)` = round(peak_bp / 1e6, 2),
+  `Bayes CI v5 (Mb)` = sprintf("%.1f–%.1f", ci_lo_bp / 1e6, ci_hi_bp / 1e6),
+  `Var (%)` = var_pct, analysis,
+  `max StPu −log10P in CI` = mapply(best_in, chr, ci_lo_bp, ci_hi_bp),
+  `contains mhl1/inv9f` = ifelse(chr == 9 & ci_hi_bp >= mhl_iv[1] & ci_lo_bp <= mhl_iv[2], "yes", "no")
+)]
+knitr::kable(tabq, caption = "Prior macrohair-density QTL from Perez-Limón et al. 2022 (G3 12(3):jkab447), the B73×Palomero Toluqueño highland-maize mapping population (peak + Bayes support interval + additive variance % + detecting analyses; B73v4 lifted to v5). Red bands on the JLM/RTIGER Manhattans below mark these intervals; `max StPu −log10P in CI` is the best RTIGER-mosaic MLM signal inside each.")
+```
+
+## JLM QTL genomic distribution (Panel A)
+
+StPu QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutation empirical α = 0.05 (Chen-style genome-wide FWER; per-trait)). Model-independent
+— the primary analysis, as in Chen 2019.
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- add_qmh_bands(plot_lollipop(
+  here("results/sim/zeal/tassel/stpu_jlm_native1.txt"), mlm,
+  "ZEAL/BZea StPu — JLM QTL genomic distribution (nested in taxon); red bands = prior qMH intervals",
+  overlap_csv = overlap, label_genes = c("mhl1", "OCL4", "gl15", "ub2", "sbp22", "tga1", "ub3", "wox3a", "tsh4", "sbp11", "wox3b", "smr4"),
+  out_png = here("results/sim/zeal/stpu_jlm_lollipop_snp50k.png")
+), mlm)
+p_lolli
+```
+
+## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+
+```{r manhattan-mlm, fig.width=9, fig.height=4.4}
+p_mlm <- add_qmh_bands(plot_manhattan(mlm,
+  sprintf("ZEAL/BZea StPu — MLM (Taxon + K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%; red bands = prior qMH)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/stpu_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
+), mlm)
+p_mlm
+cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
+```
+
+## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+
+Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated but catches sharp SNP hits the mosaic
+block-terraces away. Panel C (the ancestry mosaic) is the usable, well-calibrated genotype.
+
+```{r composite, fig.width=9, fig.height=13}
+p_B <- plot_manhattan(gt,
+  sprintf("StPu — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
+  overlap_csv = overlap, lod = thr_gt
+)
+p_C <- add_qmh_bands(plot_manhattan(mlm,
+  sprintf("StPu — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm
+), mlm)
+composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/stpu_composite_snp50k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
+composite
+```
+
+## Multi-caller StPu scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+
+The same StPu MLM (Taxon+K) scan on each ancestry caller's recovered genotypes, at the real
+~0.4× depth. The robust, trait-independent finding is **teosinte-presence recovery**: the
+block/bin-aggregated callers (RTIGER 0.111; binhmm 0.101) recover the established BzeaSeq fraction
+(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nNIL, LB-Impute)
+**under-call**. Genomic inflation is phenotype-dependent (reported per caller below). Caller
+genotypes are population-level and trait-independent; only the phenotype (StPu) changes.
+
+```{r caller-table}
+callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+gg <- fread(here("data/teonam/stpu_candidate_genes.tsv"))[, chr := as.integer(chr)]
+max_cand_logp <- function(sc) {
+  lp <- -log10(sc$P)
+  vals <- unlist(lapply(seq_len(nrow(gg)), function(i) {
+    idx <- which(sc$CHR == gg$chr[i] & abs(sc$BP - gg$start[i]) <= 5e5)
+    if (length(idx)) max(lp[idx], na.rm = TRUE) else NA_real_
+  }))
+  if (all(is.na(vals))) NA_real_ else round(max(vals, na.rm = TRUE), 2)
+}
+ctab2 <- rbindlist(lapply(names(callers), function(nm) {
+  g <- callers[[nm]]
+  sc <- fread(here(sprintf("data/zeal/stpu_gwas_mlm_%s_donor_accession_snp50k.csv", g)))
+  mf <- here(sprintf("data/zeal/zeal_%s.rds", g))
+  pres <- if (file.exists(mf)) {
+    st <- readRDS(mf)$state
+    round(mean(st %in% c(1L, 2L), na.rm = TRUE), 3)
+  } else {
+    NA_real_
+  }
+  sc <- sc[is.finite(P) & P > 0]
+  data.table(
+    caller = nm, `teosinte presence` = pres, lambda_GC = lam(sc$P),
+    `n > perm 5%` = nsig(sc$P, gwas_thr(TR, "mlm", g)),
+    `best candidate -log10P` = max_cand_logp(sc)
+  )
+}))
+knitr::kable(ctab2, caption = "StPu MLM (Taxon+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the trichome candidate windows.")
+```
+
+```{r caller-composite, fig.width=9, fig.height=20}
+panels <- lapply(names(callers), function(nm) {
+  sc <- fread(here(sprintf("data/zeal/stpu_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
+  plot_manhattan(sc, sprintf("StPu MLM (Taxon+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
+})
+cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/stpu_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
+cc
+```

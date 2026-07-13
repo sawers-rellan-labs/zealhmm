@@ -1,0 +1,240 @@
+---
+title: "ZEAL/BZea Leaf-Greenness SPAD (36 DAS) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+subtitle: "SPAD leaf greenness at 36 days after sowing (36DAS). Unlike the spatially-corrected single-SPAD sibling, the phenotype here is the zealbrowser value used AS-IS (per-line mean of the relabeled Bzea_merged.csv column, no additional spatial correction). Same SNP50K ancestry pipeline and maize chlorophyll candidate panel. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** One of three SPAD notebooks. SPAD leaf greenness was measured at **two dates**
+(20 and 36 days after sowing). This notebook maps the **36DAS** reading; its siblings map the
+**36DAS** reading ([`spad36das`](zeal-qtl-recovery-spad36das-mlm-snp50k.html)) and a single
+spatially-corrected SPAD BLUE ([`spad`](zeal-qtl-recovery-spad-mlm-snp50k.html)). Same SNP50K
+ancestry pipeline → RTIGER mosaic → K → JLM + MLM.
+
+::: {.callout-note}
+## Phenotype provenance (36DAS) — used AS-IS
+- **Source:** column `SPAD_leaf_greenness_36DAS` in `agent/introfinder/Bzea_merged.csv` (the
+  relabeled phenotype file the zealbrowser reads).
+- **Per genotype:** the **mean over that line's rows** (`scripts/zeal_spad_dates.R`,
+  `TRAIT=SPAD36DAS PHENO=direct`). This is the only aggregation applied.
+- **No additional correction:** the merged file has no plot/row/range, so **no SpATS / spatial
+  correction is done here** — the values are taken as provided (they may already have been adjusted
+  upstream). This is the deliberate contrast with the spatially-corrected single-SPAD notebook.
+- GWAS on the RTIGER-mosaic MLM with `FAMILY_COL=donor_accession`.
+:::
+
+::: {.callout-important}
+## Genotype at 0.4× skim: why ancestry, not per-SNP
+SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
+unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
+**counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is therefore λ_GC-deflated (sparse
+mean-imputation); the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed
+genotype (teosinte presence 0.111, matching the established BzeaSeq ~0.101).
+:::
+
+**Trait context.** SPAD is a leaf-chlorophyll proxy. The candidate set spans the maize chlorophyll
+pathway and its regulators: biosynthesis (`chlh1`, `oy1`, `gtr3`, `urod`, `por1/2`), catabolism /
+stay-green (`pph`, `nye1/2`, `sgrl1`, `lls1`, `nyc1`), light-harvesting (`lhcb10`, `cab1/2`), and
+regulators (`nactf132`, GOLDEN2-LIKE `g2`/`glk1`). The model-independent **JLM** is the primary QTL
+tool.
+
+```{r setup}
+library(here)
+library(data.table)
+library(ggplot2)
+library(fastman)
+library(ggrepel)
+library(ggtext)
+library(scales)
+library(cowplot)
+source(here("scripts/teonam_notebook_plots.R"))
+```
+
+```{r load}
+mlm <- fread(here("data/zeal/spad36das_gwas_mlm_rtiger_mosaic_donor_accession_snp50k.csv"))
+gt <- fread(here("data/zeal/spad36das_gwas_mlm_hwe_post_gt_donor_accession_snp50k.csv"))
+ols <- fread(here("data/zeal/spad36das_gwas_ols_donor_accession_snp50k.csv"))[is.finite(P) & P > 0]
+overlap <- here("results/sim/zeal/spad36das_candidate_overlap.csv")
+lam <- function(p) {
+  p <- p[is.finite(p) & p > 0 & p <= 1]
+  round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
+}
+# Significance = genome-wide FWER from a 1000-permutation null (scripts/zeal_gwas_perm.R),
+# stored per (trait, model, geno) in data/zeal/gwas_perm_thresholds.csv.
+TR <- "SPAD36DAS"
+thr <- function(model, geno, a = 0.05) gwas_thr(TR, model, geno, a)
+thr_ols <- thr("ols", "rtiger_mosaic")
+thr_mlm <- thr("mlm", "rtiger_mosaic")
+thr_gt <- thr("mlm", "hwe_post_gt")
+nsig <- function(p, t) sum(-log10(p) > t, na.rm = TRUE)
+```
+
+::: {.callout-note}
+## Significance = 1000-permutation genome-wide FWER (5%)
+Every Manhattan's dotted line is the **−log₁₀P exceeded by only 5% of 1000 permutations** of
+that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), stored per
+(trait, model, geno) in `data/zeal/gwas_perm_thresholds.csv`. A marker is significant iff its
+−log₁₀P clears that line. The line's height differs per panel with the null. Candidate/peak
+tables report whether the marker clears the 5% FWER line.
+:::
+
+## Candidate genes: closest marker vs window-max marker
+
+```{r candidate-markers}
+sc <- copy(mlm)[is.finite(P) & P > 0][, logP := -log10(P)]
+gg <- fread(here("data/teonam/spad36das_candidate_genes.tsv"))
+gg[, chr := as.integer(chr)]
+WIN <- 5e5
+ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
+  ch <- gg$chr[i]
+  s <- gg$start[i]
+  e <- gg$end[i]
+  m <- sc[CHR == ch]
+  if (!nrow(m)) {
+    return(NULL)
+  }
+  d <- pmax(0L, pmax(s - m$BP, m$BP - e))
+  kc <- which.min(d)
+  w <- m[BP >= s - WIN & BP <= e + WIN]
+  kw <- if (nrow(w)) which.max(w$logP) else NA
+  data.table(
+    gene = gg$symbol[i], pathway = gg$pathway[i], chr = ch, `gene start (v5)` = s,
+    `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
+    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_,
+    `clears perm 5%` = if (nrow(w)) (w$logP[kw] >= thr_mlm) else NA
+  )
+}))
+setorder(ctab, chr, `gene start (v5)`)
+knitr::kable(ctab,
+  format.args = list(big.mark = ","),
+  caption = sprintf("SPAD (36DAS) candidates (B73 v5 maize chlorophyll panel): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+)
+```
+
+## OLS → MLM: structure control
+
+```{r ols-manhattan, fig.width=9, fig.height=4.4}
+plot_manhattan(ols,
+  sprintf("ZEAL/BZea SPAD 36DAS — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  overlap_csv = overlap, lod = thr_ols,
+  out_png = here("results/sim/zeal/spad36das_gwas_ols_manhattan_fdr_snp50k.png")
+)
+```
+
+```{r ols-vs-mlm}
+lam_tab <- data.table(
+  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  markers = c(nrow(ols), nrow(mlm)),
+  lambda_GC = c(lam(ols$P), lam(mlm$P)),
+  `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
+  max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
+)
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+```
+
+```{r ols-vs-mlm-peaks}
+ov <- fread(overlap)
+peak_at <- function(scan, ch, s) {
+  w <- scan[CHR == ch & abs(BP - s) <= 5e5 & is.finite(P) & P > 0]
+  if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
+}
+cmp <- ov[, .(
+  gene = symbol, chr,
+  `OLS peak` = mapply(peak_at, list(ols), chr, start),
+  `MLM peak` = mapply(peak_at, list(mlm), chr, start)
+)]
+cmp[, `drop (OLS−MLM)` := round(`OLS peak` - `MLM peak`, 2)]
+setorder(cmp, -`OLS peak`)
+knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs MLM.")
+```
+
+## JLM QTL genomic distribution (Panel A)
+
+```{r lollipop-jlm, fig.width=9, fig.height=4}
+p_lolli <- plot_lollipop(
+  here("results/sim/zeal/tassel/spad36das_jlm_native1.txt"), mlm,
+  "ZEAL/BZea SPAD 36DAS — JLM QTL genomic distribution (nested in taxon)",
+  overlap_csv = overlap, label_genes = c("chlh1", "gtr3", "urod", "oy1", "por1", "por2", "pph", "nye1", "nye2", "sgrl1", "lls1", "nyc1", "lhcb10", "cab1", "cab2", "nactf132", "g2", "glk1"),
+  out_png = here("results/sim/zeal/spad36das_jlm_lollipop_snp50k.png")
+)
+p_lolli
+```
+
+## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+
+```{r manhattan-mlm, fig.width=9, fig.height=4.4}
+p_mlm <- plot_manhattan(mlm,
+  sprintf("ZEAL/BZea SPAD 36DAS — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/spad36das_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
+)
+p_mlm
+cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
+```
+
+## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+
+```{r composite, fig.width=9, fig.height=13}
+p_B <- plot_manhattan(gt,
+  sprintf("SPAD 36DAS — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
+  overlap_csv = overlap, lod = thr_gt
+)
+p_C <- plot_manhattan(mlm,
+  sprintf("SPAD 36DAS — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm
+)
+composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/spad36das_composite_snp50k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
+composite
+```
+
+## Multi-caller SPAD 36DAS scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+
+```{r caller-table}
+callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+gg <- fread(here("data/teonam/spad36das_candidate_genes.tsv"))[, chr := as.integer(chr)]
+max_cand_logp <- function(sc) {
+  lp <- -log10(sc$P)
+  vals <- unlist(lapply(seq_len(nrow(gg)), function(i) {
+    idx <- which(sc$CHR == gg$chr[i] & abs(sc$BP - gg$start[i]) <= 5e5)
+    if (length(idx)) max(lp[idx], na.rm = TRUE) else NA_real_
+  }))
+  if (all(is.na(vals))) NA_real_ else round(max(vals, na.rm = TRUE), 2)
+}
+ctab2 <- rbindlist(lapply(names(callers), function(nm) {
+  g <- callers[[nm]]
+  sc <- fread(here(sprintf("data/zeal/spad36das_gwas_mlm_%s_donor_accession_snp50k.csv", g)))
+  mf <- here(sprintf("data/zeal/zeal_%s.rds", g))
+  pres <- if (file.exists(mf)) {
+    st <- readRDS(mf)$state
+    round(mean(st %in% c(1L, 2L), na.rm = TRUE), 3)
+  } else {
+    NA_real_
+  }
+  sc <- sc[is.finite(P) & P > 0]
+  data.table(
+    caller = nm, `teosinte presence` = pres, lambda_GC = lam(sc$P),
+    `n > perm 5%` = nsig(sc$P, gwas_thr(TR, "mlm", g)),
+    `best candidate -log10P` = max_cand_logp(sc)
+  )
+}))
+knitr::kable(ctab2, caption = "SPAD 36DAS MLM (Taxon+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the chlorophyll candidate windows.")
+```
+
+```{r caller-composite, fig.width=9, fig.height=20}
+panels <- lapply(names(callers), function(nm) {
+  sc <- fread(here(sprintf("data/zeal/spad36das_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
+  plot_manhattan(sc, sprintf("SPAD 36DAS MLM (Taxon+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
+})
+cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
+ggsave(here("results/sim/zeal/spad36das_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
+cc
+```

@@ -81,6 +81,28 @@ read_mlm_tassel <- function(txt) {
   data.table(SNP = d$Marker, CHR = as.integer(d$Chr), BP = as.integer(d$Pos), P = as.numeric(d$p))
 }
 
+#' Per-(trait, model, geno) GWAS genome-wide FWER permutation threshold, written by
+#' zeal_ols_taxon.R / zeal_mlm_taxon.R to data/zeal/gwas_perm_thresholds.csv. Replaces
+#' the inline Benjamini-Hochberg fdr_lod() line in the recovery notebooks. model is
+#' "ols" or "mlm"; geno is the caller ("rtiger_mosaic", "hwe_post_gt", ...). Returns NA
+#' (no line drawn) if the row is missing.
+gwas_thr <- function(trait, model, geno, alpha = 0.05) {
+  want_trait <- toupper(trait)
+  want_model <- model
+  want_geno <- geno
+  want_alpha <- alpha
+  csv <- here::here("data/zeal/gwas_perm_thresholds.csv")
+  if (file.exists(csv)) {
+    d <- fread(csv)
+    hit <- d[trait == want_trait & model == want_model & geno == want_geno & alpha == want_alpha, thr_neglog10p]
+    if (length(hit) && is.finite(hit[1])) {
+      return(hit[1])
+    }
+  }
+  warning(sprintf("no GWAS perm threshold for %s / %s / %s (alpha=%.2f)", want_trait, model, geno, alpha))
+  NA_real_
+}
+
 #' Manhattan with candidate genes starred at their true v5 positions.
 #' `overlap_csv` = a candidate table with columns symbol, chr, start (v5).
 plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = NULL, lod = LOD) {

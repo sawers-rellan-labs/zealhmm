@@ -10,6 +10,7 @@ suppressMessages({
   library(parallel)
 })
 source(here("scripts/logging.R"))
+source(here("scripts/zeal_gwas_perm.R"))
 TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
 TTAG <- tolower(TRAIT)
 
@@ -86,3 +87,24 @@ peak <- function(ch, st) {
   if (!nrow(w)) NA_real_ else round(max(-log10(w$P)), 2)
 }
 print(gg[, .(gene = symbol, chr, `OLS peak` = mapply(peak, chr, start))][order(-`OLS peak`)])
+
+# --- genome-wide FWER permutation threshold (Phase 1) -------------------------
+NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
+if (NPERM > 0) {
+  Gimp <- G
+  if (anyNA(Gimp)) {
+    rmn <- rowMeans(Gimp, na.rm = TRUE)
+    rmn[!is.finite(rmn)] <- 0
+    na <- which(is.na(Gimp), arr.ind = TRUE)
+    Gimp[na] <- rmn[na[, 1]]
+  }
+  t0 <- Sys.time()
+  mn <- perm_max_ols(Gimp, fam, y, nperm = NPERM, seed = 1L)
+  thr <- upsert_gwas_threshold(
+    here("data/zeal/gwas_perm_thresholds.csv"), TRAIT, "ols", "rtiger_mosaic", FAMCOL, mn, NPERM
+  )
+  log_info(
+    "OLS FWER perm threshold (%d perm, %.1fs): 5%%=%.2f 10%%=%.2f",
+    NPERM, as.numeric(Sys.time() - t0, units = "secs"), thr[1], thr[2]
+  )
+}
