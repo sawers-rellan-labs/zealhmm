@@ -17,8 +17,15 @@
 # scanone (Haley-Knott) + N permutations (single subsampling reused across the
 # scan; TIMED). Threshold from permutations, not a naive Bonferroni/BH bar.
 #
+# Peak detection: beyond R/qtl's one-peak-per-chromosome summary(), we run the
+# airmine multi-peak search (scripts/detect_peaks.R) — lodint 1.5-LOD confidence
+# intervals (get_peak_table) plus Akima-interpolation + pracma::findpeaks +
+# interval-graph deconvolution (refine_peaks) to recover multiple linked QTL on a
+# single chromosome. Applied to the whole-genome scans AND the per-taxon scans.
+#
 # Env: NPERM (default 1000), NCORES (default detectCores()-2), MAF_MIN (default 0.05)
-# Out: results/sim/zeal/rqtl/  (cross rds, scanone csv, perms rds, peaks csv, timing)
+# Out: results/sim/zeal/rqtl/  (cross rds, scanone csv, perms rds, peaks csv,
+#      peaks_ci csv [lodint CIs], peaks_refined csv [multi-peak], timing)
 # Run: Rscript scripts/zeal_rqtl_dta.R
 # =============================================================================
 
@@ -28,11 +35,13 @@ suppressMessages({
   library(here)
 })
 source(here("scripts/logging.R"))
+source(here("scripts/detect_peaks.R")) # get_peak_table / refine_peaks (airmine multi-peak)
 set.seed(1234567890)
 
 NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 INTRO_MIN <- as.numeric(Sys.getenv("INTRO_MIN", "0.05")) # per-family min fraction introgressed (HET or ALT)
 MIN_CLASS <- as.integer(Sys.getenv("MIN_CLASS", "3")) # per-family min samples in any present genotype class
+ERR_PROB <- as.numeric(Sys.getenv("ERR_PROB", "0.01")) # HMM genotyping-error rate (pre-scan error correction)
 NCORES <- as.integer(Sys.getenv("NCORES", as.character(max(1L, parallel::detectCores() - 2L))))
 OUT <- here("results/sim/zeal/rqtl")
 dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
@@ -55,6 +64,14 @@ teonam_map <- fread(here("data/teonam/teonam_v5_native.tsv")) # TeoNAM est.map (
 jlm <- teonam_map[match(jlm_rs, marker), .(marker, chr = chr_v5, pos = pos_v5, cm)][
   !is.na(pos) & !is.na(cm)
 ][order(chr, pos)]
+# Rename markers to their v5 coordinates: S<chr_v5>_<pos_v5>. The original TeoNAM
+# rs# (e.g. S1_128373) embeds the *v2* bp — confusing here, where every position is
+# v5. So the ZEAL marker id IS its v5 position: self-documenting in the scanone /
+# peaks / refine_peaks output, no lookup needed to read a peak's Mb. marker_v2 keeps
+# the TeoNAM id for provenance / cross-referencing the TeoNAM JLM run.
+jlm[, marker_v2 := marker]
+jlm[, marker := sprintf("S%d_%d", chr, pos)]
+stopifnot(!anyDuplicated(jlm$marker))
 log_info(
   "JLM marker set: %d markers, %d chr, TeoNAM cM range %.1f-%.1f",
   nrow(jlm), uniqueN(jlm$chr), min(jlm$cm), max(jlm$cm)
@@ -130,7 +147,19 @@ log_info(
   "cross: %s | %d ind, %d markers, %d chr", paste(class(cross), collapse = "/"),
   nind(cross), totmar(cross), nchr(cross)
 )
-cross <- calc.genoprob(cross, step = 1, error.prob = 1e-4, map.function = "haldane")
+# ---- pre-scan genotype error correction via the HMM (calc.genoprob) ---------
+# Genotypes are RTIGER ancestry projected onto the JLM grid; the hard calls carry
+# het/hom-teosinte miscalls that punch artificial LOD dives -- splitting peaks and
+# clipping their CIs. We correct this at the GENOTYPE level, before the scan, instead
+# of smoothing peaks afterwards. calc.genoprob runs the R/qtl HMM with a realistic
+# ERR_PROB (not the old 1e-4, which trusted every call and did no correction) and
+# returns genotype PROBABILITIES that down-weight calls improbable given the flanking
+# markers + recombination. The whole-genome Haley-Knott scan regresses on these probs
+# directly; the per-taxon additive scan uses the HMM EXPECTED dosage derived from them
+# (st_dose, below). (Hard deletion -- cleanGeno / calc.errorlod -- was tried: cleanGeno
+# supports only 2-genotype crosses, and errorlod deletion barely moved the dive because
+# it is a gradual het/hom cline, not isolated flips. The soft probabilities fix it.)
+cross <- calc.genoprob(cross, step = 1, error.prob = ERR_PROB, map.function = "haldane")
 saveRDS(cross, file.path(OUT, "zeal_dta_cross.rds"))
 
 # ---- scanone + TIMED permutations: no-covariate vs taxon-covariate ---------
@@ -148,18 +177,42 @@ run_scan <- function(tag, addcov) {
   th <- summary(perms, alpha = c(0.05, 0.10))
   peaks <- summary(one, perms = perms, alpha = 0.05, format = "tabByChr", pvalues = TRUE)
   fwrite(as.data.table(peaks, keep.rownames = "locus"), file.path(OUT, sprintf("zeal_dta_peaks_%s.csv", tag)))
-  log_info(
-    "[%s] PERM TIMING: %.1f s (%.4f s/perm) | 5%%=%.2f 10%%=%.2f | maxLOD=%.2f | nQTL=%d",
-    tag, el, el / NPERM, th[1], th[2], max(one$lod, na.rm = TRUE),
-    if (is.data.frame(peaks)) nrow(peaks) else 0L
+  # airmine peak detection: lodint CIs (one-per-chr) + multi-peak refinement
+  ci_tab <- get_peak_table(one, perms, mk, alpha = 0.05)
+  ref_tab <- refine_peaks(ci_tab, one, mk)
+  fwrite(
+    if (is.null(ci_tab)) data.table() else as.data.table(ci_tab),
+    file.path(OUT, sprintf("zeal_dta_peaks_ci_%s.csv", tag))
   )
-  list(tag = tag, elapsed = el, thr = th, peaks = peaks, maxlod = max(one$lod, na.rm = TRUE))
+  fwrite(
+    if (is.null(ref_tab)) data.table() else as.data.table(ref_tab),
+    file.path(OUT, sprintf("zeal_dta_peaks_refined_%s.csv", tag))
+  )
+  log_info(
+    "[%s] PERM TIMING: %.1f s (%.4f s/perm) | 5%%=%.2f 10%%=%.2f | maxLOD=%.2f | nQTL=%d | CI-peaks=%d refined=%d",
+    tag, el, el / NPERM, th[1], th[2], max(one$lod, na.rm = TRUE),
+    if (is.data.frame(peaks)) nrow(peaks) else 0L,
+    if (is.null(ci_tab)) 0L else nrow(ci_tab),
+    if (is.null(ref_tab)) 0L else nrow(ref_tab)
+  )
+  list(tag = tag, elapsed = el, thr = th, peaks = peaks, refined = ref_tab, maxlod = max(one$lod, na.rm = TRUE))
 }
 
 log_info("=== DTA scan: no-covariate ===")
 r0 <- run_scan("nocovar", NULL)
 log_info("=== DTA scan: taxon covariate (%d families) ===", ncol(covar))
 r1 <- run_scan("taxon", covar)
+
+# Per-taxon predictors, both markers x lines in mk order:
+#  - st_hard: hard calls 0/1/2 (A/H/B), used ONLY for the QC class-count filters.
+#  - st_dose: HMM EXPECTED teosinte dosage E[g] = P(het) + 2 P(hom-teo) from the
+#    error-aware genoprobs, used for the additive LOD -- this is the pre-scan error
+#    correction (soft probabilities absorb the het/hom miscalls that split peaks).
+st_hard <- t(pull.geno(cross)[, mk$marker, drop = FALSE]) - 1L
+st_dose <- do.call(rbind, lapply(names(cross$geno), function(ch) {
+  pr <- cross$geno[[ch]]$prob # ind x positions x 3 (A/H/B)
+  t(pr[, , 2] * 1 + pr[, , 3] * 2) # positions x ind: expected teosinte dosage
+}))[mk$marker, , drop = FALSE] # real markers only (drops step=1 pseudomarkers), mk order
 
 # ---- per-taxon ADDITIVE-ONLY scan (family-resolved; cf. Andosol bcfst_by_donor.R) --
 # Each taxon's NILs are scanned separately to show WHICH families carry each QTL.
@@ -182,10 +235,10 @@ by_taxon <- rbindlist(lapply(levels(tax), function(t) {
     log_info("  %s: skipped (no DTA variation)", t)
     return(NULL)
   }
-  G <- st[, idx, drop = FALSE] # markers x family lines, 0/1/2 = teosinte dosage
-  nAA <- rowSums(G == 0L)
-  nAB <- rowSums(G == 1L)
-  nBB <- rowSums(G == 2L)
+  Gh <- st_hard[, idx, drop = FALSE] # hard calls, for the QC class-count filters only
+  nAA <- rowSums(Gh == 0L, na.rm = TRUE)
+  nAB <- rowSums(Gh == 1L, na.rm = TRUE)
+  nBB <- rowSums(Gh == 2L, na.rm = TRUE)
   ntot <- nAA + nAB + nBB
   frac_intro <- (nAB + nBB) / ntot
   BIG <- .Machine$integer.max
@@ -198,8 +251,8 @@ by_taxon <- rbindlist(lapply(levels(tax), function(t) {
     return(NULL)
   }
   n <- length(yv)
-  Xk <- t(G[keep, , drop = FALSE]) # lines x kept markers (teosinte dosage 0/1/2)
-  # additive 1-df LOD, vectorized via the correlation identity: LOD = -(n/2) log10(1 - r^2)
+  Xk <- t(st_dose[keep, idx, drop = FALSE]) # lines x kept markers: HMM expected dosage
+  # additive 1-df LOD via the correlation identity LOD = -(n/2) log10(1 - r^2)
   lod <- as.vector(-(n / 2) * log10(1 - cor(yv, Xk)^2))
   # per-taxon permutation 5% threshold: max additive LOD over markers, NPERM shuffles of DTA
   maxperm <- replicate(NPERM, max(-(n / 2) * log10(1 - cor(sample(yv), Xk)^2), na.rm = TRUE))
@@ -212,6 +265,46 @@ by_taxon <- rbindlist(lapply(levels(tax), function(t) {
 }))
 fwrite(by_taxon, file.path(OUT, "zeal_dta_scanone_by_taxon.csv"))
 log_info("per-taxon (additive): %d taxa scanned, %d rows", uniqueN(by_taxon$taxon), nrow(by_taxon))
+
+# ---- per-taxon multi-peak refinement (airmine find_subpeaks on each family) ----
+# Each taxon x chr LOD profile is deconvolved into non-overlapping QTL (Akima +
+# findpeaks + 1.5-LOD-drop interval graph), thresholded at that taxon's perm 5%.
+if (nrow(by_taxon) > 0) {
+  by_taxon_ref <- rbindlist(lapply(split(by_taxon, by_taxon$taxon), function(d) {
+    thr <- d$thr5[1]
+    if (max(d$lod, na.rm = TRUE) <= thr) {
+      return(NULL)
+    }
+    rbindlist(lapply(sort(unique(d$chr)), function(ch) {
+      dc <- d[chr == ch]
+      if (nrow(dc) < 3 || max(dc$lod, na.rm = TRUE) <= thr) {
+        return(NULL)
+      }
+      sp <- find_subpeaks(dc$pos, dc$lod, thresh = thr)
+      if (is.null(sp)) {
+        return(NULL)
+      }
+      sp <- sp[sp$lod > thr, , drop = FALSE]
+      if (nrow(sp) == 0) {
+        return(NULL)
+      }
+      pkm <- Map(.nearest_marker, list(mk), ch, sp$pos_cm)
+      cibp <- t(mapply(function(lo, hi) .ci_bp(mk, ch, lo, hi), sp$ci_low_cm, sp$ci_high_cm))
+      data.table(
+        taxon = d$taxon[1], chr = ch, pos = sp$pos_cm, lod = sp$lod, thr5 = thr,
+        ci.low = sp$ci_low_cm, ci.high = sp$ci_high_cm,
+        marker = vapply(pkm, `[[`, "", "marker"),
+        ci_left = cibp[, 1], ci_right = cibp[, 2],
+        width_mb = (cibp[, 2] - cibp[, 1]) / 1e6
+      )
+    }))
+  }), fill = TRUE)
+  fwrite(by_taxon_ref, file.path(OUT, "zeal_dta_peaks_refined_by_taxon.csv"))
+  log_info(
+    "per-taxon refined: %d QTL across %d taxa",
+    nrow(by_taxon_ref), if (nrow(by_taxon_ref) > 0) uniqueN(by_taxon_ref$taxon) else 0L
+  )
+}
 
 log_info("=== DONE ===")
 log_info("no-covariate : 5%%=%.2f  nQTL=%d  (%.1f s)", r0$thr[1], nrow(r0$peaks), r0$elapsed)

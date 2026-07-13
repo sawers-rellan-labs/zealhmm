@@ -41,6 +41,16 @@ library(ggrepel)
 RQ <- here("results/sim/zeal/rqtl")
 stopifnot(dir.exists(RQ)) # run scripts/zeal_rqtl_dta.R first
 
+# Markers are named S<chr_v5>_<pos_v5> (renamed upstream in zeal_rqtl_dta.R), so a
+# peak's v5 position reads straight off its name — no lookup, no v2 confusion.
+CCT_BP <- 96175873L # ZmCCT10 (chr10), Chen's DTA10.1
+CCT_MB <- CCT_BP / 1e6
+bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
+ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
+cct_in <- function(chr, lbp, hbp) {
+  fifelse(chr == 10L, fifelse(CCT_BP >= pmin(lbp, hbp) & CCT_BP <= pmax(lbp, hbp), "yes", "no"), "–")
+}
+
 load_scan <- function(tag) {
   one <- fread(file.path(RQ, sprintf("zeal_dta_scanone_%s.csv", tag)))
   perms <- readRDS(file.path(RQ, sprintf("zeal_dta_perms_%s.rds", tag)))
@@ -138,8 +148,61 @@ p
 
 ## Significant peaks (taxon model, α = 0.05)
 
+R/qtl's `summary()` reports **at most one peak per chromosome**. That is the table below — position
+and the **1.5-LOD confidence interval in v5 Mb**, plus whether **ZmCCT10** (96.2 Mb) falls inside.
+
 ```{r peaks}
-knitr::kable(peakrow("taxon"), caption = "Genome-wide significant QTL under the taxon model (1000-perm threshold), on the TeoNAM JLM grid.")
+cipk <- fread(file.path(RQ, "zeal_dta_peaks_ci_taxon.csv"))
+knitr::kable(
+  cipk[order(chr, -lod), .(
+    chr,
+    `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+    LOD = round(lod, 2), pval, marker,
+    `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+    `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+  )],
+  caption = "Genome-wide significant QTL, taxon model (1000-perm threshold). One peak per chromosome (R/qtl summary), with the 1.5-LOD interval in v5 Mb and whether ZmCCT10 (chr10, 96.2 Mb) falls inside it."
+)
+```
+
+### Multi-peak refinement (airmine `refine_peaks`)
+
+A single chromosome can carry **more than one** DTA QTL. To resolve them, `scripts/detect_peaks.R`
+(ported from the airmine QTL pipeline) Akima-interpolates each significant chromosome's LOD curve
+(10×), runs `pracma::findpeaks` for up to 5 sub-peaks above the permutation threshold, takes each
+sub-peak's **1.5-LOD-drop interval**, and resolves overlapping sub-peaks into a maximal set of
+**non-overlapping** QTL via an interval graph (igraph independent vertex sets). Positions and the
+1.5-LOD-drop confidence intervals are shown in **v5 Mb** (markers are v5-named, so `pos (Mb)` reads
+off the name), with the **ZmCCT10-in-CI** flag. Peak splitting from genotyping noise is handled
+**before** the scan, not here: the hard RTIGER/projected calls carry het/hom-teosinte miscalls that
+punch artificial LOD dives (which would split a QTL and clip its CI). `calc.genoprob` runs the R/qtl
+HMM with a realistic `error.prob` so those calls are down-weighted, and the scans use the resulting
+genotype **probabilities** (Haley–Knott) / **expected dosage** (per-taxon) rather than raw calls —
+so the LOD curve fed to peak detection is already error-corrected.
+
+```{r refined-peaks}
+refined <- function(tag) {
+  r <- fread(file.path(RQ, sprintf("zeal_dta_peaks_refined_%s.csv", tag)))
+  if (nrow(r) == 0) {
+    return(r)
+  }
+  r[order(chr, -lod), .(
+    chr,
+    `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+    LOD = round(lod, 2), `perm 5% thr` = round(thresh, 2), marker,
+    `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+    `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+  )]
+}
+rt <- refined("taxon")
+if (nrow(rt) == 0) {
+  cat("No refined peaks (no chromosome exceeded the permutation threshold).")
+} else {
+  knitr::kable(rt, caption = sprintf(
+    "Refined multi-peak QTL, taxon model (%d QTL across %d chromosomes) vs %d one-per-chr peaks above. Multiple rows on one chromosome = linked QTL split by the interval-graph deconvolution.",
+    nrow(rt), uniqueN(rt$chr), nrow(peakrow("taxon"))
+  ))
+}
 ```
 
 ## Per-taxon (family-resolved), additive-only with QC
@@ -150,8 +213,10 @@ keep low-evidence peaks from surfacing in the small per-family samples (n ≈ 60
 - **Phenotype cleaning is upstream:** the DTA BLUEs come from raw plots already cleaned by a
   per-field×taxa **upper Tukey fence** (Q3 + 3·IQR, late tail only) applied before SpATS in
   `zeal_spats_blues.R` — so the very-late plots are removed at source, not re-fenced here.
-- **Additive-only model** — LOD from `lm(DTA ~ teosinte dosage 0/1/2)`, 1 df; no dominance term, so a
-  near-empty homozygous-teosinte class cannot make the fit rank-deficient.
+- **Additive-only model on HMM expected dosage** — LOD from `lm(DTA ~ E[teosinte dosage])`, 1 df,
+  where `E[g] = P(het) + 2·P(hom-teo)` comes from the error-aware `calc.genoprob` (so het/hom miscalls
+  are down-weighted *before* the scan, not smoothed afterwards); no dominance term, so a near-empty
+  homozygous-teosinte class cannot make the fit rank-deficient. QC class-counts below use the hard calls.
 - **Marker filters:** (a) **fraction introgressed (HET or ALT) > 0.05** (HET *or* ALT because the
   caller calls het over hom-ALT — BC₂S₃ expectation is ~10.9% hom-teosinte vs ~3.1% het); (b) **≥ 3
   samples in every present genotype class** (empty classes are fine under an additive model — they
@@ -185,14 +250,52 @@ pt
 ```
 
 ```{r per-taxon-peaks}
-btpk <- bt[, .SD[which.max(lod)], by = taxon][
-  order(-lod),
-  .(taxon, chr,
-    `pos (cM)` = round(pos, 1), marker, `max LOD` = round(lod, 2),
-    `perm 5% thr` = round(thr5, 2), sig = fifelse(lod > thr5, "yes", "no")
+btpk <- bt[,
+  {
+    i <- which.max(lod)
+    ch <- chr[i]
+    L <- lod[i]
+    ins <- .SD[chr == ch][lod >= L - 1.5]
+    lbp <- min(bp_of(ins$marker))
+    hbp <- max(bp_of(ins$marker))
+    .(
+      chr = ch, `pos (cM)` = round(pos[i], 1), `pos (Mb)` = round(bp_of(marker[i]) / 1e6, 1),
+      marker = marker[i], `max LOD` = round(L, 2), `perm 5% thr` = round(thr5[1], 2),
+      sig = fifelse(L > thr5[1], "yes", "no"),
+      `1.5-LOD CI (Mb)` = sprintf("%.1f–%.1f", lbp / 1e6, hbp / 1e6),
+      `ZmCCT10 in CI` = fifelse(ch == 10L, fifelse(CCT_BP >= lbp & CCT_BP <= hbp, "yes", "no"), "–")
+    )
+  },
+  by = taxon
+][order(-`max LOD`)]
+knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: frac introgressed > 0.05 & ≥3 per present class), with the per-taxon 1000-permutation 5% threshold. 1.5-LOD interval in v5 Mb and whether ZmCCT10 (chr10) falls inside. 'sig' = the family's peak exceeds its own threshold. One peak per taxon.")
+```
+
+### Per-taxon multi-peak refinement
+
+The same `find_subpeaks` deconvolution applied to each family's LOD profile — so a taxon carrying two
+QTL on one chromosome (or across the genome) shows all of them, not just its single global maximum.
+Thresholded at each family's own per-taxon permutation 5% (`thr5`).
+
+```{r per-taxon-refined}
+btr <- fread(file.path(RQ, "zeal_dta_peaks_refined_by_taxon.csv"))
+if (nrow(btr) == 0) {
+  cat("No per-taxon refined peaks cleared the per-family thresholds.")
+} else {
+  knitr::kable(
+    btr[order(taxon, chr, -lod), .(
+      taxon, chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), `perm 5% thr` = round(thr5, 2), marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `ZmCCT10 in CI` = cct_in(chr, ci_left, ci_right)
+    )],
+    caption = sprintf(
+      "Refined per-taxon multi-peak QTL (%d QTL across %d families), 1.5-LOD-drop CIs in v5 Mb.",
+      nrow(btr), uniqueN(btr$taxon)
+    )
   )
-]
-knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: frac introgressed > 0.05 & ≥3 per present class), with the per-taxon 1000-permutation 5% threshold (max additive-LOD null, DTA permuted within family). 'sig' = the family's peak exceeds its own threshold.")
+}
 ```
 
 ## Allele effect at the Zd chr10 peak (near ZmCCT10), by taxon
@@ -202,9 +305,13 @@ knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: fra
 # so this cannot drift from the peaks table above)
 mk <- bt[taxon == "Zd"][which.max(lod), marker]
 zd_lod <- bt[taxon == "Zd"][which.max(lod), round(lod, 2)]
-.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
-zd_mb <- round(.nat[marker == mk, pos_v5] / 1e6, 1)
-zd_dist <- round(abs(.nat[marker == mk, pos_v5] - 96175873) / 1e6, 1)
+zd_mb <- round(bp_of(mk) / 1e6, 1)
+zd_dist <- round(abs(bp_of(mk) - CCT_BP) / 1e6, 1)
+# 1.5-LOD interval (v5 Mb) for the Zd chr10 peak + ZmCCT10 containment
+.ins <- bt[taxon == "Zd" & chr == 10][lod >= max(lod) - 1.5]
+zd_ci_lo <- round(min(bp_of(.ins$marker)) / 1e6, 1)
+zd_ci_hi <- round(max(bp_of(.ins$marker)) / 1e6, 1)
+zd_cct_in <- CCT_BP >= min(bp_of(.ins$marker)) & CCT_BP <= max(bp_of(.ins$marker))
 .g <- pull.geno(cross)[, mk]
 .d <- as.numeric(pull.pheno(cross, "DTA"))
 .ss <- unique(fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)], by = "pedigree")
@@ -215,8 +322,11 @@ zd_nbb <- sum(.g[.k] == 3)
 zd_bbaa <- round(mean(.d[.k][.g[.k] == 3]) - mean(.d[.k][.g[.k] == 1]), 1)
 ```
 
-The Zd per-family DTA peak, `` `r mk` `` (chr10 ≈ `r zd_mb` Mb), is **~`r zd_dist` Mb from ZmCCT10**
-(96.2 Mb, Chen's DTA10.1). In Zd it is a **large-effect, teosinte-late QTL**:
+The Zd per-family DTA peak, `` `r mk` `` (chr10 ≈ `r zd_mb` Mb), lies **~`r zd_dist` Mb from ZmCCT10**
+(96.2 Mb, Chen's DTA10.1), and its **1.5-LOD interval (`r zd_ci_lo`–`r zd_ci_hi` Mb)
+`r if (zd_cct_in) "includes" else "does not include"` ZmCCT10** — so the gene
+`r if (zd_cct_in) "sits inside the support interval" else "falls just outside the support interval"`.
+In Zd it is a **large-effect, teosinte-late QTL**:
 **`r sprintf("%+.2f", zd_ador)` days per teosinte allele, `r sprintf("%+.1f", zd_bbaa)` days B/B−A/A**
 (n_BB = `r zd_nbb`), LOD `r zd_lod`. In maize DTA that is a big effect — the scale of the major cloned
 flowering genes; the LOD is the *statistical support*, separate from the effect size. Effect by taxon
@@ -272,19 +382,21 @@ Cleaning the DTA BLUEs (per-taxa fence, upstream) drops the earlier chr1 ~254.7 
 an uncharacterized universal stress protein and outlier-sensitive — and resolves **two pooled
 peaks (+taxon):**
 
-- **chr10 101.4 Mb (`S10_99285649`, LOD 11.54)** — teosinte-**late**, **+3.9 days B/B−A/A
-  (+1.08 d/allele), n_BB = 28**. Large effect *and* strongly supported, and **5.2 Mb from ZmCCT10**
-  (Chen's DTA10.1). This is the headline the chr1/USP artifact was masking.
-- **chr9 12.4 Mb (`S9_11080285`, LOD 8.09)** — teosinte-**early**, **−1.0 day (−0.95 d/allele),
+- **chr10 101.4 Mb (`S10_101418767`, LOD 11.28)** — teosinte-**late**, **+3.9 days B/B−A/A
+  (+1.08 d/allele), n_BB = 28**. Large effect *and* strongly supported: the point estimate is 5.2 Mb
+  distal to **ZmCCT10** (Chen's DTA10.1), but its **1.5-LOD CI (93.2–102.1 Mb) spans ZmCCT10**. This
+  is the headline the chr1/USP artifact was masking.
+- **chr9 12.4 Mb (`S9_12409400`, LOD 8.09)** — teosinte-**early**, **−1.0 day (−0.95 d/allele),
   n_BB = 31**; no known flowering gene nearby.
 
 Per-family (additive, now with a per-family 1000-perm 5% threshold ~3.5–4.0): four of five families
-clear their own threshold. **Zd chr10 52 cM (`S10_94001321`): LOD 8.19 vs thr 3.96 — +6.5 days B/B−A/A
-(+2.35 d/allele), n_BB = 8**, a big teosinte-late effect **0.3 Mb from ZmCCT10** (essentially at the
-gene), echoing the pooled chr10 peak — the clearest per-family QTL. **Zl chr9 67 cM: LOD 6.82 vs thr
-3.55, −6.7 days (−2.97 d/allele)** — significant but on **only n_BB = 3**, so a large effect on thin
-support. Zx chr9 (LOD 4.67 vs 3.76, −2.6 d) and Zv chr3 (LOD 4.23 vs 4.02, +3.4 d) just clear; Zh
-does not (2.48 < 3.92).
+clear their own threshold. **Zd chr10 96.9 Mb (`S10_96943345`): LOD 8.19 vs thr 3.96 — +6.5 days
+B/B−A/A (+2.35 d/allele), n_BB = 8**, a big teosinte-late effect whose point estimate is 0.7 Mb from
+**ZmCCT10** and whose **1.5-LOD CI (95.9–100.9 Mb) includes the gene**, echoing the pooled chr10 peak
+— the clearest per-family QTL. **Zl chr9 94.3 Mb (`S9_94322165`): LOD 6.83 vs thr 3.52, −6.7 days
+(−2.97 d/allele)** — significant but on **only n_BB = 3**, so a large effect on thin support. Zx chr9
+4.5 Mb (LOD 4.67 vs 3.73, −2.6 d) and Zv chr3 230.3 Mb (LOD 4.23 vs 3.98, +3.4 d) just clear; Zh does
+not (2.48 < 3.92).
 
 So after honest phenotype cleaning the ZEAL DTA scan recovers a **large-effect, well-supported,
 teosinte-late QTL in the ZmCCT10 region** — pooled *and* in Zd — consistent with TeoNAM's DTA10.1,
