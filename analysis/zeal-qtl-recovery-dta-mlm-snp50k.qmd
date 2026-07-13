@@ -144,7 +144,7 @@ knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs
 
 ## JLM QTL genomic distribution (Panel A)
 
-DTA QTL from JLM (TASSEL StepwiseOLS, nested in taxon, enter/exit P=1e-4=LOD4). Model-
+DTA QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutation empirical α = 0.05 (Chen-style genome-wide FWER; per-trait)). Model-
 independent — Chen's primary DTA analysis and the correct home for these flowering QTL.
 
 ```{r lollipop-jlm, fig.width=9, fig.height=4}

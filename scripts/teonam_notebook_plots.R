@@ -13,7 +13,28 @@ suppressMessages({
   library(scales)
 })
 
-LOD <- 5 # Chen 2019 significance: P < 1e-5 (LOD = -log10 P)
+LOD <- 5 # fixed fallback only (Chen 2019: P < 1e-5). Prefer the per-trait perm threshold below.
+
+#' Per-trait JLM permutation threshold (Chen-style empirical alpha), written by
+#' scripts/zeal_jlm_run.R to data/zeal/gwas_perm_thresholds.csv. Trait is parsed from
+#' the JLM output filename (`<trait>_jlm_native1.txt`). Falls back to the fixed global
+#' LOD when the table/row is missing (e.g. a trait not yet permuted, or TeoNAM).
+jlm_threshold <- function(jlm_txt, alpha = 0.05) {
+  # locals named off the column names (trait, alpha) so the i-filter resolves them
+  # from scope (data.table's `..` prefix only works in j, not in an i-filter).
+  want_trait <- toupper(sub("_jlm.*$", "", basename(jlm_txt)))
+  want_alpha <- alpha
+  csv <- here::here("data/zeal/gwas_perm_thresholds.csv")
+  if (file.exists(csv)) {
+    thr <- fread(csv)
+    hit <- thr[trait == want_trait & model == "jlm" & alpha == want_alpha, thr_neglog10p]
+    if (length(hit) && is.finite(hit[1])) {
+      return(hit[1])
+    }
+  }
+  warning(sprintf("no JLM perm threshold for %s (alpha=%.2f); using fixed LOD %g", want_trait, alpha, LOD))
+  LOD
+}
 
 #' Coordinate transformer replicating fastman_gg's internal x layout, so gene
 #' labels / vertical lines can be placed at an arbitrary (chr, bp).
@@ -111,7 +132,8 @@ plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = 
 
 #' Chen 2019 Fig 4A: JLM QTL genomic distribution as a lollipop. `overlap_csv` =
 #' candidate table (symbol, chr, start); `label_genes` = symbols to label in bold-italic.
-plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, out_png = NULL, label_dist = 5e5) {
+plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, out_png = NULL, label_dist = 5e5, lod = NULL) {
+  if (is.null(lod)) lod <- jlm_threshold(jlm_txt) # per-trait perm threshold (Chen-style)
   scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
   scan <- scan[is.finite(scan$P) & scan$P > 0, ]
   maxis <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
@@ -119,7 +141,7 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
   j <- fread(jlm_txt)
   j <- j[!(Name %in% c("mean", "Family", "Error"))]
   q <- data.table(SNP = j$Name, CHR = as.integer(j$Locus), BP = as.integer(j$Position), logP = -log10(as.numeric(j$`pr>F`)))
-  q <- q[logP >= LOD]
+  q <- q[logP >= lod]
   ov <- fread(overlap_csv)
   ov <- ov[symbol %in% label_genes]
   # Label a QTL with a candidate gene only when the gene actually co-locates with it
@@ -137,7 +159,7 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
   }
   tr <- get_transformer(maxis)
   q[, BPn := tr(CHR, BP)]
-  maxlogP <- if (nrow(q)) max(q$logP) else LOD # no QTL >= LOD: keep axis finite, draw an empty panel
+  maxlogP <- if (nrow(q)) max(q$logP) else lod # no QTL >= threshold: keep axis finite, draw an empty panel
   brks <- seq(0, floor(maxlogP / 10) * 10, by = 10)
   ytop <- maxlogP * 1.18
 
@@ -146,6 +168,7 @@ plot_lollipop <- function(jlm_txt, scan_csv, title, overlap_csv, label_genes, ou
     genomewideline = NULL, suggestiveline = NULL,
     ylab = expression(-log[10](italic(P))), xlab = ""
   ) +
+    geom_hline(yintercept = lod, linetype = "dotted", linewidth = 0.6, color = "black") +
     geom_segment(data = q, aes(x = BPn, xend = BPn, y = 0, yend = logP), inherit.aes = FALSE, color = "blue", linewidth = 0.5) +
     geom_point(data = q, aes(x = BPn, y = logP), inherit.aes = FALSE, color = "blue", size = 2.5) +
     ggrepel::geom_text_repel(

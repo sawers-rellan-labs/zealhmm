@@ -239,7 +239,7 @@ knitr::kable(tabq, caption = "Prior macrohair-density QTL from Perez-Limón et a
 
 ## JLM QTL genomic distribution (Panel A)
 
-StPu QTL from JLM (TASSEL StepwiseOLS, nested in taxon, enter/exit P=1e-4=LOD4). Model-independent
+StPu QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutation empirical α = 0.05 (Chen-style genome-wide FWER; per-trait)). Model-independent
 — the primary analysis, as in Chen 2019.
 
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
