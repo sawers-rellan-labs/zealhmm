@@ -141,6 +141,15 @@ ggsave(file.path(RQ, sprintf("%s_lod_profile.png", PFX)), p, width = 11, height 
 p
 ```
 
+## Candidate gene registry
+
+Curated evidence for each **candidate** (tier, causal direction, evidence type, phenotype, and a DOI link) from the tracked registry (`reference/candidate_genes.csv` × `candidate_evidence.csv`). These are the genes marked on the LOD profile above; loci without B73 v5 coordinates still appear here but are not plotted.
+
+```{r candidate-registry}
+source(here::here("scripts/teonam_notebook_plots.R"))
+candidate_table(TRAIT)
+```
+
 ## Significant peaks (taxon model, α = 0.05) — one per chromosome, with candidate colocalization
 
 ```{r peaks}
