@@ -22,8 +22,7 @@ suppressMessages({
 })
 source(here("scripts/logging.R"))
 
-OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit (SpATS in-fit)
-IQR_MULT <- as.numeric(Sys.getenv("IQR_MULT", "3")) # per field x taxa upper Tukey fence on raw plots (pre-BLUE)
+IQR_MULT <- as.numeric(Sys.getenv("IQR_MULT", "3")) # per field x taxa upper Tukey fence on raw plots (pre-BLUE) — the ONLY outlier step
 
 TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "EN", "Prolif", "LAE", "NBR", "StPi", "StPu")
 CONT_TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "LAE") # genuinely continuous; count traits (EN/Prolif/NBR) and binary (StPi/StPu) excluded
@@ -75,7 +74,9 @@ manifest_cly23 <- function() {
 }
 
 # ---- fit one grid, one trait -> genotype BLUEs (SpATS, genotype FIXED) -------
-# Iterative outlier removal: drop plots with |studentized residual| > OUT_T, refit.
+# SpATS fit (single pass, genotype fixed). Outlier removal is done ONCE upstream as the
+# per field x taxa IQR/Tukey fence on the RAW plots (see below) — there is no second,
+# residual-based removal inside the fit.
 fit_grid_trait <- function(dat, trait, tag = "") {
   d0 <- dat[is.finite(get(trait)) & !is.na(Genotype)]
   if (uniqueN(d0$Genotype) < 5 || nrow(d0) < 20) {
@@ -96,26 +97,10 @@ fit_grid_trait <- function(dat, trait, tag = "") {
     ), error = function(e) NULL)
   }
 
-  n_out <- 0L
-  m <- NULL
-  for (it in 1:5) {
-    m <- fit_one(d)
-    if (is.null(m)) {
-      return(NULL)
-    }
-    r <- m$residuals
-    s <- sd(r, na.rm = TRUE)
-    if (!is.finite(s) || s == 0) break
-    out <- which(abs(r / s) > OUT_T) # studentized-residual outliers
-    if (!length(out)) break
-    n_out <- n_out + length(out)
-    d <- d[-out, , drop = FALSE]
-    if (uniqueN(d$Genotype) < 5) break
-  }
+  m <- fit_one(d)
   if (is.null(m)) {
     return(NULL)
   }
-  if (n_out) log_info("    %s %-4s: dropped %d outlier plots (|t|>%g)", tag, trait, n_out, OUT_T)
   pr <- tryCatch(predict(m, which = "Genotype"), error = function(e) NULL)
   if (is.null(pr)) {
     return(NULL)
