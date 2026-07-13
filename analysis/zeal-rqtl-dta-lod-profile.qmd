@@ -331,15 +331,24 @@ zd_nbb <- sum(.g[.k] == 3)
 zd_bbaa <- round(mean(.d[.k][.g[.k] == 3]) - mean(.d[.k][.g[.k] == 1]), 1)
 ```
 
-The Zd per-family DTA peak, `` `r mk` `` (chr10 ≈ `r zd_mb` Mb), lies **~`r zd_dist` Mb from ZmCCT10**
-(96.2 Mb, Chen's DTA10.1), and its **1.5-LOD interval (`r zd_ci_lo`–`r zd_ci_hi` Mb)
-`r if (zd_cct_in) "includes" else "does not include"` ZmCCT10** — so the gene
-`r if (zd_cct_in) "sits inside the support interval" else "falls just outside the support interval"`.
-In Zd it is a **large-effect, teosinte-late QTL**:
-**`r sprintf("%+.2f", zd_ador)` days per teosinte allele, `r sprintf("%+.1f", zd_bbaa)` days B/B−A/A**
-(n_BB = `r zd_nbb`), LOD `r zd_lod`. In maize DTA that is a big effect — the scale of the major cloned
-flowering genes; the LOD is the *statistical support*, separate from the effect size. Effect by taxon
-below: all families shown, but the mean ± SE is drawn **only for genotype classes with ≥ 3 samples** —
+```{r zd-narrative, results = "asis"}
+cat(sprintf(
+  paste0(
+    "The Zd per-family DTA peak, `%s` (chr10 ≈ %s Mb), lies **~%s Mb from ZmCCT10** ",
+    "(96.2 Mb, Chen's DTA10.1), and its **1.5-LOD interval (%s–%s Mb) %s ZmCCT10** — so the ",
+    "gene %s. In Zd it is a **large-effect, teosinte-late QTL**: **%+.2f days per teosinte allele, ",
+    "%+.1f days B/B−A/A** (n_BB = %d), LOD %s.\n"
+  ),
+  mk, zd_mb, zd_dist, zd_ci_lo, zd_ci_hi,
+  if (zd_cct_in) "includes" else "does not include",
+  if (zd_cct_in) "sits inside the support interval" else "falls just outside the support interval",
+  zd_ador, zd_bbaa, zd_nbb, zd_lod
+))
+```
+
+In maize DTA a shift of a few days is a big effect — the scale of the major cloned flowering genes;
+the LOD is the *statistical support*, separate from the effect size. Effect by taxon below: all
+families shown, but the mean ± SE is drawn **only for genotype classes with ≥ 3 samples** —
 undersupported classes (e.g. Zh/Zl A/B, n = 2) show raw points + count, no estimate. Lines beyond the
 per-taxa 3·IQR upper fence were dropped upstream. `A/A` = B73, `A/B` = het, `B/B` = homozygous teosinte.
 
