@@ -6,8 +6,9 @@
 # Single source of truth:
 #   data/ref/maize_earnumber_prolificacy_cloned_genes.csv   (hand-curated, rich)
 # Regenerated inputs (identical; two trait aliases used by the notebooks):
-#   data/teonam/en_candidate_genes.tsv
-#   data/teonam/prolif_candidate_genes.tsv
+#   data/teonam/en_candidate_genes.tsv        + results/sim/zeal/en_candidate_overlap.csv
+#   data/teonam/prolif_candidate_genes.tsv    + results/sim/zeal/prolif_candidate_overlap.csv
+# (the *_candidate_overlap.csv are the Manhattan/lollipop gene overlays)
 #
 # The TSV schema is the shared candidate-gene contract used across the ZEAL
 # notebooks (cf. dta/stpu/spad *_candidate_genes.tsv):
@@ -28,7 +29,10 @@ d <- fread(csv, encoding = "UTF-8")
 tier_short <- function(tier) {
   fifelse(
     grepl("^1", tier), "Tier1 core",
-    fifelse(grepl("^2", tier), "Tier2 infl. architecture", tier)
+    fifelse(
+      grepl("^2", tier), "Tier2 infl. architecture",
+      fifelse(grepl("^3", tier), "Tier3 candidate", tier)
+    )
   )
 }
 
@@ -58,4 +62,13 @@ for (trait in c("en", "prolif")) {
   path <- here(sprintf("data/teonam/%s_candidate_genes.tsv", trait))
   fwrite(out, path, sep = "\t", quote = FALSE)
   cat(sprintf("wrote %s (%d genes)\n", path, nrow(out)))
+
+  # Manhattan/lollipop gene overlay (symbol, qtl, gene_id, chr, start, end)
+  overlap <- out[, .(
+    symbol,
+    qtl = sprintf("%s(chr%d)", toupper(trait), chr), gene_id, chr, start, end
+  )]
+  ov_path <- here(sprintf("results/sim/zeal/%s_candidate_overlap.csv", trait))
+  fwrite(overlap, ov_path)
+  cat(sprintf("wrote %s (%d genes)\n", ov_path, nrow(overlap)))
 }
