@@ -22,9 +22,11 @@ suppressMessages({
 })
 source(here("scripts/logging.R"))
 
-OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit
+OUT_T <- 4 # drop plots with |studentized residual| > 4, iteratively refit (SpATS in-fit)
+IQR_MULT <- as.numeric(Sys.getenv("IQR_MULT", "3")) # per field x taxa upper Tukey fence on raw plots (pre-BLUE)
 
 TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "EN", "Prolif", "LAE", "NBR", "StPi", "StPu")
+CONT_TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "LAE") # genuinely continuous; count traits (EN/Prolif/NBR) and binary (StPi/StPu) excluded
 EXCEL_1970 <- 25569L # Excel(1900) serial for 1970-01-01
 plant_serial <- function(d) as.integer(as.Date(d)) + EXCEL_1970
 canon_ped <- function(x) sub("\\.B$", "", x)
@@ -125,9 +127,29 @@ fit_grid_trait <- function(dat, trait, tag = "") {
 
 # ---- run all fields x grids x traits ----------------------------------------
 fields <- list(cly23 = manifest_cly23(), cly25 = manifest_cly25())
+# Per field x taxa upper Tukey fence on RAW plots (pre-BLUE): set continuous-trait
+# plot values > Q3 + IQR_MULT*IQR (within field x taxon) to NA before SpATS. This is
+# the per-trait cleaning that feeds the BLUEs; the multivariate outlier DETECTION
+# (a flag list, no removal) is separate in agent/mv_outlier_detect.R.
+taxon_map <- unique(fread(here("data/zeal/samplesheet_3way.csv"))[, .(Genotype = pedigree, taxon)], by = "Genotype")
 per_field <- list()
 for (fld in names(fields)) {
   man <- fields[[fld]]
+  man[taxon_map, taxon := i.taxon, on = "Genotype"]
+  for (tr in intersect(CONT_TRAITS, names(man))) {
+    n0 <- man[is.finite(get(tr)), .N]
+    man[, (tr) := {
+      v <- .SD[[1]]
+      ok <- is.finite(v)
+      if (sum(ok) >= 4 && IQR(v[ok]) > 0) {
+        fen <- quantile(v[ok], 0.75) + IQR_MULT * IQR(v[ok])
+        v[ok & v > fen] <- NA
+      }
+      v
+    }, by = taxon, .SDcols = tr]
+    nf <- n0 - man[is.finite(get(tr)), .N]
+    if (nf) log_info("  %s %-4s: per-taxa %gxIQR upper fence -> %d plots set NA", fld, tr, IQR_MULT, nf)
+  }
   log_info(
     "=== %s: %d plots, %d grids, %d genotypes ===", fld, nrow(man),
     uniqueN(man$block), uniqueN(man$Genotype)

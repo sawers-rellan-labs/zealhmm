@@ -1,0 +1,220 @@
+#!/usr/bin/env Rscript
+# =============================================================================
+# ZEAL DTA — classic R/qtl (bcsft) interval mapping on the RTIGER ancestry mosaic.
+#
+# Design: ZEAL/BZea is a BC2S3 (B73 x 5 teosinte taxa). Genotype = RTIGER mosaic
+# states 0/1/2 recoded B73=A / het=H / teosinte=B.
+#
+# Genetic map: we do NOT estimate a map from ZEAL genotypes (excess heterozygotes
+# ~9% H vs ~2% hom-teo make a ZEAL est.map unreliable). ALL distances here are the
+# **TeoNAM** genetic distances (cM), NOT native to ZEAL. Specifically, the marker
+# set + map IS the TeoNAM JLM set (9,063 markers, 0.1 cM, TeoNAM cM from
+# teonam_jlm_build.R) — the SAME grid + TeoNAM map as the TeoNAM JLM reproduction,
+# so the two analyses are directly comparable. ZEAL SNP50K and TeoNAM markers are
+# disjoint platforms, so the ZEAL RTIGER-mosaic ancestry is PROJECTED onto the JLM
+# positions (nearest-block); no cM is computed from ZEAL.
+#
+# scanone (Haley-Knott) + N permutations (single subsampling reused across the
+# scan; TIMED). Threshold from permutations, not a naive Bonferroni/BH bar.
+#
+# Env: NPERM (default 1000), NCORES (default detectCores()-2), MAF_MIN (default 0.05)
+# Out: results/sim/zeal/rqtl/  (cross rds, scanone csv, perms rds, peaks csv, timing)
+# Run: Rscript scripts/zeal_rqtl_dta.R
+# =============================================================================
+
+suppressMessages({
+  library(qtl)
+  library(data.table)
+  library(here)
+})
+source(here("scripts/logging.R"))
+set.seed(1234567890)
+
+NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
+INTRO_MIN <- as.numeric(Sys.getenv("INTRO_MIN", "0.05")) # per-family min fraction introgressed (HET or ALT)
+MIN_CLASS <- as.integer(Sys.getenv("MIN_CLASS", "3")) # per-family min samples in any present genotype class
+NCORES <- as.integer(Sys.getenv("NCORES", as.character(max(1L, parallel::detectCores() - 2L))))
+OUT <- here("results/sim/zeal/rqtl")
+dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
+
+# ---- inputs ---------------------------------------------------------------
+mo <- readRDS(here("data/zeal/zeal_rtiger_mosaic.rds"))
+mk <- as.data.table(mo$markers)[, .(marker, chr = as.integer(chr), pos = as.integer(pos))]
+st <- mo$state
+lines <- as.data.table(mo$lines)
+ph <- fread(here("data/zeal/pheno_dta_blue.csv"))[, .(pedigree = Genotype, DTA = DTA_mean)]
+
+# ---- marker set + map = the TeoNAM JLM 0.1cM set (9,063 markers), TeoNAM cM ----
+# ALL of this ZEAL R/qtl work uses the SAME marker grid + genetic map as the TeoNAM
+# JLM reproduction (data/teonam/tassel/geno.hmp.txt built by teonam_jlm_build.R),
+# NOT a fresh thinning of ZEAL's own SNP50K. The cM are TeoNAM's (not native to
+# ZEAL). ZEAL SNP50K and TeoNAM markers are disjoint platforms, so the JLM positions
+# + TeoNAM cM define the grid and the ZEAL genotypes are projected onto them (below).
+jlm_rs <- fread(here("data/teonam/tassel/geno.hmp.txt"), select = 1L)[[1]]
+teonam_map <- fread(here("data/teonam/teonam_v5_native.tsv")) # TeoNAM est.map (cm = TeoNAM cM)
+jlm <- teonam_map[match(jlm_rs, marker), .(marker, chr = chr_v5, pos = pos_v5, cm)][
+  !is.na(pos) & !is.na(cm)
+][order(chr, pos)]
+log_info(
+  "JLM marker set: %d markers, %d chr, TeoNAM cM range %.1f-%.1f",
+  nrow(jlm), uniqueN(jlm$chr), min(jlm$cm), max(jlm$cm)
+)
+
+# ---- project the ZEAL ancestry mosaic onto the JLM positions ----
+# The mosaic is piecewise-constant ancestry (RTIGER blocks); each JLM site takes the
+# state of the nearest ZEAL marker on the same chromosome (= its covering block).
+nearest_idx <- function(target, sorted) {
+  j <- findInterval(target, sorted, all.inside = TRUE)
+  ifelse(abs(target - sorted[j]) <= abs(sorted[j + 1L] - target), j, j + 1L)
+}
+proj <- matrix(NA_integer_, nrow = nrow(jlm), ncol = ncol(st))
+for (ch in sort(unique(jlm$chr))) {
+  zi <- which(mk$chr == ch)
+  zi <- zi[order(mk$pos[zi])]
+  zpos <- mk$pos[zi]
+  ji <- which(jlm$chr == ch)
+  proj[ji, ] <- st[zi[nearest_idx(jlm$pos[ji], zpos)], , drop = FALSE]
+}
+mk <- jlm # analysis markers = JLM set (marker, chr, pos, cm)
+st <- proj # projected ancestry states, 9063 x lines
+log_info("projected ZEAL mosaic onto %d JLM sites (%d lines); NA=%d", nrow(mk), ncol(st), sum(is.na(st)))
+
+# ---- recode genotypes 0/1/2 -> A/H/B, individuals x markers ----------------
+G <- t(st) # lines x markers
+fA <- mean(G == 0)
+fH <- mean(G == 1)
+fB <- mean(G == 2)
+log_info("genotype fractions: A/B73=%.3f  H/het=%.3f  B/teo=%.3f  (H:B ratio=%.1f)", fA, fH, fB, fH / fB)
+Gc <- matrix(c("A", "H", "B")[G + 1L], nrow = nrow(G))
+colnames(Gc) <- mk$marker
+
+# ---- phenotype aligned to mosaic lines -------------------------------------
+# DTA_mean BLUE is already per-taxa fence-cleaned at the raw-plot level upstream
+# (zeal_spats_blues.R: per field x taxa 3xIQR upper fence before SpATS), so no
+# further phenotype cleaning here.
+dta <- ph[match(lines$pedigree, pedigree), DTA]
+log_info("DTA matched for %d of %d lines (BLUEs fence-cleaned upstream)", sum(!is.na(dta)), length(dta))
+
+# ---- taxon covariate (5-family factor: Zd/Zh/Zl/Zv/Zx), aligned to lines ----
+ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
+taxv <- ss[match(lines$pedigree, pedigree), taxon]
+taxv[taxv == "" | is.na(taxv)] <- NA
+tax <- factor(taxv)
+log_info(
+  "taxon: %d lines assigned (%s); %d without taxon (checks/B73)",
+  sum(!is.na(tax)), paste(levels(tax), collapse = "/"), sum(is.na(tax))
+)
+# indicator design matrix (k-1 cols); NA rows propagate -> scanone drops them
+lv <- levels(tax)
+covar <- vapply(lv[-1], function(l) as.integer(tax == l), integer(length(tax)))
+colnames(covar) <- lv[-1]
+
+# ---- write R/qtl csv (row1 header, row2 chr, row3 cM, then individuals) -----
+csv <- file.path(OUT, "zeal_dta_cross.csv")
+top <- rbind(
+  c("id", "DTA", mk$marker),
+  c("", "", as.character(mk$chr)),
+  c("", "", sprintf("%.6f", mk$cm))
+)
+bodym <- cbind(lines$pedigree, ifelse(is.na(dta), "", sprintf("%.4f", dta)), Gc)
+fwrite(as.data.table(rbind(top, bodym)), csv, col.names = FALSE, quote = FALSE)
+log_info("wrote cross csv: %s (%d ind x %d markers)", csv, nrow(G), nrow(mk))
+
+# ---- build bcsft cross, interpolated map (no est.map) ----------------------
+cross <- read.cross(
+  format = "csv", file = csv, genotypes = c("A", "H", "B"), alleles = c("A", "B"),
+  estimate.map = FALSE, BC.gen = 2, F.gen = 3
+)
+cross <- jittermap(cross)
+log_info(
+  "cross: %s | %d ind, %d markers, %d chr", paste(class(cross), collapse = "/"),
+  nind(cross), totmar(cross), nchr(cross)
+)
+cross <- calc.genoprob(cross, step = 1, error.prob = 1e-4, map.function = "haldane")
+saveRDS(cross, file.path(OUT, "zeal_dta_cross.rds"))
+
+# ---- scanone + TIMED permutations: no-covariate vs taxon-covariate ---------
+run_scan <- function(tag, addcov) {
+  one <- scanone(cross, pheno.col = "DTA", method = "hk", addcovar = addcov)
+  fwrite(data.table(marker = rownames(one), one), file.path(OUT, sprintf("zeal_dta_scanone_%s.csv", tag)))
+  log_info("[%s] starting %d permutations on %d cores ...", tag, NPERM, NCORES)
+  t0 <- proc.time()
+  perms <- scanone(cross,
+    pheno.col = "DTA", method = "hk", addcovar = addcov,
+    n.perm = NPERM, n.cluster = NCORES, verbose = FALSE
+  )
+  el <- (proc.time() - t0)[["elapsed"]]
+  saveRDS(perms, file.path(OUT, sprintf("zeal_dta_perms_%s.rds", tag)))
+  th <- summary(perms, alpha = c(0.05, 0.10))
+  peaks <- summary(one, perms = perms, alpha = 0.05, format = "tabByChr", pvalues = TRUE)
+  fwrite(as.data.table(peaks, keep.rownames = "locus"), file.path(OUT, sprintf("zeal_dta_peaks_%s.csv", tag)))
+  log_info(
+    "[%s] PERM TIMING: %.1f s (%.4f s/perm) | 5%%=%.2f 10%%=%.2f | maxLOD=%.2f | nQTL=%d",
+    tag, el, el / NPERM, th[1], th[2], max(one$lod, na.rm = TRUE),
+    if (is.data.frame(peaks)) nrow(peaks) else 0L
+  )
+  list(tag = tag, elapsed = el, thr = th, peaks = peaks, maxlod = max(one$lod, na.rm = TRUE))
+}
+
+log_info("=== DTA scan: no-covariate ===")
+r0 <- run_scan("nocovar", NULL)
+log_info("=== DTA scan: taxon covariate (%d families) ===", ncol(covar))
+r1 <- run_scan("taxon", covar)
+
+# ---- per-taxon ADDITIVE-ONLY scan (family-resolved; cf. Andosol bcfst_by_donor.R) --
+# Each taxon's NILs are scanned separately to show WHICH families carry each QTL.
+# Model = ADDITIVE ONLY: LOD from lm(DTA ~ teosinte dosage 0/1/2), 1 df, so a near-
+# empty homozygous-teosinte class cannot rank-deficient-blow-up the LOD (the 3-class
+# bcsft model did). Two per-family marker filters, both required:
+#   (a) fraction introgressed (HET or ALT) > INTRO_MIN -- HET or ALT because the
+#       RTIGER caller calls het over hom-ALT, so ALT-only undercounts introgression;
+#   (b) >= MIN_CLASS samples in EVERY present genotype class -- so no single 1-2
+#       sample class (e.g. the Zl chr1 B/B=1, DTA 115 outlier) can drive a peak.
+log_info("=== per-taxon ADDITIVE-only scans (frac_intro>%.2f & class>=%d) ===", INTRO_MIN, MIN_CLASS)
+by_taxon <- rbindlist(lapply(levels(tax), function(t) {
+  idx <- which(tax == t & !is.na(dta))
+  if (length(idx) < 20) {
+    log_info("  %s: skipped (n=%d)", t, length(idx))
+    return(NULL)
+  }
+  yv <- dta[idx]
+  if (sd(yv) == 0) {
+    log_info("  %s: skipped (no DTA variation)", t)
+    return(NULL)
+  }
+  G <- st[, idx, drop = FALSE] # markers x family lines, 0/1/2 = teosinte dosage
+  nAA <- rowSums(G == 0L)
+  nAB <- rowSums(G == 1L)
+  nBB <- rowSums(G == 2L)
+  ntot <- nAA + nAB + nBB
+  frac_intro <- (nAB + nBB) / ntot
+  BIG <- .Machine$integer.max
+  min_class <- pmin(
+    fifelse(nAA > 0L, nAA, BIG), fifelse(nAB > 0L, nAB, BIG), fifelse(nBB > 0L, nBB, BIG)
+  )
+  keep <- which(frac_intro > INTRO_MIN & min_class >= MIN_CLASS)
+  if (length(keep) < 10) {
+    log_info("  %s: skipped (only %d markers pass filters)", t, length(keep))
+    return(NULL)
+  }
+  n <- length(yv)
+  Xk <- t(G[keep, , drop = FALSE]) # lines x kept markers (teosinte dosage 0/1/2)
+  # additive 1-df LOD, vectorized via the correlation identity: LOD = -(n/2) log10(1 - r^2)
+  lod <- as.vector(-(n / 2) * log10(1 - cor(yv, Xk)^2))
+  # per-taxon permutation 5% threshold: max additive LOD over markers, NPERM shuffles of DTA
+  maxperm <- replicate(NPERM, max(-(n / 2) * log10(1 - cor(sample(yv), Xk)^2), na.rm = TRUE))
+  thr5 <- as.numeric(quantile(maxperm, 0.95, na.rm = TRUE))
+  log_info(
+    "  %s: n=%d | kept %d markers | maxLOD=%.2f | perm 5%% thr=%.2f (%s)",
+    t, n, length(keep), max(lod, na.rm = TRUE), thr5, ifelse(max(lod, na.rm = TRUE) > thr5, "SIG", "ns")
+  )
+  data.table(taxon = t, marker = mk$marker[keep], chr = mk$chr[keep], pos = mk$cm[keep], lod = lod, n = n, thr5 = thr5)
+}))
+fwrite(by_taxon, file.path(OUT, "zeal_dta_scanone_by_taxon.csv"))
+log_info("per-taxon (additive): %d taxa scanned, %d rows", uniqueN(by_taxon$taxon), nrow(by_taxon))
+
+log_info("=== DONE ===")
+log_info("no-covariate : 5%%=%.2f  nQTL=%d  (%.1f s)", r0$thr[1], nrow(r0$peaks), r0$elapsed)
+log_info("taxon-covar  : 5%%=%.2f  nQTL=%d  (%.1f s)", r1$thr[1], nrow(r1$peaks), r1$elapsed)
+cat("\n--- taxon-covariate significant peaks (alpha=0.05) ---\n")
+print(r1$peaks)

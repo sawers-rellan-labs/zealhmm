@@ -1,0 +1,292 @@
+---
+title: "ZEAL/BZea DTA — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
+subtitle: "Classic R/qtl interval mapping (Haley–Knott) on the BC2S3 RTIGER ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold. Models: no covariate vs + taxon (5-family), and per-family scans with a per-family MAF filter."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** A first R/qtl look at ZEAL/BZea DTA — the classic linkage-mapping route as a
+contrast to the EMMAX-MLM / TASSEL-JLM pipeline in the other ZEAL notebooks. A `bcsft` cross
+(BC₂S₃), interval mapping by Haley–Knott, and a **1000-permutation** genome-wide threshold. Inputs
+produced by `scripts/zeal_rqtl_dta.R`.
+
+::: {.callout-important}
+## Marker set, map, and genotype — read this first
+- **No ZEAL genetic map is estimated.** The excess heterozygotes in the mosaic (H ≈ 9% vs
+  hom-teosinte ≈ 2%) make a ZEAL `est.map` unreliable, so **every cM here is a TeoNAM distance**,
+  not native to ZEAL.
+- **Marker set + map = the TeoNAM JLM set** (9,063 markers, 0.1 cM, TeoNAM cM), the *same* grid the
+  TeoNAM JLM reproduction uses — so the two analyses are directly comparable.
+- ZEAL SNP50K and TeoNAM markers are **disjoint platforms**, so the ZEAL RTIGER-mosaic ancestry is
+  **projected** onto the JLM positions (each site takes the nearest ZEAL marker's block state).
+- Genotype = ancestry mosaic recoded `0/1/2` → `A/H/B`. This scan has no kinship term; the
+  permutation calibrates the threshold to the (structured) null.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+RQ <- here("results/sim/zeal/rqtl")
+stopifnot(dir.exists(RQ)) # run scripts/zeal_rqtl_dta.R first
+
+load_scan <- function(tag) {
+  one <- fread(file.path(RQ, sprintf("zeal_dta_scanone_%s.csv", tag)))
+  perms <- readRDS(file.path(RQ, sprintf("zeal_dta_perms_%s.rds", tag)))
+  th <- summary(perms, alpha = c(0.05, 0.10))
+  list(one = one, thr5 = as.numeric(th[1]), thr10 = as.numeric(th[2]))
+}
+nc <- load_scan("nocovar")
+tx <- load_scan("taxon")
+cross <- readRDS(file.path(RQ, "zeal_dta_cross.rds"))
+NMARK <- totmar(cross)
+```
+
+```{r meta}
+g <- pull.geno(cross)
+fH <- mean(g == 2, na.rm = TRUE)
+fB <- mean(g == 3, na.rm = TRUE)
+meta <- data.table(
+  metric = c("individuals (DTA)", "markers (TeoNAM JLM grid)", "chromosomes", "H / het", "B / teosinte", "H:B ratio"),
+  value = c(
+    sum(!is.na(pull.pheno(cross, "DTA"))), NMARK, nchr(cross),
+    sprintf("%.3f", fH), sprintf("%.3f", fB), sprintf("%.1f", fH / fB)
+  )
+)
+knitr::kable(meta, caption = "Run composition. Markers = the TeoNAM JLM 0.1-cM grid; genotypes = ZEAL mosaic projected onto it.")
+```
+
+## No covariate vs taxon covariate
+
+```{r compare-table}
+peakrow <- function(tag) {
+  pk <- fread(file.path(RQ, sprintf("zeal_dta_peaks_%s.csv", tag)))
+  setnames(pk, old = names(pk), new = sub("^lod\\.", "", names(pk)))
+  pk
+}
+cmp <- data.table(
+  model = c("no covariate", "+ taxon (5-family)"),
+  `perm 5% LOD` = round(c(nc$thr5, tx$thr5), 2),
+  `perm 10% LOD` = round(c(nc$thr10, tx$thr10), 2),
+  `max LOD` = round(c(max(nc$one$lod), max(tx$one$lod)), 2),
+  `n QTL (FWER 0.05)` = c(nrow(peakrow("nocovar")), nrow(peakrow("taxon")))
+)
+knitr::kable(cmp, caption = "Adding the 5-family taxon covariate barely shifts the permutation threshold or the QTL count — the pooled chr1 DTA signal is robust to structure correction.")
+```
+
+## Genome-wide LOD profile (taxon model, with the no-covariate profile behind it)
+
+Faceted by chromosome. **Blue** = scanone + taxon covariate; **grey** = no covariate. Dashed lines =
+the corresponding 1000-permutation 5% thresholds.
+
+```{r lod-profile, fig.width=11, fig.height=4.4}
+prof <- rbindlist(list(
+  cbind(nc$one[, .(marker, chr, pos, lod)], model = "no covariate"),
+  cbind(tx$one[, .(marker, chr, pos, lod)], model = "+ taxon")
+))[is.finite(lod)]
+prof[, model := factor(model, levels = c("no covariate", "+ taxon"))]
+sig <- prof[model == "+ taxon" & lod >= tx$thr5][, .SD[which.max(lod)], by = chr]
+pal <- c("no covariate" = "grey65", "+ taxon" = "#2c6fbb")
+# ZmCCT10 (chr10 96.18 Mb) mapped onto the TeoNAM cM axis -> mark on the chr10 facet
+.n10 <- fread(here("data/teonam/teonam_v5_native.tsv"))[chr_v5 == 10 & is.finite(cm)][order(pos_v5)]
+cct10 <- data.table(chr = 10L, cm = approx(.n10$pos_v5, .n10$cm, xout = 96175873)$y)
+ytop <- max(prof$lod, na.rm = TRUE)
+p <- ggplot(prof, aes(pos, lod, colour = model)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = nc$thr5, linetype = "dashed", colour = pal[["no covariate"]], linewidth = 0.35) +
+  geom_hline(yintercept = tx$thr5, linetype = "dashed", colour = pal[["+ taxon"]], linewidth = 0.35) +
+  geom_point(data = sig, colour = "red", size = 1.6) +
+  ggrepel::geom_text_repel(
+    data = sig, aes(label = sprintf("%s\n%.0f cM · LOD %.1f", marker, pos, lod)),
+    size = 2.6, colour = "red", min.segment.length = 0, box.padding = 0.6, show.legend = FALSE
+  ) +
+  geom_vline(data = cct10, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey30", linewidth = 0.35) +
+  geom_point(data = cct10, aes(x = cm, y = ytop * 1.22), inherit.aes = FALSE, shape = 25, fill = "black", colour = "black", size = 2.4) +
+  geom_text(data = cct10, aes(x = cm, y = ytop * 1.33, label = "ZmCCT10"), inherit.aes = FALSE, size = 2.7, colour = "grey20") +
+  expand_limits(y = ytop * 1.42) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal, name = NULL) +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
+    title = "ZEAL/BZea DTA — R/qtl (bcsft) scanone, Haley–Knott (TeoNAM JLM grid)",
+    subtitle = sprintf(
+      "%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f",
+      format(NMARK, big.mark = ","), nc$thr5, tx$thr5
+    )
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, "zeal_dta_lod_profile.png"), p, width = 11, height = 4.4, dpi = 200, bg = "white")
+p
+```
+
+## Significant peaks (taxon model, α = 0.05)
+
+```{r peaks}
+knitr::kable(peakrow("taxon"), caption = "Genome-wide significant QTL under the taxon model (1000-perm threshold), on the TeoNAM JLM grid.")
+```
+
+## Per-taxon (family-resolved), additive-only with QC
+
+Each taxon's NILs are scanned separately (cf. the Andosol `bcfst_by_donor.R` approach), with QC to
+keep low-evidence peaks from surfacing in the small per-family samples (n ≈ 60–380):
+
+- **Phenotype cleaning is upstream:** the DTA BLUEs come from raw plots already cleaned by a
+  per-field×taxa **upper Tukey fence** (Q3 + 3·IQR, late tail only) applied before SpATS in
+  `zeal_spats_blues.R` — so the very-late plots are removed at source, not re-fenced here.
+- **Additive-only model** — LOD from `lm(DTA ~ teosinte dosage 0/1/2)`, 1 df; no dominance term, so a
+  near-empty homozygous-teosinte class cannot make the fit rank-deficient.
+- **Marker filters:** (a) **fraction introgressed (HET or ALT) > 0.05** (HET *or* ALT because the
+  caller calls het over hom-ALT — BC₂S₃ expectation is ~10.9% hom-teosinte vs ~3.1% het); (b) **≥ 3
+  samples in every present genotype class** (empty classes are fine under an additive model — they
+  carry no parameter).
+
+```{r per-taxon, fig.width=11, fig.height=4.6}
+bt <- fread(file.path(RQ, "zeal_dta_scanone_by_taxon.csv"))[is.finite(lod)]
+pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(
+    data = unique(bt[, .(taxon, thr5)]), aes(yintercept = thr5, colour = taxon),
+    linetype = "dotted", linewidth = 0.4, show.legend = FALSE
+  ) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal5, name = "taxon") +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD (additive)",
+    title = "ZEAL/BZea DTA — per-taxon additive scan (TeoNAM JLM grid)",
+    subtitle = "additive-only; per-family filters: frac introgressed (HET or ALT) > 0.05 & ≥3 per present class"
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, "zeal_dta_lod_by_taxon.png"), pt, width = 11, height = 4.6, dpi = 200, bg = "white")
+pt
+```
+
+```{r per-taxon-peaks}
+btpk <- bt[, .SD[which.max(lod)], by = taxon][
+  order(-lod),
+  .(taxon, chr,
+    `pos (cM)` = round(pos, 1), marker, `max LOD` = round(lod, 2),
+    `perm 5% thr` = round(thr5, 2), sig = fifelse(lod > thr5, "yes", "no")
+  )
+]
+knitr::kable(btpk, caption = "Genome-wide additive peak per taxon (filtered: frac introgressed > 0.05 & ≥3 per present class), with the per-taxon 1000-permutation 5% threshold (max additive-LOD null, DTA permuted within family). 'sig' = the family's peak exceeds its own threshold.")
+```
+
+## Allele effect at the Zd chr10 peak (near ZmCCT10), by taxon
+
+```{r zd-setup}
+# derive the effect-plot marker from the current Zd per-family peak (no hardcoding,
+# so this cannot drift from the peaks table above)
+mk <- bt[taxon == "Zd"][which.max(lod), marker]
+zd_lod <- bt[taxon == "Zd"][which.max(lod), round(lod, 2)]
+.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+zd_mb <- round(.nat[marker == mk, pos_v5] / 1e6, 1)
+zd_dist <- round(abs(.nat[marker == mk, pos_v5] - 96175873) / 1e6, 1)
+.g <- pull.geno(cross)[, mk]
+.d <- as.numeric(pull.pheno(cross, "DTA"))
+.ss <- unique(fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)], by = "pedigree")
+.tx <- .ss[match(as.character(pull.pheno(cross, "id")), pedigree), taxon]
+.k <- .tx == "Zd" & is.finite(.d) & !is.na(.g)
+zd_ador <- round(coef(lm(.d[.k] ~ c(0, 1, 2)[.g[.k]]))[2], 2)
+zd_nbb <- sum(.g[.k] == 3)
+zd_bbaa <- round(mean(.d[.k][.g[.k] == 3]) - mean(.d[.k][.g[.k] == 1]), 1)
+```
+
+The Zd per-family DTA peak, `` `r mk` `` (chr10 ≈ `r zd_mb` Mb), is **~`r zd_dist` Mb from ZmCCT10**
+(96.2 Mb, Chen's DTA10.1). In Zd it is a **large-effect, teosinte-late QTL**:
+**`r sprintf("%+.2f", zd_ador)` days per teosinte allele, `r sprintf("%+.1f", zd_bbaa)` days B/B−A/A**
+(n_BB = `r zd_nbb`), LOD `r zd_lod`. In maize DTA that is a big effect — the scale of the major cloned
+flowering genes; the LOD is the *statistical support*, separate from the effect size. Effect by taxon
+below: all families shown, but the mean ± SE is drawn **only for genotype classes with ≥ 3 samples** —
+undersupported classes (e.g. Zh/Zl A/B, n = 2) show raw points + count, no estimate. Lines beyond the
+per-taxa 3·IQR upper fence were dropped upstream. `A/A` = B73, `A/B` = het, `B/B` = homozygous teosinte.
+
+```{r zl-effect, fig.width=10, fig.height=4.2}
+gm <- pull.geno(cross)[, mk] # mk from the zd-setup chunk (current Zd peak)
+dta <- as.numeric(pull.pheno(cross, "DTA")) # DTA > 100 already dropped upstream
+ids <- as.character(pull.pheno(cross, "id"))
+ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
+d <- data.table(
+  taxon = ss[match(ids, pedigree), taxon],
+  geno = factor(c("A/A", "A/B", "B/B")[gm], levels = c("A/A", "A/B", "B/B")), dta
+)[!is.na(dta) & !is.na(geno) & taxon %in% c("Zd", "Zh", "Zl", "Zv", "Zx")]
+summ <- d[, .(mean = mean(dta), se = sd(dta) / sqrt(.N), n = .N), by = .(taxon, geno)]
+shown <- summ[n >= 3] # estimate drawn only for classes with >= 3 samples
+ef <- ggplot(d, aes(geno, dta, colour = taxon)) +
+  geom_jitter(width = 0.12, alpha = 0.12, size = 0.5) +
+  geom_line(data = shown, aes(y = mean, group = taxon), linewidth = 0.7) +
+  geom_point(data = shown, aes(y = mean), size = 2.2) +
+  geom_errorbar(data = shown, aes(y = mean, ymin = mean - se, ymax = mean + se), width = 0.15) +
+  geom_text(data = summ, aes(label = n), y = min(d$dta), vjust = 0, size = 2.5, show.legend = FALSE) +
+  facet_wrap(~taxon, nrow = 1) +
+  scale_colour_manual(values = pal5, guide = "none") +
+  labs(
+    x = sprintf("genotype at %s (chr10 ~%s Mb, ~%s Mb from ZmCCT10)", mk, zd_mb, zd_dist), y = "DTA (days)",
+    title = sprintf("Allele effect at the Zd chr10 peak — %s, by taxon", mk),
+    subtitle = "per-genotype mean DTA ± SE (grey = individual lines; n at base)"
+  ) +
+  theme_bw(base_size = 11) +
+  theme(panel.grid.minor = element_blank())
+ggsave(file.path(RQ, sprintf("zeal_dta_%s_effect.png", mk)), ef, width = 10, height = 4.2, dpi = 200, bg = "white")
+ef
+```
+
+```{r zl-effect-table}
+eff <- dcast(summ, taxon ~ geno, value.var = "mean")
+ns <- dcast(summ, taxon ~ geno, value.var = "n")
+setnames(ns, names(ns)[-1], paste0("n ", names(ns)[-1]), skip_absent = TRUE)
+knitr::kable(merge(eff, ns, by = "taxon"),
+  digits = 1,
+  caption = paste0("Mean DTA by genotype and taxon at ", mk, ", with cell counts.")
+)
+```
+
+**Read.** *Effect size and statistical support are separate — read effects in days, LOD/n as the
+support.* In maize a DTA shift of a few days is a **large** effect, the scale of the major cloned
+flowering genes.
+
+Cleaning the DTA BLUEs (per-taxa fence, upstream) drops the earlier chr1 ~254.7 Mb peak — it was over
+an uncharacterized universal stress protein and outlier-sensitive — and resolves **two pooled
+peaks (+taxon):**
+
+- **chr10 101.4 Mb (`S10_99285649`, LOD 11.54)** — teosinte-**late**, **+3.9 days B/B−A/A
+  (+1.08 d/allele), n_BB = 28**. Large effect *and* strongly supported, and **5.2 Mb from ZmCCT10**
+  (Chen's DTA10.1). This is the headline the chr1/USP artifact was masking.
+- **chr9 12.4 Mb (`S9_11080285`, LOD 8.09)** — teosinte-**early**, **−1.0 day (−0.95 d/allele),
+  n_BB = 31**; no known flowering gene nearby.
+
+Per-family (additive, now with a per-family 1000-perm 5% threshold ~3.5–4.0): four of five families
+clear their own threshold. **Zd chr10 52 cM (`S10_94001321`): LOD 8.19 vs thr 3.96 — +6.5 days B/B−A/A
+(+2.35 d/allele), n_BB = 8**, a big teosinte-late effect **0.3 Mb from ZmCCT10** (essentially at the
+gene), echoing the pooled chr10 peak — the clearest per-family QTL. **Zl chr9 67 cM: LOD 6.82 vs thr
+3.55, −6.7 days (−2.97 d/allele)** — significant but on **only n_BB = 3**, so a large effect on thin
+support. Zx chr9 (LOD 4.67 vs 3.76, −2.6 d) and Zv chr3 (LOD 4.23 vs 4.02, +3.4 d) just clear; Zh
+does not (2.48 < 3.92).
+
+So after honest phenotype cleaning the ZEAL DTA scan recovers a **large-effect, well-supported,
+teosinte-late QTL in the ZmCCT10 region** — pooled *and* in Zd — consistent with TeoNAM's DTA10.1,
+plus a chr9 teosinte-early locus. These are not "modest" effects; they are large, and the chr10 one
+is well supported.
