@@ -185,7 +185,7 @@ SPAD QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutat
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/spad_jlm_native1.txt"), mlm,
   "ZEAL/BZea SPAD — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("chlh1", "gtr3", "urod", "oy1", "por1", "por2", "pph", "nye1", "nye2", "sgrl1", "lls1", "nyc1", "lhcb10", "cab1", "cab2", "nactf132", "g2", "glk1"),
+  overlap_csv = overlap, label_genes = c("chlh1", "gtr3", "urod", "oy1", "por1", "por2", "pph", "nye1", "nye2", "sgrl1", "lls1", "nyc1", "lhcb10", "cab1", "cab2", "nactf132", "g2", "glk1", "nactf108", "sweet1b", "bhlh65", "pco076489"),
   out_png = here("results/sim/zeal/spad_jlm_lollipop_snp50k.png")
 )
 p_lolli

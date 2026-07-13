@@ -1,0 +1,210 @@
+gene_id,trait,tier,qtl,functional_note,phenotype,causation_direction,evidence_type,reference,doi,pmid,curated
+Zm00001eb057540,dta,"","","","","","","","","",TODO
+Zm00001eb143080,dta,"","","","","","","","","",TODO
+Zm00001eb153190,dta,"",DTA3.2,"","","","","","","",TODO
+Zm00001eb193790,dta,"",DTA4.1,"","","","","","","",TODO
+Zm00001eb214740,dta,"",DTA5.1,"","","","","","","",TODO
+Zm00001eb272490,dta,"",DTA6.1,"","","","","","","",TODO
+Zm00001eb284010,dta,"",DTA6.2,"","","","","","","",TODO
+Zm00001eb331880,dta,"",DTA7.2,"","","","","","","",TODO
+Zm00001eb353250,dta,"","","","","","","","","",TODO
+Zm00001eb391230,dta,"","","","","","","","","",TODO
+Zm00001eb418700,dta,"","","","","","","","","",TODO
+Zm00001eb057540,dts,"","","","","","","","","",TODO
+Zm00001eb143080,dts,"","","","","","","","","",TODO
+Zm00001eb153190,dts,"",DTA3.2,"","","","","","","",TODO
+Zm00001eb193790,dts,"",DTA4.1,"","","","","","","",TODO
+Zm00001eb214740,dts,"",DTA5.1,"","","","","","","",TODO
+Zm00001eb272490,dts,"",DTA6.1,"","","","","","","",TODO
+Zm00001eb284010,dts,"",DTA6.2,"","","","","","","",TODO
+Zm00001eb331880,dts,"",DTA7.2,"","","","","","","",TODO
+Zm00001eb353250,dts,"","","","","","","","","",TODO
+Zm00001eb391230,dts,"","","","","","","","","",TODO
+Zm00001eb418700,dts,"","","","","","","","","",TODO
+Zm00001eb005840,eh,"","",Gα signaling — heterotrimeric G-protein α,"","","","","","",TODO
+Zm00001eb007480,eh,"","","Microtubule-associated (QWRF); polar cell growth, OE reduces PH","","","","","","",TODO
+Zm00001eb038710,eh,"","",Auxin transport — ABCB1/PGP1 efflux transporter,"","","","","","",TODO
+Zm00001eb048020,eh,"","",GA biosynthesis — ent-copalyl diphosphate synthase,"","","","","","",TODO
+Zm00001eb050010,eh,"","",BR biosynthesis — BR C-6 oxidase (CYP85A),"","","","","","",TODO
+Zm00001eb050490,eh,"","","Internode number/elongation — EMS dwarf (Bin1.09), EH−63%/PH−35%","","","","","","",TODO
+Zm00001eb054480,eh,"","","GA signaling — DELLA (dominant, GA-insensitive)","","","","","","",TODO
+Zm00001eb082150,eh,"","","Chr2 positional candidate — ABI3-VP1-type B3-domain TF (abi17, MaizeGDB); 'Auxin response factor' auto-annotation is a B3-domain artifact","","","","","","",TODO
+Zm00001eb122500,eh,"","",GA biosynthesis — GA 3-oxidase,"","","","","","",TODO
+Zm00001eb147800,eh,"","",BR biosynthesis — DET2 steroid 5α-reductase,"","","","","","",TODO
+Zm00001eb158550,eh,"","",Auxin biosynthesis — YUCCA flavin monooxygenase,"","","","","","",TODO
+Zm00001eb216610,eh,"","",GA signaling — DELLA (dominant),"","","","","","",TODO
+Zm00001eb228910,eh,"","",BR biosynthesis — Δ24-sterol reductase (DWF1-like),"","","","","","",TODO
+Zm00001eb379120,eh,"","",GA biosynthesis — ent-kaurenoic acid oxidase (CYP88A1),"","","","","","",TODO
+Zm00001eb419950,eh,"","",Auxin transport — PIN1 efflux carrier,"","","","","","",TODO
+Zm00001eb428490,eh,"","",Ethylene biosynthesis — ACC synthase 7 (Sdw3); PH + leaf angle,"","","","","","",TODO
+Zm00001eb007950,en,1 - ear number / prolificacy (core),"",Ear number / prolificacy — underlies the prol1.1 QTL; represses growth of axillary ear buds. Repressed by shade; teosinte allele → prolific tillers/ears.,"","","","Whipple et al. 2011, PNAS, doi:10.1073/pnas.1102819108 (gt1 cloning); Wills et al. 2013, PLoS Genet, doi:10.1371/journal.pgen.1003604 (prol1.1=gt1)",10.1073/pnas.1102819108,"",source
+Zm00001eb035030,en,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching / kernel row number — tassel branch & ear row number.,"","","","Chuck et al. 2014, PNAS, doi:10.1073/pnas.1407401112",10.1073/pnas.1407401112,"",source
+Zm00001eb054440,en,1 - ear number / prolificacy (core),"",Ear number / prolificacy — suppresses axillary branching; Hopscotch insertion upstream drives apical dominance & reduced ear number. Major domestication locus.,"","","","Doebley et al. 1997, Nature, doi:10.1038/386485a0 (tb1 function); Studer et al. 2011, Nat Genet, doi:10.1038/ng.942 (Hopscotch insertion)",10.1038/386485a0,"",source
+Zm00001eb082150,en,3 - chr2 positional candidate,"","Ear number / prolificacy — chr2 positional candidate (abi17, MaizeGDB). Browser/MaizeMine 'Auxin response factor' auto-annotation is a B3-domain artifact.","","","",MaizeGDB (Zm00001eb082150 = abi17); positional candidate under chr2 QTL,"","",TODO
+Zm00001eb123060,en,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — meristem determinacy in ear/tassel.,"","","","Bortiri et al. 2006, Plant Cell, doi:10.1105/tpc.105.039032",10.1105/tpc.105.039032,"",source
+Zm00001eb126430,en,2 - inflorescence architecture (branching / meristem / KRN),"",Ear meristem size / kernel row number — CLE-peptide signalling.,"","","","Je et al. 2016, Nat Genet, doi:10.1038/ng.3567",10.1038/ng.3567,"",source
+Zm00001eb141160,en,1 - ear number / prolificacy (core),"",Ear number / prolificacy — direct target of tb1; promotes ear (vs tassel) identity in axillary meristems. Loss → tassels replace upper ears.,"","","","Dong et al. 2017, PNAS, doi:10.1073/pnas.1714960114",10.1073/pnas.1714960114,"",source
+Zm00001eb184050,en,2 - inflorescence architecture (branching / meristem / KRN),"",Ear meristem size / kernel row & ear fasciation — CLV-WUS pathway.,"","","","Taguchi-Shiobara et al. 2001, Genes Dev, doi:10.1101/gad.208501 (fea2 cloning); Bommert et al. 2013, Nat Genet, doi:10.1038/ng.2534 (KRN natural variation)",10.1101/gad.208501,"",source
+Zm00001eb199880,en,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching / kernel row number — paralog of ub2.,"","","","Chuck et al. 2014, PNAS, doi:10.1073/pnas.1407401112",10.1073/pnas.1407401112,"",source
+Zm00001eb228140,en,2 - inflorescence architecture (branching / meristem / KRN),"",Ear/tassel meristem size — CLV-WUS pathway; kernel row number.,"","","","Bommert et al. 2005, Development, doi:10.1242/dev.01671",10.1242/dev.01671,"",source
+Zm00001eb312340,en,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — restricts long-branch (spikelet-pair) formation; affects ear/tassel branch number.,"","","","Vollbrecht et al. 2005, Nature, doi:10.1038/nature03892",10.1038/nature03892,"",source
+Zm00001eb327910,en,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — meristem determinacy; sugar signalling.,"","","","Satoh-Nagasawa et al. 2006, Nature, doi:10.1038/nature04725",10.1038/nature04725,"",source
+Zm00001eb005840,kinki,"","",Galpha subunit; compact stature/meristem,"","","","","","",TODO
+Zm00001eb029300,kinki,"","","MYB KNOX-repressor; recessive, compressed/twisted culms via ectopic KNOX","","","","","","",TODO
+Zm00001eb031760,kinki,"","",Ser/Thr kinase; auxin-related inflorescence,"","","","","","",TODO
+Zm00001eb048020,kinki,"","",GA biosynthesis (ent-kaurene synthase); internode/dwarf,"","","","","","",TODO
+Zm00001eb100770,kinki,"","",Cytokinin receptor; leaf/sheath outgrowths,"","","","","","",TODO
+Zm00001eb117820,kinki,"","","KNOX homeobox; dominant Gn1 = curving/twisting culm, short internodes — YOUR comparison gene","","","","","","",TODO
+Zm00001eb130180,kinki,"","",KNOX-class homeobox; dominant leaf/blade-sheath,"","","","","","",TODO
+Zm00001eb148990,kinki,"","",bHLH; axillary meristem initiation,"","","","","","",TODO
+Zm00001eb158550,kinki,"","",YUCCA auxin biosynthesis,"","","","","","",TODO
+Zm00001eb159020,kinki,"","",Pigment marker (chr3 anchor),"","","","","","",TODO
+Zm00001eb184050,kinki,"","",CLV2-like; meristem/fasciation,"","","","","","",TODO
+Zm00001eb216610,kinki,"","",GA signaling; internode length,"","","","","","",TODO
+Zm00001eb228140,kinki,"","",CLV1-like; meristem size / stature,"","","","","","",TODO
+Zm00001eb278680,kinki,"","",Proximal flank of classical zg1 interval on 6L; R2R3-MYB anthocyanin regulator (MaizeMine v1.6),"","","","","","",TODO
+Zm00001eb284390,kinki,"","",Classical zg1 linkage anchor on 6L,"","","","","","",TODO
+Zm00001eb286860,kinki,"","",Division-plane control; disorganized/misoriented growth,"","","","","","",TODO
+Zm00001eb312340,kinki,"","",Inflorescence branching (anchor),"","","","","","",TODO
+Zm00001eb008680,lae,2,"",leaf polarity/initiation (YABBY); TU1 target,"","","","","","",TODO
+Zm00001eb035030,lae,2,"",rate of leaf initiation (SBP-box); TU1 target,"","","","","","",TODO
+Zm00001eb043940,lae,3,"",YABBY-family (co-hit with dl1 on 'yabby' search); weaker LAE prior than dl1,"","","","","","",TODO
+Zm00001eb048540,lae,3,"",CYP78A; rice PLA1 ortholog — plastochron (leaf initiation rate); cross-species prior,"","","","","","",TODO
+Zm00001eb055920,lae,2,"",leaf initiation repressor (KNOX); TU1 target,"","","","","","",TODO
+Zm00001eb060200,lae,2,"",plastochron (AMP1-like),"","","","","","",TODO
+Zm00001eb082150,lae,3,"","ABI3-VP1-type B3-domain TF (abi17, MaizeGDB); chr2 positional LAE candidate (browser/MaizeMine auto-annotation 'Auxin response factor' = B3-domain artifact)","","","","","","",TODO
+Zm00001eb144140,lae,2,"",plastochron; lof increases leaf no.,"","","","","","",TODO
+Zm00001eb193790,lae,1,"",node/leaf number — cloned natural LAE locus,"Increases leaf/node number ABOVE the uppermost ear without changing flowering time, plant/ear height, or below-ear leaf number",increase (above-ear leaf/node number),cloned natural QTL (map-based cloning + functional validation),"Chen et al. 2024, Nat Commun 15:...",10.1038/s41467-024-54148-7,"",curated
+Zm00001eb209170,lae,2,"",plastochron (cell-cycle kinase); TU1 target,"","","","","","",TODO
+Zm00001eb211050,lae,2,"",lateral organ initiation (MATE); TU1 target,"","","","","","",TODO
+Zm00001eb228140,lae,2,"",meristem size (CLV1-like); TU1 target,"","","","","","",TODO
+Zm00001eb298680,lae,2,"","MADS-box (AP1/SQUA/ZAP1-type); affects NODE NUMBER & spikelet dev (Heuer 2001, PMID 11553732); TU1 target","","","","","","",TODO
+Zm00001eb372180,lae,2/3,"",auxin efflux; leaf-init + elongation; TU1 target,"","","","","","",TODO
+Zm00001eb403750,lae,2,"",leaf number (MADS-box); TU1 target,"","","","","","",TODO
+Zm00001eb003920,nbr,2,"",LOB-domain (LBD) protein; master regulator of embryonic seminal & post-embryonic shoot-borne (crown+brace) root initiation; rtcs lacks shoot-borne roots,"",loss,"",Taramino et al. 2007 Plant J,10.1111/j.1365-313X.2007.03075.x,"",source
+Zm00001eb060200,nbr,2,"",vp8 mutant INCREASES number of brace-root whorls (also affects leaf/embryo development),"",increase,"",Evans & Poethig 1997; Suzuki 2008,10.1104/pp.108.116202,"",source
+Zm00001eb088950,nbr,1,"","Flavin monooxygenase, auxin biosynthesis; Zmyuc4 single & Zmyuc2/4 double mutant enlarge brace root angle","",angle,"",Zheng et al. 2023 New Phytol,10.1111/nph.18733,"",source
+Zm00001eb152940,nbr,1,"",ARF downstream of miR390-TAS3; STTM390 up-regulates ZmARF11 → INCREASED brace root length & whorl number,"",increase,"",Meng et al. 2024 Int J Mol Sci,10.3390/ijms25126791,"",source
+Zm00001eb156910,nbr,3,"",Monocot-specific Aux/IAA (ZmIAA10); controls embryonic seminal & post-embryonic lateral root initiation,"",loss,"",von Behrens et al. 2011 Plant J,10.1111/j.1365-313X.2011.04495.x,"",source
+Zm00001eb211050,nbr,2,"",trans-Golgi MATE transporter; bige1 mutant INCREASES number of brace-root whorls / nodes with roots (accelerated organ initiation),"",increase,"",Suzuki et al. 2015 PNAS,10.1073/pnas.1411851112,"",source
+Zm00001eb287000,nbr,2,"",Negative regulator of ethylene signalling; blocks nodal/brace root emergence (not primordia formation) → REDUCED number of nodal roots,"",decrease,"",Shi et al. 2019,10.1111/pbi.13077,"",source
+Zm00001eb355240,nbr,1,"","AP2/ERF TF, miR172 target; RAP2.7-Mu mutant DECREASES brace root number (crown roots unaffected); Corngrass1 (elevated) INCREASES brace roots","",decrease,"",Li et al. 2019 Front Plant Sci,10.3389/fpls.2019.00820,"",source
+Zm00001eb360250,nbr,3,"",Homeolog of RUM1 (Aux/IAA); conserved/unique features in auxin-signalling root initiation,"",modifier,"",Zhang et al. 2015 Plant Physiol,10.1104/pp.15.00107,"",source
+Zm00001eb362740,nbr,3,"","Transcriptional activator directly regulated by RUM1 (Aux/IAA); auxin-inducible, confined to early root primordia/meristems","",modifier,"",Zhang et al. 2015 J Exp Bot,10.1093/jxb/erv187,"",source
+Zm00001eb370810,nbr,1,"",ARF downstream of miR390-TAS3; up-regulated in STTM390; loss-of-function alters brace root growth,"",increase,"",Meng et al. 2024 Int J Mol Sci,10.3390/ijms25126791,"",source
+Zm00001eb403030,nbr,2,"",LBD paralog of RTCS; reduced elongation of shoot-borne crown roots; cooperative with RTCS downstream of ARF,"",decrease,"",Xu et al. 2015 New Phytol,10.1111/nph.13420,"",source
+Zm00001eb419450,nbr,1,"","Flavin monooxygenase, auxin biosynthesis; Zmyuc2/4 double mutant enlarges brace root angle & raises lodging resistance","",angle,"",Zheng et al. 2023 New Phytol,10.1111/nph.18733,"",source
+Zm00001eb434410,nbr,3,"",DCAF subunit of CUL4 E3 ligase; lrt1 defective in LATERAL roots of primary/seminal roots but NOT shoot-borne roots (cloned via BSA-seq+CRISPR),"",loss,"",Baer et al. 2023 New Phytol,10.1111/nph.18599,"",source
+locus:rt1,nbr,2,"","Classic rootless1 mutant; strongly reduced formation of nodal/brace (shoot-borne) roots (locus, gene not molecularly cloned)","",loss,"",Jenkins 1930 (classical locus),"","",TODO
+Zm00001eb038710,ph,"","",auxin transport,"","","","","","",TODO
+Zm00001eb041450,ph,"","",internode elongation,"","","","","","",TODO
+Zm00001eb048020,ph,"","",GA biosynthesis,"","","","","","",TODO
+Zm00001eb050010,ph,"","",BR biosynthesis,"","","","","","",TODO
+Zm00001eb054480,ph,"","",GA signaling (DELLA),"","","","","","",TODO
+Zm00001eb122500,ph,"","",GA biosynthesis,"","","","","","",TODO
+Zm00001eb216610,ph,"","",GA signaling,"","","","","","",TODO
+Zm00001eb228910,ph,"","",BR biosynthesis,"","","","","","",TODO
+Zm00001eb287800,ph,"","",GA receptor,"","","","","","",TODO
+Zm00001eb379120,ph,"","",GA biosynthesis,"","","","","","",TODO
+Zm00001eb007950,prolif,1 - ear number / prolificacy (core),"",Ear number / prolificacy — underlies the prol1.1 QTL; represses growth of axillary ear buds. Repressed by shade; teosinte allele → prolific tillers/ears.,"","","","Whipple et al. 2011, PNAS, doi:10.1073/pnas.1102819108 (gt1 cloning); Wills et al. 2013, PLoS Genet, doi:10.1371/journal.pgen.1003604 (prol1.1=gt1)",10.1073/pnas.1102819108,"",source
+Zm00001eb035030,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching / kernel row number — tassel branch & ear row number.,"","","","Chuck et al. 2014, PNAS, doi:10.1073/pnas.1407401112",10.1073/pnas.1407401112,"",source
+Zm00001eb054440,prolif,1 - ear number / prolificacy (core),"",Ear number / prolificacy — suppresses axillary branching; Hopscotch insertion upstream drives apical dominance & reduced ear number. Major domestication locus.,"","","","Doebley et al. 1997, Nature, doi:10.1038/386485a0 (tb1 function); Studer et al. 2011, Nat Genet, doi:10.1038/ng.942 (Hopscotch insertion)",10.1038/386485a0,"",source
+Zm00001eb082150,prolif,3 - chr2 positional candidate,"","Ear number / prolificacy — chr2 positional candidate (abi17, MaizeGDB). Browser/MaizeMine 'Auxin response factor' auto-annotation is a B3-domain artifact.","","","",MaizeGDB (Zm00001eb082150 = abi17); positional candidate under chr2 QTL,"","",TODO
+Zm00001eb123060,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — meristem determinacy in ear/tassel.,"","","","Bortiri et al. 2006, Plant Cell, doi:10.1105/tpc.105.039032",10.1105/tpc.105.039032,"",source
+Zm00001eb126430,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Ear meristem size / kernel row number — CLE-peptide signalling.,"","","","Je et al. 2016, Nat Genet, doi:10.1038/ng.3567",10.1038/ng.3567,"",source
+Zm00001eb141160,prolif,1 - ear number / prolificacy (core),"",Ear number / prolificacy — direct target of tb1; promotes ear (vs tassel) identity in axillary meristems. Loss → tassels replace upper ears.,"","","","Dong et al. 2017, PNAS, doi:10.1073/pnas.1714960114",10.1073/pnas.1714960114,"",source
+Zm00001eb184050,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Ear meristem size / kernel row & ear fasciation — CLV-WUS pathway.,"","","","Taguchi-Shiobara et al. 2001, Genes Dev, doi:10.1101/gad.208501 (fea2 cloning); Bommert et al. 2013, Nat Genet, doi:10.1038/ng.2534 (KRN natural variation)",10.1101/gad.208501,"",source
+Zm00001eb199880,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching / kernel row number — paralog of ub2.,"","","","Chuck et al. 2014, PNAS, doi:10.1073/pnas.1407401112",10.1073/pnas.1407401112,"",source
+Zm00001eb228140,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Ear/tassel meristem size — CLV-WUS pathway; kernel row number.,"","","","Bommert et al. 2005, Development, doi:10.1242/dev.01671",10.1242/dev.01671,"",source
+Zm00001eb312340,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — restricts long-branch (spikelet-pair) formation; affects ear/tassel branch number.,"","","","Vollbrecht et al. 2005, Nature, doi:10.1038/nature03892",10.1038/nature03892,"",source
+Zm00001eb327910,prolif,2 - inflorescence architecture (branching / meristem / KRN),"",Inflorescence branching — meristem determinacy; sugar signalling.,"","","","Satoh-Nagasawa et al. 2006, Nature, doi:10.1038/nature04725",10.1038/nature04725,"",source
+Zm00001eb003760,spad,"","",Chl catabolism — pheophorbide a oxygenase (lethal leaf spot1),"","","","","","",TODO
+Zm00001eb044210,spad,"","",Chl biosynthesis — glutamyl-tRNA reductase,"","","","","","",TODO
+Zm00001eb076680,spad,"","",Chl catabolism — STAY-GREEN-LIKE,"","","","","","",TODO
+Zm00001eb103480,spad,"","",Chl catabolism — STAY-GREEN homolog,"","","","","","",TODO
+Zm00001eb118900,spad,"","",Regulator (TF) — GOLDEN2 (chloroplast development),"","","","","","",TODO
+Zm00001eb119410,spad,"","",Chl catabolism — chlorophyll b reductase (non-yellow coloring1),"","","","","","",TODO
+Zm00001eb179680,spad,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb207130,spad,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb231810,spad,"","",Chl catabolism — pheophytinase,"","","","","","",TODO
+Zm00001eb319560,spad,"","",Chl catabolism — SGR / STAY-GREEN,"","","","","","",TODO
+Zm00001eb324550,spad,"","","Regulator (TF) — NAC132, activates nye1","","","","","","",TODO
+Zm00001eb357390,spad,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb357740,spad,"","",Light harvesting — LHCII chl a/b binding protein 10,"","","","","","",TODO
+Zm00001eb358510,spad,"","",Chl biosynthesis — uroporphyrinogen decarboxylase,"","","","","","",TODO
+Zm00001eb371980,spad,"","",Regulator (TF) — GOLDEN2-LIKE1,"","","","","","",TODO
+Zm00001eb407780,spad,"","",Chl biosynthesis — Mg-chelatase subunit I (oil yellow1; maize SPAD gene),"","","","","","",TODO
+Zm00001eb429750,spad,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb433610,spad,"","",Chl biosynthesis — Mg-chelatase subunit H,"","","","","","",TODO
+Zm00001eb003760,spad20das,"","",Chl catabolism — pheophorbide a oxygenase (lethal leaf spot1),"","","","","","",TODO
+Zm00001eb044210,spad20das,"","",Chl biosynthesis — glutamyl-tRNA reductase,"","","","","","",TODO
+Zm00001eb076680,spad20das,"","",Chl catabolism — STAY-GREEN-LIKE,"","","","","","",TODO
+Zm00001eb103480,spad20das,"","",Chl catabolism — STAY-GREEN homolog,"","","","","","",TODO
+Zm00001eb118900,spad20das,"","",Regulator (TF) — GOLDEN2 (chloroplast development),"","","","","","",TODO
+Zm00001eb119410,spad20das,"","",Chl catabolism — chlorophyll b reductase (non-yellow coloring1),"","","","","","",TODO
+Zm00001eb179680,spad20das,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb207130,spad20das,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb231810,spad20das,"","",Chl catabolism — pheophytinase,"","","","","","",TODO
+Zm00001eb319560,spad20das,"","",Chl catabolism — SGR / STAY-GREEN,"","","","","","",TODO
+Zm00001eb324550,spad20das,"","","Regulator (TF) — NAC132, activates nye1","","","","","","",TODO
+Zm00001eb357390,spad20das,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb357740,spad20das,"","",Light harvesting — LHCII chl a/b binding protein 10,"","","","","","",TODO
+Zm00001eb358510,spad20das,"","",Chl biosynthesis — uroporphyrinogen decarboxylase,"","","","","","",TODO
+Zm00001eb371980,spad20das,"","",Regulator (TF) — GOLDEN2-LIKE1,"","","","","","",TODO
+Zm00001eb407780,spad20das,"","",Chl biosynthesis — Mg-chelatase subunit I (oil yellow1; maize SPAD gene),"","","","","","",TODO
+Zm00001eb429750,spad20das,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb433610,spad20das,"","",Chl biosynthesis — Mg-chelatase subunit H,"","","","","","",TODO
+Zm00001eb003760,spad36das,"","",Chl catabolism — pheophorbide a oxygenase (lethal leaf spot1),"","","","","","",TODO
+Zm00001eb044210,spad36das,"","",Chl biosynthesis — glutamyl-tRNA reductase,"","","","","","",TODO
+Zm00001eb076680,spad36das,"","",Chl catabolism — STAY-GREEN-LIKE,"","","","","","",TODO
+Zm00001eb103480,spad36das,"","",Chl catabolism — STAY-GREEN homolog,"","","","","","",TODO
+Zm00001eb118900,spad36das,"","",Regulator (TF) — GOLDEN2 (chloroplast development),"","","","","","",TODO
+Zm00001eb119410,spad36das,"","",Chl catabolism — chlorophyll b reductase (non-yellow coloring1),"","","","","","",TODO
+Zm00001eb179680,spad36das,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb207130,spad36das,"","",Light harvesting — chl a/b binding protein,"","","","","","",TODO
+Zm00001eb231810,spad36das,"","",Chl catabolism — pheophytinase,"","","","","","",TODO
+Zm00001eb319560,spad36das,"","",Chl catabolism — SGR / STAY-GREEN,"","","","","","",TODO
+Zm00001eb324550,spad36das,"","","Regulator (TF) — NAC132, activates nye1","","","","","","",TODO
+Zm00001eb357390,spad36das,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb357740,spad36das,"","",Light harvesting — LHCII chl a/b binding protein 10,"","","","","","",TODO
+Zm00001eb358510,spad36das,"","",Chl biosynthesis — uroporphyrinogen decarboxylase,"","","","","","",TODO
+Zm00001eb371980,spad36das,"","",Regulator (TF) — GOLDEN2-LIKE1,"","","","","","",TODO
+Zm00001eb407780,spad36das,"","",Chl biosynthesis — Mg-chelatase subunit I (oil yellow1; maize SPAD gene),"","","","","","",TODO
+Zm00001eb429750,spad36das,"","",Chl biosynthesis — protochlorophyllide oxidoreductase,"","","","","","",TODO
+Zm00001eb433610,spad36das,"","",Chl biosynthesis — Mg-chelatase subunit H,"","","","","","",TODO
+Zm00001eb048110,stpi,"","",structural (GST),"","","","","","",TODO
+Zm00001eb062510,stpi,"","",structural (CHI),"","","","","","",TODO
+Zm00001eb074320,stpi,"","",regulatory (bHLH),"","","","","","",TODO
+Zm00001eb159020,stpi,"","",structural (DFR),"","","","","","",TODO
+Zm00001eb198030,stpi,"","",structural (CHS),"","","","","","",TODO
+Zm00001eb229190,stpi,"","",structural (ANS),"","","","","","",TODO
+Zm00001eb245960,stpi,"","",structural (F3'H),"","","","","","",TODO
+Zm00001eb278680,stpi,"","",regulatory (MYB),"","","","","","",TODO
+Zm00001eb303250,stpi,"","",regulatory (bHLH repressor),"","","","","","",TODO
+Zm00001eb373660,stpi,"","",regulatory (MYB),"","","","","","",TODO
+Zm00001eb374230,stpi,"","",structural (UFGT),"","","","","","",TODO
+Zm00001eb429330,stpi,"","",regulatory (bHLH),"","","","","","",TODO
+Zm00001eb024680,stpu,"","",HD-ZIP IV TF; trichome patterning & anther development,"","","","","","",TODO
+Zm00001eb035030,stpu,"","",SBP-box/SPL TF (unbranched2; SPL family),"","","","","","",TODO
+Zm00001eb143110,stpu,"","",SBP-box/SPL TF (nearest SBP to chr3 StPu peak),"","","","","","",TODO
+Zm00001eb175150,stpu,"","",SBP-box/SPL TF (teosinte glume architecture1),"","","","","","",TODO
+Zm00001eb199880,stpu,"","",SBP-box/SPL TF (unbranched3),"","","","","","",TODO
+Zm00001eb265710,stpu,"","","WOX3 homeobox (ZmWOX3A; trichome initiation, downstream of SPL)","","","","","","",TODO
+Zm00001eb316740,stpu,"","",SBP-box/SPL TF (tasselsheath4),"","","","","","",TODO
+Zm00001eb349730,stpu,"","",SBP-box/SPL TF (nearest SBP to chr8 StPu peak),"","","","","","",TODO
+Zm00001eb355310,stpu,"","",WOX3 homeobox (paralog of ZmWOX3A),"","","","","","",TODO
+Zm00001eb387280,stpu,"","","AP2 TF; suppresses adult epidermal hairs (juvenile→adult phase change), proximal flank of mhl1","","","","","","",TODO
+Zm00001eb391990,stpu,"","",SIAMESE-related CDK inhibitor (ZmSMR4; cell-cycle/trichome),"","","","","","",TODO
+locus:mhl1,stpu,"","",macrohair QTL; inv9f mexicana inversion (no cloned causal gene),"","","","","","",TODO
+Zm00001eb332400,spad,2,"","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress",increase (chlorophyll under stress),"overexpression (heterologous, in rice)","Gao et al. 2015, Plant Mol Biol 87:413-428",10.1007/s11103-015-0288-z,"",curated
+Zm00001eb332400,spad20das,2,"","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress",increase (chlorophyll under stress),"overexpression (heterologous, in rice)","Gao et al. 2015, Plant Mol Biol 87:413-428",10.1007/s11103-015-0288-z,"",curated
+Zm00001eb332400,spad36das,2,"","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress","bHLH PIF3; overexpression increases chlorophyll content (and fluorescence, cell-membrane stability) under drought/salt stress",increase (chlorophyll under stress),"overexpression (heterologous, in rice)","Gao et al. 2015, Plant Mol Biol 87:413-428",10.1007/s11103-015-0288-z,"",curated
+Zm00001eb288410,spad,2,"","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence",decrease (early senescence / chlorosis),loss-of-function (EMS mutant + CRISPR; map-based cloning),"Wang et al. 2019, Plant Cell 31:1328-1343",10.1105/tpc.18.00736,"",curated
+Zm00001eb288410,spad20das,2,"","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence",decrease (early senescence / chlorosis),loss-of-function (EMS mutant + CRISPR; map-based cloning),"Wang et al. 2019, Plant Cell 31:1328-1343",10.1105/tpc.18.00736,"",curated
+Zm00001eb288410,spad36das,2,"","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence","Clade-I SWEET glucose transporter, subsidiary-cell-localized; cst1 loss-of-function causes reduced stomatal opening, carbon starvation and early leaf senescence",decrease (early senescence / chlorosis),loss-of-function (EMS mutant + CRISPR; map-based cloning),"Wang et al. 2019, Plant Cell 31:1328-1343",10.1105/tpc.18.00736,"",curated
+Zm00001eb135910,spad,2,"","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)",increase-via-knockdown (stay-green),knockdown (RNAi) of a cloned QTL,"Zhang et al. 2019, Plant Biotechnol J 17:2272-2285",10.1111/pbi.13139,"",curated
+Zm00001eb135910,spad20das,2,"","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)",increase-via-knockdown (stay-green),knockdown (RNAi) of a cloned QTL,"Zhang et al. 2019, Plant Biotechnol J 17:2272-2285",10.1111/pbi.13139,"",curated
+Zm00001eb135910,spad36das,2,"","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)","NAC-domain TF, cloned stay-green QTL; RNAi knockdown delays senescence and increases stay-green (NAC7 is a negative regulator of chlorophyll retention)",increase-via-knockdown (stay-green),knockdown (RNAi) of a cloned QTL,"Zhang et al. 2019, Plant Biotechnol J 17:2272-2285",10.1111/pbi.13139,"",curated
+Zm00001eb346800,spad,2,"",proposed els5 candidate gene (141-bp insertion 268 bp upstream of the start codon); els5 mutant shows premature leaf senescence,premature leaf-senescence mutant; mapped to a 1.1 Mb B73 interval (gene not cloned),decrease (premature senescence),premature-senescence mutant + fine-mapping; candidate gene proposed (not functionally validated),"Gao et al. 2023, Plant Cell Rep 42:1651-1663",10.1007/s00299-023-03051-4,"",curated
+Zm00001eb346800,spad20das,2,"",proposed els5 candidate gene (141-bp insertion 268 bp upstream of the start codon); els5 mutant shows premature leaf senescence,premature leaf-senescence mutant; mapped to a 1.1 Mb B73 interval (gene not cloned),decrease (premature senescence),premature-senescence mutant + fine-mapping; candidate gene proposed (not functionally validated),"Gao et al. 2023, Plant Cell Rep 42:1651-1663",10.1007/s00299-023-03051-4,"",curated
+Zm00001eb346800,spad36das,2,"",proposed els5 candidate gene (141-bp insertion 268 bp upstream of the start codon); els5 mutant shows premature leaf senescence,premature leaf-senescence mutant; mapped to a 1.1 Mb B73 interval (gene not cloned),decrease (premature senescence),premature-senescence mutant + fine-mapping; candidate gene proposed (not functionally validated),"Gao et al. 2023, Plant Cell Rep 42:1651-1663",10.1007/s00299-023-03051-4,"",curated
