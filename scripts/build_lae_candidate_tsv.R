@@ -3,8 +3,10 @@
 # LAE (leaves above the uppermost ear = leaf/node-number count) candidate gene:
 # derive the caller TSV input + the notebook overlap CSV from the canonical CSV.
 #
-# Single source of truth:
+# Sources:
 #   data/ref/leaf_number_candidate_genes_v5.csv   (hand-curated; tu1 / tunicate1)
+#   data/teonam/eh_candidate_genes.tsv            (ear-height panel, overlaid: LAE = ear/
+#     node position shares internode / GA / BR / auxin architecture with ear height)
 # Regenerated:
 #   data/teonam/lae_candidate_genes.tsv        (caller/GWAS candidate contract)
 #   results/sim/zeal/lae_candidate_overlap.csv (Manhattan/lollipop gene overlay)
@@ -39,6 +41,18 @@ tsv <- data.table(
   v5_canonical_symbol = d$symbol,
   pathway             = paste0("Tier", d$tier, " — ", d$protein, "; ", first_clause(d$trait_role))
 )
+# Overlay the ear-height candidate panel (LAE ear/node position shares internode / GA /
+# BR / auxin architecture with ear height), deduping by gene id.
+eh_path <- here("data/teonam/eh_candidate_genes.tsv")
+if (file.exists(eh_path)) {
+  eh <- fread(eh_path, encoding = "UTF-8")
+  eh[, qtl_chen2019 := as.character(qtl_chen2019)]
+  eh[is.na(qtl_chen2019), qtl_chen2019 := ""]
+  tsv <- unique(rbind(tsv, eh, fill = TRUE), by = "gene_id")
+  cat(sprintf("overlaid %d ear-height candidates\n", nrow(eh)))
+} else {
+  warning("eh_candidate_genes.tsv not found; LAE panel = leaf-number genes only")
+}
 setorder(tsv, chr, start)
 
 tsv_path <- here("data/teonam/lae_candidate_genes.tsv")
