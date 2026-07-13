@@ -209,8 +209,14 @@ threshold.
 ```{r per-taxon, fig.width=11, fig.height=4.6}
 bt <- fread(file.path(RQ, sprintf("%s_scanone_by_taxon.csv", PFX)))[is.finite(lod)]
 pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+ytop_bt <- max(bt$lod, na.rm = TRUE)
 pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
   geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  ggrepel::geom_text_repel(
+    data = cl, aes(x = cm, y = ytop_bt * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+  ) +
+  expand_limits(y = ytop_bt * 1.45) +
   geom_line(linewidth = 0.4) +
   geom_hline(data = unique(bt[, .(taxon, thr5)]), aes(yintercept = thr5, colour = taxon), linetype = "dotted", linewidth = 0.4, show.legend = FALSE) +
   facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
