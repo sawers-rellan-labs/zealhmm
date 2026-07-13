@@ -152,7 +152,16 @@ plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
     SNP = j$Name, CHR = as.integer(j$Locus), BP = as.integer(j$Position),
     logP = -log10(as.numeric(j$`pr>F`))
   )
-  q <- q[logP >= LOD] # keep only QTL significant at LOD 5 (-log10P >= 5)
+  tr_ <- toupper(sub("_jlm.*$", "", basename(jlm_txt))) # JLM perm threshold (Chen-style FWER)
+  .thrcsv <- here("data/teonam/jlm_perm_thresholds.csv")
+  .jlm_thr <- if (file.exists(.thrcsv)) {
+    .d <- fread(.thrcsv)
+    .h <- .d[trait == tr_ & alpha == 0.05, thr_neglog10p]
+    if (length(.h) && is.finite(.h[1])) .h[1] else LOD
+  } else {
+    LOD
+  }
+  q <- q[logP >= .jlm_thr] # keep QTL clearing the 1000-permutation FWER (5%) line
   ov <- fread(here("results/sim/teonam/stam_candidate_overlap.csv")) # symbol, chr, start (v5)
   ov <- ov[symbol %in% c("ts2", "tb1", "tru1", "zmm16", "tsh4")] # JLM Fig-4A candidates (an1 is GWAS-only)
   q[, gene := ""] # assign each candidate gene to its NEAREST JLM QTL (1:1)

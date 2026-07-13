@@ -24,7 +24,13 @@ jlm_threshold <- function(jlm_txt, alpha = 0.05) {
   # from scope (data.table's `..` prefix only works in j, not in an i-filter).
   want_trait <- toupper(sub("_jlm.*$", "", basename(jlm_txt)))
   want_alpha <- alpha
-  csv <- here::here("data/zeal/gwas_perm_thresholds.csv")
+  # TeoNAM (nilHMM) and ZEAL have separate JLM threshold tables — pick by the output
+  # path so TeoNAM DTA does not collide with ZEAL DTA on the shared trait key.
+  csv <- if (grepl("teonam", jlm_txt)) {
+    here::here("data/teonam/jlm_perm_thresholds.csv")
+  } else {
+    here::here("data/zeal/gwas_perm_thresholds.csv")
+  }
   if (file.exists(csv)) {
     thr <- fread(csv)
     hit <- thr[trait == want_trait & model == "jlm" & alpha == want_alpha, thr_neglog10p]
