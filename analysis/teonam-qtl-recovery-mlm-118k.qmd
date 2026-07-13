@@ -143,6 +143,7 @@ p_mlm <- plot_manhattan(
   mlm,
   "STAM — GWAS MLM (Family + K), authentic 118K panel, candidate genes at v5 positions",
   overlap_csv = here("results/sim/teonam/stam_candidate_overlap.csv"),
+  lod = teonam_gwas_thr("STAM", "mlm"), # 1000-permutation genome-wide FWER (5%)
   out_png = here("results/sim/teonam/stam_gwas_mlm_manhattan_annotated_118k.png")
 )
 p_mlm

@@ -17,7 +17,9 @@ execute:
 **What this is.** The STAM GWAS Manhattan (Chen 2019 Fig 4C) reproduced on the
 TeoNAM genotypes, with the domestication candidate genes placed at their **real
 B73 v5 coordinates** (MaizeGDB `genemodel_locus` → `b73_gene_coords`), a red star
-at each gene's genomic position, and the LOD = 5 dotted significance line.
+at each gene's genomic position, and a dotted significance line — the raw-panel OLS
+Manhattan now uses a **1000-permutation genome-wide FWER** (the FSFHap-imputed panel and
+the coverage sweeps keep Chen's fixed LOD 5 as their reference).
 
 ::: {.callout-important}
 ## 118K-panel edition
@@ -85,7 +87,22 @@ get_transformer <- function(m) {
   }
 }
 
-LOD <- 5 # Chen 2019: P < 1e-5 (LOD = 5)
+LOD <- 5 # Chen 2019: P < 1e-5 (LOD = 5) — fixed fallback + FSFHap/sweep panels
+
+# Per-(trait, model) TeoNAM GWAS permutation threshold (raw 118K point Manhattan),
+# written by teonam_stam_gwas118k.R / teonam_mlm_family_118k.R. Falls back to LOD.
+teonam_gwas_thr <- function(trait, model, geno = "raw118k", alpha = 0.05) {
+  d <- tryCatch(fread(here("data/teonam/gwas_perm_thresholds.csv")), error = function(e) NULL)
+  if (is.null(d)) {
+    return(LOD)
+  }
+  wt <- toupper(trait)
+  wm <- model
+  wg <- geno
+  wa <- alpha
+  h <- d[trait == wt & model == wm & geno == wg & alpha == wa, thr_neglog10p]
+  if (length(h) && is.finite(h[1])) h[1] else LOD
+}
 
 #' STAM GWAS Manhattan with candidate genes at their true v5 positions.
 #' Odd chromosomes black, even gray75; y-axis expanded one major-tick unit above
@@ -94,7 +111,7 @@ LOD <- 5 # Chen 2019: P < 1e-5 (LOD = 5)
 #' @param scan_csv per-marker scan (SNP, CHR, BP[v5], P)
 #' @param title    plot title
 #' @param out_png  optional path to save a PNG
-plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL) {
+plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL, lod = LOD) {
   scan <- if (is.data.frame(scan_csv)) as.data.frame(scan_csv) else as.data.frame(fread(scan_csv))
   scan <- scan[is.finite(scan$P) & scan$P > 0, ]
   m <- scan[order(scan$CHR, scan$BP), c("SNP", "CHR", "BP", "P")]
@@ -119,7 +136,7 @@ plot_stam_manhattan <- function(scan_csv, title, out_png = NULL, mark = NULL) {
     genomewideline = NULL, suggestiveline = NULL,
     ylab = expression(-log[10](italic(P))), xlab = ""
   ) +
-    geom_hline(yintercept = LOD, linetype = "dotted", linewidth = 0.7, color = "black") +
+    geom_hline(yintercept = lod, linetype = "dotted", linewidth = 0.7, color = "black") +
     geom_point(
       data = ov, aes(x = BPn, y = y), inherit.aes = FALSE,
       shape = 8, size = 3, stroke = 1, color = "red"
@@ -367,7 +384,8 @@ Chen's Fig-4C model — the same 118K panel run through the MLM (Q+K) — is in
 p_unimp <- plot_stam_manhattan(
   here("data/teonam/stam_gwas_scan_118k.csv"),
   "STAM — GWAS OLS (Family + marker), authentic 118K panel, candidate genes at v5 positions",
-  here("results/sim/teonam/stam_gwas_manhattan_annotated_118k.png")
+  here("results/sim/teonam/stam_gwas_manhattan_annotated_118k.png"),
+  lod = teonam_gwas_thr("STAM", "ols") # 1000-permutation genome-wide FWER (5%)
 )
 p_unimp
 ```

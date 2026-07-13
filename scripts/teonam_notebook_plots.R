@@ -109,6 +109,27 @@ gwas_thr <- function(trait, model, geno, alpha = 0.05) {
   NA_real_
 }
 
+#' Per-(trait, model) TeoNAM GWAS genome-wide FWER permutation threshold for the raw
+#' 118K point Manhattans, written by teonam_stam_gwas118k.R / teonam_mlm_family_118k.R
+#' to data/teonam/gwas_perm_thresholds.csv (separate from ZEAL; TeoNAM DTA would collide).
+#' model is "ols" or "mlm". Falls back to the fixed LOD if the row is missing.
+teonam_gwas_thr <- function(trait, model, geno = "raw118k", alpha = 0.05) {
+  want_trait <- toupper(trait)
+  want_model <- model
+  want_geno <- geno
+  want_alpha <- alpha
+  csv <- here::here("data/teonam/gwas_perm_thresholds.csv")
+  if (file.exists(csv)) {
+    d <- fread(csv)
+    hit <- d[trait == want_trait & model == want_model & geno == want_geno & alpha == want_alpha, thr_neglog10p]
+    if (length(hit) && is.finite(hit[1])) {
+      return(hit[1])
+    }
+  }
+  warning(sprintf("no TeoNAM GWAS perm threshold for %s / %s / %s; using fixed LOD %g", want_trait, model, geno, LOD))
+  LOD
+}
+
 #' Manhattan with candidate genes starred at their true v5 positions.
 #' `overlap_csv` = a candidate table with columns symbol, chr, start (v5).
 plot_manhattan <- function(scan_csv, title, overlap_csv, out_png = NULL, mark = NULL, lod = LOD) {
