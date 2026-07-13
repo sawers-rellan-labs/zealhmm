@@ -243,7 +243,14 @@ keep low-evidence peaks from surfacing in the small per-family samples (n ≈ 60
 ```{r per-taxon, fig.width=11, fig.height=4.6}
 bt <- fread(file.path(RQ, "zeal_dta_scanone_by_taxon.csv"))[is.finite(lod)]
 pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+ytop_bt <- max(bt$lod, na.rm = TRUE)
 pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  ggrepel::geom_text_repel(
+    data = cl, aes(x = cm, y = ytop_bt * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+  ) +
+  expand_limits(y = ytop_bt * 1.45) +
   geom_line(linewidth = 0.4) +
   geom_hline(
     data = unique(bt[, .(taxon, thr5)]), aes(yintercept = thr5, colour = taxon),
@@ -254,7 +261,7 @@ pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
   labs(
     x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD (additive)",
     title = "ZEAL/BZea DTA — per-taxon additive scan (TeoNAM JLM grid)",
-    subtitle = "additive-only; per-family filters: frac introgressed (HET or ALT) > 0.05 & ≥3 per present class"
+    subtitle = "additive-only; per-family filters: frac introgressed (HET or ALT) > 0.05 & ≥3 per present class · dotted = candidate genes"
   ) +
   theme_classic(base_size = 11) +
   theme(
