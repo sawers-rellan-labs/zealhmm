@@ -185,7 +185,7 @@ in Chen 2019.
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/eh_jlm_native1.txt"), mlm,
   "ZEAL/BZea EH — JLM QTL genomic distribution (nested in taxon)",
-  overlap_csv = overlap, label_genes = c("ct2", "ZmRPH1", "br2", "an1", "brd1", "ZmDLE1", "d8", "d1", "na1", "spi1", "d9", "na2", "d3", "ZmPIN1a", "ZmACS7"),
+  overlap_csv = overlap, label_genes = c("ct2", "ZmRPH1", "br2", "an1", "brd1", "ZmDLE1", "d8", "d1", "na1", "spi1", "d9", "na2", "d3", "ZmPIN1a", "ZmACS7", "abi17"),
   out_png = here("results/sim/zeal/eh_jlm_lollipop_snp50k.png")
 )
 p_lolli
