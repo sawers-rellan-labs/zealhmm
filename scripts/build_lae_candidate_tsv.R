@@ -3,10 +3,11 @@
 # LAE (leaves above the uppermost ear = leaf/node-number count) candidate gene:
 # derive the caller TSV input + the notebook overlap CSV from the canonical CSV.
 #
-# Sources:
-#   data/ref/leaf_number_candidate_genes_v5.csv   (hand-curated; tu1 / tunicate1)
-#   data/teonam/eh_candidate_genes.tsv            (ear-height panel, overlaid: LAE = ear/
-#     node position shares internode / GA / BR / auxin architecture with ear height)
+# Source:
+#   data/ref/leaf_number_candidate_genes_v5.csv   (hand-curated, TU1-centric leaf-number
+#     panel: tu1 upstream + its plastochron/meristem/polarity targets + data-driven
+#     positional hits, all with B73 v5 gene models + coordinates; self-contained, no bulk
+#     ear-height overlay)
 # Regenerated:
 #   data/teonam/lae_candidate_genes.tsv        (caller/GWAS candidate contract)
 #   results/sim/zeal/lae_candidate_overlap.csv (Manhattan/lollipop gene overlay)
@@ -25,33 +26,25 @@ library(here)
 csv <- here("data/ref/leaf_number_candidate_genes_v5.csv")
 d <- fread(csv, encoding = "UTF-8")
 
-first_clause <- function(x) {
-  after <- trimws(sub("^[^—]*—\\s*", "", x)) # drop "<category> — " if present
-  after <- sub("\\.\\s.*$", "", after) # keep first sentence
-  sub("\\.$", "", after)
-}
-
+# Canonical CSV (v6) schema:
+#   label  gene  entrez_or_model_id  chr  start_v5  end_v5  strand  tier  mechanism
+#   length_bp  v5_gene_model
 tsv <- data.table(
-  symbol              = d$symbol,
+  symbol              = d$gene,
   gene_id             = d$v5_gene_model,
   chr                 = as.integer(sub("^chr", "", d$chr)),
-  start               = as.integer(d$start_bp),
-  end                 = as.integer(d$end_bp),
+  start               = as.integer(d$start_v5),
+  end                 = as.integer(d$end_v5),
   qtl_chen2019        = '""', # literal, matching the other candidate TSVs
-  v5_canonical_symbol = d$symbol,
-  pathway             = paste0("Tier", d$tier, " — ", d$protein, "; ", first_clause(d$trait_role))
+  v5_canonical_symbol = d$gene,
+  pathway             = paste0("Tier", d$tier, " — ", d$mechanism)
 )
-# Overlay the ear-height candidate panel (LAE ear/node position shares internode / GA /
-# BR / auxin architecture with ear height), deduping by gene id.
-eh_path <- here("data/teonam/eh_candidate_genes.tsv")
-if (file.exists(eh_path)) {
-  eh <- fread(eh_path, encoding = "UTF-8")
-  eh[, qtl_chen2019 := as.character(qtl_chen2019)]
-  eh[is.na(qtl_chen2019), qtl_chen2019 := ""]
-  tsv <- unique(rbind(tsv, eh, fill = TRUE), by = "gene_id")
-  cat(sprintf("overlaid %d ear-height candidates\n", nrow(eh)))
-} else {
-  warning("eh_candidate_genes.tsv not found; LAE panel = leaf-number genes only")
+# Safety net: drop any candidate without a placeable v5 coordinate (the current panel
+# places every row) so an unplaceable row can never reach the map.
+n_all <- nrow(tsv)
+tsv <- tsv[!is.na(chr) & !is.na(start) & !is.na(end)]
+if (nrow(tsv) < n_all) {
+  cat(sprintf("dropped %d coordinate-less candidate(s) from the placed panel\n", n_all - nrow(tsv)))
 }
 setorder(tsv, chr, start)
 
