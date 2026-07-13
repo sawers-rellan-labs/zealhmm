@@ -28,9 +28,9 @@ within each, by the **paper** the work supports:
    B73 × teosinte BC2S3 population across the trait panel — flowering (DTA / DTS),
    morphology (PH / EH / EN / Prolif / NBR / LAE), leaf greenness (SPAD), the binary
    stem traits StPi / StPu, and Kinki (empirical logits, no spatial correction). Two
-   complementary routes: **MLM + JLM GWAS** on the SNP50K ancestry callers (MLM at
-   FDR ≤ 0.05; JLM at a 1000-permutation empirical α, Chen-style genome-wide FWER;
-   `zeal-qtl-recovery-<trait>-mlm-snp50k-fdr`) and **classic R/qtl linkage mapping**
+   complementary routes: **MLM + JLM GWAS** on the SNP50K ancestry callers (both at a
+   1000-permutation genome-wide FWER — Chen-style empirical α per scan;
+   `zeal-qtl-recovery-<trait>-mlm-snp50k`) and **classic R/qtl linkage mapping**
    (`bcsft` Haley–Knott on the TeoNAM JLM grid, one joint scan sharing a single
    permutation null, `zeal-rqtl-<trait>-lod-profile`).
 3. **Inv4m inversion paper** — *already written, in review.*  This repo only

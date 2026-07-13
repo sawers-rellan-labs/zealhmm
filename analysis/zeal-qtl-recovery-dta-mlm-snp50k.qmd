@@ -1,6 +1,6 @@
 ---
-title: "ZEAL/BZea DTA (days to anthesis) — MLM (Taxon + K) GWAS + JLM on the SNP50K panel"
-subtitle: "The ZEAL reproduction of the TeoNAM DTA composite: JLM QTL, per-SNP vs RTIGER-ancestry MLM, and the ancestry↔flowering confound, on 1,403 B73×teosinte BC2S3 NILs"
+title: "ZEAL/BZea DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+subtitle: "GWAS + JLM on the SNP50K panel. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -60,7 +60,25 @@ lam <- function(p) {
   p <- p[is.finite(p) & p > 0 & p <= 1]
   round(median(qchisq(p, 1, lower.tail = FALSE)) / qchisq(0.5, 1), 2)
 }
+# Significance = genome-wide FWER from a 1000-permutation null (scripts/zeal_gwas_perm.R),
+# stored per (trait, model, geno) in data/zeal/gwas_perm_thresholds.csv. thr() reads the
+# -log10P line for a panel; a marker is significant iff its -log10P exceeds that line.
+TR <- "DTA"
+thr <- function(model, geno, a = 0.05) gwas_thr(TR, model, geno, a)
+thr_ols <- thr("ols", "rtiger_mosaic") # OLS runs on the RTIGER mosaic
+thr_mlm <- thr("mlm", "rtiger_mosaic") # Panel C
+thr_gt <- thr("mlm", "hwe_post_gt") # Panel B (per-SNP)
+nsig <- function(p, t) sum(-log10(p) > t, na.rm = TRUE) # markers above the FWER line
 ```
+
+::: {.callout-note}
+## Significance = 1000-permutation genome-wide FWER (5%)
+Every Manhattan's dotted line is the **−log₁₀P exceeded by only 5% of 1000 permutations** of
+that scan (a genome-wide max-−log₁₀P null; `scripts/zeal_gwas_perm.R`), stored per
+(trait, model, geno) in `data/zeal/gwas_perm_thresholds.csv`. A marker is significant iff its
+−log₁₀P clears that line. The line's height differs per panel with the null. Candidate/peak
+tables report whether the marker clears the 5% FWER line.
+:::
 
 ## Candidate genes: closest marker vs window-max marker
 
@@ -89,13 +107,14 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
   data.table(
     gene = gg$symbol[i], QTL = gg$qtl[i], chr = ch, `gene start (v5)` = s,
     `closest Δstart (bp)` = m$BP[kc] - s, `closest -log10P` = round(m$logP[kc], 2),
-    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_
+    `window-max -log10P` = if (nrow(w)) round(w$logP[kw], 2) else NA_real_,
+    `clears perm 5%` = if (nrow(w)) (w$logP[kw] >= thr_mlm) else NA
   )
 }))
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = "DTA candidates (B73 v5): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan."
+  caption = sprintf("DTA candidates (B73 v5): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
@@ -108,22 +127,25 @@ confound.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea DTA — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f)", lam(ols$P)),
-  overlap_csv = overlap, out_png = here("results/sim/zeal/dta_gwas_ols_manhattan_snp50k.png")
+  sprintf("ZEAL/BZea DTA — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  overlap_csv = overlap, lod = thr_ols,
+  out_png = here("results/sim/zeal/dta_gwas_ols_manhattan_fdr_snp50k.png")
 )
 ```
 
-The OLS Manhattan (no K) is genome-wide inflated (λ_GC ≈ 2.4, ancestry-block LD) — the
-structure artifact the MLM K term removes below.
+The OLS Manhattan (no K) is genome-wide inflated (λ_GC ≈ 2.4, ancestry-block LD) — many
+markers cross even the permutation line, and *ZmCCT10* is nominally strong — precisely the structure
+artifact the MLM K term removes below.
 
 ```{r ols-vs-mlm}
 lam_tab <- data.table(
   model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
   markers = c(nrow(ols), nrow(mlm)),
   lambda_GC = c(lam(ols$P), lam(mlm$P)),
+  `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -144,8 +166,9 @@ knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs
 
 ## JLM QTL genomic distribution (Panel A)
 
-DTA QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutation empirical α = 0.05 (Chen-style genome-wide FWER; per-trait)). Model-
-independent — Chen's primary DTA analysis and the correct home for these flowering QTL.
+DTA QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutation empirical α = 0.05 (Chen-style genome-wide FWER; per-trait)). JLM QTL are
+selected by the stepwise enter/exit P (a model-selection gate), independent of the per-scan
+permutation FWER line used for the GWAS Manhattans below. Model-independent — Chen's primary DTA analysis.
 
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
@@ -161,10 +184,11 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea DTA — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
-  overlap_csv = overlap, out_png = here("results/sim/zeal/dta_gwas_mlm_rtiger_mosaic_manhattan_snp50k.png")
+  sprintf("ZEAL/BZea DTA — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/dta_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm
+cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
 ```
 
 ## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
@@ -177,12 +201,12 @@ inference is mandatory at low coverage.
 
 ```{r composite, fig.width=9, fig.height=13}
 p_B <- plot_manhattan(gt,
-  sprintf("DTA — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
-  overlap_csv = overlap
+  sprintf("DTA — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(gt$P)),
+  overlap_csv = overlap, lod = thr_gt
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("DTA — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
-  overlap_csv = overlap
+  sprintf("DTA — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  overlap_csv = overlap, lod = thr_mlm
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
 ggsave(here("results/sim/zeal/dta_composite_snp50k.png"), composite, width = 9, height = 13, dpi = 200, bg = "white")
@@ -212,22 +236,23 @@ ctab2 <- rbindlist(lapply(names(callers), function(nm) {
   } else {
     NA_real_
   }
-  z <- sc[CHR == tb1$chr & abs(BP - tb1$start) <= 5e5 & is.finite(P) & P > 0]
+  sc <- sc[is.finite(P) & P > 0]
+  z <- sc[CHR == tb1$chr & abs(BP - tb1$start) <= 5e5]
   data.table(
     caller = nm, `teosinte presence` = pres, lambda_GC = lam(sc$P),
-    `max -log10P` = round(max(-log10(sc[is.finite(P) & P > 0, P])), 2),
-    `zmcct10 -log10P` = if (nrow(z)) round(max(-log10(z$P)), 2) else NA_real_
+    `n > perm 5%` = nsig(sc$P, gwas_thr(TR, "mlm", g)),
+    `zmcct10 -log10P` = if (nrow(z)) round(max(z[is.finite(P) & P > 0, -log10(P)]), 2) else NA_real_
   )
 }))
-knitr::kable(ctab2, caption = "DTA MLM (Taxon+K) by ancestry caller at 0.4×. Aggregated callers (RTIGER, binhmm) recover teosinte presence ~0.10 (established); per-SNP (control) and per-SNP recalls (nNIL, LB-Impute) under-call and deflate λ_GC.")
+knitr::kable(ctab2, caption = "DTA MLM (Taxon+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the zmcct10 window-max -log10P. Aggregated callers (RTIGER, binhmm) recover teosinte presence ~0.10; per-SNP (control) and per-SNP recalls (nNIL, LB-Impute) under-call and deflate λ_GC.")
 ```
 
 ```{r caller-composite, fig.width=9, fig.height=20}
 panels <- lapply(names(callers), function(nm) {
   sc <- fread(here(sprintf("data/zeal/dta_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
-  plot_manhattan(sc, sprintf("DTA MLM (Taxon+K) — %s (λ_GC = %.2f)", nm, lam(sc$P)), overlap_csv = overlap)
+  plot_manhattan(sc, sprintf("DTA MLM (Taxon+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
 })
 cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
-ggsave(here("results/sim/zeal/dta_caller_composite_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
+ggsave(here("results/sim/zeal/dta_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")
 cc
 ```

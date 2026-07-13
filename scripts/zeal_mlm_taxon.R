@@ -15,6 +15,7 @@ suppressMessages({
 })
 source(here("scripts/logging.R"))
 source(here("scripts/emmax_qk.R"))
+source(here("scripts/zeal_gwas_perm.R"))
 
 TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
 TTAG <- tolower(TRAIT)
@@ -108,7 +109,8 @@ build_null <- function(X) {
   ry <- as.numeric((yt * ws) - Xs %*% (XtXinv %*% crossprod(Xs, yt * ws)))
   list(lines = lines, U = U, ws = ws, Xs = Xs, XtXinv = XtXinv, ry = ry, n = n, p = p, delta = delta)
 }
-scan_fam <- emmax_qk_scan(G, build_null(model.matrix(~fam)), CHR, BP)[order(CHR, BP)]
+null_fam <- build_null(model.matrix(~fam))
+scan_fam <- emmax_qk_scan(G, null_fam, CHR, BP)[order(CHR, BP)]
 
 # --- QC + write ---------------------------------------------------------------
 log_info(
@@ -127,3 +129,17 @@ cand <- gg[, .(gene = symbol, chr, `MLM peak -log10P` = mapply(peak, chr, start)
 print(cand)
 fwrite(scan_fam, here(sprintf("data/zeal/%s_gwas_mlm_%s_%s_snp50k.csv", TTAG, GENO, FAMCOL)))
 log_info("wrote data/zeal/%s_gwas_mlm_%s_%s_snp50k.csv", TTAG, GENO, FAMCOL)
+
+# --- genome-wide FWER permutation threshold (Phase 1) -------------------------
+NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
+if (NPERM > 0) {
+  t0 <- Sys.time()
+  mn <- perm_max_mlm(G, null_fam, CHR, nperm = NPERM, seed = 1L)
+  thr <- upsert_gwas_threshold(
+    here("data/zeal/gwas_perm_thresholds.csv"), TRAIT, "mlm", GENO, FAMCOL, mn, NPERM
+  )
+  log_info(
+    "MLM (%s) FWER perm threshold (%d perm, %.1fs): 5%%=%.2f 10%%=%.2f",
+    GENO, NPERM, as.numeric(Sys.time() - t0, units = "secs"), thr[1], thr[2]
+  )
+}
