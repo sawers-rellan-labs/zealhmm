@@ -133,12 +133,9 @@ listing:
     field-display-names: {title: "Notebook", description: "Description"}
     sort: false
     contents:
-      - title: "DTA · MLM + JLM"
-        path: analysis/zeal-qtl-recovery-dta-mlm-snp50k.qmd
-        description: "DTA: JLM + MLM composite, five-caller comparison"
       - title: "DTA · 1000-perm FWER"
         path: analysis/zeal-qtl-recovery-dta-mlm-snp50k.qmd
-        description: "DTA: same, 1000-perm FWER"
+        description: "DTA: JLM + MLM composite, five-caller comparison, 1000-perm FWER"
       - title: "PH · 1000-perm FWER"
         path: analysis/zeal-qtl-recovery-ph-mlm-snp50k.qmd
         description: "Plant height: JLM + MLM composite, five-caller comparison, dwarf/GA candidates, 1000-perm FWER"
