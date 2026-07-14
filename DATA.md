@@ -379,6 +379,7 @@ recalibrated RTIGER if ever needed).
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
 into `data/zeal/` (gitignored) and consumed by `scripts/zeal_hwe_post_gt.R`. The README states the
-wall (see `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
+wall (the genotype↔ancestry-mosaic distinction — `nilhmm/design/TERMINOLOGY.md`; ZEAL object names
+in `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
 ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
 allele at invariant sites; only `hwe_post` does.
