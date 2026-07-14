@@ -49,6 +49,9 @@ listing:
       - title: "Ancestry callers"
         path: analysis/callers-and-methods.qmd
         description: "nNIL, RTIGER, LB-Impute, binhmm, control"
+      - title: "Pedigree caller"
+        path: analysis/pedigree-caller-validation.qmd
+        description: "Family-coupled belief propagation on a ZEAL-structured cohort (82 founders, ~17 lines/founder): parity with per-individual callers + full-grid missing-data fill, not an accuracy gain (needs nilHMM caller='pedigree', PR #10)"
       - title: "Simulation calibration"
         path: analysis/simulation-calibration.qmd
         description: "Two-stage simcross parameter search (calibrate on sim, validate on truth)"

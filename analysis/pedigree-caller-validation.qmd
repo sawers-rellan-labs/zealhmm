@@ -1,0 +1,182 @@
+---
+title: "Pedigree caller on a ZEAL-structured cohort"
+subtitle: "Does family coupling beat per-individual calling at ZEAL's scale and skim depth? — 82 donor founders, ~17 lines/founder, n ≈ 1394"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+params:
+  design: "BC2S3"
+  founders: 82          # ZEAL donor accessions (data/zeal/bzea_50K_cohort_ref_metadata.csv)
+  lines_per_founder: 17 # ZEAL mean lines/founder (17.1); fixed-sibs approximation of a skewed real dist
+  n_markers: 600
+  chr: 1
+  seed: 11
+---
+
+::: {.callout-note title="Dependency"}
+This notebook uses `nilHMM`'s `call_ancestry(caller = "pedigree")`. Until nilhmm
+**PR #10** (`feat/pedigree-counts-emission`) is merged to `main`, reproduce by
+installing `nilHMM` from that branch (`R CMD INSTALL` the branch working tree); the
+setup guard below fails loudly against an older build. Method: paper supplement
+Text S9 and `nilhmm/design/PEDIGREE_HMM.md`.
+:::
+
+The count/geometric callers decode each individual's chromosome independently; the
+`pedigree` caller instead couples a selfing family's relatives by loopy belief
+propagation over the (pedigree × genome) grid (supplement Text S9). This notebook
+asks the honest question on a **ZEAL-structured** simulated cohort: at ZEAL's scale
+(82 donor founders, ~17 lines per founder, ~1400 lines) and skim depth, does the
+coupling beat per-individual calling? The answer here is a **characterization, not
+a win** — see the Take.
+
+## Setup
+
+```{r setup}
+suppressMessages({
+  library(nilHMM) # simulate_family, simulate_counts, call_states, to_segments
+  library(data.table)
+  library(ggplot2)
+})
+stopifnot("pedigree" %in% eval(formals(nilHMM::call_states)$caller)) # guard: caller must be installed
+set.seed(params$seed)
+
+# Per-marker dosage accuracy of a call_states() table vs the simcross truth mosaic.
+dosage_acc <- function(calls, truth) {
+  kt <- paste(truth$name, truth$chr, truth$pos)
+  ts <- truth$state[match(paste(calls$name, calls$chr, calls$pos), kt)]
+  mean(calls$state == ts, na.rm = TRUE)
+}
+```
+
+## 1. A ZEAL-matched cohort
+
+The BZea/ZEAL SNP50K cohort is **1439 lines** descended from **82 teosinte donor
+founders** (accessions), a **mean of 17.1 lines per founder** — a right-skewed
+distribution (median 11, range 3–100) spanning five teosinte taxa
+(*mexicana* 35 founders, *parviglumis* 36, *diploperennis* 4, *luxurians* 5,
+*huehuetenangensis* 2; from `data/zeal/bzea_50K_cohort_ref_metadata.csv`, pedigree
+strings like `Zx.0580_P3_P1_P4.1.1.1.B`). `simulate_family()` draws fixed-size
+families, so we approximate the population by its **mean**: `r params$founders`
+founders × `r params$lines_per_founder` lines. (The fixed-sibs simplification is a
+known departure from the skewed real distribution; it matches total n, founder
+count, and mean family size — the structure that drives sibling coupling.)
+
+```{r cohort}
+sim <- simulate_family(params$design,
+  families = params$founders, sibs = params$lines_per_founder,
+  chr = params$chr, n_markers = params$n_markers, seed = params$seed
+)
+truth <- sim$truth
+
+data.table(
+  quantity = c("total lines", "donor founders", "mean lines/founder"),
+  `ZEAL (real)` = c("1439", "82", "17.1"),
+  `simulated` = c(
+    length(unique(truth$name)),
+    length(unique(sim$pedigree$family)),
+    round(length(unique(truth$name)) / length(unique(sim$pedigree$family)), 1)
+  )
+) |> knitr::kable()
+```
+
+## 2. Accuracy versus sequencing depth
+
+Degrade the same truth mosaic across a depth ladder bracketing ZEAL's skim regime
+(~0.4×) and call three ways on the identical reads: two single-chain callers
+(`nnil`, `rtiger`) and the family-coupled `pedigree` caller.
+
+```{r depth-sweep}
+depths <- c(0.1, 0.2, 0.4, 0.8, 1.6, 3.2)
+depth_res <- rbindlist(lapply(depths, function(d) {
+  o <- simulate_counts(truth, depth = d, error = 0.01, seed = params$seed)
+  o$cm <- truth$cm[match(paste(o$name, o$chr, o$pos), paste(truth$name, truth$chr, truth$pos))]
+  data.table(
+    depth    = d,
+    zero_cov = mean((o$n_ref + o$n_alt) == 0),
+    nnil     = dosage_acc(call_states(o, caller = "nnil", design = params$design, rrate = 1e-3), truth),
+    rtiger   = dosage_acc(call_states(o, caller = "rtiger", design = params$design, rigidity = 3L), truth),
+    pedigree = dosage_acc(call_states(o, caller = "pedigree", pedigree = sim$pedigree, design = params$design), truth)
+  )
+}))
+knitr::kable(depth_res, digits = 3)
+
+ggplot(
+  melt(depth_res[, .(depth, nnil, rtiger, pedigree)],
+    id.vars = "depth",
+    variable.name = "caller", value.name = "accuracy"
+  ),
+  aes(depth, accuracy, colour = caller)
+) +
+  geom_vline(xintercept = 0.4, linetype = "dotted") +
+  annotate("text", x = 0.4, y = -Inf, label = " ZEAL ~0.4×", hjust = 0, vjust = -0.5, size = 3) +
+  geom_line() +
+  geom_point() +
+  scale_x_log10() +
+  labs(
+    x = "depth (×, log)", y = "per-marker dosage accuracy",
+    title = "At ZEAL scale/depth the pedigree caller reaches parity, not a gain",
+    subtitle = "rtiger's within-individual rigidity is the strong baseline; coupling does not overtake it"
+  ) +
+  theme_minimal()
+```
+
+## 3. What the coupling *does* buy: full-grid missing-data fill
+
+At skim depth a large fraction of markers carry no reads. The count emission emits
+flat there (`n = 0`) and the pedigree fills the state from relatives (Text S9.3):
+the caller leaves **no marker uncalled**. We score accuracy specifically on the
+zero-coverage markers at ZEAL's ~0.4×.
+
+```{r zero-cov}
+o <- simulate_counts(truth, depth = 0.4, error = 0.01, seed = params$seed)
+o$cm <- truth$cm[match(paste(o$name, o$chr, o$pos), paste(truth$name, truth$chr, truth$pos))]
+o$depth <- o$n_ref + o$n_alt
+cp <- call_states(o, caller = "pedigree", pedigree = sim$pedigree, design = params$design)
+zc <- o[o$depth == 0, c("name", "chr", "pos")]
+kt <- paste(truth$name, truth$chr, truth$pos)
+ts_z <- truth$state[match(paste(zc$name, zc$chr, zc$pos), kt)]
+pz <- cp$state[match(paste(zc$name, zc$chr, zc$pos), paste(cp$name, cp$chr, cp$pos))]
+cat(sprintf("zero-coverage markers at 0.4x: %.0f%% of the grid\n", 100 * nrow(zc) / nrow(o)))
+cat(sprintf("pedigree calls left uncalled: %d\n", sum(is.na(pz))))
+cat(sprintf("pedigree accuracy on the zero-coverage markers: %.3f\n", mean(pz == ts_z, na.rm = TRUE)))
+```
+
+## 4. Why parity, not a gain
+
+The gap to `rtiger` is expected from the model, not a bug. The current kernel
+couples relatives with a **per-marker** selfing factor $T^{\mathrm{sib}}$, which
+drops *transmission linkage*: a parent transmits a donor **segment** as a coherent
+block, but the per-marker factor only pools siblings marker-by-marker (weak
+marginal pooling), not over the shared blocks they actually inherited
+(`nilhmm/design/PEDIGREE_HMM.md` §2). Meanwhile `rtiger` already captures
+block coherence *within* each individual through its rigidity prior — the strong
+baseline. Block-coherent *cross-sibling* pooling — the mechanism that would let the
+coupling overtake `rtiger` — needs the **phased copy-switch transmission kernel**
+(§18), deferred to a follow-up branch.
+
+## Take
+
+On a ZEAL-structured cohort (82 founders, ~17 lines/founder, n ≈ 1394) at skim
+depth, the `pedigree` caller:
+
+- **reaches parity with, but does not beat, the single-chain callers** — at ~0.4× it
+  matches `nnil` and trails `rtiger` by a small margin, and the three converge by
+  ~1×. This is consistent with the design's own prediction (§2): the per-marker
+  transmission factor cannot pool siblings over inherited blocks.
+- **calls 100% of markers, including the fully-uncovered majority**, filling
+  zero-coverage sites from relatives — a real capability the single-chain callers
+  achieve only through their own spatial smoothing.
+
+So the caller is validated as **correct and principled infrastructure** (depth-aware
+family coupling + the `refine_ancestry()` workflow + the foundation for the phased
+kernel), **not** as an accuracy improvement over `rtiger` on ZEAL-like data. The
+block-coherent gain is the goal of the phased copy-switch kernel (§18), a separate
+branch.
