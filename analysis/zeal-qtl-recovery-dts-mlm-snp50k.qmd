@@ -90,7 +90,7 @@ candidate_table(TR)
 ## Candidate genes: closest marker vs window-max marker
 
 For each maize flowering candidate (B73 v5), the closest marker to the gene body vs the
-highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Taxon+K)** scan (Panel C).
+highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Family+K)** scan (Panel C).
 The same v5 flowering candidates as DTA (these are maize genes; teosinte introgression at them
 drives flowering time in both sexes).
 
@@ -121,19 +121,21 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = sprintf("DTS candidates (B73 v5): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+  caption = sprintf("DTS candidates (B73 v5): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
 ## OLS → MLM: the flowering confound and structure control
 
-The fixed-effect OLS (Taxon + marker, no K) vs the MLM (Taxon + K) on the RTIGER mosaic, same
+Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level structure correction) that the MLM and per-marker OLS scans were actually computed with — a stronger correction than the 5 donor **taxa** the JLM nests on. It likely over-corrects population structure and costs some power; a taxon-level (5) MLM/OLS rerun is a pending comparison (see `TERMINOLOGY.md`).
+
+The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the RTIGER mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1 **and**
 collapses the flowering peaks (`ZmCCT10`), the ancestry-QTL confound.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea DTS — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL/BZea DTS — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/dts_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -141,13 +143,13 @@ plot_manhattan(ols,
 
 ```{r ols-vs-mlm}
 lam_tab <- data.table(
-  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  model = c("OLS (Family + marker, no K)", "MLM (Family + K)"),
   markers = c(nrow(ols), nrow(mlm)),
   lambda_GC = c(lam(ols$P), lam(mlm$P)),
   `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -181,11 +183,11 @@ p_lolli <- plot_lollipop(
 p_lolli
 ```
 
-## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+## MLM (Family + K), RTIGER ancestry mosaic (Panel C)
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea DTS — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL/BZea DTS — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/dts_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm
@@ -200,11 +202,11 @@ genotype. The B↔C contrast is the notebook's per-SNP-scatter vs ancestry-block
 
 ```{r composite, fig.width=9, fig.height=13}
 p_B <- plot_manhattan(gt,
-  sprintf("DTS — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(gt$P)),
+  sprintf("DTS — MLM (Family+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(gt$P)),
   overlap_csv = overlap, lod = thr_gt
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("DTS — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("DTS — MLM (Family+K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
@@ -214,7 +216,7 @@ composite
 
 ## Multi-caller DTS scan (control · nNIL · RTIGER · LB-Impute · binhmm)
 
-The same DTS MLM (Taxon+K) scan on each ancestry caller's recovered genotypes, at the real
+The same DTS MLM (Family+K) scan on each ancestry caller's recovered genotypes, at the real
 ~0.4× depth. Caller reliability at low coverage: the block/bin-aggregated callers (RTIGER
 per-donor segments; binhmm 1 Mb bins) recover the correct teosinte fraction (~0.10), while
 per-SNP calling (control) and the fresh per-SNP HMM recalls (nNIL, LB-Impute) **under-call** and
@@ -242,13 +244,13 @@ ctab2 <- rbindlist(lapply(names(callers), function(nm) {
     `zmcct10 -log10P` = if (nrow(z)) round(max(z[is.finite(P) & P > 0, -log10(P)]), 2) else NA_real_
   )
 }))
-knitr::kable(ctab2, caption = "DTS MLM (Taxon+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the zmcct10 window-max -log10P. Aggregated callers (RTIGER, binhmm) recover teosinte presence ~0.10; per-SNP (control) and per-SNP recalls (nNIL, LB-Impute) under-call and deflate λ_GC.")
+knitr::kable(ctab2, caption = "DTS MLM (Family+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the zmcct10 window-max -log10P. Aggregated callers (RTIGER, binhmm) recover teosinte presence ~0.10; per-SNP (control) and per-SNP recalls (nNIL, LB-Impute) under-call and deflate λ_GC.")
 ```
 
 ```{r caller-composite, fig.width=9, fig.height=20}
 panels <- lapply(names(callers), function(nm) {
   sc <- fread(here(sprintf("data/zeal/dts_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
-  plot_manhattan(sc, sprintf("DTS MLM (Taxon+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
+  plot_manhattan(sc, sprintf("DTS MLM (Family+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
 })
 cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
 ggsave(here("results/sim/zeal/dts_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")

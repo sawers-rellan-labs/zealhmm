@@ -124,15 +124,17 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = sprintf("SPAD (20DAS) candidates (B73 v5 maize chlorophyll panel): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Taxon+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+  caption = sprintf("SPAD (20DAS) candidates (B73 v5 maize chlorophyll panel): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
 ## OLS → MLM: structure control
 
+Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level structure correction) that the MLM and per-marker OLS scans were actually computed with — a stronger correction than the 5 donor **taxa** the JLM nests on. It likely over-corrects population structure and costs some power; a taxon-level (5) MLM/OLS rerun is a pending comparison (see `TERMINOLOGY.md`).
+
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea SPAD 20DAS — OLS (Taxon + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL/BZea SPAD 20DAS — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/spad20das_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -140,13 +142,13 @@ plot_manhattan(ols,
 
 ```{r ols-vs-mlm}
 lam_tab <- data.table(
-  model = c("OLS (Taxon + marker, no K)", "MLM (Taxon + K)"),
+  model = c("OLS (Family + marker, no K)", "MLM (Family + K)"),
   markers = c(nrow(ols), nrow(mlm)),
   lambda_GC = c(lam(ols$P), lam(mlm$P)),
   `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Taxon fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -177,11 +179,11 @@ p_lolli <- plot_lollipop(
 p_lolli
 ```
 
-## MLM (Taxon + K), RTIGER ancestry mosaic (Panel C)
+## MLM (Family + K), RTIGER ancestry mosaic (Panel C)
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea SPAD 20DAS — MLM (Taxon + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL/BZea SPAD 20DAS — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/spad20das_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm
@@ -192,11 +194,11 @@ cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P,
 
 ```{r composite, fig.width=9, fig.height=13}
 p_B <- plot_manhattan(gt,
-  sprintf("SPAD 20DAS — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
+  sprintf("SPAD 20DAS — MLM (Family+K), per-SNP genotype (bcftools HWE-posterior) (λ_GC = %.2f)", lam(gt$P)),
   overlap_csv = overlap, lod = thr_gt
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("SPAD 20DAS — MLM (Taxon+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  sprintf("SPAD 20DAS — MLM (Family+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
@@ -234,13 +236,13 @@ ctab2 <- rbindlist(lapply(names(callers), function(nm) {
     `best candidate -log10P` = max_cand_logp(sc)
   )
 }))
-knitr::kable(ctab2, caption = "SPAD 20DAS MLM (Taxon+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the chlorophyll candidate windows.")
+knitr::kable(ctab2, caption = "SPAD 20DAS MLM (Family+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the chlorophyll candidate windows.")
 ```
 
 ```{r caller-composite, fig.width=9, fig.height=20}
 panels <- lapply(names(callers), function(nm) {
   sc <- fread(here(sprintf("data/zeal/spad20das_gwas_mlm_%s_donor_accession_snp50k.csv", callers[[nm]])))
-  plot_manhattan(sc, sprintf("SPAD 20DAS MLM (Taxon+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
+  plot_manhattan(sc, sprintf("SPAD 20DAS MLM (Family+K) — %s (λ_GC = %.2f; perm FWER 5%%)", nm, lam(sc$P)), overlap_csv = overlap, lod = gwas_thr(TR, "mlm", callers[[nm]]))
 })
 cc <- cowplot::plot_grid(plotlist = panels, ncol = 1, labels = LETTERS[1:5], label_size = 18, align = "v", axis = "lr")
 ggsave(here("results/sim/zeal/spad20das_caller_composite_fdr_snp50k.png"), cc, width = 9, height = 20, dpi = 200, bg = "white")

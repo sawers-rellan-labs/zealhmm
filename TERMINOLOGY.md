@@ -33,16 +33,24 @@ umbrella. Taxa: **Zv / Zx / Zl / Zd / Zh**. Dotted codes `Zx.####` are individua
 
 ## Population-structure covariate (Family vs. taxon)
 
-The MLM structure covariate is **not** named the same across datasets:
+The structure covariate differs by dataset **and by analysis** — and, importantly, the ZEAL
+scans as *run* are not what the older "Taxon" labels implied:
 
-- **TeoNAM (Chen 2019):** Q (first 5 PCs of the kinship K) ≈ a 5-level **Family** factor
-  = the 5 donor parents (1 parent = 1 family = 1 taxon draw). My TeoNAM *validation*
-  substitutes an explicit 5-level "Family" factor for Q.
-- **ZEAL/BZea:** the covariate is **taxon (5)**, *not* per-founder family — the 82
-  founders collapse into 5 taxa. "Family" carried over from TeoNAM is misleading here.
+- **TeoNAM (Chen 2019):** Q (first 5 PCs of the kinship K) ≈ a 5-level factor = the 5 donor
+  parents (1 parent = 1 family). The TeoNAM validation uses an explicit 5-level **Family**
+  factor in place of Q.
+- **ZEAL/BZea — what the code actually did:** the **MLM and per-marker OLS** scans were
+  computed with the **82-donor-accession** factor (`FAMILY_COL=donor_accession`,
+  parent-plant-level correction) — this is what "**Family**" denotes in the notebooks. The
+  **JLM** instead nests marker effects within the **5 donor taxa** (the TASSEL pheno-file
+  `Family` column holds taxon codes `Zd`/`Zx`/…). So MLM/OLS (82) and JLM (5) genuinely use
+  **different** structure factors; the notebooks say "**Family**" for the 82-accession scans
+  and "**taxon**" for the JLM nesting, each matching what it computed.
 
-Correction pending (relabel ZEAL "Family" → taxon; explain the distinction in the
-notebooks/paper) — see the `zeal-q-analog-is-taxon-not-family` memory.
+The 82-accession correction is a strong (parent-plant-level) structure control that likely
+over-corrects and costs power. **Pending comparison** (`zeal-q-analog-is-taxon-not-family`
+memory): rerun the MLM/OLS at the **taxon (5)** level and decide — if over-inflated, discard;
+if it recovers power without inflation, it *replaces* the donor-accession scans in the paper.
 
 ## Phenotypes / trait panel
 
