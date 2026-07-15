@@ -278,7 +278,7 @@ removes). One replicate per (family, λ) cell.
 
 ```{r sweep-composite, fig.width=9, fig.height=20}
 pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — interpolation control (GL + HWE)", legend = TRUE, legend_corner = "topright")
-pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — nNIL ancestry", legend = FALSE)
+pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — bbNIL ancestry", legend = FALSE)
 pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — RTIGER ancestry", legend = FALSE)
 pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — LB-Impute ancestry (map-aware cM)", legend = FALSE)
 pE <- plot_sweep_line(here("results/sim/teonam/stam_gwas_binhmm_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — binhmm ancestry (1 Mb bins)", legend = FALSE)
