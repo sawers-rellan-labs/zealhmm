@@ -497,7 +497,7 @@ pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_sweep.csv"),
   legend = TRUE
 )
 pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_sweep.csv"),
-  "STAM — nNIL ancestry",
+  "STAM — bbNIL ancestry",
   legend = FALSE
 )
 pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
