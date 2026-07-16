@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-10">
+<meta name="dcterms.date" content="2026-07-16">
 
-<title>BAM-alignment genome coverage and missing data in the BZea population – zealhmm</title>
+<title>BAM-alignment genome coverage and missing data in the ZEAL population – zealhmm</title>
 <style>
 
 code{white-space: pre-wrap;}
@@ -4245,8 +4245,8 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">BAM-alignment genome coverage and missing data in the BZea population</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
-<p class="subtitle lead">Missing-data modelling in BZea, part 2 of 3 — the exponential-with-floor model</p>
+<div class="quarto-title-block"><div><h1 class="title">BAM-alignment genome coverage and missing data in the ZEAL population</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+<p class="subtitle lead">Missing-data modelling in ZEAL, part 2 of 3 — the exponential-with-floor model</p>
 </div>
 
 
@@ -4263,7 +4263,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 10, 2026</p>
+      <p class="date">July 16, 2026</p>
     </div>
   </div>
   
@@ -4275,7 +4275,7 @@ window.Quarto = {
 </header>
 
 
-<p><strong>Purpose.</strong> Extend the Poisson baseline from <code>missing-data-coverage-theory.qmd</code> into a model that actually fits the BZea data. We analyze <strong>BAM alignments directly</strong> — before any genotype calling or VCF filtering — and show that per-sample missingness follows an <em>exponential-with-floor</em> law rather than the pure Poisson expectation.</p>
+<p><strong>Purpose.</strong> Extend the Poisson baseline from <code>missing-data-coverage-theory.qmd</code> into a model that actually fits the ZEAL data. We analyze <strong>BAM alignments directly</strong> — before any genotype calling or VCF filtering — and show that per-sample missingness follows an <em>exponential-with-floor</em> law rather than the pure Poisson expectation.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Where this sits in the series">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -4288,8 +4288,8 @@ window.Quarto = {
 <div class="callout-body-container callout-body">
 <ol type="1">
 <li><code>missing-data-coverage-theory.qmd</code> — Poisson coverage theory (the baseline).</li>
-<li><strong>This note</strong> — the exponential-with-floor model, fit to BZea BAM alignments.</li>
-<li><code>missing-data-model-comparison.qmd</code> — the floor model applied to three BZea datasets.</li>
+<li><strong>This note</strong> — the exponential-with-floor model, fit to ZEAL BAM alignments.</li>
+<li><code>missing-data-model-comparison.qmd</code> — the floor model applied to three ZEAL datasets.</li>
 </ol>
 </div>
 </div>
@@ -4304,14 +4304,14 @@ window.Quarto = {
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggpubr)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(cowplot)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(minpack.lm)   <span class="co"># nlsLM: robust Levenberg-Marquardt nonlinear least squares</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(minpack.lm) <span class="co"># nlsLM: robust Levenberg-Marquardt nonlinear least squares</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(viridis)</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <section id="introduction" class="level1">
 <h1>1 Introduction</h1>
-<p>This analysis examines genome coverage and the distribution of missing read data in the <strong>BZea</strong> maize–teosinte population without calling genotypes or relying on VCF files. Instead, we analyze the <strong>BAM alignments</strong> directly, prior to any genotype calling. We used GATK’s <code>CollectAllelicCounts</code> on the BAM files, restricting read counting to sites corresponding to ~27 million known teosinte variants (the <code>wideseq_ref</code> panel). For each site and sample the tool counted the number of reads supporting each allele, and these counts were aggregated into 1 Mb bins for the initial file in the workflow.</p>
+<p>This analysis examines genome coverage and the distribution of missing read data in the <strong>ZEAL</strong> maize–teosinte population without calling genotypes or relying on VCF files. Instead, we analyze the <strong>BAM alignments</strong> directly, prior to any genotype calling. We used GATK’s <code>CollectAllelicCounts</code> on the BAM files, restricting read counting to sites corresponding to ~27 million known teosinte variants (the <code>wideseq_ref</code> panel). For each site and sample the tool counted the number of reads supporting each allele, and these counts were aggregated into 1 Mb bins for the initial file in the workflow.</p>
 <p>By aggregating the per-bin read counts across the genome, we estimate coverage (<span class="math inline">\(\lambda\)</span>) and compare the <strong>observed fraction of missing genotype calls</strong> against the <strong>expected missing fraction</strong> under the Poisson coverage model.</p>
 <section id="theoretical-background" class="level2">
 <h2 class="anchored" data-anchor-id="theoretical-background">1.1 Theoretical background</h2>
@@ -4426,8 +4426,10 @@ window.Quarto = {
 </div>
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Effective coverage (k*lambda) range:&quot;</span>,</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="fu">round</span>(k_est <span class="sc">*</span> <span class="fu">range</span>(per_sample<span class="sc">$</span>lambda), <span class="dv">3</span>), <span class="at">collapse =</span> <span class="st">&quot; - &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Effective coverage (k*lambda) range:&quot;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="fu">round</span>(k_est <span class="sc">*</span> <span class="fu">range</span>(per_sample<span class="sc">$</span>lambda), <span class="dv">3</span>), <span class="at">collapse =</span> <span class="st">&quot; - &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Effective coverage (k*lambda) range: 0 - 0.846 </code></pre>
@@ -4442,26 +4444,28 @@ window.Quarto = {
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Restrict to samples with well-defined missingness in (0, 1)</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.finite</span>(lambda), <span class="fu">is.finite</span>(missing_obs),</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>         missing_obs <span class="sc">&gt;</span> <span class="dv">0</span>, missing_obs <span class="sc">&lt;</span> <span class="dv">1</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial estimate of the floor from a linear fit of observed vs Poisson</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>fit_missing <span class="ot">&lt;-</span> <span class="fu">lm</span>(missing_obs <span class="sc">~</span> missing_poisson, <span class="at">data =</span> per_sample)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>pi_est <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_missing)[<span class="dv">1</span>]</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>fit_exp_floor <span class="ot">&lt;-</span> <span class="fu">nlsLM</span>(</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  missing_obs <span class="sc">~</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>k <span class="sc">*</span> lambda),</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat,</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">pi =</span> pi_est, <span class="at">k =</span> k_est),</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">lower =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">upper =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_exp_floor)</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> model_params[<span class="dv">1</span>]</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>k  <span class="ot">&lt;-</span> model_params[<span class="dv">2</span>]</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.finite</span>(lambda), <span class="fu">is.finite</span>(missing_obs),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    missing_obs <span class="sc">&gt;</span> <span class="dv">0</span>, missing_obs <span class="sc">&lt;</span> <span class="dv">1</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial estimate of the floor from a linear fit of observed vs Poisson</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>fit_missing <span class="ot">&lt;-</span> <span class="fu">lm</span>(missing_obs <span class="sc">~</span> missing_poisson, <span class="at">data =</span> per_sample)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>pi_est <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_missing)[<span class="dv">1</span>]</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>fit_exp_floor <span class="ot">&lt;-</span> <span class="fu">nlsLM</span>(</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  missing_obs <span class="sc">~</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>k <span class="sc">*</span> lambda),</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">pi =</span> pi_est, <span class="at">k =</span> k_est),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">lower =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">upper =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_exp_floor)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> model_params[<span class="dv">1</span>]</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> model_params[<span class="dv">2</span>]</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Floor parameter (pi): 0.346 </code></pre>
@@ -4477,8 +4481,9 @@ window.Quarto = {
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>per_sample<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_exp_floor, <span class="at">newdata =</span> per_sample)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>overall_stats<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  fit_exp_floor, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">lambda =</span> overall_stats<span class="sc">$</span>lambda)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  fit_exp_floor,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">lambda =</span> overall_stats<span class="sc">$</span>lambda)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -4491,20 +4496,24 @@ window.Quarto = {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>decay_plot <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>missing_obs) <span class="sc">%&gt;%</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">&quot;missing_&quot;</span>),</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_to =</span> <span class="st">&quot;model&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;pred&quot;</span>,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_prefix =</span> <span class="st">&quot;missing_&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> pred, <span class="at">col =</span> model, <span class="at">group =</span> model)) <span class="sc">+</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> per_sample, <span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> missing_obs),</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Coverage&quot;</span>) <span class="sc">+</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Missing Fraction&quot;</span>) <span class="sc">+</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> lambda_bar, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.25</span>), <span class="at">legend.box =</span> <span class="st">&quot;horizontal&quot;</span>)</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(decay_plot)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">&quot;missing_&quot;</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">&quot;model&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;pred&quot;</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_prefix =</span> <span class="st">&quot;missing_&quot;</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> pred, <span class="at">col =</span> model, <span class="at">group =</span> model)) <span class="sc">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> per_sample, <span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> missing_obs),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.3</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Coverage&quot;</span>) <span class="sc">+</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Missing Fraction&quot;</span>) <span class="sc">+</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> lambda_bar, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.25</span>), <span class="at">legend.box =</span> <span class="st">&quot;horizontal&quot;</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(decay_plot)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -4521,7 +4530,7 @@ window.Quarto = {
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>xy_limits     <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>xy_limits <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>legend_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="fl">1.5</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>legend_labels <span class="ot">&lt;-</span> <span class="fu">as.character</span>(legend_breaks)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -4535,26 +4544,30 @@ window.Quarto = {
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> missing_poisson, <span class="at">y =</span> missing_obs, <span class="at">col =</span> lambda)) <span class="sc">+</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)) <span class="sc">+</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> overall_stats<span class="sc">$</span>missing_poisson, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs,</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Poisson)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>inlay_grob <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">as_grob</span>(p_hist)</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>final_plot_poisson <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_poisson) <span class="sc">+</span></span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> overall_stats<span class="sc">$</span>missing_poisson, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;red&quot;</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Poisson)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>inlay_grob <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">as_grob</span>(p_hist)</span>
 <span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_poisson)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>final_plot_poisson <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_poisson) <span class="sc">+</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_poisson)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -4576,24 +4589,28 @@ window.Quarto = {
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> pi, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                        <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)) <span class="sc">+</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> overall_stats<span class="sc">$</span>missing_exp_floor,</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Floor Model)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>final_plot_floor <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_floor) <span class="sc">+</span></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> overall_stats<span class="sc">$</span>missing_exp_floor,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Floor Model)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
 <span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_floor)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>final_plot_floor <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_floor) <span class="sc">+</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_floor)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -4667,7 +4684,7 @@ window.Quarto = {
 </div>
 </div>
 <p>The exponential-with-floor model substantially improves the fit over the simple Poisson model. The floor parameter (~0.35) indicates that about a third of sites remain uncallable even at high coverage — likely repetitive sequence, structural variants, or mapping artifacts. The decay rate (~1.26) implies slower-than-Poisson decay of missingness with increasing coverage.</p>
-<p>Part 3 (<code>missing-data-model-comparison.qmd</code>) evaluates how stable <span class="math inline">\(\pi\)</span> and <span class="math inline">\(k\)</span> are when the same model is fit to three different BZea data products.</p>
+<p>Part 3 (<code>missing-data-model-comparison.qmd</code>) evaluates how stable <span class="math inline">\(\pi\)</span> and <span class="math inline">\(k\)</span> are when the same model is fit to three different ZEAL data products.</p>
 </section>
 <section id="references" class="level1">
 <h1>8 References</h1>
@@ -5132,8 +5149,8 @@ window.Quarto = {
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;BAM-alignment genome coverage and missing data in the BZea population&quot;</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Missing-data modelling in BZea, part 2 of 3 — the exponential-with-floor model&quot;</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;BAM-alignment genome coverage and missing data in the ZEAL population&quot;</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;Missing-data modelling in ZEAL, part 2 of 3 — the exponential-with-floor model&quot;</span></span>
 <span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
 <span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
 <span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
@@ -5148,15 +5165,15 @@ window.Quarto = {
 <span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>**Purpose.** Extend the Poisson baseline from <span class="in">`missing-data-coverage-theory.qmd`</span></span>
-<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>into a model that actually fits the BZea data. We analyze **BAM alignments</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>into a model that actually fits the ZEAL data. We analyze **BAM alignments</span>
 <span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>directly** — before any genotype calling or VCF filtering — and show that</span>
 <span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>per-sample missingness follows an *exponential-with-floor* law rather than the</span>
 <span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>pure Poisson expectation.</span>
 <span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title=&quot;Where this sits in the series&quot;}</span>
 <span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span><span class="in">`missing-data-coverage-theory.qmd`</span> — Poisson coverage theory (the baseline).</span>
-<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**This note** — the exponential-with-floor model, fit to BZea BAM alignments.</span>
-<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span><span class="in">`missing-data-model-comparison.qmd`</span> — the floor model applied to three BZea datasets.</span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**This note** — the exponential-with-floor model, fit to ZEAL BAM alignments.</span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span><span class="in">`missing-data-model-comparison.qmd`</span> — the floor model applied to three ZEAL datasets.</span>
 <span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
@@ -5168,7 +5185,7 @@ window.Quarto = {
 <span id="cb35-35"><a href="#cb35-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb35-36"><a href="#cb35-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggpubr)</span>
 <span id="cb35-37"><a href="#cb35-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(cowplot)</span>
-<span id="cb35-38"><a href="#cb35-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(minpack.lm)   <span class="co"># nlsLM: robust Levenberg-Marquardt nonlinear least squares</span></span>
+<span id="cb35-38"><a href="#cb35-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(minpack.lm) <span class="co"># nlsLM: robust Levenberg-Marquardt nonlinear least squares</span></span>
 <span id="cb35-39"><a href="#cb35-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(viridis)</span>
 <span id="cb35-40"><a href="#cb35-40" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb35-41"><a href="#cb35-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
@@ -5176,7 +5193,7 @@ window.Quarto = {
 <span id="cb35-43"><a href="#cb35-43" aria-hidden="true" tabindex="-1"></a><span class="fu"># 1 Introduction</span></span>
 <span id="cb35-44"><a href="#cb35-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-45"><a href="#cb35-45" aria-hidden="true" tabindex="-1"></a>This analysis examines genome coverage and the distribution of missing read data</span>
-<span id="cb35-46"><a href="#cb35-46" aria-hidden="true" tabindex="-1"></a>in the **BZea** maize–teosinte population without calling genotypes or relying on</span>
+<span id="cb35-46"><a href="#cb35-46" aria-hidden="true" tabindex="-1"></a>in the **ZEAL** maize–teosinte population without calling genotypes or relying on</span>
 <span id="cb35-47"><a href="#cb35-47" aria-hidden="true" tabindex="-1"></a>VCF files. Instead, we analyze the **BAM alignments** directly, prior to any</span>
 <span id="cb35-48"><a href="#cb35-48" aria-hidden="true" tabindex="-1"></a>genotype calling. We used GATK&#39;s <span class="in">`CollectAllelicCounts`</span> on the BAM files,</span>
 <span id="cb35-49"><a href="#cb35-49" aria-hidden="true" tabindex="-1"></a>restricting read counting to sites corresponding to ~27 million known teosinte</span>
@@ -5307,172 +5324,189 @@ window.Quarto = {
 <span id="cb35-174"><a href="#cb35-174" aria-hidden="true" tabindex="-1"></a>k_est <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">coef</span>(fit_linear)[<span class="dv">2</span>]</span>
 <span id="cb35-175"><a href="#cb35-175" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Estimated k:&quot;</span>, <span class="fu">round</span>(k_est, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb35-176"><a href="#cb35-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-177"><a href="#cb35-177" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Effective coverage (k*lambda) range:&quot;</span>,</span>
-<span id="cb35-178"><a href="#cb35-178" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="fu">round</span>(k_est <span class="sc">*</span> <span class="fu">range</span>(per_sample<span class="sc">$</span>lambda), <span class="dv">3</span>), <span class="at">collapse =</span> <span class="st">&quot; - &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-179"><a href="#cb35-179" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-180"><a href="#cb35-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-181"><a href="#cb35-181" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4.2 Exponential-with-floor model</span></span>
+<span id="cb35-177"><a href="#cb35-177" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(</span>
+<span id="cb35-178"><a href="#cb35-178" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Effective coverage (k*lambda) range:&quot;</span>,</span>
+<span id="cb35-179"><a href="#cb35-179" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="fu">round</span>(k_est <span class="sc">*</span> <span class="fu">range</span>(per_sample<span class="sc">$</span>lambda), <span class="dv">3</span>), <span class="at">collapse =</span> <span class="st">&quot; - &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb35-180"><a href="#cb35-180" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-181"><a href="#cb35-181" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb35-182"><a href="#cb35-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-183"><a href="#cb35-183" aria-hidden="true" tabindex="-1"></a>Now the full model, fit by robust nonlinear least squares (<span class="in">`nlsLM`</span>), using the</span>
-<span id="cb35-184"><a href="#cb35-184" aria-hidden="true" tabindex="-1"></a>linear-model estimates as starting values.</span>
-<span id="cb35-185"><a href="#cb35-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-186"><a href="#cb35-186" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fit-floor}</span></span>
-<span id="cb35-187"><a href="#cb35-187" aria-hidden="true" tabindex="-1"></a><span class="co"># Restrict to samples with well-defined missingness in (0, 1)</span></span>
-<span id="cb35-188"><a href="#cb35-188" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
-<span id="cb35-189"><a href="#cb35-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.finite</span>(lambda), <span class="fu">is.finite</span>(missing_obs),</span>
-<span id="cb35-190"><a href="#cb35-190" aria-hidden="true" tabindex="-1"></a>         missing_obs <span class="sc">&gt;</span> <span class="dv">0</span>, missing_obs <span class="sc">&lt;</span> <span class="dv">1</span>)</span>
-<span id="cb35-191"><a href="#cb35-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-192"><a href="#cb35-192" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial estimate of the floor from a linear fit of observed vs Poisson</span></span>
-<span id="cb35-193"><a href="#cb35-193" aria-hidden="true" tabindex="-1"></a>fit_missing <span class="ot">&lt;-</span> <span class="fu">lm</span>(missing_obs <span class="sc">~</span> missing_poisson, <span class="at">data =</span> per_sample)</span>
-<span id="cb35-194"><a href="#cb35-194" aria-hidden="true" tabindex="-1"></a>pi_est <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_missing)[<span class="dv">1</span>]</span>
+<span id="cb35-183"><a href="#cb35-183" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4.2 Exponential-with-floor model</span></span>
+<span id="cb35-184"><a href="#cb35-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-185"><a href="#cb35-185" aria-hidden="true" tabindex="-1"></a>Now the full model, fit by robust nonlinear least squares (<span class="in">`nlsLM`</span>), using the</span>
+<span id="cb35-186"><a href="#cb35-186" aria-hidden="true" tabindex="-1"></a>linear-model estimates as starting values.</span>
+<span id="cb35-187"><a href="#cb35-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-188"><a href="#cb35-188" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fit-floor}</span></span>
+<span id="cb35-189"><a href="#cb35-189" aria-hidden="true" tabindex="-1"></a><span class="co"># Restrict to samples with well-defined missingness in (0, 1)</span></span>
+<span id="cb35-190"><a href="#cb35-190" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
+<span id="cb35-191"><a href="#cb35-191" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb35-192"><a href="#cb35-192" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.finite</span>(lambda), <span class="fu">is.finite</span>(missing_obs),</span>
+<span id="cb35-193"><a href="#cb35-193" aria-hidden="true" tabindex="-1"></a>    missing_obs <span class="sc">&gt;</span> <span class="dv">0</span>, missing_obs <span class="sc">&lt;</span> <span class="dv">1</span></span>
+<span id="cb35-194"><a href="#cb35-194" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb35-195"><a href="#cb35-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-196"><a href="#cb35-196" aria-hidden="true" tabindex="-1"></a>fit_exp_floor <span class="ot">&lt;-</span> <span class="fu">nlsLM</span>(</span>
-<span id="cb35-197"><a href="#cb35-197" aria-hidden="true" tabindex="-1"></a>  missing_obs <span class="sc">~</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>k <span class="sc">*</span> lambda),</span>
-<span id="cb35-198"><a href="#cb35-198" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat,</span>
-<span id="cb35-199"><a href="#cb35-199" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">pi =</span> pi_est, <span class="at">k =</span> k_est),</span>
-<span id="cb35-200"><a href="#cb35-200" aria-hidden="true" tabindex="-1"></a>  <span class="at">lower =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb35-201"><a href="#cb35-201" aria-hidden="true" tabindex="-1"></a>  <span class="at">upper =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span>
-<span id="cb35-202"><a href="#cb35-202" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb35-203"><a href="#cb35-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-204"><a href="#cb35-204" aria-hidden="true" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_exp_floor)</span>
-<span id="cb35-205"><a href="#cb35-205" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> model_params[<span class="dv">1</span>]</span>
-<span id="cb35-206"><a href="#cb35-206" aria-hidden="true" tabindex="-1"></a>k  <span class="ot">&lt;-</span> model_params[<span class="dv">2</span>]</span>
+<span id="cb35-196"><a href="#cb35-196" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial estimate of the floor from a linear fit of observed vs Poisson</span></span>
+<span id="cb35-197"><a href="#cb35-197" aria-hidden="true" tabindex="-1"></a>fit_missing <span class="ot">&lt;-</span> <span class="fu">lm</span>(missing_obs <span class="sc">~</span> missing_poisson, <span class="at">data =</span> per_sample)</span>
+<span id="cb35-198"><a href="#cb35-198" aria-hidden="true" tabindex="-1"></a>pi_est <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_missing)[<span class="dv">1</span>]</span>
+<span id="cb35-199"><a href="#cb35-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-200"><a href="#cb35-200" aria-hidden="true" tabindex="-1"></a>fit_exp_floor <span class="ot">&lt;-</span> <span class="fu">nlsLM</span>(</span>
+<span id="cb35-201"><a href="#cb35-201" aria-hidden="true" tabindex="-1"></a>  missing_obs <span class="sc">~</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>k <span class="sc">*</span> lambda),</span>
+<span id="cb35-202"><a href="#cb35-202" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat,</span>
+<span id="cb35-203"><a href="#cb35-203" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">pi =</span> pi_est, <span class="at">k =</span> k_est),</span>
+<span id="cb35-204"><a href="#cb35-204" aria-hidden="true" tabindex="-1"></a>  <span class="at">lower =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb35-205"><a href="#cb35-205" aria-hidden="true" tabindex="-1"></a>  <span class="at">upper =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span>
+<span id="cb35-206"><a href="#cb35-206" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb35-207"><a href="#cb35-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-208"><a href="#cb35-208" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-209"><a href="#cb35-209" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Decay rate (k):&quot;</span>, <span class="fu">round</span>(k, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-210"><a href="#cb35-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-211"><a href="#cb35-211" aria-hidden="true" tabindex="-1"></a>per_sample<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_exp_floor, <span class="at">newdata =</span> per_sample)</span>
-<span id="cb35-212"><a href="#cb35-212" aria-hidden="true" tabindex="-1"></a>overall_stats<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
-<span id="cb35-213"><a href="#cb35-213" aria-hidden="true" tabindex="-1"></a>  fit_exp_floor, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">lambda =</span> overall_stats<span class="sc">$</span>lambda)</span>
-<span id="cb35-214"><a href="#cb35-214" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb35-215"><a href="#cb35-215" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-216"><a href="#cb35-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-217"><a href="#cb35-217" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5 Model comparison</span></span>
-<span id="cb35-218"><a href="#cb35-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-219"><a href="#cb35-219" aria-hidden="true" tabindex="-1"></a><span class="in">```{r decay-plot}</span></span>
-<span id="cb35-220"><a href="#cb35-220" aria-hidden="true" tabindex="-1"></a>decay_plot <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
-<span id="cb35-221"><a href="#cb35-221" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>missing_obs) <span class="sc">%&gt;%</span></span>
-<span id="cb35-222"><a href="#cb35-222" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb35-223"><a href="#cb35-223" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">&quot;missing_&quot;</span>),</span>
-<span id="cb35-224"><a href="#cb35-224" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_to =</span> <span class="st">&quot;model&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;pred&quot;</span>,</span>
-<span id="cb35-225"><a href="#cb35-225" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_prefix =</span> <span class="st">&quot;missing_&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb35-226"><a href="#cb35-226" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> pred, <span class="at">col =</span> model, <span class="at">group =</span> model)) <span class="sc">+</span></span>
-<span id="cb35-227"><a href="#cb35-227" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> per_sample, <span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> missing_obs),</span>
-<span id="cb35-228"><a href="#cb35-228" aria-hidden="true" tabindex="-1"></a>             <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
-<span id="cb35-229"><a href="#cb35-229" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb35-230"><a href="#cb35-230" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Coverage&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-231"><a href="#cb35-231" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Missing Fraction&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-232"><a href="#cb35-232" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> lambda_bar, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-233"><a href="#cb35-233" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb35-234"><a href="#cb35-234" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.25</span>), <span class="at">legend.box =</span> <span class="st">&quot;horizontal&quot;</span>)</span>
-<span id="cb35-235"><a href="#cb35-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-236"><a href="#cb35-236" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(decay_plot)</span>
-<span id="cb35-237"><a href="#cb35-237" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-238"><a href="#cb35-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-239"><a href="#cb35-239" aria-hidden="true" tabindex="-1"></a><span class="fu"># 6 Model validation</span></span>
-<span id="cb35-240"><a href="#cb35-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-241"><a href="#cb35-241" aria-hidden="true" tabindex="-1"></a>Common scales for the validation scatter plots.</span>
-<span id="cb35-242"><a href="#cb35-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-243"><a href="#cb35-243" aria-hidden="true" tabindex="-1"></a><span class="in">```{r validation-scales}</span></span>
-<span id="cb35-244"><a href="#cb35-244" aria-hidden="true" tabindex="-1"></a>xy_limits     <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)</span>
-<span id="cb35-245"><a href="#cb35-245" aria-hidden="true" tabindex="-1"></a>legend_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="fl">1.5</span>)</span>
-<span id="cb35-246"><a href="#cb35-246" aria-hidden="true" tabindex="-1"></a>legend_labels <span class="ot">&lt;-</span> <span class="fu">as.character</span>(legend_breaks)</span>
-<span id="cb35-247"><a href="#cb35-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-248"><a href="#cb35-248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-249"><a href="#cb35-249" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6.1 Poisson model assessment</span></span>
-<span id="cb35-250"><a href="#cb35-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-251"><a href="#cb35-251" aria-hidden="true" tabindex="-1"></a><span class="in">```{r poisson-scatter}</span></span>
-<span id="cb35-252"><a href="#cb35-252" aria-hidden="true" tabindex="-1"></a>p_scatter_poisson <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
-<span id="cb35-253"><a href="#cb35-253" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> missing_poisson, <span class="at">y =</span> missing_obs, <span class="at">col =</span> lambda)) <span class="sc">+</span></span>
-<span id="cb35-254"><a href="#cb35-254" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb35-255"><a href="#cb35-255" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-256"><a href="#cb35-256" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
-<span id="cb35-257"><a href="#cb35-257" aria-hidden="true" tabindex="-1"></a>                        <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)) <span class="sc">+</span></span>
-<span id="cb35-258"><a href="#cb35-258" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb35-259"><a href="#cb35-259" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> overall_stats<span class="sc">$</span>missing_poisson, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs,</span>
-<span id="cb35-260"><a href="#cb35-260" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-261"><a href="#cb35-261" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb35-262"><a href="#cb35-262" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb35-263"><a href="#cb35-263" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb35-264"><a href="#cb35-264" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Poisson)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-265"><a href="#cb35-265" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-266"><a href="#cb35-266" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb35-267"><a href="#cb35-267" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb35-268"><a href="#cb35-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-269"><a href="#cb35-269" aria-hidden="true" tabindex="-1"></a>inlay_grob <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">as_grob</span>(p_hist)</span>
-<span id="cb35-270"><a href="#cb35-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-271"><a href="#cb35-271" aria-hidden="true" tabindex="-1"></a>final_plot_poisson <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
-<span id="cb35-272"><a href="#cb35-272" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_poisson) <span class="sc">+</span></span>
-<span id="cb35-273"><a href="#cb35-273" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
-<span id="cb35-274"><a href="#cb35-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-275"><a href="#cb35-275" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_poisson)</span>
-<span id="cb35-276"><a href="#cb35-276" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-277"><a href="#cb35-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-278"><a href="#cb35-278" aria-hidden="true" tabindex="-1"></a>The Poisson model systematically **underpredicts** missingness: observed points</span>
-<span id="cb35-279"><a href="#cb35-279" aria-hidden="true" tabindex="-1"></a>sit above the 1:1 line.</span>
-<span id="cb35-280"><a href="#cb35-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-281"><a href="#cb35-281" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6.2 Exponential-with-floor model assessment</span></span>
-<span id="cb35-282"><a href="#cb35-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-283"><a href="#cb35-283" aria-hidden="true" tabindex="-1"></a><span class="in">```{r floor-scatter}</span></span>
-<span id="cb35-284"><a href="#cb35-284" aria-hidden="true" tabindex="-1"></a>p_scatter_floor <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
-<span id="cb35-285"><a href="#cb35-285" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> missing_exp_floor, <span class="at">y =</span> missing_obs, <span class="at">col =</span> lambda)) <span class="sc">+</span></span>
-<span id="cb35-286"><a href="#cb35-286" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb35-287"><a href="#cb35-287" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> pi, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-288"><a href="#cb35-288" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-289"><a href="#cb35-289" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
-<span id="cb35-290"><a href="#cb35-290" aria-hidden="true" tabindex="-1"></a>                        <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)) <span class="sc">+</span></span>
-<span id="cb35-291"><a href="#cb35-291" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
-<span id="cb35-292"><a href="#cb35-292" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> overall_stats<span class="sc">$</span>missing_exp_floor,</span>
-<span id="cb35-293"><a href="#cb35-293" aria-hidden="true" tabindex="-1"></a>             <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-294"><a href="#cb35-294" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb35-295"><a href="#cb35-295" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb35-296"><a href="#cb35-296" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb35-297"><a href="#cb35-297" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Floor Model)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-298"><a href="#cb35-298" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
-<span id="cb35-299"><a href="#cb35-299" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb35-300"><a href="#cb35-300" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb35-301"><a href="#cb35-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-302"><a href="#cb35-302" aria-hidden="true" tabindex="-1"></a>final_plot_floor <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
-<span id="cb35-303"><a href="#cb35-303" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_floor) <span class="sc">+</span></span>
-<span id="cb35-304"><a href="#cb35-304" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
-<span id="cb35-305"><a href="#cb35-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-306"><a href="#cb35-306" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_floor)</span>
-<span id="cb35-307"><a href="#cb35-307" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb35-308"><a href="#cb35-308" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-309"><a href="#cb35-309" aria-hidden="true" tabindex="-1"></a>The floor model places points on the 1:1 line; the dashed line marks the floor</span>
-<span id="cb35-310"><a href="#cb35-310" aria-hidden="true" tabindex="-1"></a>$\pi$, the minimum missingness attainable no matter how high the coverage.</span>
-<span id="cb35-311"><a href="#cb35-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-312"><a href="#cb35-312" aria-hidden="true" tabindex="-1"></a><span class="fu"># 7 Results summary</span></span>
-<span id="cb35-313"><a href="#cb35-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-314"><a href="#cb35-314" aria-hidden="true" tabindex="-1"></a><span class="in">```{r results-summary}</span></span>
-<span id="cb35-315"><a href="#cb35-315" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Population-level Statistics:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-316"><a href="#cb35-316" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Mean coverage (lambda):&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>lambda, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-317"><a href="#cb35-317" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Observed missingness:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_obs, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-318"><a href="#cb35-318" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Poisson expectation:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_poisson, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-319"><a href="#cb35-319" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor model expectation:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_exp_floor, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-320"><a href="#cb35-320" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-321"><a href="#cb35-321" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Model Parameters:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-322"><a href="#cb35-322" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb35-323"><a href="#cb35-323" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Decay rate (k):&quot;</span>, <span class="fu">round</span>(k, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-208"><a href="#cb35-208" aria-hidden="true" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_exp_floor)</span>
+<span id="cb35-209"><a href="#cb35-209" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> model_params[<span class="dv">1</span>]</span>
+<span id="cb35-210"><a href="#cb35-210" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> model_params[<span class="dv">2</span>]</span>
+<span id="cb35-211"><a href="#cb35-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-212"><a href="#cb35-212" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-213"><a href="#cb35-213" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Decay rate (k):&quot;</span>, <span class="fu">round</span>(k, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-214"><a href="#cb35-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-215"><a href="#cb35-215" aria-hidden="true" tabindex="-1"></a>per_sample<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_exp_floor, <span class="at">newdata =</span> per_sample)</span>
+<span id="cb35-216"><a href="#cb35-216" aria-hidden="true" tabindex="-1"></a>overall_stats<span class="sc">$</span>missing_exp_floor <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
+<span id="cb35-217"><a href="#cb35-217" aria-hidden="true" tabindex="-1"></a>  fit_exp_floor,</span>
+<span id="cb35-218"><a href="#cb35-218" aria-hidden="true" tabindex="-1"></a>  <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">lambda =</span> overall_stats<span class="sc">$</span>lambda)</span>
+<span id="cb35-219"><a href="#cb35-219" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-220"><a href="#cb35-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb35-221"><a href="#cb35-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-222"><a href="#cb35-222" aria-hidden="true" tabindex="-1"></a><span class="fu"># 5 Model comparison</span></span>
+<span id="cb35-223"><a href="#cb35-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-224"><a href="#cb35-224" aria-hidden="true" tabindex="-1"></a><span class="in">```{r decay-plot}</span></span>
+<span id="cb35-225"><a href="#cb35-225" aria-hidden="true" tabindex="-1"></a>decay_plot <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
+<span id="cb35-226"><a href="#cb35-226" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>missing_obs) <span class="sc">%&gt;%</span></span>
+<span id="cb35-227"><a href="#cb35-227" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb35-228"><a href="#cb35-228" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb35-229"><a href="#cb35-229" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">&quot;missing_&quot;</span>),</span>
+<span id="cb35-230"><a href="#cb35-230" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">&quot;model&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;pred&quot;</span>,</span>
+<span id="cb35-231"><a href="#cb35-231" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_prefix =</span> <span class="st">&quot;missing_&quot;</span></span>
+<span id="cb35-232"><a href="#cb35-232" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb35-233"><a href="#cb35-233" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> pred, <span class="at">col =</span> model, <span class="at">group =</span> model)) <span class="sc">+</span></span>
+<span id="cb35-234"><a href="#cb35-234" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb35-235"><a href="#cb35-235" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> per_sample, <span class="fu">aes</span>(<span class="at">x =</span> lambda, <span class="at">y =</span> missing_obs),</span>
+<span id="cb35-236"><a href="#cb35-236" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">alpha =</span> <span class="fl">0.3</span></span>
+<span id="cb35-237"><a href="#cb35-237" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-238"><a href="#cb35-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb35-239"><a href="#cb35-239" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Coverage&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-240"><a href="#cb35-240" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Missing Fraction&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-241"><a href="#cb35-241" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">x =</span> lambda_bar, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-242"><a href="#cb35-242" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb35-243"><a href="#cb35-243" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.25</span>), <span class="at">legend.box =</span> <span class="st">&quot;horizontal&quot;</span>)</span>
+<span id="cb35-244"><a href="#cb35-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-245"><a href="#cb35-245" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(decay_plot)</span>
+<span id="cb35-246"><a href="#cb35-246" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb35-247"><a href="#cb35-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-248"><a href="#cb35-248" aria-hidden="true" tabindex="-1"></a><span class="fu"># 6 Model validation</span></span>
+<span id="cb35-249"><a href="#cb35-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-250"><a href="#cb35-250" aria-hidden="true" tabindex="-1"></a>Common scales for the validation scatter plots.</span>
+<span id="cb35-251"><a href="#cb35-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-252"><a href="#cb35-252" aria-hidden="true" tabindex="-1"></a><span class="in">```{r validation-scales}</span></span>
+<span id="cb35-253"><a href="#cb35-253" aria-hidden="true" tabindex="-1"></a>xy_limits <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)</span>
+<span id="cb35-254"><a href="#cb35-254" aria-hidden="true" tabindex="-1"></a>legend_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb35-255"><a href="#cb35-255" aria-hidden="true" tabindex="-1"></a>legend_labels <span class="ot">&lt;-</span> <span class="fu">as.character</span>(legend_breaks)</span>
+<span id="cb35-256"><a href="#cb35-256" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb35-257"><a href="#cb35-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-258"><a href="#cb35-258" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6.1 Poisson model assessment</span></span>
+<span id="cb35-259"><a href="#cb35-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-260"><a href="#cb35-260" aria-hidden="true" tabindex="-1"></a><span class="in">```{r poisson-scatter}</span></span>
+<span id="cb35-261"><a href="#cb35-261" aria-hidden="true" tabindex="-1"></a>p_scatter_poisson <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
+<span id="cb35-262"><a href="#cb35-262" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> missing_poisson, <span class="at">y =</span> missing_obs, <span class="at">col =</span> lambda)) <span class="sc">+</span></span>
+<span id="cb35-263"><a href="#cb35-263" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb35-264"><a href="#cb35-264" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-265"><a href="#cb35-265" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(</span>
+<span id="cb35-266"><a href="#cb35-266" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
+<span id="cb35-267"><a href="#cb35-267" aria-hidden="true" tabindex="-1"></a>    <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb35-268"><a href="#cb35-268" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-269"><a href="#cb35-269" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb35-270"><a href="#cb35-270" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb35-271"><a href="#cb35-271" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> overall_stats<span class="sc">$</span>missing_poisson, <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs,</span>
+<span id="cb35-272"><a href="#cb35-272" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;red&quot;</span></span>
+<span id="cb35-273"><a href="#cb35-273" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-274"><a href="#cb35-274" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb35-275"><a href="#cb35-275" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb35-276"><a href="#cb35-276" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb35-277"><a href="#cb35-277" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Poisson)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-278"><a href="#cb35-278" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-279"><a href="#cb35-279" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb35-280"><a href="#cb35-280" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb35-281"><a href="#cb35-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-282"><a href="#cb35-282" aria-hidden="true" tabindex="-1"></a>inlay_grob <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">as_grob</span>(p_hist)</span>
+<span id="cb35-283"><a href="#cb35-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-284"><a href="#cb35-284" aria-hidden="true" tabindex="-1"></a>final_plot_poisson <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
+<span id="cb35-285"><a href="#cb35-285" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_poisson) <span class="sc">+</span></span>
+<span id="cb35-286"><a href="#cb35-286" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb35-287"><a href="#cb35-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-288"><a href="#cb35-288" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_poisson)</span>
+<span id="cb35-289"><a href="#cb35-289" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb35-290"><a href="#cb35-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-291"><a href="#cb35-291" aria-hidden="true" tabindex="-1"></a>The Poisson model systematically **underpredicts** missingness: observed points</span>
+<span id="cb35-292"><a href="#cb35-292" aria-hidden="true" tabindex="-1"></a>sit above the 1:1 line.</span>
+<span id="cb35-293"><a href="#cb35-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-294"><a href="#cb35-294" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6.2 Exponential-with-floor model assessment</span></span>
+<span id="cb35-295"><a href="#cb35-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-296"><a href="#cb35-296" aria-hidden="true" tabindex="-1"></a><span class="in">```{r floor-scatter}</span></span>
+<span id="cb35-297"><a href="#cb35-297" aria-hidden="true" tabindex="-1"></a>p_scatter_floor <span class="ot">&lt;-</span> per_sample <span class="sc">%&gt;%</span></span>
+<span id="cb35-298"><a href="#cb35-298" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> missing_exp_floor, <span class="at">y =</span> missing_obs, <span class="at">col =</span> lambda)) <span class="sc">+</span></span>
+<span id="cb35-299"><a href="#cb35-299" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb35-300"><a href="#cb35-300" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> pi, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-301"><a href="#cb35-301" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">&quot;red&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-302"><a href="#cb35-302" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(</span>
+<span id="cb35-303"><a href="#cb35-303" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> legend_breaks, <span class="at">labels =</span> legend_labels,</span>
+<span id="cb35-304"><a href="#cb35-304" aria-hidden="true" tabindex="-1"></a>    <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb35-305"><a href="#cb35-305" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-306"><a href="#cb35-306" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colorbar</span>(<span class="at">title =</span> <span class="st">&quot;Coverage&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb35-307"><a href="#cb35-307" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
+<span id="cb35-308"><a href="#cb35-308" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> overall_stats<span class="sc">$</span>missing_exp_floor,</span>
+<span id="cb35-309"><a href="#cb35-309" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> overall_stats<span class="sc">$</span>missing_obs, <span class="at">color =</span> <span class="st">&quot;red&quot;</span></span>
+<span id="cb35-310"><a href="#cb35-310" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb35-311"><a href="#cb35-311" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb35-312"><a href="#cb35-312" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> xy_limits, <span class="at">breaks =</span> (<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb35-313"><a href="#cb35-313" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb35-314"><a href="#cb35-314" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;Expected Missing (Floor Model)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-315"><a href="#cb35-315" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Observed Missing&quot;</span>) <span class="sc">+</span></span>
+<span id="cb35-316"><a href="#cb35-316" aria-hidden="true" tabindex="-1"></a>  ggpubr<span class="sc">::</span><span class="fu">theme_classic2</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb35-317"><a href="#cb35-317" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb35-318"><a href="#cb35-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-319"><a href="#cb35-319" aria-hidden="true" tabindex="-1"></a>final_plot_floor <span class="ot">&lt;-</span> cowplot<span class="sc">::</span><span class="fu">ggdraw</span>() <span class="sc">+</span></span>
+<span id="cb35-320"><a href="#cb35-320" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(p_scatter_floor) <span class="sc">+</span></span>
+<span id="cb35-321"><a href="#cb35-321" aria-hidden="true" tabindex="-1"></a>  cowplot<span class="sc">::</span><span class="fu">draw_plot</span>(inlay_grob, <span class="at">x =</span> <span class="fl">0.55</span>, <span class="at">y =</span> <span class="fl">0.16</span>, <span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.25</span>)</span>
+<span id="cb35-322"><a href="#cb35-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-323"><a href="#cb35-323" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_plot_floor)</span>
 <span id="cb35-324"><a href="#cb35-324" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb35-325"><a href="#cb35-325" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-326"><a href="#cb35-326" aria-hidden="true" tabindex="-1"></a>The exponential-with-floor model substantially improves the fit over the simple</span>
-<span id="cb35-327"><a href="#cb35-327" aria-hidden="true" tabindex="-1"></a>Poisson model. The floor parameter (~0.35) indicates that about a third of sites</span>
-<span id="cb35-328"><a href="#cb35-328" aria-hidden="true" tabindex="-1"></a>remain uncallable even at high coverage — likely repetitive sequence, structural</span>
-<span id="cb35-329"><a href="#cb35-329" aria-hidden="true" tabindex="-1"></a>variants, or mapping artifacts. The decay rate (~1.26) implies</span>
-<span id="cb35-330"><a href="#cb35-330" aria-hidden="true" tabindex="-1"></a>slower-than-Poisson decay of missingness with increasing coverage.</span>
-<span id="cb35-331"><a href="#cb35-331" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-332"><a href="#cb35-332" aria-hidden="true" tabindex="-1"></a>Part 3 (<span class="in">`missing-data-model-comparison.qmd`</span>) evaluates how stable $\pi$ and $k$</span>
-<span id="cb35-333"><a href="#cb35-333" aria-hidden="true" tabindex="-1"></a>are when the same model is fit to three different BZea data products.</span>
-<span id="cb35-334"><a href="#cb35-334" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-335"><a href="#cb35-335" aria-hidden="true" tabindex="-1"></a><span class="fu"># 8 References</span></span>
-<span id="cb35-336"><a href="#cb35-336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-337"><a href="#cb35-337" aria-hidden="true" tabindex="-1"></a>Li, H., Ruan, J., &amp; Durbin, R. (2008). Mapping short DNA sequencing reads and</span>
-<span id="cb35-338"><a href="#cb35-338" aria-hidden="true" tabindex="-1"></a>calling variants using mapping quality scores. *Bioinformatics*, 24(3), 223–230.</span>
-<span id="cb35-339"><a href="#cb35-339" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-340"><a href="#cb35-340" aria-hidden="true" tabindex="-1"></a>Nielsen, R., Paul, J. S., Albrechtsen, A., &amp; Song, Y. S. (2011). Genotype and SNP</span>
-<span id="cb35-341"><a href="#cb35-341" aria-hidden="true" tabindex="-1"></a>calling from next-generation sequencing data. *Nature Reviews Genetics*, 12(6),</span>
-<span id="cb35-342"><a href="#cb35-342" aria-hidden="true" tabindex="-1"></a>443–451.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb35-326"><a href="#cb35-326" aria-hidden="true" tabindex="-1"></a>The floor model places points on the 1:1 line; the dashed line marks the floor</span>
+<span id="cb35-327"><a href="#cb35-327" aria-hidden="true" tabindex="-1"></a>$\pi$, the minimum missingness attainable no matter how high the coverage.</span>
+<span id="cb35-328"><a href="#cb35-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-329"><a href="#cb35-329" aria-hidden="true" tabindex="-1"></a><span class="fu"># 7 Results summary</span></span>
+<span id="cb35-330"><a href="#cb35-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-331"><a href="#cb35-331" aria-hidden="true" tabindex="-1"></a><span class="in">```{r results-summary}</span></span>
+<span id="cb35-332"><a href="#cb35-332" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Population-level Statistics:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-333"><a href="#cb35-333" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Mean coverage (lambda):&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>lambda, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-334"><a href="#cb35-334" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Observed missingness:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_obs, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-335"><a href="#cb35-335" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Poisson expectation:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_poisson, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-336"><a href="#cb35-336" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor model expectation:&quot;</span>, <span class="fu">round</span>(overall_stats<span class="sc">$</span>missing_exp_floor, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-337"><a href="#cb35-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-338"><a href="#cb35-338" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Model Parameters:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-339"><a href="#cb35-339" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Floor parameter (pi):&quot;</span>, <span class="fu">round</span>(pi, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-340"><a href="#cb35-340" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Decay rate (k):&quot;</span>, <span class="fu">round</span>(k, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb35-341"><a href="#cb35-341" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb35-342"><a href="#cb35-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-343"><a href="#cb35-343" aria-hidden="true" tabindex="-1"></a>The exponential-with-floor model substantially improves the fit over the simple</span>
+<span id="cb35-344"><a href="#cb35-344" aria-hidden="true" tabindex="-1"></a>Poisson model. The floor parameter (~0.35) indicates that about a third of sites</span>
+<span id="cb35-345"><a href="#cb35-345" aria-hidden="true" tabindex="-1"></a>remain uncallable even at high coverage — likely repetitive sequence, structural</span>
+<span id="cb35-346"><a href="#cb35-346" aria-hidden="true" tabindex="-1"></a>variants, or mapping artifacts. The decay rate (~1.26) implies</span>
+<span id="cb35-347"><a href="#cb35-347" aria-hidden="true" tabindex="-1"></a>slower-than-Poisson decay of missingness with increasing coverage.</span>
+<span id="cb35-348"><a href="#cb35-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-349"><a href="#cb35-349" aria-hidden="true" tabindex="-1"></a>Part 3 (<span class="in">`missing-data-model-comparison.qmd`</span>) evaluates how stable $\pi$ and $k$</span>
+<span id="cb35-350"><a href="#cb35-350" aria-hidden="true" tabindex="-1"></a>are when the same model is fit to three different ZEAL data products.</span>
+<span id="cb35-351"><a href="#cb35-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-352"><a href="#cb35-352" aria-hidden="true" tabindex="-1"></a><span class="fu"># 8 References</span></span>
+<span id="cb35-353"><a href="#cb35-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-354"><a href="#cb35-354" aria-hidden="true" tabindex="-1"></a>Li, H., Ruan, J., &amp; Durbin, R. (2008). Mapping short DNA sequencing reads and</span>
+<span id="cb35-355"><a href="#cb35-355" aria-hidden="true" tabindex="-1"></a>calling variants using mapping quality scores. *Bioinformatics*, 24(3), 223–230.</span>
+<span id="cb35-356"><a href="#cb35-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-357"><a href="#cb35-357" aria-hidden="true" tabindex="-1"></a>Nielsen, R., Paul, J. S., Albrechtsen, A., &amp; Song, Y. S. (2011). Genotype and SNP</span>
+<span id="cb35-358"><a href="#cb35-358" aria-hidden="true" tabindex="-1"></a>calling from next-generation sequencing data. *Nature Reviews Genetics*, 12(6),</span>
+<span id="cb35-359"><a href="#cb35-359" aria-hidden="true" tabindex="-1"></a>443–451.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

@@ -58,7 +58,7 @@ That is the testable core the ergodic symmetry points to — and section 4 tests
 
 ### What the generator does
 - Per-sample mean coverage is drawn `λ_s ~ Normal(0.590, 0.226)`, floored for
-  positivity. (Fit to 1,434 BZea wideseq samples; Normal beats Gamma and lognormal by
+  positivity. (Fit to 1,434 ZEAL wideseq samples; Normal beats Gamma and lognormal by
   AIC −192 vs +205 vs +1091; CV 0.38, skew 0.34.)
 - Missingness uses the wideseq exp-floor model
   `missing(λ) = π + (1−π)·e^(−kλ)` with `π = 0.346`, `k = 1.256` (mean missingness

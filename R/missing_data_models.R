@@ -1,7 +1,7 @@
 # Per-sample missing-data model: the exponential-with-floor fit and its two
 # companion plots (coverage histogram + observed-vs-expected validation panel),
 # factored out of the missing-data notebooks so the fit and figure that produced
-# the BZea slide deck (data/20250819_Fausto.pdf, p.2) live in one place and never
+# the ZEAL slide deck (data/20250819_Fausto.pdf, p.2) live in one place and never
 # drift from a hand-retyped copy.
 #
 # Ported verbatim from the original modeling_functions.R. Assumes the caller has

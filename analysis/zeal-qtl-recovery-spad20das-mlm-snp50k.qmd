@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Leaf-Greenness SPAD (20 DAS) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Leaf-Greenness SPAD (20 DAS) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "SPAD leaf greenness at 20 days after sowing (20DAS). Unlike the spatially-corrected single-SPAD sibling, the phenotype here is the zealbrowser value used AS-IS (per-line mean of the relabeled Bzea_merged.csv column, no additional spatial correction). Same SNP50K ancestry pipeline and maize chlorophyll candidate panel. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -134,7 +134,7 @@ Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level s
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea SPAD 20DAS — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL SPAD 20DAS — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/spad20das_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -172,7 +172,7 @@ knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) per candidate: OLS vs
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/spad20das_jlm_native1.txt"), mlm,
-  "ZEAL/BZea SPAD 20DAS — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL SPAD 20DAS — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/spad20das_jlm_lollipop_snp50k.png")
 )
@@ -183,7 +183,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea SPAD 20DAS — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL SPAD 20DAS — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/spad20das_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-14">
+<meta name="dcterms.date" content="2026-07-16">
 
 <title>Pedigree caller on a ZEAL-structured cohort – zealhmm</title>
 <style>
@@ -4245,7 +4245,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 14, 2026</p>
+      <p class="date">July 16, 2026</p>
     </div>
   </div>
   
@@ -4277,11 +4277,11 @@ window.Quarto = {
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM)          <span class="co"># simulate_family, simulate_counts, call_states, to_segments</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM) <span class="co"># simulate_family, simulate_counts, call_states, to_segments</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="st">&quot;pedigree&quot;</span> <span class="sc">%in%</span> <span class="fu">eval</span>(<span class="fu">formals</span>(nilHMM<span class="sc">::</span>call_states)<span class="sc">$</span>caller))  <span class="co"># guard: caller must be installed</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="st">&quot;pedigree&quot;</span> <span class="sc">%in%</span> <span class="fu">eval</span>(<span class="fu">formals</span>(nilHMM<span class="sc">::</span>call_states)<span class="sc">$</span>caller)) <span class="co"># guard: caller must be installed</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(params<span class="sc">$</span>seed)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-marker dosage accuracy of a call_states() table vs the simcross truth mosaic.</span></span>
@@ -4295,21 +4295,25 @@ window.Quarto = {
 </section>
 <section id="a-zeal-matched-cohort" class="level2">
 <h2 class="anchored" data-anchor-id="a-zeal-matched-cohort">1. A ZEAL-matched cohort</h2>
-<p>The BZea/ZEAL SNP50K cohort is <strong>1439 lines</strong> descended from <strong>82 teosinte donor founders</strong> (accessions), a <strong>mean of 17.1 lines per founder</strong> — a right-skewed distribution (median 11, range 3–100) spanning five teosinte taxa (<em>mexicana</em> 35 founders, <em>parviglumis</em> 36, <em>diploperennis</em> 4, <em>luxurians</em> 5, <em>huehuetenangensis</em> 2; from <code>data/zeal/bzea_50K_cohort_ref_metadata.csv</code>, pedigree strings like <code>Zx.0580_P3_P1_P4.1.1.1.B</code>). <code>simulate_family()</code> draws fixed-size families, so we approximate the population by its <strong>mean</strong>: 82 founders × 17 lines. (The fixed-sibs simplification is a known departure from the skewed real distribution; it matches total n, founder count, and mean family size — the structure that drives sibling coupling.)</p>
+<p>The ZEAL SNP50K cohort is <strong>1439 lines</strong> descended from <strong>82 teosinte donor founders</strong> (accessions), a <strong>mean of 17.1 lines per founder</strong> — a right-skewed distribution (median 11, range 3–100) spanning five teosinte taxa (<em>mexicana</em> 35 founders, <em>parviglumis</em> 36, <em>diploperennis</em> 4, <em>luxurians</em> 5, <em>huehuetenangensis</em> 2; from <code>data/zeal/bzea_50K_cohort_ref_metadata.csv</code>, pedigree strings like <code>Zx.0580_P3_P1_P4.1.1.1.B</code>). <code>simulate_family()</code> draws fixed-size families, so we approximate the population by its <strong>mean</strong>: 82 founders × 17 lines. (The fixed-sibs simplification is a known departure from the skewed real distribution; it matches total n, founder count, and mean family size — the structure that drives sibling coupling.)</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">simulate_family</span>(params<span class="sc">$</span>design, <span class="at">families =</span> params<span class="sc">$</span>founders, <span class="at">sibs =</span> params<span class="sc">$</span>lines_per_founder,</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">chr =</span> params<span class="sc">$</span>chr, <span class="at">n_markers =</span> params<span class="sc">$</span>n_markers, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> sim<span class="sc">$</span>truth</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity          =</span> <span class="fu">c</span>(<span class="st">&quot;total lines&quot;</span>, <span class="st">&quot;donor founders&quot;</span>, <span class="st">&quot;mean lines/founder&quot;</span>),</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">ZEAL (real)</span><span class="st">`</span>     <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;1439&quot;</span>, <span class="st">&quot;82&quot;</span>, <span class="st">&quot;17.1&quot;</span>),</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">simulated</span><span class="st">`</span>       <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)),</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)),</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">round</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)) <span class="sc">/</span> <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)), <span class="dv">1</span>))</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">simulate_family</span>(params<span class="sc">$</span>design,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">families =</span> params<span class="sc">$</span>founders, <span class="at">sibs =</span> params<span class="sc">$</span>lines_per_founder,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">chr =</span> params<span class="sc">$</span>chr, <span class="at">n_markers =</span> params<span class="sc">$</span>n_markers, <span class="at">seed =</span> params<span class="sc">$</span>seed</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> sim<span class="sc">$</span>truth</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;total lines&quot;</span>, <span class="st">&quot;donor founders&quot;</span>, <span class="st">&quot;mean lines/founder&quot;</span>),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">ZEAL (real)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;1439&quot;</span>, <span class="st">&quot;82&quot;</span>, <span class="st">&quot;17.1&quot;</span>),</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">simulated</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)),</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)),</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)) <span class="sc">/</span> <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)), <span class="dv">1</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -4354,7 +4358,7 @@ window.Quarto = {
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">depth    =</span> d,</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">zero_cov =</span> <span class="fu">mean</span>((o<span class="sc">$</span>n_ref <span class="sc">+</span> o<span class="sc">$</span>n_alt) <span class="sc">==</span> <span class="dv">0</span>),</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">nnil     =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>,   <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rrate =</span> <span class="fl">1e-3</span>), truth),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">nnil     =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>, <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rrate =</span> <span class="fl">1e-3</span>), truth),</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">rtiger   =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rigidity =</span> <span class="dv">3</span>L), truth),</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">pedigree =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;pedigree&quot;</span>, <span class="at">pedigree =</span> sim<span class="sc">$</span>pedigree, <span class="at">design =</span> params<span class="sc">$</span>design), truth)</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  )</span>
@@ -4420,16 +4424,24 @@ window.Quarto = {
 </div>
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(depth_res[, .(depth, nnil, rtiger, pedigree)], <span class="at">id.vars =</span> <span class="st">&quot;depth&quot;</span>,</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">variable.name =</span> <span class="st">&quot;caller&quot;</span>, <span class="at">value.name =</span> <span class="st">&quot;accuracy&quot;</span>),</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(depth, accuracy, <span class="at">colour =</span> caller)) <span class="sc">+</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.4</span>, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="fl">0.4</span>, <span class="at">y =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">label =</span> <span class="st">&quot; ZEAL ~0.4×&quot;</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;depth (×, log)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;per-marker dosage accuracy&quot;</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;At ZEAL scale/depth the pedigree caller reaches parity, not a gain&quot;</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;rtiger&#39;s within-individual rigidity is the strong baseline; coupling does not overtake it&quot;</span>) <span class="sc">+</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">melt</span>(depth_res[, .(depth, nnil, rtiger, pedigree)],</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.vars =</span> <span class="st">&quot;depth&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable.name =</span> <span class="st">&quot;caller&quot;</span>, <span class="at">value.name =</span> <span class="st">&quot;accuracy&quot;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(depth, accuracy, <span class="at">colour =</span> caller)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.4</span>, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="fl">0.4</span>, <span class="at">y =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">label =</span> <span class="st">&quot; ZEAL ~0.4×&quot;</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;depth (×, log)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;per-marker dosage accuracy&quot;</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;At ZEAL scale/depth the pedigree caller reaches parity, not a gain&quot;</span>,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;rtiger&#39;s within-individual rigidity is the strong baseline; coupling does not overtake it&quot;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -4453,7 +4465,7 @@ window.Quarto = {
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>zc <span class="ot">&lt;-</span> o[o<span class="sc">$</span>depth <span class="sc">==</span> <span class="dv">0</span>, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;chr&quot;</span>, <span class="st">&quot;pos&quot;</span>)]</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>kt <span class="ot">&lt;-</span> <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos)</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>ts_z <span class="ot">&lt;-</span> truth<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), kt)]</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>pz   <span class="ot">&lt;-</span> cp<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), <span class="fu">paste</span>(cp<span class="sc">$</span>name, cp<span class="sc">$</span>chr, cp<span class="sc">$</span>pos))]</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>pz <span class="ot">&lt;-</span> cp<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), <span class="fu">paste</span>(cp<span class="sc">$</span>name, cp<span class="sc">$</span>chr, cp<span class="sc">$</span>pos))]</span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;zero-coverage markers at 0.4x: %.0f%% of the grid</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> <span class="fu">nrow</span>(zc) <span class="sc">/</span> <span class="fu">nrow</span>(o)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
@@ -4988,11 +5000,11 @@ window.Quarto = {
 <span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
 <span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM)          <span class="co"># simulate_family, simulate_counts, call_states, to_segments</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(nilHMM) <span class="co"># simulate_family, simulate_counts, call_states, to_segments</span></span>
 <span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(data.table)</span>
 <span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="st">&quot;pedigree&quot;</span> <span class="sc">%in%</span> <span class="fu">eval</span>(<span class="fu">formals</span>(nilHMM<span class="sc">::</span>call_states)<span class="sc">$</span>caller))  <span class="co"># guard: caller must be installed</span></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="st">&quot;pedigree&quot;</span> <span class="sc">%in%</span> <span class="fu">eval</span>(<span class="fu">formals</span>(nilHMM<span class="sc">::</span>call_states)<span class="sc">$</span>caller)) <span class="co"># guard: caller must be installed</span></span>
 <span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(params<span class="sc">$</span>seed)</span>
 <span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-marker dosage accuracy of a call_states() table vs the simcross truth mosaic.</span></span>
@@ -5005,7 +5017,7 @@ window.Quarto = {
 <span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. A ZEAL-matched cohort</span></span>
 <span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>The BZea/ZEAL SNP50K cohort is **1439 lines** descended from **82 teosinte donor</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>The ZEAL SNP50K cohort is **1439 lines** descended from **82 teosinte donor</span>
 <span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>founders** (accessions), a **mean of 17.1 lines per founder** — a right-skewed</span>
 <span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>distribution (median 11, range 3–100) spanning five teosinte taxa</span>
 <span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>(*mexicana* 35 founders, *parviglumis* 36, *diploperennis* 4, *luxurians* 5,</span>
@@ -5017,104 +5029,116 @@ window.Quarto = {
 <span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>count, and mean family size — the structure that drives sibling coupling.)</span>
 <span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a><span class="in">```{r cohort}</span></span>
-<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">simulate_family</span>(params<span class="sc">$</span>design, <span class="at">families =</span> params<span class="sc">$</span>founders, <span class="at">sibs =</span> params<span class="sc">$</span>lines_per_founder,</span>
-<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>                       <span class="at">chr =</span> params<span class="sc">$</span>chr, <span class="at">n_markers =</span> params<span class="sc">$</span>n_markers, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
-<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> sim<span class="sc">$</span>truth</span>
-<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
-<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity          =</span> <span class="fu">c</span>(<span class="st">&quot;total lines&quot;</span>, <span class="st">&quot;donor founders&quot;</span>, <span class="st">&quot;mean lines/founder&quot;</span>),</span>
-<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">ZEAL (real)</span><span class="st">`</span>     <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;1439&quot;</span>, <span class="st">&quot;82&quot;</span>, <span class="st">&quot;17.1&quot;</span>),</span>
-<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">simulated</span><span class="st">`</span>       <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)),</span>
-<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)),</span>
-<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">round</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)) <span class="sc">/</span> <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)), <span class="dv">1</span>))</span>
-<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> knitr<span class="sc">::</span><span class="fu">kable</span>()</span>
-<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Accuracy versus sequencing depth</span></span>
-<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a>Degrade the same truth mosaic across a depth ladder bracketing ZEAL&#39;s skim regime</span>
-<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a>(~0.4×) and call three ways on the identical reads: two single-chain callers</span>
-<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a>(<span class="in">`nnil`</span>, <span class="in">`rtiger`</span>) and the family-coupled <span class="in">`pedigree`</span> caller.</span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">simulate_family</span>(params<span class="sc">$</span>design,</span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">families =</span> params<span class="sc">$</span>founders, <span class="at">sibs =</span> params<span class="sc">$</span>lines_per_founder,</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>  <span class="at">chr =</span> params<span class="sc">$</span>chr, <span class="at">n_markers =</span> params<span class="sc">$</span>n_markers, <span class="at">seed =</span> params<span class="sc">$</span>seed</span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> sim<span class="sc">$</span>truth</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a><span class="fu">data.table</span>(</span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;total lines&quot;</span>, <span class="st">&quot;donor founders&quot;</span>, <span class="st">&quot;mean lines/founder&quot;</span>),</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">ZEAL (real)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;1439&quot;</span>, <span class="st">&quot;82&quot;</span>, <span class="st">&quot;17.1&quot;</span>),</span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">simulated</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)),</span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)),</span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="fu">length</span>(<span class="fu">unique</span>(truth<span class="sc">$</span>name)) <span class="sc">/</span> <span class="fu">length</span>(<span class="fu">unique</span>(sim<span class="sc">$</span>pedigree<span class="sc">$</span>family)), <span class="dv">1</span>)</span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> knitr<span class="sc">::</span><span class="fu">kable</span>()</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Accuracy versus sequencing depth</span></span>
 <span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a><span class="in">```{r depth-sweep}</span></span>
-<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>depths <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.8</span>, <span class="fl">1.6</span>, <span class="fl">3.2</span>)</span>
-<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a>depth_res <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(depths, <span class="cf">function</span>(d) {</span>
-<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a>  o <span class="ot">&lt;-</span> <span class="fu">simulate_counts</span>(truth, <span class="at">depth =</span> d, <span class="at">error =</span> <span class="fl">0.01</span>, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
-<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>  o<span class="sc">$</span>cm <span class="ot">&lt;-</span> truth<span class="sc">$</span>cm[<span class="fu">match</span>(<span class="fu">paste</span>(o<span class="sc">$</span>name, o<span class="sc">$</span>chr, o<span class="sc">$</span>pos), <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos))]</span>
-<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(</span>
-<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a>    <span class="at">depth    =</span> d,</span>
-<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">zero_cov =</span> <span class="fu">mean</span>((o<span class="sc">$</span>n_ref <span class="sc">+</span> o<span class="sc">$</span>n_alt) <span class="sc">==</span> <span class="dv">0</span>),</span>
-<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">nnil     =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>,   <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rrate =</span> <span class="fl">1e-3</span>), truth),</span>
-<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">rtiger   =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rigidity =</span> <span class="dv">3</span>L), truth),</span>
-<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>    <span class="at">pedigree =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;pedigree&quot;</span>, <span class="at">pedigree =</span> sim<span class="sc">$</span>pedigree, <span class="at">design =</span> params<span class="sc">$</span>design), truth)</span>
-<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>}))</span>
-<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(depth_res, <span class="at">digits =</span> <span class="dv">3</span>)</span>
-<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">melt</span>(depth_res[, .(depth, nnil, rtiger, pedigree)], <span class="at">id.vars =</span> <span class="st">&quot;depth&quot;</span>,</span>
-<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a>            <span class="at">variable.name =</span> <span class="st">&quot;caller&quot;</span>, <span class="at">value.name =</span> <span class="st">&quot;accuracy&quot;</span>),</span>
-<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(depth, accuracy, <span class="at">colour =</span> caller)) <span class="sc">+</span></span>
-<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.4</span>, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
-<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="fl">0.4</span>, <span class="at">y =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">label =</span> <span class="st">&quot; ZEAL ~0.4×&quot;</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;depth (×, log)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;per-marker dosage accuracy&quot;</span>,</span>
-<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">&quot;At ZEAL scale/depth the pedigree caller reaches parity, not a gain&quot;</span>,</span>
-<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">&quot;rtiger&#39;s within-individual rigidity is the strong baseline; coupling does not overtake it&quot;</span>) <span class="sc">+</span></span>
-<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. What the coupling *does* buy: full-grid missing-data fill</span></span>
-<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>At skim depth a large fraction of markers carry no reads. The count emission emits</span>
-<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>flat there (<span class="in">`n = 0`</span>) and the pedigree fills the state from relatives (Text S9.3):</span>
-<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>the caller leaves **no marker uncalled**. We score accuracy specifically on the</span>
-<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>zero-coverage markers at ZEAL&#39;s ~0.4×.</span>
-<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a><span class="in">```{r zero-cov}</span></span>
-<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>o <span class="ot">&lt;-</span> <span class="fu">simulate_counts</span>(truth, <span class="at">depth =</span> <span class="fl">0.4</span>, <span class="at">error =</span> <span class="fl">0.01</span>, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
-<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>o<span class="sc">$</span>cm <span class="ot">&lt;-</span> truth<span class="sc">$</span>cm[<span class="fu">match</span>(<span class="fu">paste</span>(o<span class="sc">$</span>name, o<span class="sc">$</span>chr, o<span class="sc">$</span>pos), <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos))]</span>
-<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a>o<span class="sc">$</span>depth <span class="ot">&lt;-</span> o<span class="sc">$</span>n_ref <span class="sc">+</span> o<span class="sc">$</span>n_alt</span>
-<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a>cp <span class="ot">&lt;-</span> <span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;pedigree&quot;</span>, <span class="at">pedigree =</span> sim<span class="sc">$</span>pedigree, <span class="at">design =</span> params<span class="sc">$</span>design)</span>
-<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a>zc <span class="ot">&lt;-</span> o[o<span class="sc">$</span>depth <span class="sc">==</span> <span class="dv">0</span>, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;chr&quot;</span>, <span class="st">&quot;pos&quot;</span>)]</span>
-<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a>kt <span class="ot">&lt;-</span> <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos)</span>
-<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a>ts_z <span class="ot">&lt;-</span> truth<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), kt)]</span>
-<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a>pz   <span class="ot">&lt;-</span> cp<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), <span class="fu">paste</span>(cp<span class="sc">$</span>name, cp<span class="sc">$</span>chr, cp<span class="sc">$</span>pos))]</span>
-<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;zero-coverage markers at 0.4x: %.0f%% of the grid</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> <span class="fu">nrow</span>(zc) <span class="sc">/</span> <span class="fu">nrow</span>(o)))</span>
-<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;pedigree calls left uncalled: %d</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">sum</span>(<span class="fu">is.na</span>(pz))))</span>
-<span id="cb11-137"><a href="#cb11-137" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;pedigree accuracy on the zero-coverage markers: %.3f</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">mean</span>(pz <span class="sc">==</span> ts_z, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)))</span>
-<span id="cb11-138"><a href="#cb11-138" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb11-139"><a href="#cb11-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-140"><a href="#cb11-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Why parity, not a gain</span></span>
-<span id="cb11-141"><a href="#cb11-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-142"><a href="#cb11-142" aria-hidden="true" tabindex="-1"></a>The gap to <span class="in">`rtiger`</span> is expected from the model, not a bug. The current kernel</span>
-<span id="cb11-143"><a href="#cb11-143" aria-hidden="true" tabindex="-1"></a>couples relatives with a **per-marker** selfing factor $T^{\mathrm{sib}}$, which</span>
-<span id="cb11-144"><a href="#cb11-144" aria-hidden="true" tabindex="-1"></a>drops *transmission linkage*: a parent transmits a donor **segment** as a coherent</span>
-<span id="cb11-145"><a href="#cb11-145" aria-hidden="true" tabindex="-1"></a>block, but the per-marker factor only pools siblings marker-by-marker (weak</span>
-<span id="cb11-146"><a href="#cb11-146" aria-hidden="true" tabindex="-1"></a>marginal pooling), not over the shared blocks they actually inherited</span>
-<span id="cb11-147"><a href="#cb11-147" aria-hidden="true" tabindex="-1"></a>(<span class="in">`nilhmm/design/PEDIGREE_HMM.md`</span> §2). Meanwhile <span class="in">`rtiger`</span> already captures</span>
-<span id="cb11-148"><a href="#cb11-148" aria-hidden="true" tabindex="-1"></a>block coherence *within* each individual through its rigidity prior — the strong</span>
-<span id="cb11-149"><a href="#cb11-149" aria-hidden="true" tabindex="-1"></a>baseline. Block-coherent *cross-sibling* pooling — the mechanism that would let the</span>
-<span id="cb11-150"><a href="#cb11-150" aria-hidden="true" tabindex="-1"></a>coupling overtake <span class="in">`rtiger`</span> — needs the **phased copy-switch transmission kernel**</span>
-<span id="cb11-151"><a href="#cb11-151" aria-hidden="true" tabindex="-1"></a>(§18), deferred to a follow-up branch.</span>
-<span id="cb11-152"><a href="#cb11-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-153"><a href="#cb11-153" aria-hidden="true" tabindex="-1"></a><span class="fu">## Take</span></span>
-<span id="cb11-154"><a href="#cb11-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-155"><a href="#cb11-155" aria-hidden="true" tabindex="-1"></a>On a ZEAL-structured cohort (82 founders, ~17 lines/founder, n ≈ 1394) at skim</span>
-<span id="cb11-156"><a href="#cb11-156" aria-hidden="true" tabindex="-1"></a>depth, the <span class="in">`pedigree`</span> caller:</span>
-<span id="cb11-157"><a href="#cb11-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-158"><a href="#cb11-158" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**reaches parity with, but does not beat, the single-chain callers** — at ~0.4× it</span>
-<span id="cb11-159"><a href="#cb11-159" aria-hidden="true" tabindex="-1"></a>  matches <span class="in">`nnil`</span> and trails <span class="in">`rtiger`</span> by a small margin, and the three converge by</span>
-<span id="cb11-160"><a href="#cb11-160" aria-hidden="true" tabindex="-1"></a>  ~1×. This is consistent with the design&#39;s own prediction (§2): the per-marker</span>
-<span id="cb11-161"><a href="#cb11-161" aria-hidden="true" tabindex="-1"></a>  transmission factor cannot pool siblings over inherited blocks.</span>
-<span id="cb11-162"><a href="#cb11-162" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**calls 100% of markers, including the fully-uncovered majority**, filling</span>
-<span id="cb11-163"><a href="#cb11-163" aria-hidden="true" tabindex="-1"></a>  zero-coverage sites from relatives — a real capability the single-chain callers</span>
-<span id="cb11-164"><a href="#cb11-164" aria-hidden="true" tabindex="-1"></a>  achieve only through their own spatial smoothing.</span>
-<span id="cb11-165"><a href="#cb11-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-166"><a href="#cb11-166" aria-hidden="true" tabindex="-1"></a>So the caller is validated as **correct and principled infrastructure** (depth-aware</span>
-<span id="cb11-167"><a href="#cb11-167" aria-hidden="true" tabindex="-1"></a>family coupling + the <span class="in">`refine_ancestry()`</span> workflow + the foundation for the phased</span>
-<span id="cb11-168"><a href="#cb11-168" aria-hidden="true" tabindex="-1"></a>kernel), **not** as an accuracy improvement over <span class="in">`rtiger`</span> on ZEAL-like data. The</span>
-<span id="cb11-169"><a href="#cb11-169" aria-hidden="true" tabindex="-1"></a>block-coherent gain is the goal of the phased copy-switch kernel (§18), a separate</span>
-<span id="cb11-170"><a href="#cb11-170" aria-hidden="true" tabindex="-1"></a>branch.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a>Degrade the same truth mosaic across a depth ladder bracketing ZEAL&#39;s skim regime</span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>(~0.4×) and call three ways on the identical reads: two single-chain callers</span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a>(<span class="in">`nnil`</span>, <span class="in">`rtiger`</span>) and the family-coupled <span class="in">`pedigree`</span> caller.</span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a><span class="in">```{r depth-sweep}</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a>depths <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.8</span>, <span class="fl">1.6</span>, <span class="fl">3.2</span>)</span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a>depth_res <span class="ot">&lt;-</span> <span class="fu">rbindlist</span>(<span class="fu">lapply</span>(depths, <span class="cf">function</span>(d) {</span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a>  o <span class="ot">&lt;-</span> <span class="fu">simulate_counts</span>(truth, <span class="at">depth =</span> d, <span class="at">error =</span> <span class="fl">0.01</span>, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>  o<span class="sc">$</span>cm <span class="ot">&lt;-</span> truth<span class="sc">$</span>cm[<span class="fu">match</span>(<span class="fu">paste</span>(o<span class="sc">$</span>name, o<span class="sc">$</span>chr, o<span class="sc">$</span>pos), <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos))]</span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.table</span>(</span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>    <span class="at">depth    =</span> d,</span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">zero_cov =</span> <span class="fu">mean</span>((o<span class="sc">$</span>n_ref <span class="sc">+</span> o<span class="sc">$</span>n_alt) <span class="sc">==</span> <span class="dv">0</span>),</span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>    <span class="at">nnil     =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;nnil&quot;</span>, <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rrate =</span> <span class="fl">1e-3</span>), truth),</span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">rtiger   =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;rtiger&quot;</span>, <span class="at">design =</span> params<span class="sc">$</span>design, <span class="at">rigidity =</span> <span class="dv">3</span>L), truth),</span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">pedigree =</span> <span class="fu">dosage_acc</span>(<span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;pedigree&quot;</span>, <span class="at">pedigree =</span> sim<span class="sc">$</span>pedigree, <span class="at">design =</span> params<span class="sc">$</span>design), truth)</span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(depth_res, <span class="at">digits =</span> <span class="dv">3</span>)</span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>  <span class="fu">melt</span>(depth_res[, .(depth, nnil, rtiger, pedigree)],</span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.vars =</span> <span class="st">&quot;depth&quot;</span>,</span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable.name =</span> <span class="st">&quot;caller&quot;</span>, <span class="at">value.name =</span> <span class="st">&quot;accuracy&quot;</span></span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(depth, accuracy, <span class="at">colour =</span> caller)</span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.4</span>, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="fl">0.4</span>, <span class="at">y =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">label =</span> <span class="st">&quot; ZEAL ~0.4×&quot;</span>, <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;depth (×, log)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;per-marker dosage accuracy&quot;</span>,</span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;At ZEAL scale/depth the pedigree caller reaches parity, not a gain&quot;</span>,</span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;rtiger&#39;s within-individual rigidity is the strong baseline; coupling does not overtake it&quot;</span></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. What the coupling *does* buy: full-grid missing-data fill</span></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a>At skim depth a large fraction of markers carry no reads. The count emission emits</span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a>flat there (<span class="in">`n = 0`</span>) and the pedigree fills the state from relatives (Text S9.3):</span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a>the caller leaves **no marker uncalled**. We score accuracy specifically on the</span>
+<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a>zero-coverage markers at ZEAL&#39;s ~0.4×.</span>
+<span id="cb11-137"><a href="#cb11-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-138"><a href="#cb11-138" aria-hidden="true" tabindex="-1"></a><span class="in">```{r zero-cov}</span></span>
+<span id="cb11-139"><a href="#cb11-139" aria-hidden="true" tabindex="-1"></a>o <span class="ot">&lt;-</span> <span class="fu">simulate_counts</span>(truth, <span class="at">depth =</span> <span class="fl">0.4</span>, <span class="at">error =</span> <span class="fl">0.01</span>, <span class="at">seed =</span> params<span class="sc">$</span>seed)</span>
+<span id="cb11-140"><a href="#cb11-140" aria-hidden="true" tabindex="-1"></a>o<span class="sc">$</span>cm <span class="ot">&lt;-</span> truth<span class="sc">$</span>cm[<span class="fu">match</span>(<span class="fu">paste</span>(o<span class="sc">$</span>name, o<span class="sc">$</span>chr, o<span class="sc">$</span>pos), <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos))]</span>
+<span id="cb11-141"><a href="#cb11-141" aria-hidden="true" tabindex="-1"></a>o<span class="sc">$</span>depth <span class="ot">&lt;-</span> o<span class="sc">$</span>n_ref <span class="sc">+</span> o<span class="sc">$</span>n_alt</span>
+<span id="cb11-142"><a href="#cb11-142" aria-hidden="true" tabindex="-1"></a>cp <span class="ot">&lt;-</span> <span class="fu">call_states</span>(o, <span class="at">caller =</span> <span class="st">&quot;pedigree&quot;</span>, <span class="at">pedigree =</span> sim<span class="sc">$</span>pedigree, <span class="at">design =</span> params<span class="sc">$</span>design)</span>
+<span id="cb11-143"><a href="#cb11-143" aria-hidden="true" tabindex="-1"></a>zc <span class="ot">&lt;-</span> o[o<span class="sc">$</span>depth <span class="sc">==</span> <span class="dv">0</span>, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;chr&quot;</span>, <span class="st">&quot;pos&quot;</span>)]</span>
+<span id="cb11-144"><a href="#cb11-144" aria-hidden="true" tabindex="-1"></a>kt <span class="ot">&lt;-</span> <span class="fu">paste</span>(truth<span class="sc">$</span>name, truth<span class="sc">$</span>chr, truth<span class="sc">$</span>pos)</span>
+<span id="cb11-145"><a href="#cb11-145" aria-hidden="true" tabindex="-1"></a>ts_z <span class="ot">&lt;-</span> truth<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), kt)]</span>
+<span id="cb11-146"><a href="#cb11-146" aria-hidden="true" tabindex="-1"></a>pz <span class="ot">&lt;-</span> cp<span class="sc">$</span>state[<span class="fu">match</span>(<span class="fu">paste</span>(zc<span class="sc">$</span>name, zc<span class="sc">$</span>chr, zc<span class="sc">$</span>pos), <span class="fu">paste</span>(cp<span class="sc">$</span>name, cp<span class="sc">$</span>chr, cp<span class="sc">$</span>pos))]</span>
+<span id="cb11-147"><a href="#cb11-147" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;zero-coverage markers at 0.4x: %.0f%% of the grid</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> <span class="fu">nrow</span>(zc) <span class="sc">/</span> <span class="fu">nrow</span>(o)))</span>
+<span id="cb11-148"><a href="#cb11-148" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;pedigree calls left uncalled: %d</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">sum</span>(<span class="fu">is.na</span>(pz))))</span>
+<span id="cb11-149"><a href="#cb11-149" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;pedigree accuracy on the zero-coverage markers: %.3f</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">mean</span>(pz <span class="sc">==</span> ts_z, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb11-150"><a href="#cb11-150" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-151"><a href="#cb11-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-152"><a href="#cb11-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Why parity, not a gain</span></span>
+<span id="cb11-153"><a href="#cb11-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-154"><a href="#cb11-154" aria-hidden="true" tabindex="-1"></a>The gap to <span class="in">`rtiger`</span> is expected from the model, not a bug. The current kernel</span>
+<span id="cb11-155"><a href="#cb11-155" aria-hidden="true" tabindex="-1"></a>couples relatives with a **per-marker** selfing factor $T^{\mathrm{sib}}$, which</span>
+<span id="cb11-156"><a href="#cb11-156" aria-hidden="true" tabindex="-1"></a>drops *transmission linkage*: a parent transmits a donor **segment** as a coherent</span>
+<span id="cb11-157"><a href="#cb11-157" aria-hidden="true" tabindex="-1"></a>block, but the per-marker factor only pools siblings marker-by-marker (weak</span>
+<span id="cb11-158"><a href="#cb11-158" aria-hidden="true" tabindex="-1"></a>marginal pooling), not over the shared blocks they actually inherited</span>
+<span id="cb11-159"><a href="#cb11-159" aria-hidden="true" tabindex="-1"></a>(<span class="in">`nilhmm/design/PEDIGREE_HMM.md`</span> §2). Meanwhile <span class="in">`rtiger`</span> already captures</span>
+<span id="cb11-160"><a href="#cb11-160" aria-hidden="true" tabindex="-1"></a>block coherence *within* each individual through its rigidity prior — the strong</span>
+<span id="cb11-161"><a href="#cb11-161" aria-hidden="true" tabindex="-1"></a>baseline. Block-coherent *cross-sibling* pooling — the mechanism that would let the</span>
+<span id="cb11-162"><a href="#cb11-162" aria-hidden="true" tabindex="-1"></a>coupling overtake <span class="in">`rtiger`</span> — needs the **phased copy-switch transmission kernel**</span>
+<span id="cb11-163"><a href="#cb11-163" aria-hidden="true" tabindex="-1"></a>(§18), deferred to a follow-up branch.</span>
+<span id="cb11-164"><a href="#cb11-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-165"><a href="#cb11-165" aria-hidden="true" tabindex="-1"></a><span class="fu">## Take</span></span>
+<span id="cb11-166"><a href="#cb11-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-167"><a href="#cb11-167" aria-hidden="true" tabindex="-1"></a>On a ZEAL-structured cohort (82 founders, ~17 lines/founder, n ≈ 1394) at skim</span>
+<span id="cb11-168"><a href="#cb11-168" aria-hidden="true" tabindex="-1"></a>depth, the <span class="in">`pedigree`</span> caller:</span>
+<span id="cb11-169"><a href="#cb11-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-170"><a href="#cb11-170" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**reaches parity with, but does not beat, the single-chain callers** — at ~0.4× it</span>
+<span id="cb11-171"><a href="#cb11-171" aria-hidden="true" tabindex="-1"></a>  matches <span class="in">`nnil`</span> and trails <span class="in">`rtiger`</span> by a small margin, and the three converge by</span>
+<span id="cb11-172"><a href="#cb11-172" aria-hidden="true" tabindex="-1"></a>  ~1×. This is consistent with the design&#39;s own prediction (§2): the per-marker</span>
+<span id="cb11-173"><a href="#cb11-173" aria-hidden="true" tabindex="-1"></a>  transmission factor cannot pool siblings over inherited blocks.</span>
+<span id="cb11-174"><a href="#cb11-174" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**calls 100% of markers, including the fully-uncovered majority**, filling</span>
+<span id="cb11-175"><a href="#cb11-175" aria-hidden="true" tabindex="-1"></a>  zero-coverage sites from relatives — a real capability the single-chain callers</span>
+<span id="cb11-176"><a href="#cb11-176" aria-hidden="true" tabindex="-1"></a>  achieve only through their own spatial smoothing.</span>
+<span id="cb11-177"><a href="#cb11-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-178"><a href="#cb11-178" aria-hidden="true" tabindex="-1"></a>So the caller is validated as **correct and principled infrastructure** (depth-aware</span>
+<span id="cb11-179"><a href="#cb11-179" aria-hidden="true" tabindex="-1"></a>family coupling + the <span class="in">`refine_ancestry()`</span> workflow + the foundation for the phased</span>
+<span id="cb11-180"><a href="#cb11-180" aria-hidden="true" tabindex="-1"></a>kernel), **not** as an accuracy improvement over <span class="in">`rtiger`</span> on ZEAL-like data. The</span>
+<span id="cb11-181"><a href="#cb11-181" aria-hidden="true" tabindex="-1"></a>block-coherent gain is the goal of the phased copy-switch kernel (§18), a separate</span>
+<span id="cb11-182"><a href="#cb11-182" aria-hidden="true" tabindex="-1"></a>branch.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

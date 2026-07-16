@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Leaf-Greenness (SPAD) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Leaf-Greenness (SPAD) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "The leaf-greenness analog of the PH/EH notebooks: same SNP50K ancestry pipeline, phenotype = per-field SpATS SPAD BLUE (leaf greenness index; scored in CLY25 only), candidate set = maize chlorophyll biosynthesis / catabolism-stay-green / light-harvesting / GLK–NAC regulator genes. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the −log₁₀P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The leaf-greenness (SPAD) sibling of
 [`zeal-qtl-recovery-ph-mlm-snp50k`](zeal-qtl-recovery-ph-mlm-snp50k.html), built from the
-same real BZea pipeline end-to-end: field SPAD → SpATS spatial BLUE → SNP50K teosinte-ancestry
+same real ZEAL pipeline end-to-end: field SPAD → SpATS spatial BLUE → SNP50K teosinte-ancestry
 dosage → RTIGER ancestry mosaic → K → JLM + MLM. **SPAD** is the leaf greenness index read by a
 SPAD meter on one leaf above the primary ear node — a proxy for leaf chlorophyll content. It was
 scored in **CLY25 only**, so the BLUE is a **single-field** SpATS mean (no cross-field union). Only
@@ -153,7 +153,7 @@ fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ tow
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea SPAD — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL SPAD — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/spad_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -194,7 +194,7 @@ SPAD QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutat
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/spad_jlm_native1.txt"), mlm,
-  "ZEAL/BZea SPAD — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL SPAD — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/spad_jlm_lollipop_snp50k.png")
 )
@@ -205,7 +205,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea SPAD — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL SPAD — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/spad_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

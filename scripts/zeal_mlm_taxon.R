@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL/BZea Phase 4 — MLM (Taxon + K) GWAS on the RTIGER ancestry mosaic.
+# ZEAL Phase 4 — MLM (Taxon + K) GWAS on the RTIGER ancestry mosaic.
 # The ZEAL analog of teonam_mlm_family_118k.R: fixed = the taxon factor (Zx/Zv/Zd/Zl/Zh,
 # the 5-family analog), random = VanRaden K, joint 2-df additive+dominance F, R-EMMAX
 # (emmax_qk.R). Genotype = the RTIGER mosaic state (0/1/2), since the raw per-SNP dosage

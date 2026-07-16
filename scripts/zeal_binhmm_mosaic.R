@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — binhmm/nilhmm ancestry mosaic from the REAL per-bin GENOTYPE calls in
+# ZEAL — binhmm/nilhmm ancestry mosaic from the REAL per-bin GENOTYPE calls in
 # bzeaseq's all_samples_bin_genotypes.tsv (the pipeline's own per-1Mb-bin ancestry;
 # presence 0.108 matches the established ~0.10 — the per-bin call recovers the sparse
 # 0.4x teosinte signal that a per-SNP recall misses). We map the GENOTYPE column

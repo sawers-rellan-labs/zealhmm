@@ -1,6 +1,6 @@
 ---
 title: "Genome coverage theory: the Poisson model of missing data"
-subtitle: "Missing-data modelling in BZea, part 1 of 3 — the coverage baseline"
+subtitle: "Missing-data modelling in ZEAL, part 1 of 3 — the coverage baseline"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,15 +16,15 @@ execute:
 
 **Purpose.** Establish the theoretical baseline for reasoning about missing
 genotype data in a low-coverage sequencing population. Before we fit any model
-to the BZea data (`missing-data-floor-model.qmd`) or compare fits across
+to the ZEAL data (`missing-data-floor-model.qmd`) or compare fits across
 datasets (`missing-data-model-comparison.qmd`), we need the expectation that a
 purely random, Poisson sampling of reads would produce. Everything downstream is
 measured as a *departure* from this baseline.
 
 ::: {.callout-note title="Where this sits in the series"}
 1. **This note** — Poisson coverage theory and the missing-data expectation it implies.
-2. `missing-data-floor-model.qmd` — the exponential-with-floor model, fit to BZea BAM alignments.
-3. `missing-data-model-comparison.qmd` — the floor model applied to three BZea datasets.
+2. `missing-data-floor-model.qmd` — the exponential-with-floor model, fit to ZEAL BAM alignments.
+3. `missing-data-model-comparison.qmd` — the floor model applied to three ZEAL datasets.
 :::
 
 # Coverage calculation
@@ -47,7 +47,7 @@ and:
 - $L$ is the short-read average length,
 - $N$ is the number of short reads sequenced.
 
-## For the BZea population
+## For the ZEAL population
 
 The NAM v5 B73 genome is about 2.2 Gb:
 
@@ -61,7 +61,7 @@ The mean read length is 150 bp:
 L <- 150
 ```
 
-The nominal coverage for BZea is 0.8:
+The nominal coverage for ZEAL is 0.8:
 
 ```{r lambda}
 lambda <- 0.8

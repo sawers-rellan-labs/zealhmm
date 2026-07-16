@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — SPAD leaf greenness at the two measurement dates (20DAS, 36DAS), USED AS-IS.
+# ZEAL — SPAD leaf greenness at the two measurement dates (20DAS, 36DAS), USED AS-IS.
 # Source: agent/introfinder/Bzea_merged.csv (the relabeled phenotype file the zealbrowser reads).
 # These two columns are taken as provided — the only aggregation is a per-genotype MEAN over a
 # line's rows (needed for one value per genotype in GWAS); NO spatial correction is applied here

@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Kinki (zigzag culm) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Kinki (zigzag culm) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "Zigzag-culm analog of the StPi notebook: the same SNP50K ancestry pipeline, with the binary kinked-stem score modeled on the logit scale (empirical logit of the per-genotype kinked-plot proportion, no spatial correction; CLY23 only) and a curated maize culm/meristem-architecture candidate set anchored on gn1/knox4 (Gnarley1) and the classical zg1 interval. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The Kinki (zigzag-culm) sibling of
 [`zeal-qtl-recovery-stpi-mlm-snp50k`](zeal-qtl-recovery-stpi-mlm-snp50k.html), built from the
-same real BZea pipeline: field Kinki → **per-genotype empirical logit** → SNP50K
+same real ZEAL pipeline: field Kinki → **per-genotype empirical logit** → SNP50K
 teosinte-ancestry dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same
 near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. Kinki is the classic maize
 **"zigzag culm"** phenotype (Eyster 1920, *J Hered* 11:349): dwarfed plants with shortened,
@@ -153,7 +153,7 @@ fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ tow
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea Kinki — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL Kinki — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/kinki_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -194,7 +194,7 @@ Kinki QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permuta
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/kinki_jlm_native1.txt"), mlm,
-  "ZEAL/BZea Kinki — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL Kinki — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/kinki_jlm_lollipop_snp50k.png")
 )
@@ -205,7 +205,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea Kinki — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL Kinki — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/kinki_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

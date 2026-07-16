@@ -2,7 +2,7 @@
 # Build small per-sample missing-data summaries for the §1 foundations notebooks
 # (analysis/missing-data-floor-model.qmd, analysis/missing-data-model-comparison.qmd).
 #
-# Reduces three heavy BZea tables to tiny per-sample tables (~1,400 rows) of
+# Reduces three heavy ZEAL tables to tiny per-sample tables (~1,400 rows) of
 # coverage (lambda) and observed missingness (missing_obs). Designed to run on the
 # HPC over NATIVE paths (submitted via scripts/make_missing_data_summaries.lsf),
 # but is path-agnostic: set BZEASEQ_DIR / OUT_DIR to run anywhere (e.g. the mount).

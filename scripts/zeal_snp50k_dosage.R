@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 3 — SNP50K teosinte-ancestry dosage base (analog of TeoNAM
+# ZEAL Phase 3 — SNP50K teosinte-ancestry dosage base (analog of TeoNAM
 # teonam_gwas118k_dosage.R + _polarize.R). The SNP50K hard GT is unusable (70%
 # missing, 0% ALT-hom at ~0.4x), so — like the bzeaseq callers — we build from the
 # per-sample allele-count tables. Sites are the 51,991 HQ teosinte-vs-B73 panel;

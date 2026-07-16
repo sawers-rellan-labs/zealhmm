@@ -1,6 +1,6 @@
 ---
-title: "Comparing missing-data estimates across three BZea datasets"
-subtitle: "Missing-data modelling in BZea, part 3 of 3 — fitting the floor model to WGS, Wideseq, and SNP50K"
+title: "Comparing missing-data estimates across three ZEAL datasets"
+subtitle: "Missing-data modelling in ZEAL, part 3 of 3 — fitting the floor model to WGS, Wideseq, and SNP50K"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,14 +16,14 @@ execute:
 
 **Purpose.** Take the exponential-with-floor model developed in
 `missing-data-floor-model.qmd` and evaluate how stable its parameters ($\pi$,
-$k$) are when the *same* BZea samples are viewed through three different data
+$k$) are when the *same* ZEAL samples are viewed through three different data
 products: whole-genome `picard` WGS metrics, the 27 M-SNP Wideseq binned counts,
 and a filtered 50 K SNP panel.
 
 ::: {.callout-note title="Where this sits in the series"}
 1. `missing-data-coverage-theory.qmd` — Poisson coverage theory (the baseline).
-2. `missing-data-floor-model.qmd` — the exponential-with-floor model, fit to BZea BAM alignments.
-3. **This note** — the floor model applied to, and compared across, three BZea datasets.
+2. `missing-data-floor-model.qmd` — the exponential-with-floor model, fit to ZEAL BAM alignments.
+3. **This note** — the floor model applied to, and compared across, three ZEAL datasets.
 :::
 
 ```{r setup}
@@ -75,7 +75,7 @@ per_sample_wgs <- read_tsv(
 head(per_sample_wgs)
 ```
 
-## 1.2 Dataset 2: BZea Wideseq (27 M binned genotypes)
+## 1.2 Dataset 2: ZEAL Wideseq (27 M binned genotypes)
 
 Derived from `all_samples_bin_genotypes.tsv` — the same source used in part 2,
 via the shared per-sample summary from `scripts/make_missing_data_summaries.R`.
@@ -120,7 +120,7 @@ cat("WGS Metrics Model Parameters:\n")
 cat("Floor (pi):", round(wgs_model_results$params$pi, 3), "\n")
 cat("Decay (k):", round(wgs_model_results$params$k, 3), "\n\n")
 
-cat("BZea Binned Model Parameters:\n")
+cat("ZEAL Binned Model Parameters:\n")
 cat("Floor (pi):", round(bzea_model_results$params$pi, 3), "\n")
 cat("Decay (k):", round(bzea_model_results$params$k, 3), "\n\n")
 

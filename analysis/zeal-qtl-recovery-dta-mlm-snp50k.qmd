@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL DTA GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "GWAS + JLM on the SNP50K panel. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -14,9 +14,9 @@ execute:
   echo: true
 ---
 
-**What this is.** The ZEAL/BZea analog of
+**What this is.** The ZEAL analog of
 [`teonam-qtl-recovery-dta-mlm-118k`](teonam-qtl-recovery-dta-mlm-118k.html), built from real
-BZea data end-to-end: field DTA → SpATS spatial BLUEs → SNP50K teosinte-ancestry dosage →
+ZEAL data end-to-end: field DTA → SpATS spatial BLUEs → SNP50K teosinte-ancestry dosage →
 RTIGER ancestry mosaic → K → JLM + MLM. The population is 1,403 near-isogenic B73×teosinte
 BC2S3 lines from **5 teosinte taxa** (Zx *mexicana* 573, Zv *parviglumis* 383, Zd
 *diploperennis* 254, Zl *luxurians* 118, Zh *huehuetenangensis* 61) — the analog of TeoNAM's
@@ -137,7 +137,7 @@ confound.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea DTA — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL DTA — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/dta_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -183,7 +183,7 @@ permutation FWER line used for the GWAS Manhattans below. Model-independent — 
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/dta_jlm_native1.txt"), mlm,
-  "ZEAL/BZea DTA — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL DTA — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/dta_jlm_lollipop_snp50k.png")
 )
@@ -194,7 +194,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea DTA — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL DTA — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/dta_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

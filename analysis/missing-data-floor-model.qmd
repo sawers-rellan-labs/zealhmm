@@ -1,6 +1,6 @@
 ---
-title: "BAM-alignment genome coverage and missing data in the BZea population"
-subtitle: "Missing-data modelling in BZea, part 2 of 3 — the exponential-with-floor model"
+title: "BAM-alignment genome coverage and missing data in the ZEAL population"
+subtitle: "Missing-data modelling in ZEAL, part 2 of 3 — the exponential-with-floor model"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -15,15 +15,15 @@ execute:
 ---
 
 **Purpose.** Extend the Poisson baseline from `missing-data-coverage-theory.qmd`
-into a model that actually fits the BZea data. We analyze **BAM alignments
+into a model that actually fits the ZEAL data. We analyze **BAM alignments
 directly** — before any genotype calling or VCF filtering — and show that
 per-sample missingness follows an *exponential-with-floor* law rather than the
 pure Poisson expectation.
 
 ::: {.callout-note title="Where this sits in the series"}
 1. `missing-data-coverage-theory.qmd` — Poisson coverage theory (the baseline).
-2. **This note** — the exponential-with-floor model, fit to BZea BAM alignments.
-3. `missing-data-model-comparison.qmd` — the floor model applied to three BZea datasets.
+2. **This note** — the exponential-with-floor model, fit to ZEAL BAM alignments.
+3. `missing-data-model-comparison.qmd` — the floor model applied to three ZEAL datasets.
 :::
 
 ```{r setup}
@@ -43,7 +43,7 @@ suppressMessages({
 # 1 Introduction
 
 This analysis examines genome coverage and the distribution of missing read data
-in the **BZea** maize–teosinte population without calling genotypes or relying on
+in the **ZEAL** maize–teosinte population without calling genotypes or relying on
 VCF files. Instead, we analyze the **BAM alignments** directly, prior to any
 genotype calling. We used GATK's `CollectAllelicCounts` on the BAM files,
 restricting read counting to sites corresponding to ~27 million known teosinte
@@ -347,7 +347,7 @@ variants, or mapping artifacts. The decay rate (~1.26) implies
 slower-than-Poisson decay of missingness with increasing coverage.
 
 Part 3 (`missing-data-model-comparison.qmd`) evaluates how stable $\pi$ and $k$
-are when the same model is fit to three different BZea data products.
+are when the same model is fit to three different ZEAL data products.
 
 # 8 References
 

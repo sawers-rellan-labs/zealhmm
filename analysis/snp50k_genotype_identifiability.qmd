@@ -172,7 +172,7 @@ Even setting the caller aside, the *signal itself* is far weaker than the naive
 
 The reference allele model is the Grzybowski (2023) resequencing panel
 (`##source="schnable2021"`), filtered to biallelic SNPs with
-`--min-af 0.05:minor` and intersected to the BZea HQ sites. **Not imputed.** So
+`--min-af 0.05:minor` and intersected to the ZEAL HQ sites. **Not imputed.** So
 panel sites are *common* teosinte-vs-B73 variants — segregating in the species,
 but not fixed in any one accession.
 

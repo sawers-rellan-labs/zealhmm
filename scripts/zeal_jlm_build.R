@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 4 — build the JLM HapMap from the RTIGER mosaic.
+# ZEAL Phase 4 — build the JLM HapMap from the RTIGER mosaic.
 # Analog of teonam_jlm_build.R. JLM (stepwise regression) is the ONE analysis that thins:
 # markers >= 0.1 cM apart (exact 1-D greedy MDdIS per chr; Chen 2019 l.78, user-confirmed);
 # GWAS/MLM stay full. Mosaic state 0/1/2 -> A/M/C HapMap, taxa = pedigree.

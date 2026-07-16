@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Plant-Height (PH) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Plant-Height (PH) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "The plant-height analog of the DTA notebook: same SNP50K ancestry pipeline, but the phenotype is per-field SpATS plant-height BLUEs and the candidate set is the classic maize dwarf/GA/BR height genes (Peiffer et al. 2014). Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The plant-height (PH) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
-same real BZea pipeline end-to-end: field PH → SpATS spatial BLUEs → SNP50K teosinte-ancestry
+same real ZEAL pipeline end-to-end: field PH → SpATS spatial BLUEs → SNP50K teosinte-ancestry
 dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa** (Zx *mexicana* 578, Zv *parviglumis* 385, Zd
 *diploperennis* 255, Zl *luxurians* 118, Zh *huehuetenangensis* 61). The PH BLUE is the per-field
@@ -141,7 +141,7 @@ teosinte-ancestry-structured height panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea PH — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL PH — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/ph_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -187,7 +187,7 @@ in Chen 2019.
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/ph_jlm_native1.txt"), mlm,
-  "ZEAL/BZea PH — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL PH — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/ph_jlm_lollipop_snp50k.png")
 )
@@ -198,7 +198,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea PH — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL PH — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/ph_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

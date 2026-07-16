@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 3 — cM grid for the FULL SNP50K panel, on the TeoNAM native map
+# ZEAL Phase 3 — cM grid for the FULL SNP50K panel, on the TeoNAM native map
 # (analog of teonam_gwas118k_cm_grid.R). The GWAS is NEVER thinned — it runs on the
 # full marker set. (Thinning is only an ancestry-inference speed-up for some coverage-
 # sweep callers, back-projected to the full set; that belongs to the deferred Phase 5,

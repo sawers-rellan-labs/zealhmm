@@ -1,6 +1,6 @@
-# BZea NIL genotype release
+# ZEAL NIL genotype release
 
-Ancestry and genotype calls for the BZea BC2S3 near-isogenic lines (~1,400 lines,
+Ancestry and genotype calls for the ZEAL BC2S3 near-isogenic lines (~1,400 lines,
 ~80 teosinte donors × recurrent B73) on the **SNP50K** teosinte-vs-B73 panel
 (~49,002 sites, **B73 AGPv5**). Built by `scripts/zeal_export_release.R` in the
 [`zealhmm`](https://github.com/sawers-rellan-labs/zealhmm) repo. Terminology and

@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Stem-Pigment (StPi) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Stem-Pigment (StPi) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "Stem-anthocyanin analog of the DTA notebook: the same SNP50K ancestry pipeline, with the binary stem-pigment score modeled on the logit scale (empirical logit of the per-genotype pigmented-plot proportion, no spatial correction) and the maize anthocyanin-biosynthesis pathway as the candidate set. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the −log₁₀P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The stem-pigment (StPi) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
-same real BZea pipeline: field StPi → **per-genotype empirical logit** → SNP50K
+same real ZEAL pipeline: field StPi → **per-genotype empirical logit** → SNP50K
 teosinte-ancestry dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same
 near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi is a **binary 0/1**
 stem-pigment call per plot (pigmented / not); the per-genotype phenotype is the **proportion of
@@ -151,7 +151,7 @@ fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ tow
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea StPi — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL StPi — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/stpi_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -192,7 +192,7 @@ StPi QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutat
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/stpi_jlm_native1.txt"), mlm,
-  "ZEAL/BZea StPi — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL StPi — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/stpi_jlm_lollipop_snp50k.png")
 )
@@ -203,7 +203,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea StPi — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL StPi — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/stpi_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

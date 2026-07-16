@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — StPu (stem pubescence / macrohairs) phenotype used DIRECTLY, no spatial correction.
+# ZEAL — StPu (stem pubescence / macrohairs) phenotype used DIRECTLY, no spatial correction.
 # StPu is a binary 0/1 macrohair-presence plot score (CLY23 56/4389, CLY25 28/2898 positive); a
 # SpATS genotype-fixed P-spline is the wrong model for it — the current SpATS pipeline returns
 # "no fit" and the stale BLUEs ran out of [0,1] range (min -0.034). Here, exactly as for StPi

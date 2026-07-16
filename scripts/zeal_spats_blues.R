@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 2b — spatially-corrected phenotype BLUEs (BZeaPheno recipe).
+# ZEAL Phase 2b — spatially-corrected phenotype BLUEs (BZeaPheno recipe).
 #
 # Per field, per contiguous map grid: SpATS 2-D P-spline surface PSANOVA(Range,Row) with
 # genotype FIXED (-> BLUEs) and B73 as check (statgenHTP engine="SpATS", what="fixed").
