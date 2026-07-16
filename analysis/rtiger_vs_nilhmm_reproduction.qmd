@@ -14,7 +14,7 @@ format:
 **Reference implementation:** RTIGER R package (Julia backend via juliaup), `rHMM_methods.jl`.
 **Test implementation:** `nilHMM::call_ancestry(caller = "rtiger")` — a C++ (Rcpp)
 port of the RTIGER fork in `src/rtiger.cpp` / `R/rtiger.R`.
-**Data:** the real SNP50K BZea NIL counts staged in the zealtiger repo
+**Data:** the real SNP50K ZEAL NIL counts staged in the zealtiger repo
 (`data/rtiger_50K/`): per-taxon cohorts of `counts/<donor>/<sample>.tsv`, the
 51,991-SNP teosinte-informative panel. Taxa **Zh** (n=61) and **Zl** (n=121).
 Reference RTIGER calls/fits: `calls_taxa_r8.csv`, `fits_taxa*/<taxon>/rtiger_result.rds`.

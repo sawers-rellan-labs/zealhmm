@@ -24,7 +24,7 @@ execute:
 
 website:
   title: "zealhmm"
-  description: "Teosinte-introgression QTL recovery — TeoNAM & ZEAL/BZea"
+  description: "Teosinte-introgression QTL recovery — TeoNAM & ZEAL"
   search: true
   page-navigation: true
   navbar:

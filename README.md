@@ -9,7 +9,7 @@
 Clean, reproducible analysis repo built on the [`nilHMM`](https://github.com/sawers-rellan-labs/nilhmm)
 ancestry-caller package. It calibrates and validates caller parameters against Broman
 `simcross` simulations, reproduces the TeoNAM QTL analysis (Chen et al. 2019) under
-simulated low coverage, and applies the calibrated callers to the BZea/ZEAL
+simulated low coverage, and applies the calibrated callers to the ZEAL
 teosinte-introgression population.
 
 📖 **Docs site:** <https://sawers-rellan-labs.github.io/zealhmm/>
@@ -17,7 +17,7 @@ teosinte-introgression population.
 
 ## Papers this repo serves
 
-The notebooks are organized on the docs site by **dataset** (TeoNAM, ZEAL/BZea) and,
+The notebooks are organized on the docs site by **dataset** (TeoNAM, ZEAL) and,
 within each, by the **paper** the work supports:
 
 1. **nilHMM R package paper** (Oxford Bioinformatics) — **priority; written here.** A

@@ -58,7 +58,7 @@ dosage_acc <- function(calls, truth) {
 
 ## 1. A ZEAL-matched cohort
 
-The BZea/ZEAL SNP50K cohort is **1439 lines** descended from **82 teosinte donor
+The ZEAL SNP50K cohort is **1439 lines** descended from **82 teosinte donor
 founders** (accessions), a **mean of 17.1 lines per founder** — a right-skewed
 distribution (median 11, range 3–100) spanning five teosinte taxa
 (*mexicana* 35 founders, *parviglumis* 36, *diploperennis* 4, *luxurians* 5,

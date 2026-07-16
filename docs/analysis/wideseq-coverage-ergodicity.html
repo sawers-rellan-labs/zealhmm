@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-10">
+<meta name="dcterms.date" content="2026-07-16">
 
 <title>The ergodicity assumption in the wideseq coverage model – zealhmm</title>
 <style>
@@ -4114,7 +4114,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 10, 2026</p>
+      <p class="date">July 16, 2026</p>
     </div>
   </div>
   
@@ -4139,7 +4139,7 @@ vertical-align: -.125em;
 <section id="what-the-generator-does" class="level3">
 <h3 class="anchored" data-anchor-id="what-the-generator-does">What the generator does</h3>
 <ul>
-<li>Per-sample mean coverage is drawn <code>λ_s ~ Normal(0.590, 0.226)</code>, floored for positivity. (Fit to 1,434 BZea wideseq samples; Normal beats Gamma and lognormal by AIC −192 vs +205 vs +1091; CV 0.38, skew 0.34.)</li>
+<li>Per-sample mean coverage is drawn <code>λ_s ~ Normal(0.590, 0.226)</code>, floored for positivity. (Fit to 1,434 ZEAL wideseq samples; Normal beats Gamma and lognormal by AIC −192 vs +205 vs +1091; CV 0.38, skew 0.34.)</li>
 <li>Missingness uses the wideseq exp-floor model <code>missing(λ) = π + (1−π)·e^(−kλ)</code> with <code>π = 0.346</code>, <code>k = 1.256</code> (mean missingness ≈ 0.67), fit across samples (<code>missing_data.Rmd</code>).</li>
 <li>Each 1 Mb bin then draws, <strong>analytically and without materializing individual variants</strong>: <code>VARIANT_COUNT ~ Poisson(sites_per_mb)</code>, <code>INFORMATIVE_VARIANT_COUNT ~ Binomial(VARIANT_COUNT, present_prob)</code>, <code>DEPTH_SUM = IVC + Poisson(IVC·(λ/present−1))</code>, <code>ALT_COUNT ~ Binomial(DEPTH_SUM, p_eff)</code>.</li>
 </ul>
@@ -4766,7 +4766,7 @@ vertical-align: -.125em;
 <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="fu">### What the generator does</span></span>
 <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Per-sample mean coverage is drawn <span class="in">`λ_s ~ Normal(0.590, 0.226)`</span>, floored for</span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  positivity. (Fit to 1,434 BZea wideseq samples; Normal beats Gamma and lognormal by</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  positivity. (Fit to 1,434 ZEAL wideseq samples; Normal beats Gamma and lognormal by</span>
 <span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>  AIC −192 vs +205 vs +1091; CV 0.38, skew 0.34.)</span>
 <span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Missingness uses the wideseq exp-floor model</span>
 <span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>  <span class="in">`missing(λ) = π + (1−π)·e^(−kλ)`</span> with <span class="in">`π = 0.346`</span>, <span class="in">`k = 1.256`</span> (mean missingness</span>

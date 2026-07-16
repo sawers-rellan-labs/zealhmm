@@ -6,7 +6,7 @@ Authors@R:
            email = "thegemmalab@ncsu.edu")
 Description: Analysis and benchmark repository backing the nilHMM methods paper.
     Installs the nilHMM package, runs the ancestry-caller comparison across
-    sequencing modalities (Skim WGS, BRB-seq, target-seq) on BZea NILs,
+    sequencing modalities (Skim WGS, BRB-seq, target-seq) on ZEAL NILs,
     calibrates and validates caller parameters against Broman simcross
     simulations, and renders the paper's figures and analysis notes. This is
     not itself a library: R/ holds shared analysis helpers and the simcross

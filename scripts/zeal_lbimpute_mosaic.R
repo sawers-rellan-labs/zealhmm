@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL/BZea Phase 3 — LB-Impute ancestry mosaic on the REAL SNP50K counts.
+# ZEAL Phase 3 — LB-Impute ancestry mosaic on the REAL SNP50K counts.
 #
 # The gateway genotype artifact: LB-Impute (map-aware, unit="cm") decodes teosinte
 # ancestry state (0=B73, 1=het, 2=teo) at EVERY SNP50K marker, per chromosome, for the

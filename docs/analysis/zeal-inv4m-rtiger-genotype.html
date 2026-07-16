@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-11">
+<meta name="dcterms.date" content="2026-07-16">
 
 <title>Inv4m tagging-SNP genotype: 50K vs 200K RTIGER calls, ZEAL NIL panel – zealhmm</title>
 <style>
@@ -4248,7 +4248,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 11, 2026</p>
+      <p class="date">July 16, 2026</p>
     </div>
   </div>
   
@@ -4262,7 +4262,7 @@ window.Quarto = {
 
 <p><strong>What this is.</strong> A companion to the inversion-paper ZEAL flowering notebook (<code>scripts/inversion_paper/Zeal_Inv4m_flowering_lmm.Rmd</code>). The genotype at the <em>Inv4m</em> tagging SNP <strong>PZE04175660223</strong> (chr4:181,637,780) is read from <strong>two RTIGER ancestry call sets</strong>, both are RTIGER (HMM on skim allele counts); they differ only in the <strong>reference variant set</strong>:</p>
 <ul>
-<li><strong>200K (previous)</strong>, the calls behind the inversion paper, from Nirwan Tandukar’s QC subset of a larger GATK variant set (Bzea introgression-finder pipeline / <code>BzeaSeq</code>). Emitted as <strong>two states</strong>: <code>B73</code> (recurrent) vs <code>Introgression</code> (donor), no zygosity split.</li>
+<li><strong>200K (previous)</strong>, the calls behind the inversion paper, from Nirwan Tandukar’s QC subset of a larger GATK variant set (ZEAL introgression-finder pipeline / <code>BzeaSeq</code>). Emitted as <strong>two states</strong>: <code>B73</code> (recurrent) vs <code>Introgression</code> (donor), no zygosity split.</li>
 <li><strong>50K (current)</strong>, my reworked RTIGER on the 50K teosinte-reference variant-filtered set (<code>data/zeal/rtiger_50K_calls.csv</code>). Emitted as <strong>three states</strong>: <code>0/1/2</code> = REF / HET / ALT.</li>
 </ul>
 <div class="callout callout-style-default callout-important callout-titled">
@@ -5324,7 +5324,7 @@ loaded via a namespace (and not attached):
 <span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>RTIGER (HMM on skim allele counts); they differ only in the **reference variant set**:</span>
 <span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**200K (previous)**, the calls behind the inversion paper, from Nirwan Tandukar&#39;s QC subset of a</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  larger GATK variant set (Bzea introgression-finder pipeline / <span class="in">`BzeaSeq`</span>). Emitted as **two</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  larger GATK variant set (ZEAL introgression-finder pipeline / <span class="in">`BzeaSeq`</span>). Emitted as **two</span>
 <span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  states**: <span class="in">`B73`</span> (recurrent) vs <span class="in">`Introgression`</span> (donor), no zygosity split.</span>
 <span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**50K (current)**, my reworked RTIGER on the 50K teosinte-reference variant-filtered set</span>
 <span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`data/zeal/rtiger_50K_calls.csv`</span>). Emitted as **three states**: <span class="in">`0/1/2`</span> = REF / HET / ALT.</span>

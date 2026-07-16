@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 1 — unified three-way sample sheet.
+# ZEAL Phase 1 — unified three-way sample sheet.
 #
 # Establishes, one row per line, the correspondence between:
 #   pedigree string  <->  skim-seq library id  <->  BRB-seq library id
@@ -127,7 +127,7 @@ ss <- merge(ss, amap, by.x = "donor_accession", by.y = "accession_id", all.x = T
 # Zv (parviglumis) and Zx (mexicana) are Z. mays subspecies; Zd/Zl/Zh are distinct species.
 TEO <- c("Zx", "Zv", "Zd", "Zl", "Zh")
 ss[, donor_class := fifelse(taxon %chin% TEO, "teosinte", "maize")]
-ss[, gwas_nil := in_snp50k & !is_check & project %chin% "bzea" &
+ss[, gwas_nil := in_snp50k & !is_check & project %chin% "ZEAL" &
   taxon %chin% TEO & !is.na(pedigree) & pedigree != ""]
 
 # ---- 8. finalize ------------------------------------------------------------
@@ -156,12 +156,12 @@ log_info("checks=%d (B73=%d purple=%d)", sum(ss$is_check), sum(ss$is_B73), sum(s
 log_info("SNP50K lines with field_row=%d / %d", sum(ss$in_snp50k & !is.na(ss$field_row)), sum(ss$in_snp50k))
 log_info("SNP50K lines with external accession=%d / %d", sum(ss$in_snp50k & !is.na(ss$old_accession_id)), sum(ss$in_snp50k))
 tx <- ss[gwas_nil == TRUE, .N, by = taxon][order(-N)]
-log_info("GWAS NIL panel (gwas_nil==TRUE) = %d bzea teosinte-donor lines", sum(ss$gwas_nil))
+log_info("GWAS NIL panel (gwas_nil==TRUE) = %d ZEAL teosinte-donor lines", sum(ss$gwas_nil))
 log_info("family factor (taxon): %s", paste(sprintf("%s=%d", tx$taxon, tx$N), collapse = " "))
 log_info(
-  "excluded from panel: %d checks, %d maize (Zm), %d non-bzea project",
+  "excluded from panel: %d checks, %d maize (Zm), %d non-ZEAL project",
   sum(ss$is_check), sum(ss$in_snp50k & ss$donor_class == "maize" & !ss$is_check),
-  sum(ss$in_snp50k & !ss$is_check & !(ss$project %chin% "bzea"))
+  sum(ss$in_snp50k & !ss$is_check & !(ss$project %chin% "ZEAL"))
 )
 if (n_disc) {
   log_warn("%d genotyped lines: pedigree-derived taxon != SNP50K taxon", n_disc)

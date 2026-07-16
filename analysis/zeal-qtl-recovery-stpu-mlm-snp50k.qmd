@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Stem-Pubescence (StPu) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Stem-Pubescence (StPu) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "Macrohair/pubescence sibling of the StPi notebook: the same SNP50K ancestry pipeline, with the binary stem-pubescence (macrohair-presence) score modeled on the logit scale (empirical logit of the per-genotype pubescent-plot proportion, no spatial correction), and the maize macrohairless1 (mhl1) locus — an uncloned QTL inside the inv9f mexicana inversion on chromosome 9 — as the lead candidate. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the -log10P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The stem-pubescence (StPu) sibling of
 [`zeal-qtl-recovery-stpi-mlm-snp50k`](zeal-qtl-recovery-stpi-mlm-snp50k.html), built from the
-same real BZea pipeline: field StPu → **per-genotype empirical logit** → SNP50K teosinte-ancestry
+same real ZEAL pipeline: field StPu → **per-genotype empirical logit** → SNP50K teosinte-ancestry
 dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPu is a **binary 0/1** macrohair-presence call
 per plot (pubescent stem / not); the per-genotype phenotype is the **proportion of pubescent plots**,
@@ -185,7 +185,7 @@ fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ tow
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea StPu — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL StPu — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/stpu_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -254,7 +254,7 @@ StPu QTL from JLM (TASSEL StepwiseOLS, nested in taxon, entry by a 1000-permutat
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- add_qmh_bands(plot_lollipop(
   here("results/sim/zeal/tassel/stpu_jlm_native1.txt"), mlm,
-  "ZEAL/BZea StPu — JLM QTL genomic distribution (nested in taxon); red bands = prior qMH intervals",
+  "ZEAL StPu — JLM QTL genomic distribution (nested in taxon); red bands = prior qMH intervals",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/stpu_jlm_lollipop_snp50k.png")
 ), mlm)
@@ -265,7 +265,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- add_qmh_bands(plot_manhattan(mlm,
-  sprintf("ZEAL/BZea StPu — MLM (Family + K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%; red bands = prior qMH)", lam(mlm$P)),
+  sprintf("ZEAL StPu — MLM (Family + K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%; red bands = prior qMH)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/stpu_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 ), mlm)
 p_mlm

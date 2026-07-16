@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 4 — OLS (Taxon + marker) GWAS on the RTIGER mosaic (no K).
+# ZEAL Phase 4 — OLS (Taxon + marker) GWAS on the RTIGER mosaic (no K).
 # Analog of teonam_stam_gwas118k.R: per-marker y ~ taxon + marker(additive), 1-df F.
 # The OLS<->MLM contrast (this vs zeal_mlm_taxon.R, same taxon fixed part) isolates the
 # K term = the ancestry/flowering confound. TRAIT via env (default DTA).

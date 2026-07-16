@@ -21,7 +21,7 @@ pick <- function(...) {
   cands[[1]]
 }
 
-#' Resolve the standard BZea mount roots
+#' Resolve the standard ZEAL mount roots
 #'
 #' Returns the cassini (`CAS`) and ancestry (`MNT`) roots, each resolved through
 #' [pick()] across the known rsstu / BZea-share / local-volume layouts. Notes

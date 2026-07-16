@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 4 — DTA composite (A: JLM QTL lollipop · B: MLM Taxon+K Manhattan).
+# ZEAL Phase 4 — DTA composite (A: JLM QTL lollipop · B: MLM Taxon+K Manhattan).
 # Analog of the TeoNAM DTA composite (teonam-qtl-recovery-dta-mlm-118k.qmd). ZEAL has one
 # ancestry mosaic (RTIGER), so this is a 2-panel A/B (TeoNAM's Panel C was a 2nd caller).
 # JLM (Panel A) is the model-independent DTA analysis (recovers zmcct10, chr10); MLM
@@ -32,18 +32,18 @@ rtiger <- fread(here(sprintf("data/zeal/%s_gwas_mlm_rtiger_mosaic_%s_snp50k.csv"
 # A: JLM lollipop (model-independent QTL; context scan = the rtiger_mosaic MLM)
 p_lolli <- plot_lollipop(
   here(sprintf("results/sim/zeal/tassel/%s_jlm_native1.txt", TTAG)), rtiger,
-  sprintf("ZEAL/BZea %s — JLM QTL genomic distribution (nested in taxon)", TRAIT),
+  sprintf("ZEAL %s — JLM QTL genomic distribution (nested in taxon)", TRAIT),
   overlap_csv = overlap, label_genes = c("zcn8", "zcn12", "zmcct9", "zmcct10", "dlf1", "tu1"),
   out_png = file.path(OUT, sprintf("%s_jlm_lollipop_snp50k.png", TTAG))
 )
 # B: per-SNP genotype (bcftools HWE-posterior) MLM (sharp SNP peaks; sparse -> lambda-deflated at 0.4x)
 p_B <- plot_manhattan(gt,
-  sprintf("ZEAL/BZea %s — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (lambda_GC = %.2f)", TRAIT, lam(gt$P)),
+  sprintf("ZEAL %s — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (lambda_GC = %.2f)", TRAIT, lam(gt$P)),
   overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_hwe_post_gt_manhattan_snp50k.png", TTAG))
 )
 # C: RTIGER ancestry mosaic MLM (block-smoothed; well-calibrated)
 p_C <- plot_manhattan(rtiger,
-  sprintf("ZEAL/BZea %s — MLM (Taxon+K), RTIGER ancestry mosaic (lambda_GC = %.2f)", TRAIT, lam(rtiger$P)),
+  sprintf("ZEAL %s — MLM (Taxon+K), RTIGER ancestry mosaic (lambda_GC = %.2f)", TRAIT, lam(rtiger$P)),
   overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_rtiger_mosaic_manhattan_snp50k.png", TTAG))
 )
 

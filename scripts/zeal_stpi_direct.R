@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — StPi (stem anthocyanin) phenotype used DIRECTLY, no spatial correction.
+# ZEAL — StPi (stem anthocyanin) phenotype used DIRECTLY, no spatial correction.
 # StPi is a 0-1 pigment score; a SpATS genotype-fixed P-spline is the wrong model for it
 # (the SpATS BLUEs ran out of range, e.g. 13 genotypes > 1). Here the phenotype is the raw
 # per-genotype mean of the plot scores: mean within each field, then mean across fields

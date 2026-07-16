@@ -71,13 +71,13 @@ different provenances:
   27.6 M density.
 - **The ~52 K SNP50K set is an *intersection* — not a genotyping array, and not
   merely a coarse thinning of the 27.6 M panel.** Its unfiltered base is the
-  **BZea NIL BAMs → GATK joint genotyping (N. Tandukar) + Beagle imputation**
+  **ZEAL NIL BAMs → GATK joint genotyping (N. Tandukar) + Beagle imputation**
   (196,120 SNPs); intersecting those genotyped sites with the 27.6 M
   teosinte-informative panel yields **51,991 SNPs** (so the 50K is itself
   teosinte-informative, being a subset of the panel). The Skim-nNIL / Skim-rtiger
   counts are reads tallied at those ~52 K sites. Here the teosinte panel is the
   **filter** and the
-  BZea genotyping is the base — full chain + paths in
+  ZEAL genotyping is the base — full chain + paths in
   `sawers-rellan-labs/BzeaSeq` → `docs/donor_id_jaccard.md`
   ("SNP50K & marker-set provenance").
 

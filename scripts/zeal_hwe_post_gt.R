@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL/BZea — the HWE-posterior GENOTYPE object, extracted from the AUTHORITATIVE cohort VCF.
+# ZEAL — the HWE-posterior GENOTYPE object, extracted from the AUTHORITATIVE cohort VCF.
 #
 # bzea_50K_cohort.vcf.gz was produced by `bcftools mpileup -f <B73 v5> -R <sites> |
 # bcftools call -mv` (HWE-prior MAP genotypes = "HWE-posterior"), the cohort set Fausto sent to

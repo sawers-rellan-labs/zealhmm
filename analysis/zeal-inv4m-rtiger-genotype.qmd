@@ -20,7 +20,7 @@ execute:
 RTIGER (HMM on skim allele counts); they differ only in the **reference variant set**:
 
 - **200K (previous)**, the calls behind the inversion paper, from Nirwan Tandukar's QC subset of a
-  larger GATK variant set (Bzea introgression-finder pipeline / `BzeaSeq`). Emitted as **two
+  larger GATK variant set (ZEAL introgression-finder pipeline / `BzeaSeq`). Emitted as **two
   states**: `B73` (recurrent) vs `Introgression` (donor), no zygosity split.
 - **50K (current)**, my reworked RTIGER on the 50K teosinte-reference variant-filtered set
   (`data/zeal/rtiger_50K_calls.csv`). Emitted as **three states**: `0/1/2` = REF / HET / ALT.

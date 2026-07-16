@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — ancestry mosaic from any nilhmm caller on the real SNP50K counts.
+# ZEAL — ancestry mosaic from any nilhmm caller on the real SNP50K counts.
 # CALLER env: nnil | binhmm | lbimpute (rtiger uses zealtiger's per-donor calls via
 # zeal_rtiger_mosaic.R). Runs call_ancestry per chromosome over the whole NIL panel
 # (each line decoded independently given the BC2S3 priors), assembles the marker x line

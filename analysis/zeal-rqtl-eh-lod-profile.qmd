@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea EH — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
+title: "ZEAL EH — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
 subtitle: "R/qtl interval mapping (Haley–Knott) for EH on the BC2S3 RTIGER ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold (a single shared permutation null across all traits). Candidates = the EH candidate-gene panel (B73 v5)."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -127,7 +127,7 @@ p <- ggplot(prof, aes(pos, lod, colour = model)) +
   scale_colour_manual(values = pal, name = NULL) +
   labs(
     x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
-    title = sprintf("ZEAL/BZea %s — R/qtl (bcsft) scanone, Haley–Knott (TeoNAM JLM grid)", TRAIT),
+    title = sprintf("ZEAL %s — R/qtl (bcsft) scanone, Haley–Knott (TeoNAM JLM grid)", TRAIT),
     subtitle = sprintf("%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f · dotted = candidate genes", format(NMARK, big.mark = ","), nc$thr5, tx$thr5)
   ) +
   theme_classic(base_size = 11) +
@@ -209,7 +209,7 @@ pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
   scale_colour_manual(values = pal5, name = "taxon") +
   labs(
     x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD (additive)",
-    title = sprintf("ZEAL/BZea %s — per-taxon additive scan (TeoNAM JLM grid)", TRAIT),
+    title = sprintf("ZEAL %s — per-taxon additive scan (TeoNAM JLM grid)", TRAIT),
     subtitle = "HMM expected dosage; per-family filters (frac introgressed > 0.05 & ≥3 per present class); dotted = candidate genes"
   ) +
   theme_classic(base_size = 11) +

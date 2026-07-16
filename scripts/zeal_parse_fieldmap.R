@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 2a — reconstruct plot Row/Range from the field-layout maps.
+# ZEAL Phase 2a — reconstruct plot Row/Range from the field-layout maps.
 #
 # Two field books, two map formats (both are 2-D field grids; body cells = plot ids
 # laid serpentine, borders = "B", gaps = "x", serpentine markers = arrows/</>):

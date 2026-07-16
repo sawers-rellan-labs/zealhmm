@@ -1,6 +1,6 @@
-# Terminology (ZEAL/BZea — paper & data)
+# Terminology (ZEAL — paper & data)
 
-Paper-facing and general/biological vocabulary for the ZEAL/BZea work: phenotype
+Paper-facing and general/biological vocabulary for the ZEAL work: phenotype
 definitions, germplasm/taxa, datasets, the population-structure covariate, and the
 ZEAL analysis object names. The analysis notebooks, `DATA.md`, the scripts, and the
 genotype browser follow this.
@@ -24,7 +24,7 @@ Spelling: **SNP50K** (not `50K`/`snp50k`/`SNP 50K`), **wideseq** (not
 
 ## Germplasm / taxa
 
-Always **taxon / taxa** — **never** species, subspecies, population, or race. The BZea
+Always **taxon / taxa** — **never** species, subspecies, population, or race. The ZEAL
 donors are of *mixed taxonomic rank* (some species, e.g. *Z. diploperennis* /
 *Z. luxurians*; some subspecies of *Z. mays*, e.g. *mexicana* / *parviglumis* /
 *huehuetenangensis*), so no single rank word is correct — "taxon" is the rank-agnostic
@@ -39,7 +39,7 @@ scans as *run* are not what the older "Taxon" labels implied:
 - **TeoNAM (Chen 2019):** Q (first 5 PCs of the kinship K) ≈ a 5-level factor = the 5 donor
   parents (1 parent = 1 family). The TeoNAM validation uses an explicit 5-level **Family**
   factor in place of Q.
-- **ZEAL/BZea — what the code actually did:** the **MLM and per-marker OLS** scans were
+- **ZEAL — what the code actually did:** the **MLM and per-marker OLS** scans were
   computed with the **82-donor-accession** factor (`FAMILY_COL=donor_accession`,
   parent-plant-level correction) — this is what "**Family**" denotes in the notebooks. The
   **JLM** instead nests marker effects within the **5 donor taxa** (the TASSEL pheno-file
@@ -55,7 +55,7 @@ if it recovers power without inflation, it *replaces* the donor-accession scans 
 ## Phenotypes / trait panel
 
 The **fieldbooks are the authoritative phenotype source**, and **definitions can vary by
-field/year** — always cite the field when the protocol or units matter. Two BZea evaluation
+field/year** — always cite the field when the protocol or units matter. Two ZEAL evaluation
 fields feed the panel (both Clayton, NC):
 
 - **CLY23-D4** (2023) — `data/zeal/CLY23_D4_FieldBook.xlsx`, sheet `UPDATED_CLY23_D4_FieldBook`.

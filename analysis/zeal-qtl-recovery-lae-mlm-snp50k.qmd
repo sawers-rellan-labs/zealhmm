@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Leaves-Above-Ear (LAE) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Leaves-Above-Ear (LAE) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "The leaf-number analog of the EN/EH notebooks: same SNP50K ancestry pipeline, phenotype = per-field SpATS leaves-above-ear BLUEs (CLY25 only), candidate = tunicate1 (tu1/ZMM19), a MADS-box gene reported to control leaf/node number. Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the −log₁₀P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The leaves-above-ear (LAE) sibling of
 [`zeal-qtl-recovery-en-mlm-snp50k`](zeal-qtl-recovery-en-mlm-snp50k.html), built from the
-same real BZea pipeline end-to-end: field LAE → SpATS spatial BLUEs → SNP50K teosinte-ancestry
+same real ZEAL pipeline end-to-end: field LAE → SpATS spatial BLUEs → SNP50K teosinte-ancestry
 dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa**. LAE is the **number of leaves above the
 uppermost ear** — a node/leaf-number count (B73 ≈ 5.7). It was scored **CLY25 only**, so the
@@ -146,7 +146,7 @@ teosinte-ancestry-structured node-number panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea LAE — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL LAE — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/lae_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -192,7 +192,7 @@ in Chen 2019.
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/lae_jlm_native1.txt"), mlm,
-  "ZEAL/BZea LAE — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL LAE — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/lae_jlm_lollipop_snp50k.png")
 )
@@ -203,7 +203,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea LAE — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL LAE — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/lae_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

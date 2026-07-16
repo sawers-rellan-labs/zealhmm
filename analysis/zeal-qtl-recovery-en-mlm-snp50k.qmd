@@ -1,5 +1,5 @@
 ---
-title: "ZEAL/BZea Ear-Number (EN) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
+title: "ZEAL Ear-Number (EN) GWAS + JLM on the SNP50K panel — 1000-permutation FWER"
 subtitle: "The ear-number analog of the PH/EH notebooks: same SNP50K ancestry pipeline, phenotype = per-field SpATS ear-number BLUEs, candidate set = the curated maize ear-number / prolificacy cloned-gene panel (core gt1/tb1/tru1 + inflorescence-architecture branching/meristem/KRN genes). Significance is a genome-wide FWER from a 1000-permutation null (per scan): the Manhattan line is the −log₁₀P exceeded by only 5% of permutations, and candidate/peak calls report whether they clear it."
 author: "Fausto Rodríguez-Zapata"
 date: today
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The ear-number (EN) sibling of
 [`zeal-qtl-recovery-eh-mlm-snp50k`](zeal-qtl-recovery-eh-mlm-snp50k.html), built from the
-same real BZea pipeline end-to-end: field EN → SpATS spatial BLUEs → SNP50K teosinte-ancestry
+same real ZEAL pipeline end-to-end: field EN → SpATS spatial BLUEs → SNP50K teosinte-ancestry
 dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa**. EN is **ear number** — the count of ears borne
 per plant — and the per-genotype value is the per-field SpATS mean across the two fields (CLY23-D4,
@@ -149,7 +149,7 @@ teosinte-ancestry-structured ear-number panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL/BZea EN — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL EN — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/en_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -195,7 +195,7 @@ in Chen 2019.
 ```{r lollipop-jlm, fig.width=9, fig.height=4}
 p_lolli <- plot_lollipop(
   here("results/sim/zeal/tassel/en_jlm_native1.txt"), mlm,
-  "ZEAL/BZea EN — JLM QTL genomic distribution (nested in taxon)",
+  "ZEAL EN — JLM QTL genomic distribution (nested in taxon)",
   overlap_csv = overlap,
   out_png = here("results/sim/zeal/en_jlm_lollipop_snp50k.png")
 )
@@ -206,7 +206,7 @@ p_lolli
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL/BZea EN — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL EN — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/en_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm

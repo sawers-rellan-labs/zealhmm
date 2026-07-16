@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL/BZea Phase 3 — RTIGER ancestry mosaic (the usable one; supersedes the
+# ZEAL Phase 3 — RTIGER ancestry mosaic (the usable one; supersedes the
 # LB-Impute mosaic, which under-called teosinte ~8x — see agent/zeal_dta_repro_plan.md).
 #
 # Reproduce-don't-approximate: use the EXISTING, validated per-accession RTIGER-SNP50K

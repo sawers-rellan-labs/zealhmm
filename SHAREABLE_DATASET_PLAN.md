@@ -1,9 +1,9 @@
-# Shareable BZea genotype dataset & genotype browser — goals and plan
+# Shareable ZEAL genotype dataset & genotype browser — goals and plan
 
 **Status:** proposal (2026-07-09) · **Owner:** GEMMA lab (Fausto R.) · **Priority:** this is the
 current top priority for wrapping up `zealhmm`.
 
-This document states the goals for turning the ZEAL/BZea ancestry work into a **shareable,
+This document states the goals for turning the ZEAL ancestry work into a **shareable,
 citable genotype dataset** plus a **Shiny genotype browser**, and lays out an implementation
 plan. It also records the terminology / scripts / provenance standardization that should land
 alongside it, and the still-open tasks in the repo (secondary to the dataset).
@@ -12,8 +12,8 @@ alongside it, and the still-open tasks in the repo (secondary to the dataset).
 
 ## 1. Goals
 
-### G1 — A shareable, citable BZea genotype dataset
-Package the BZea BC2S3 NIL ancestry calls into a documented, versioned release with a DOI
+### G1 — A shareable, citable ZEAL genotype dataset
+Package the ZEAL BC2S3 NIL ancestry calls into a documented, versioned release with a DOI
 landing (CyVerse Data Store). Three components:
 
 1. **50K dataset, in its caller variations** — the SNP50K ancestry mosaics produced by each

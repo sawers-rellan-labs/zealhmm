@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea Phase 4 — JLM via TASSEL5 StepwiseOLS (analog of teonam_jlm_run.R).
+# ZEAL Phase 4 — JLM via TASSEL5 StepwiseOLS (analog of teonam_jlm_run.R).
 # Family (=taxon) fitted first; marker effects NESTED within Family enter/leave the
 # model on marginal-F P. Model-independent QTL analysis (Panel A). TRAIT via env
 # (default DTA).

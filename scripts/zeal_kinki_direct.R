@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# ZEAL/BZea — Kinki (zigzag-culm / kinked-stem severity) phenotype, empirical logit.
+# ZEAL — Kinki (zigzag-culm / kinked-stem severity) phenotype, empirical logit.
 # Kinki is a CLY23-ONLY ordinal 0/1/2 severity score for the classic maize "zigzag culm"
 # phenotype (dwarf, shortened/thickened arching ear-region internodes; Eyster 1920,
 # J Hered 11:349). Like StPi/StPu it is not continuous, so no SpATS: the score is binarized

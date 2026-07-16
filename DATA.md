@@ -338,7 +338,7 @@ Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223
   `github.com/nirwan1265/BZea_Introgression_Finder` (the calls behind the inversion paper's
   `inv4m_introgression` label). Names carry a `.B` bulk suffix → strip to match pedigree.
   **Provenance (Nirwan DM 2025-08-15; a lineage SEPARATE from this repo's BzeaSeq/wideseq work,
-  and not reproducible here):** Nirwan ran GATK HaplotypeCaller → joint genotyping on the BZea BAMs
+  and not reproducible here):** Nirwan ran GATK HaplotypeCaller → joint genotyping on the ZEAL BAMs
   (`/rsstu/.../DOE_CAREER/BZea/joint_genotype/all_samps/9_final_samples/more_filtered/BZea.vcf.gz`,
   raw, ~98% missing) → MAF ≥ 0.05 + quality filter + rename → **Beagle imputation by Asher (P.
   Balint-Kurti's lab)** → `BZea_MAF_0.05_qfiltered_newnames_imputed.vcf.gz` (196,120 SNPs) → RTIGER.
@@ -361,7 +361,7 @@ scratch tree is not copied.
 
 ## Shareable release bundle (`release/`, gitignored → CyVerse)
 
-`scripts/zeal_export_release.R` assembles the citable BZea genotype release into
+`scripts/zeal_export_release.R` assembles the citable ZEAL genotype release into
 `release/bzea_genotypes/` (bulk, gitignored; destined for the CyVerse Data Store with a
 DOI — Phase E of `SHAREABLE_DATASET_PLAN.md`). Fully reproducible from the tracked script
 + `scripts/release_README.md` template; ~156 MB, 30 files.

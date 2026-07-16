@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# Phase B — assemble the shareable BZea genotype release.
+# Phase B — assemble the shareable ZEAL genotype release.
 #
 # 50K "variations" (SNP50K panel, B73 v5):
 #   <caller>_mosaic  ANCESTRY inference (call_ancestry): rtiger, nnil, binhmm, lbimpute

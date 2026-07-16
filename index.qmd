@@ -30,7 +30,7 @@ listing:
         description: "Poisson coverage model — the missing-data baseline"
       - title: "Floor model"
         path: analysis/missing-data-floor-model.qmd
-        description: "Exponential-with-floor missingness, fit to BZea BAM alignments"
+        description: "Exponential-with-floor missingness, fit to ZEAL BAM alignments"
       - title: "Model comparison"
         path: analysis/missing-data-model-comparison.qmd
         description: "Floor model across WGS, Wideseq, and SNP50K datasets"
@@ -246,7 +246,7 @@ written, in review), which this repo supplies updated genotypes to.
 
 ### §1 Foundations — missing data
 
-The Poisson and exponential-with-floor model of missing data, fit to the BZea
+The Poisson and exponential-with-floor model of missing data, fit to the ZEAL
 population.
 
 ::: {#foundations}
@@ -300,7 +300,7 @@ The per-marker OLS computation behind the scans, reproducible from primary data.
 ::: {#teonam-supp}
 :::
 
-## ZEAL / BZea
+## ZEAL / ZEAL
 
 ::: {style="text-align:center; margin-bottom:1.5rem;"}
 ![](zeal.png){fig-alt="ZEAL — Zea Exotic Allele Library" width="200"}
@@ -320,7 +320,7 @@ across sources, and the paired skim + BRB-seq cross-modality comparison.
 
 ### ZEAL population paper
 
-Trait QTL recovery on the ZEAL/BZea population (a reflection of the TeoNAM analysis):
+Trait QTL recovery on the ZEAL population (a reflection of the TeoNAM analysis):
 JLM + MLM composites with five-caller comparison, at 1000-perm FWER.
 
 ::: {#zeal-pop}

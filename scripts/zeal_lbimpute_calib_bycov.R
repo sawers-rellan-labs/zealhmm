@@ -2,7 +2,7 @@
 # =============================================================================
 # Per-coverage LB-Impute recombdist calibration on SIMULATED ground truth (ZEAL SNP50K grid).
 #
-# ZEAL/BZea port of scripts/teonam_lbimpute_calib_bycov.R. Only the breeding design
+# ZEAL port of scripts/teonam_lbimpute_calib_bycov.R. Only the breeding design
 # (BC2S3, not TeoNAM's BC1S4), the marker grid (SNP50K, not 118K) and the output paths
 # change; the calibration machinery is identical. The tuned knob is `recombdist` (cM):
 # the linkage-decay DISTANCE over which the distance-dependent transition relaxes toward
@@ -34,7 +34,7 @@ source(file.path(ROOT, "scripts/logging.R"))
 SMOKE <- "--smoke" %in% commandArgs(TRUE)
 SEED <- 12345L
 N_RIL <- 200L
-DESIGN <- "BC2S3" # ZEAL/BZea cross (TeoNAM was BC1S4)
+DESIGN <- "BC2S3" # ZEAL cross (TeoNAM was BC1S4)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 LAMBDAS <- if (SMOKE) c(1) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf)
 GENOTYPEERR <- 0.05 # emission floor/ceiling (errg)
