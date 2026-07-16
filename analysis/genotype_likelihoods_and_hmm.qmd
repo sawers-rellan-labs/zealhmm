@@ -135,7 +135,8 @@ Where each tool applies $\pi$:
 ### HWE prior at the cohort frequency → forces HET
 
 The genotype prior is Hardy–Weinberg at the cohort alt-allele frequency $p$
-(measured mean $\bar p = 0.015$): $\pi(AA,AB,BB)=((1-p)^2,\,2p(1-p),\,p^2)$.
+(the GL-based cohort mean $\bar p = 0.015$; provenance in §2.2):
+$\pi(AA,AB,BB)=((1-p)^2,\,2p(1-p),\,p^2)$.
 Multiplying the one-read likelihoods (from §1) by this prior and normalizing, at
 $p=\bar p=0.015$ and $\varepsilon=0.01$:
 
@@ -232,6 +233,127 @@ counteracts the coverage-induced het-bias), **but it only relabels the default �
 it adds no zygosity information.** The data still speaks at only $\approx 3$ PL. One
 read cannot resolve het from hom under *any* prior; the prior decides the tie.
 
+### The four priors side by side — and where each allele frequency comes from
+
+We have now seen the two extremes — the HWE-at-cohort prior forces **HET**, the
+BC2S3 breeding prior forces **DONOR-HOM**. Putting all four priors a real pipeline
+might actually use into one comparison makes the crux explicit: **two of them are
+HWE priors, and their allele frequencies have completely different origins.**
+
+| # | prior (caller) | $\pi(AA, AB, BB)$ | allele-frequency source |
+|---|---|---|---|
+| 1 | ML flat — GATK single-sample | $(\tfrac13,\tfrac13,\tfrac13)$ | none; per-sample GT $=\arg\max$ PL |
+| 2 | GATK joint — `GenotypeGVCFs` | HWE at $\hat p = 0.125$ | *theoretical* BC2S3 donor freq, $f_{BB}+f_{AB}/2$ |
+| 3 | bcftools — `mpileup \| call -m` | HWE at $p = 0.015$ | *empirical*, GL-based cohort mean |
+| 4 | BC2S3 breeding design | $(0.859, 0.031, 0.109)$ | single-locus Mendelian NIL frequencies |
+
+GATK sits in **two** rows: its per-sample GT is flat/ML (bar 1), but its **joint**
+step (`GenotypeGVCFs`, and `CalculateGenotypePosteriors`) applies HWE at the
+estimated cohort frequency (bar 2) — so joint-genotyped GATK is *not* exempt from
+the het-forcing prior.
+
+#### 2.1 The theoretical frequency $\hat p = 0.125$ (GATK joint)
+
+Bar 2 uses the frequency **implied by the BC2S3 design itself**, not measured from
+data: $\hat p = f_{BB} + f_{AB}/2 = 0.1094 + 0.0312/2 = 0.125$. This isolates the
+effect of the HWE *shape*: even when a joint caller estimates the frequency
+*perfectly*, HWE at $\hat p = 0.125$ gives $\pi = (0.766, 0.219, 0.016)$ — donor-hom
+is $\hat p^2 = 0.016$, about $14\times$ rarer than het ($2\hat p(1-\hat p)=0.219$).
+So the joint call on one read is **HET at 7:1**, despite the frequency being right.
+The joint bar is the theoretical BC2S3 expectation run through HWE.
+
+#### 2.2 The empirical frequency $p = 0.015$ — GL-based, not a hard-call count
+
+Bar 3 uses the **measured** genome-wide mean alt-allele frequency of the real
+cohort, $\bar p = 0.015$ — far below the per-locus $0.125$ because most panel sites
+are near-monomorphic REF across the cohort. There are two ways to obtain such a
+number, and they are not equivalent:
+
+- **From genotype likelihoods (correct at low coverage).** Estimate $p$ directly
+  from the per-sample GLs by EM (Li 2011; ANGSD `-doMaf`/`-doPost 1`; bcftools
+  `call -m`), marginalizing over the unknown genotypes — no genotype is ever
+  hard-called. Each sample contributes its *expected* alt dosage
+  $0\cdot P(AA)+1\cdot P(AB)+2\cdot P(BB)$.
+- **From called genotypes (circular).** Counting REF/ALT alleles in the called
+  matrix instead re-uses calls that were themselves made under the het-forcing HWE
+  prior: the prior inflates het, the het-inflated calls are counted to estimate
+  $p$, and $p$ feeds the prior again.
+
+$\bar p = 0.015$ here is the **GL-based** estimate — the posterior-caller core
+(bcftools/ANGSD, Li 2011 → GLs → allele-freq prior) estimates $p$ from likelihoods
+and then imposes HWE$(\bar p)$. The 448,805-vs-355 depth-1 table above is the
+*consequence* of that imposed prior, not the source of $\bar p$.
+
+> If a local pipeline instead computed $0.015$ by counting alleles in a hard-called
+> VCF, that would change the reading from "correct estimator, wrong HWE shape" to
+> "circular estimate *and* wrong shape." (`-doMaf` = GL-based; `bcftools query` on a
+> called VCF = hard-call.)
+
+#### 2.3 Why no single HWE frequency represents BC2S3 — and the one caller that can
+
+BC2S3 has a **het deficit**: $f_{BB}=0.109 > f_{AB}=0.031$ (donor-hom more common
+than het, because selfing collapses heterozygotes). No HWE frequency reproduces
+that — HWE forces $f_{AB}=2p(1-p)\ge f_{BB}=p^2$ for all $p\le\tfrac23$. So GATK's
+joint step and `CalculateGenotypePosteriors` (both HWE-locked) are *structurally*
+unable to emit the BC2S3 call, whatever frequency they estimate.
+
+The fix is an **inbreeding** term. The inbreeding-adjusted HWE prior at frequency
+$p$ with coefficient $F$ is
+$$
+\pi = \big((1-p)^2+Fp(1-p),\;\; 2p(1-p)(1-F),\;\; p^2+Fp(1-p)\big),
+$$
+and at $p=0.125,\ F=0.857$ this is **exactly** $(0.859, 0.031, 0.109)$ — the BC2S3
+vector ($F = 1 - f_{AB}/[2p(1-p)] = 0.857$). Selfing *is* inbreeding, so the design's
+single-locus frequencies are the $F$-model frequencies, not an ad-hoc table.
+
+Which callers can apply it? **GATK** (`GenotypeGVCFs`, `CalculateGenotypePosteriors`),
+**bcftools** (`call -m`), **freebayes**, **Beagle**, and **GLIMPSE** are all
+HWE-at-$p$ (i.e. $F=0$) or reference-panel priors, with no inbreeding knob — they
+cannot encode $f_{BB}>f_{AB}$. **ANGSD is the exception:** with a per-individual
+inbreeding coefficient from `ngsF` / `ngsF-HMM` / PCAngsd
+(Vieira et al. 2013, ref. 8), its `-doPost` computes the $F$-adjusted genotype
+posterior, reproducing the BC2S3 prior. (Caveat: $F$ is a genome-wide per-individual
+coefficient, not a per-locus segregating-introgression prior, and $p$ is still
+GL-estimated — but for the het-deficient *shape* it is exact.) So the breeding
+prior is the $F$-model prior, and ANGSD `-doPost +F` is its standard implementation.
+
+#### The four priors on one ALT read
+
+Posterior $\propto$ likelihood $\times$ prior, normalized. Same read, same
+likelihood (PL $=[25,3,0]$); only the prior changes:
+
+| prior (caller) | $\pi(AA, AB, BB)$ | $P(AA)$ | $P(AB)$ | $P(BB)$ | call | AB : BB |
+|---|---|---:|---:|---:|---|---:|
+| ML flat (GATK single-sample) | $(0.333, 0.333, 0.333)$ | 0.002 | 0.333 | **0.664** | donor-hom | 0.5 |
+| GATK joint, HWE $\hat p=0.125$ | $(0.766, 0.219, 0.016)$ | 0.020 | **0.858** | 0.122 | het | 7.0 |
+| bcftools, HWE $p=0.015$ | $(0.970, 0.030, 0.0002)$ | 0.178 | **0.809** | 0.012 | het | 65.9 |
+| BC2S3 breeding | $(0.859, 0.031, 0.109)$ | 0.023 | 0.122 | **0.855** | donor-hom | 0.1 |
+
+**Reading.** Flat (GATK single-sample) and BC2S3 call **donor-hom** on one ALT read;
+both HWE priors call **het** — GATK-joint (theoretical $\hat p=0.125$) at 7:1, bcftools
+(empirical $p=0.015$) at 66:1. The call is the prior's, not the read's.
+
+And the number of ALT reads each prior needs before it will finally call donor-hom
+(with $r=0$ REF reads):
+
+| prior (caller) | min ALT reads to $P(\text{donor-hom}) > 0.5$ |
+|---|---|
+| ML flat (GATK single-sample) | 1 |
+| BC2S3 breeding | 1 |
+| GATK joint (HWE $\hat p=0.125$) | 4 |
+| bcftools (HWE $p=0.015$) | 8 |
+
+```{r}
+#| label: fig-gl-prior-lowcov
+#| fig-width: 6.8
+#| fig-height: 8.0
+#| message: false
+#| warning: false
+#| fig-cap: "One ALT read under four priors. **(a)** posterior $P(G\\mid\\text{one ALT read})$; the winning call is labeled above each group. **(b)** ALT reads needed before each prior crosses $P(\\text{donor-hom})>0.5$. Same read, same likelihood (PL $=[25,3,0]$) — the call is the prior's. $\\hat p=0.125$ is the theoretical BC2S3 donor frequency (GATK joint); $p=0.015$ is the empirical GL-based cohort mean (bcftools); BC2S3 $=$ inbreeding-HWE ($F=0.857$), applicable via ANGSD `-doPost +F`. Code: `scripts/fig_gl_prior_lowcov.R`."
+source(here::here("scripts/fig_gl_prior_lowcov.R"))
+fig
+```
+
 ------
 
 ## 3. From one site to a stretch: what accumulation can and cannot do
@@ -325,6 +447,16 @@ count-emission caller already does. They rescue the **segment/haplotype** call (
 the imputed marker genotypes), not the isolated site, and they do not lift the
 dilution ceiling.
 
+::: {.callout-note collapse="true" title="Corrections to earlier drafts of this analysis"}
+| # | superseded statement | correction |
+|---|----------------------|------------|
+| C1 | "GATK/samtools apply a default HWE-ish genotype prior expecting 25–50% hets." | GATK **single-sample** GT is flat-prior $\arg\max$ PL — no genotype prior. HWE enters only in the **joint** step (`GenotypeGVCFs` / `CalculateGenotypePosteriors`), as HWE at the estimated cohort $p$ (§2, §2.1). |
+| C2 | Het overcalling framed as a multi-read $(\varepsilon/3)^r$ likelihood wall at 4×/12×. | The governing regime is **single-read** at 0.4× (81% of covered sites have exactly one read); the overcalling is the **rare-allele HWE prior**, not a likelihood wall (§2). |
+| C3 | "RAF < 0.5 means reference over-counted." | Backwards. RAF $=$ REF/(REF+ALT); reference-mapping bias over-represents REF $\Rightarrow$ RAF $>0.5$. A clean pipeline centers RAF at 0.5. |
+| C4 | "The EM under-estimates the allele frequency because of the het deficit." | It **over-estimates** ($\hat p \approx 0.139$ vs true $0.125$): the donor-hom *excess* pulls $p$ up under HWE. The frequency is ~right; the HWE *shape* is wrong (§2.3). |
+| C5 | "The introgressed locus is mostly het." | BC2S3 is **het-deficient**: $f_{BB}$ (0.109) $> f_{AB}$ (0.031). By design an introgressed locus is more often donor-hom than het (§2.3). |
+:::
+
 ------
 
 ## References
@@ -368,6 +500,14 @@ dilution ceiling.
    *Scientific Reports* **10**:18542.
    [doi:10.1038/s41598-020-75387-w](https://doi.org/10.1038/s41598-020-75387-w).
    — reference-panel imputation at ultra-low coverage (§3a).
+
+**Inbreeding-aware genotype calling**
+
+8. Vieira FG, Fumagalli M, Albrechtsen A, Nielsen R (2013). Estimating inbreeding
+   coefficients from NGS data: impact on genotype calling and allele frequency
+   estimation. *Genome Research* **23**(11):1852–1861.
+   [doi:10.1101/gr.157388.113](https://doi.org/10.1101/gr.157388.113).
+   — the per-individual $F$-adjusted genotype posterior (ANGSD `ngsF`, §2.3).
 
 ------
 
