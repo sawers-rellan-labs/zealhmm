@@ -166,8 +166,13 @@ pb <- ggplot(dfb, aes(n, pbb, color = prior)) +
     panel.grid.minor = element_blank(),
     plot.title = element_text(face = "bold", size = 12),
     plot.subtitle = element_text(size = 8.5, color = "grey30"),
-    legend.position = "right", legend.key.size = unit(4, "mm"),
-    legend.title = element_text(size = 8.5), legend.text = element_text(size = 8),
+    legend.position = "inside",
+    legend.position.inside = c(0.98, 0.02),
+    legend.justification = c(1, 0),
+    legend.key.size = unit(3.8, "mm"),
+    legend.title = element_text(size = 8), legend.text = element_text(size = 7.5),
+    legend.background = element_rect(fill = alpha("white", 0.82), color = "grey80", linewidth = 0.3),
+    legend.margin = margin(2, 4, 3, 4),
     plot.background = element_rect(fill = "white", color = NA),
     plot.margin = margin(6, 10, 4, 6)
   )
