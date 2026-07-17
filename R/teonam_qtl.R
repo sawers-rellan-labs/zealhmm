@@ -81,7 +81,7 @@ reconcile_teonam <- function(geno_path, pheno_path) {
 #' Evaluates the consensus-map Marey spline at each marker's `pos_v5`
 #' (nilHMM::bp_to_cm, Hyman monotone, clamped). The consensus map
 #' (Ed Coe 2008 composite "Genetic", v5-anchored) defines the spline; markers are
-#' query points — NOT a coordinate join. Requires `R/simulate.R` sourced.
+#' query points — NOT a coordinate join.
 #'
 #' @param v5 data.frame with `chr_v5`, `pos_v5` (e.g. from `liftover_teonam()`).
 #' @param map Consensus map data.table (chr, cm, bp); e.g. `load_consensus_map()`.
