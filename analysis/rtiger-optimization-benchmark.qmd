@@ -1,0 +1,161 @@
+---
+title: "RTIGER reimplementation benchmark: nilHMM C++/Rcpp vs Julia"
+subtitle: "Supplement (optimization): correctness-first equivalence, then throughput/memory at 10^4-10^5 markers"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+::: {.callout-important title="SCAFFOLD, numbers not yet measured"}
+This note is scaffolded ahead of the live benchmark (Phase 1 of
+`agent/nilhmm-draft-completion-plan.md`). Every result table/figure below is a
+placeholder guarded by `file.exists()`; running the compute script (see the
+callout in *Compute*) fills them. Prose framing and method are final; the numbers
+are `[TO MEASURE]`.
+:::
+
+**Thesis.** nilHMM reimplements the RTIGER rigid-HMM core in **C++/Rcpp**
+(`nilhmm/src/rtiger.cpp`, `viterbi_batch.cpp`, `emission_count.cpp`, ...), removing
+the Julia backend that upstream RTIGER \[Campos-Martin 2023\] requires through
+`JuliaCall`. The reimplementation is a **prerequisite**, not a contribution: the
+paper's simulation-scale calibration and benchmarking (a caller rerun across many
+parameter settings on 10^4-10^5-marker panels) are only tractable on a laptop once
+the per-fit cost and the Julia runtime dependency are gone. This note establishes
+two things, in order of importance:
+
+1. **Correctness first.** The C++/Rcpp core returns the *same answer* as the Julia
+   RTIGER, Viterbi-identical ancestry paths and fitted parameters agreeing to
+   float-summation tolerance, from identical initialization on real data.
+2. **Then speed/memory.** Only after equivalence is established do we report the
+   throughput and peak-memory gains, and their scaling in marker count.
+
+**Reference point.** The prior *optimized-Julia vs original-Julia* fork
+(`faustovrz/RTIGER@optimize-julia-core`, `docs/optimization.md`) established the
+method used here, the shared-panel marker sweep, the Viterbi-identical
+equivalence oracle, and the peak-RSS sweep, and its numbers (O(N^2)->O(N) in
+markers; ~34x at 6.9k to ~610x at 110k markers; peak RSS made flat in #samples)
+are the baseline this C++ port is measured against.
+
+::: {.callout-note title="Compute is separated from this note"}
+The benchmark is run by `scripts/bench_rtiger_cpp_vs_julia.R` (to be written),
+which builds the shared *Arabidopsis* Col x Ler panel, decimates it by odd index
+to five sizes, fits both the nilHMM C++ core and the Julia RTIGER at each size
+(fixed iterations for throughput; to convergence for equivalence), and writes
+summary CSVs to `results/bench/` (gitignored). This note only loads and plots
+them. Regenerate with `Rscript scripts/bench_rtiger_cpp_vs_julia.R --generate`.
+
+This is a multi-hour run (the Julia baseline dominates), so it runs **offline, not
+at render time**: the script sources `scripts/logging.R` (timestamped `log_info`
+with a per-size ETA line), supports `--smoke` for a single timed size first, fits
+the Julia RTIGER baseline with `progress_log = TRUE` for a per-EM-iteration ETA,
+and each run is persisted via `... 2>&1 | tee agent/bench_rtiger_<ts>_<pid>.log`.
+Rendering this note (`freeze: auto`) only reads the CSVs and never triggers the
+benchmark.
+
+Inputs staged from the fork (see `DATA.md`): the 109,703-locus shared-3 panel
+(`rtiger_shared3_input/`), the 270K real inputs, and the fitted equivalence oracle
+(`arabidopsis_fit_3samples.rds`), originally from BioProject PRJNA720439 / SRP313911.
+:::
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(ggplot2)
+})
+BENCH <- here::here("results/bench")
+f <- function(x) file.path(BENCH, x)
+have_equiv <- file.exists(f("rtiger_equivalence.csv"))
+have_scale <- file.exists(f("rtiger_marker_scaling.csv"))
+have_mem <- file.exists(f("rtiger_memory_sweep.csv"))
+```
+
+## 1. Why reimplement in C++/Rcpp
+
+Two properties of the upstream implementation motivate the port:
+
+- **Runtime dependency.** Upstream RTIGER runs its time-critical core in Julia via
+  `JuliaCall`; a matching Julia + package environment must be installed and loaded.
+  For an R package intended to run many callers on many parameter settings, that
+  cross-runtime dependency is both a friction and a reproducibility hazard.
+- **Per-fit cost at density.** The paper works at 10^4-10^5 markers per line and
+  reruns callers across calibration sweeps. The fit must be cheap enough to loop.
+
+The C++/Rcpp core keeps the rigid-HMM arithmetic (rHMM EM + rigid Viterbi + segment
+boundary postprocessing) but runs in-process with no external runtime.
+
+## 2. Equivalence (correctness first)
+
+The claim the port must earn: **same answer as Julia RTIGER**. Following the fork's
+oracle, both cores are run to full convergence from identical deterministic
+initialization on the shared panel at all five sizes, and outputs compared
+position-by-position.
+
+```{r equiv-table}
+if (have_equiv) {
+  eq <- fread(f("rtiger_equivalence.csv"))
+  knitr::kable(eq, caption = "nilHMM C++/Rcpp vs Julia RTIGER: EM iterations, Viterbi match, mismatches, parameter max-diff, per marker-panel size.")
+} else {
+  cat(
+    "[TO MEASURE] Equivalence table, columns: markers/sample, EM iters (cpp/julia),",
+    "Viterbi match (n/n), mismatches, param max-diff. Target: 0 mismatches at every size."
+  )
+}
+```
+
+## 3. Throughput, scaling with markers
+
+Shared-panel head-to-head, per-iteration and total wall time vs markers/sample, on
+the same five decimated sizes (6,857 -> 13,713 -> 27,426 -> 54,852 -> 109,703),
+fixed iteration count, native build.
+
+```{r scaling-plot}
+if (have_scale) {
+  sc <- fread(f("rtiger_marker_scaling.csv"))
+  ggplot(sc, aes(markers, sec_per_iter, color = core)) +
+    geom_point() +
+    geom_line() +
+    scale_x_log10() +
+    scale_y_log10() +
+    labs(
+      x = "markers / sample", y = "seconds / EM iteration",
+      color = "core", title = "nilHMM C++/Rcpp vs Julia RTIGER, per-iteration scaling"
+    ) +
+    theme_bw()
+} else {
+  cat(
+    "[TO MEASURE] Log-log per-iteration wall time vs markers, one line per core.",
+    "Report the empirical complexity exponent (slope) for each."
+  )
+}
+```
+
+## 4. Memory
+
+Peak RSS as the sample count grows at fixed markers/sample.
+
+```{r mem-table}
+if (have_mem) {
+  mm <- fread(f("rtiger_memory_sweep.csv"))
+  knitr::kable(mm, caption = "Peak RSS vs sample count, nilHMM C++/Rcpp core.")
+} else {
+  cat(
+    "[TO MEASURE] Peak-RSS sweep (N samples x 50k markers). Report whether peak",
+    "memory is flat vs #samples, as the streaming fork core achieved."
+  )
+}
+```
+
+## 5. Reproducing
+
+`scripts/bench_rtiger_cpp_vs_julia.R --generate` builds the shared panel from the
+staged Col x Ler inputs, runs both cores at each size (fixed iters for §3-4, to
+convergence for §2), and writes the CSVs read above. Julia RTIGER is required only
+to *produce the baseline*; the nilHMM side needs only the built C++ core.
