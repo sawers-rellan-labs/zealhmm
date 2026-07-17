@@ -61,9 +61,9 @@ if (SMOKE) dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 }
 
 # --- design + knobs (offline, so we can afford larger sets than a live render) --
-EXP <- breeding_prior(DESIGN) # c(REF, HET, ALT) implied by the design
-F1 <- as.numeric(EXP["HET"]) # HMM start prior (HET freq); same EXP source as breeding_prior
-F2 <- as.numeric(EXP["ALT"]) # HMM start prior (donor-hom freq)
+design_prior <- breeding_prior(DESIGN) # design genotype-freq prior c(REF, HET, ALT)
+F1 <- as.numeric(design_prior["HET"]) # HMM start prior (HET freq)
+F2 <- as.numeric(design_prior["ALT"]) # HMM start prior (donor-hom freq)
 
 # smoke = tiny sizes for a fast end-to-end check + per-caller timing basis
 N_CAL_NNIL <- if (SMOKE) 20L else 300L # calibration subset for the geometric log sweep
@@ -100,11 +100,10 @@ skim[grid, cm := i.cm, on = c("chr", "pos")] # lbimpute needs cM per marker
 # explicitly -- call_gt's default is HWE, which is WRONG for NILs (no random mating:
 # P(HET) is the scheme's expectation, not 2p(1-p)) and underperforms even a flat
 # prior. Choosing the design prior is a conscious decision (not choosing = flat).
-# breeding_prior is COMPUTED from the design (EXP = breeding_prior(DESIGN)),
-# the same source as the F1/F2 start priors -- one function, no lookup table.
-breeding_prior <- EXP[c("REF", "HET", "ALT")] # single-locus genotype-freq prior
+# Reuse design_prior -- the same genotype-freq prior that seeds F1/F2, computed once
+# from breeding_prior(DESIGN); one source, no lookup table.
 skim[, g := {
-  gg <- call_gt(n_ref, n_alt, prior = breeding_prior, error = 0.01)
+  gg <- call_gt(n_ref, n_alt, prior = design_prior, error = 0.01)
   gg[is.na(gg)] <- 3L # NA (zero depth) -> explicit missing state
   as.integer(gg)
 }]
