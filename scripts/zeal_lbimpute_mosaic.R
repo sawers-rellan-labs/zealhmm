@@ -23,14 +23,14 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # single_locus_expectation
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f)
 source(file.path(ROOT, "scripts/logging.R"))
 
 GENOTYPEERR <- 0.05
 DRP <- TRUE
 ERR <- 0.01
 THREADS <- as.integer(Sys.getenv("LBIMPUTE_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
-EXP <- single_locus_expectation(2L, 3L) # BC2S3 start seed
+EXP <- breeding_prior("BC2S3") # BC2S3 start seed
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 

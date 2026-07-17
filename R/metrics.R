@@ -128,27 +128,6 @@ control_donor_rate <- function(seg, grid) {
 # All operate on the common schema (name, chr, start_bp, end_bp, state).
 # ============================================================================
 
-#' Single-locus (Mendelian) genotype-frequency expectation for BCn Sm
-#'
-#' The distance-free, map-free target for the genotype-frequency panel. Donor
-#' allele frequency is `0.5^(n_bc + 1)` and is invariant across selfing; only
-#' heterozygosity decays. For BC2S2: REF 0.844 / HET 0.0625 / ALT 0.0938,
-#' dosage 0.125.
-#'
-#' @param n_bc,n_self Backcross and selfing generations.
-#' @return Named vector `c(REF, HET, ALT, dosage)` (dosage = donor allele freq).
-#' @export
-single_locus_expectation <- function(n_bc = 2L, n_self = 2L) {
-  p <- 0.5^(n_bc + 1) # donor allele frequency (invariant across selfing)
-  h <- 2 * p
-  a <- 0
-  for (i in seq_len(n_self)) {
-    a <- a + h / 4
-    h <- h / 2
-  }
-  c(REF = 1 - h - a, HET = h, ALT = a, dosage = a + h / 2)
-}
-
 #' Per-sample genome fractions and donor dosage (length-weighted)
 #'
 #' @param seg Common-schema segments (one or many samples).

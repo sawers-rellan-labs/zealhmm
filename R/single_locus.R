@@ -16,14 +16,14 @@ suppressMessages({
 })
 
 #' Single-locus genotype expectation for a BC(n_bc) S(n_self) scheme
+#'
+#' Thin naming adapter over [nilHMM::breeding_prior()], which owns the
+#' backcross/selfing transition-matrix propagation. Re-cases its `c(REF, HET, ALT)`
+#' to the `Het` convention this validation module and [hotelling_fractions()] use.
 #' @return Named numeric `c(REF, Het, ALT)` summing to 1.
 single_locus_p0 <- function(n_bc = 2L, n_self = 3L) {
-  B <- rbind(c(0, 1, 0), c(0, 0.5, 0.5), c(0, 0, 1)) # backcross to aa
-  S <- rbind(c(1, 0, 0), c(0.25, 0.5, 0.25), c(0, 0, 1)) # selfing
-  v <- c(0, 1, 0) # F1 = Aa; order (AA,Aa,aa)
-  for (i in seq_len(n_bc)) v <- as.numeric(v %*% B)
-  for (i in seq_len(n_self)) v <- as.numeric(v %*% S)
-  c(REF = v[3], Het = v[2], ALT = v[1])
+  p <- nilHMM::breeding_prior(sprintf("BC%dS%d", n_bc, n_self))
+  c(REF = p[["REF"]], Het = p[["HET"]], ALT = p[["ALT"]])
 }
 
 #' Run-length truth segments from a per-marker dosage vector (0/1/2).

@@ -23,9 +23,10 @@
 #  - Coverage grid: {0.1, 0.2, 0.5, 1, 5, 10, 20} (+ lambda=Inf baseline = panel C).
 #  - rrate = rrate_star, READ from results/sim/calib_params.csv (do not invent).
 #  - Design priors: nNIL (geometric duration) CONSUMES f_1/f_2 (unlike RTIGER,
-#    which fits its own start freqs). design_priors() has no "BC1S4" entry, and
-#    the calibration was on BC2S2 SIM NILs; TeoNAM is BC1S4 with the Chen 2019
-#    observed frequencies ~8% het / ~15% teosinte-hom, so f_1 = 0.08, f_2 = 0.15.
+#    which fits its own start freqs). We use the Chen 2019 OBSERVED frequencies,
+#    not the Mendelian breeding_prior("BC1S4") expectation: real TeoNAM shows het
+#    excess / teosinte-hom deficit (~8% het / ~15% teosinte-hom), so f_1 = 0.08,
+#    f_2 = 0.15.
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (identical scheme to the
 #    RTIGER + control sweeps, so all three degrade the same truth mosaics).
@@ -72,19 +73,18 @@ message(sprintf("nNIL: rrate_star = %.5g (calib_params.csv), f_1 = %.2f, f_2 = %
 # liftover). cM is taken ENTIRELY from the NATIVE TeoNAM est.map: native cM for the
 # markers it placed, and for those it did not (quirky/non-Mendelian/unplaced) a cM
 # interpolated ON THE NATIVE MAP via its monotone bp->cM Marey spline
-# (.bp_to_cm_fun, Hyman, clamped; R/simulate.R) fit per chr to the placed markers.
+# (nilHMM::bp_to_cm, Hyman, clamped) fit per chr to the placed markers.
 mc <- fread(file.path(ROOT, "data/teonam/markers_v5.tsv")) # roster + v5 bp (liftover)
 setnames(mc, "chr_v5", "chr")
 nat_cm <- fread(file.path(ROOT, DEFAULT_TEONAM_MAP)) # native est.map: cM for placed markers
 mc[, cm := nat_cm$cm[match(marker, nat_cm$marker)]] # native cM; NA where est.map didn't place it
-mc[, cm := {
-  ok <- !is.na(cm)
-  if (any(!ok) && sum(ok) >= 2L) {
-    f <- .bp_to_cm_fun(data.table(bp = pos_v5[ok], cm = cm[ok])) # native Marey spline (Hyman, monotone)
-    cm[!ok] <- f(pos_v5[!ok])
-  }
-  cm
-}, by = chr] # place est.map-unplaced markers on the NATIVE cM scale via its Marey spline
+# place est.map-unplaced markers on the NATIVE cM scale via a per-chr Marey spline
+# fit on the placed markers (bp_to_cm splits by chr internally; a chr with
+# <2 placed markers has no spline and its unplaced markers stay NA).
+placed <- mc[!is.na(cm), .(chr, bp = pos_v5, cm)]
+fit_chr <- placed[, .N, by = chr][N >= 2L, chr]
+to_cm <- bp_to_cm(placed[chr %in% fit_chr])
+mc[is.na(cm) & chr %in% fit_chr, cm := to_cm(chr, pos_v5)]
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 
