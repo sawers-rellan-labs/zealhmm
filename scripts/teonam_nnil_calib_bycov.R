@@ -25,7 +25,7 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, single_locus_expectation, log_grid)
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, log_grid)
 OUT <- file.path(ROOT, "results/sim/teonam")
 source(file.path(ROOT, "scripts/logging.R"))
 
@@ -40,8 +40,8 @@ LAMBDAS <- if (SMOKE) c(1) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf)
 # aggregates only compact segments. Safe to use the RTIGER thread convention.
 THREADS <- as.integer(Sys.getenv("NNIL_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
 
-# nNIL start priors for BC1S4 (design_priors() has no BC1S4 entry) -- same as 02_calibrate.R
-EXP <- single_locus_expectation(1L, 4L) # (n_bc = 1, n_self = 4)
+# nNIL start priors for BC1S4 from breeding_prior() -- same as 02_calibrate.R
+EXP <- breeding_prior("BC1S4") # (n_bc = 1, n_self = 4)
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 

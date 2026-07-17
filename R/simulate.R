@@ -58,15 +58,6 @@ SIM_DEFAULT_SEED <- 1L
   )
 }
 
-# "BC1S4" -> list(n_bc = 1, n_self = 4)
-.parse_design <- function(design) {
-  mm <- regmatches(design, regexec("^BC(\\d+)S(\\d+)$", design))[[1]]
-  if (!length(mm)) {
-    stop(".parse_design(): design must be 'BC<n>S<m>' (e.g. BC1S4, BC2S2): ", design)
-  }
-  list(n_bc = as.integer(mm[2]), n_self = as.integer(mm[3]))
-}
-
 # --- consensus map ----------------------------------------------------------
 #' Load the staged consensus map (marker -> chr, cm, bp)
 #' @export
@@ -82,14 +73,6 @@ load_consensus_map <- function(path = here::here("data/ref/maize_map_v5_clean.rd
 # per-chromosome cM length (the simcross `L` vector), ordered by chr
 .chr_cm_lengths <- function(map) map[, .(L = max(cm)), by = chr][order(chr)]
 
-# monotone bp -> cM interpolator for one chromosome (Hyman spline, clamped)
-.bp_to_cm_fun <- function(chr_map) {
-  d <- chr_map[, .(cm = mean(cm)), by = bp][order(bp)]
-  f <- stats::splinefun(d$bp, d$cm, method = "hyman")
-  rng <- range(d$bp)
-  function(bp) f(pmin(pmax(bp, rng[1]), rng[2]))
-}
-
 #' Build a physical marker grid: n_markers spread by span, cM per marker
 #' @export
 build_marker_grid <- function(map, n_markers = 2500L, chr_prefix = "chr") {
@@ -98,13 +81,13 @@ build_marker_grid <- function(map, n_markers = 2500L, chr_prefix = "chr") {
   # yielding NA quotas. Double arithmetic keeps the quota computation exact.
   spans <- map[, .(min_bp = min(bp), max_bp = max(bp), span = as.numeric(max(bp) - min(bp))), by = chr]
   spans[, quota := pmax(2L, as.integer(round(n_markers * span / sum(span))))]
+  to_cm <- nilHMM::bp_to_cm(map) # monotone bp -> cM Marey spline (nilHMM::bp_to_cm, R/map.R)
   data.table::rbindlist(lapply(seq_len(nrow(spans)), function(i) {
     ch <- spans$chr[i]
     bp <- round(seq(spans$min_bp[i], spans$max_bp[i], length.out = spans$quota[i]))
-    f <- .bp_to_cm_fun(map[chr == ch])
     data.table::data.table(
       chr = as.integer(ch), chr_label = paste0(chr_prefix, ch),
-      bp = as.integer(bp), cm = f(bp)
+      bp = as.integer(bp), cm = to_cm(ch, bp)
     )
   }))[order(chr, bp)]
 }
@@ -225,7 +208,7 @@ simulate_source <- function(design = "BC2S2",
     ped <- pedigree
     nid <- as.character(nil_id)
   } else {
-    pd <- .parse_design(design)
+    pd <- nilHMM::parse_design(design)
     bp <- .bcsft_pedigree(pd$n_bc, pd$n_self)
     ped <- bp$ped
     nid <- bp$nil_id

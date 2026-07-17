@@ -50,9 +50,10 @@ transitions, design start-priors) is shared:
 - **Duration / rigidity** — how long the chain stays in a state:
   `duration_geometric()`, `duration_rigidity()`, `duration_hsmm()`.
 
-Design start-priors come from `design_priors("BC2S2" | "BC2S3")` (donor allele
-frequency and heterozygosity expected from the pedigree). The data-agnostic
-contract is `call_ancestry(data, caller, design, params...) → segment table`.
+Design start-priors come from `breeding_prior("BC2S2")` (the `c(REF, HET, ALT)`
+genotype frequencies expected from the pedigree, computed for any `"BCnSm"`
+design). The data-agnostic contract is
+`call_ancestry(data, caller, design, params...) → segment table`.
 
 # 2. The four callers
 

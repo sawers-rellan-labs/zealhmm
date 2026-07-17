@@ -66,7 +66,7 @@ feasible_rigidity <- function(data, values) {
 #'   donor_marker_recall, marker_macro_dice, n_breakpoints, truth_bp, ks_fragsize)`,
 #'   ascending in `value`.
 #' @export
-sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "rtiger", "lbimpute"),
+sweep_calibrate <- function(data, truth, grid, caller = c("nnil", "bbnil", "rtiger", "lbimpute"),
                             values, threads = 1L, refit = "none", ...) {
   caller <- match.arg(caller)
   pcol <- switch(caller,
@@ -137,7 +137,7 @@ bracket_from_sweep <- function(scores, objective = "donor_frag_dice") {
 #' @return List: `value` (refined optimum), `objective`, `score` (its scored row),
 #'   `trace` (per-iteration bracket), `evals` (all probed value/objective pairs).
 #' @export
-golden_refine <- function(data, truth, grid, caller = c("nnil", "rtiger", "lbimpute"),
+golden_refine <- function(data, truth, grid, caller = c("nnil", "bbnil", "rtiger", "lbimpute"),
                           lo, hi, objective = "donor_frag_dice", threads = 1L,
                           tol = 0.05, max_iter = 20L, integer = NULL, ...) {
   caller <- match.arg(caller)

@@ -29,7 +29,7 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, single_locus_expectation, log_grid)
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, log_grid)
 OUT <- file.path(ROOT, "results/sim/teonam")
 source(file.path(ROOT, "scripts/logging.R"))
 
@@ -47,10 +47,10 @@ DRP <- TRUE # double-recombination penalty
 # Same RTIGER thread convention; env-overridable if memory needs capping.
 THREADS <- as.integer(Sys.getenv("LBIMPUTE_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
 
-# LB-Impute start-distribution seed for BC1S4 (design_priors() has no BC1S4 entry).
+# LB-Impute start-distribution seed for BC1S4 (the Mendelian breeding_prior).
 # For lbimpute f_1/f_2 only SEED the start dist (no state-frequency prior in the
 # transition) -- same source as the nNIL/rtiger calibrations.
-EXP <- single_locus_expectation(1L, 4L) # (n_bc = 1, n_self = 4)
+EXP <- breeding_prior("BC1S4") # (n_bc = 1, n_self = 4)
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 

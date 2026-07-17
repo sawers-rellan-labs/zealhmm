@@ -30,7 +30,7 @@ ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
 source(file.path(ROOT, "scripts/logging.R"))
 source(file.path(ROOT, "R/simulate.R")) # .draw_counts()
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # single_locus_expectation()
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f)
 source(file.path(ROOT, "scripts/map_tools.R"))
 source(file.path(ROOT, "scripts/emmax_qk.R")) # emmax_qk_scan (MLM Q+K, Chen Fig-4C)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
@@ -49,9 +49,9 @@ LAMBDAS <- if (SMOKE) c(1, Inf) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf) # Inf =
 # all-coverage plateau floor for every coverage.
 RRATE <- 3.3e-5
 # BC1S4 start/transition priors -- SAME source as the rrate calibration
-# (single_locus_expectation(1,4)); consistency with the tuning run, not the pre-calib
+# (breeding_prior("BC1S4")); consistency with the tuning run, not the pre-calib
 # sweep's Chen observed freqs. f_1 = HET, f_2 = ALT (homozygous donor).
-EXP <- single_locus_expectation(1L, 4L)
+EXP <- breeding_prior("BC1S4")
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 THREADS <- max(1L, detectCores() - 2L)

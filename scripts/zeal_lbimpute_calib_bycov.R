@@ -26,7 +26,7 @@ suppressMessages({
 })
 ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, single_locus_expectation, log_grid)
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # calibrate.R (+ .draw_counts, log_grid)
 OUT <- file.path(ROOT, "results/sim/zeal")
 dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 source(file.path(ROOT, "scripts/logging.R"))
@@ -42,7 +42,7 @@ DRP <- TRUE # double-recombination penalty
 THREADS <- as.integer(Sys.getenv("LBIMPUTE_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
 
 # LB-Impute start-distribution seed for BC2S3 (n_bc = 2, n_self = 3).
-EXP <- single_locus_expectation(2L, 3L)
+EXP <- breeding_prior("BC2S3")
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 

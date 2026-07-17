@@ -8,7 +8,7 @@
 #
 # The SNP50K sites are teosinte-informative positions (not TeoNAM marker ids), so every
 # marker's cM is interpolated from bp via the native map's monotone bp->cM Marey spline
-# (.bp_to_cm_fun, Hyman, clamped), fit per chromosome to the native placed markers.
+# (nilHMM::bp_to_cm, Hyman, clamped), fit per chromosome to the native placed markers.
 # Genetic-distance reference = the TeoNAM native v5 map (user-specified), already local.
 #
 # Input : data/zeal/markers_snp50k_v5.tsv (marker, chr, pos)
@@ -16,11 +16,11 @@
 # Output: data/zeal/markers_snp50k_cm.tsv  (marker, chr, pos, cm) -- FULL grid, no thinning
 
 suppressMessages({
+  library(nilHMM)
   library(here)
   library(data.table)
 })
 source(here("scripts/logging.R"))
-source(here("R/simulate.R")) # .bp_to_cm_fun
 
 mk <- fread(here("data/zeal/markers_snp50k_v5.tsv")) # marker, chr, pos
 nat <- fread(here("data/teonam/teonam_v5_native.tsv"))[, .(chr = chr_v5, bp = pos_v5, cm)]
@@ -29,11 +29,11 @@ log_info(
   paste(range(nat$chr), collapse = "-")
 )
 
-# per-chromosome bp -> cM via the native Marey spline
-mk[, cm := {
-  nm <- nat[chr == .BY$chr]
-  if (nrow(nm) >= 2L) .bp_to_cm_fun(nm[, .(bp, cm)])(pos) else NA_real_
-}, by = chr]
+# per-chromosome bp -> cM via the native Marey spline (bp_to_cm splits by chr)
+fit_chr <- nat[, .N, by = chr][N >= 2L, chr]
+to_cm <- bp_to_cm(nat[chr %in% fit_chr])
+mk[, cm := NA_real_]
+mk[chr %in% fit_chr, cm := to_cm(chr, pos)]
 n_na <- mk[is.na(cm), .N]
 if (n_na) log_warn("%d markers have no cM (chr not in native map?)", n_na)
 

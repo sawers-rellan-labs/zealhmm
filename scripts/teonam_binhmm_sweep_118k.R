@@ -32,7 +32,7 @@ ROOT <- "/Users/fvrodriguez/repos/zealhmm"
 setwd(ROOT)
 source(file.path(ROOT, "scripts/logging.R"))
 source(file.path(ROOT, "R/simulate.R")) # .draw_counts()
-for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f) # single_locus_expectation()
+for (f in list.files(file.path(ROOT, "R"), "\\.R$", full.names = TRUE)) source(f)
 source(file.path(ROOT, "scripts/map_tools.R"))
 source(file.path(ROOT, "scripts/emmax_qk.R")) # emmax_qk_scan (MLM Family+K)
 OUTDIR <- file.path(ROOT, "results/sim/teonam")
@@ -48,8 +48,8 @@ if (!SMOKE && !("--generate" %in% ARGS)) {
 LAMBDAS <- if (SMOKE) c(1, Inf) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf) # Inf = perfect-coverage ceiling
 BIN_SIZE <- 1e6 # 1 Mb bins, FIXED (no tuning) -- binhmm's segmentation scale
 # BC1S4 start priors (start distribution for binhmm's sticky transition) -- same
-# source as the nNIL/LB-Impute calibrations: single_locus_expectation(1,4).
-EXP <- single_locus_expectation(1L, 4L)
+# source as the nNIL/LB-Impute calibrations: breeding_prior("BC1S4").
+EXP <- breeding_prior("BC1S4")
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 THREADS <- max(1L, detectCores() - 2L)

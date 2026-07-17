@@ -16,14 +16,13 @@ mc <- fread("data/teonam/markers_v5.tsv") # roster + v5 bp (map-neutral liftover
 setnames(mc, "chr_v5", "chr")
 nat_cm <- fread("data/teonam/teonam_v5_native.tsv") # native est.map: cM for placed markers
 mc[, cm := nat_cm$cm[match(marker, nat_cm$marker)]] # native cM; NA where est.map didn't place it
-mc[, cm := {
-  ok <- !is.na(cm)
-  if (any(!ok) && sum(ok) >= 2L) {
-    f <- .bp_to_cm_fun(data.table(bp = pos_v5[ok], cm = cm[ok])) # native Marey spline (Hyman, monotone)
-    cm[!ok] <- f(pos_v5[!ok])
-  }
-  cm
-}, by = chr] # place est.map-unplaced markers on the NATIVE cM scale via its Marey spline
+# place est.map-unplaced markers on the NATIVE cM scale via a per-chr Marey spline
+# fit on the placed markers (bp_to_cm splits by chr internally; a chr with <2
+# placed markers has no spline and its unplaced markers stay NA).
+placed <- mc[!is.na(cm), .(chr, bp = pos_v5, cm)]
+fit_chr <- placed[, .N, by = chr][N >= 2L, chr]
+to_cm <- bp_to_cm(placed[chr %in% fit_chr])
+mc[is.na(cm) & chr %in% fit_chr, cm := to_cm(chr, pos_v5)]
 cm_by <- setNames(mc$cm, mc$marker)
 pos_by <- setNames(mc$pos_v5, mc$marker)
 # FULL 51,004 GWAS target (teonam_map_v5_gwas). interpolate_genotype accepts a
