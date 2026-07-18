@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-09">
+<meta name="dcterms.date" content="2026-07-17">
 
 <title>The nilHMM caller family: one duration-aware HMM, swappable emissions – zealhmm</title>
 <style>
@@ -4104,7 +4104,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 9, 2026</p>
+      <p class="date">July 17, 2026</p>
     </div>
   </div>
   
@@ -4143,7 +4143,7 @@ vertical-align: -.125em;
 </ul></li>
 <li><strong>Duration / rigidity</strong> — how long the chain stays in a state: <code>duration_geometric()</code>, <code>duration_rigidity()</code>, <code>duration_hsmm()</code>.</li>
 </ul>
-<p>Design start-priors come from <code>design_priors(&quot;BC2S2&quot; | &quot;BC2S3&quot;)</code> (donor allele frequency and heterozygosity expected from the pedigree). The data-agnostic contract is <code>call_ancestry(data, caller, design, params...) → segment table</code>.</p>
+<p>Design start-priors come from <code>breeding_prior(&quot;BC2S2&quot;)</code> (the <code>c(REF, HET, ALT)</code> genotype frequencies expected from the pedigree, computed for any <code>&quot;BCnSm&quot;</code> design). The data-agnostic contract is <code>call_ancestry(data, caller, design, params...) → segment table</code>.</p>
 </section>
 <section id="the-four-callers" class="level1">
 <h1>2. The four callers</h1>
@@ -4218,7 +4218,7 @@ vertical-align: -.125em;
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;nilHMM&quot;</span>, <span class="fu">as.character</span>(<span class="fu">packageVersion</span>(<span class="st">&quot;nilHMM&quot;</span>)), <span class="st">&quot;loaded; engine ready.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>nilHMM 0.1.0 loaded; engine ready.</code></pre>
+<pre><code>nilHMM 0.3.0 loaded; engine ready.</code></pre>
 </div>
 </div>
 </section>
@@ -4741,59 +4741,60 @@ vertical-align: -.125em;
 <span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Duration / rigidity** — how long the chain stays in a state:</span>
 <span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="in">`duration_geometric()`</span>, <span class="in">`duration_rigidity()`</span>, <span class="in">`duration_hsmm()`</span>.</span>
 <span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>Design start-priors come from <span class="in">`design_priors(&quot;BC2S2&quot; | &quot;BC2S3&quot;)`</span> (donor allele</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>frequency and heterozygosity expected from the pedigree). The data-agnostic</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>contract is <span class="in">`call_ancestry(data, caller, design, params...) → segment table`</span>.</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="fu"># 2. The four callers</span></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Caller  <span class="pp">|</span> Emission          <span class="pp">|</span> Duration       <span class="pp">|</span> Typical input                    <span class="pp">|</span> Lineage        <span class="pp">|</span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|-------------------|----------------|----------------------------------|----------------|</span></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> nNIL    <span class="pp">|</span> count / BetaBinom <span class="pp">|</span> geometric      <span class="pp">|</span> SNP-panel allele counts          <span class="pp">|</span> Holland nNIL   <span class="pp">|</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RTIGER  <span class="pp">|</span> count / BetaBinom <span class="pp">|</span> rigidity (<span class="in">`r`</span>) <span class="pp">|</span> SNP-panel allele counts          <span class="pp">|</span> RTIGER (port)  <span class="pp">|</span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> binhmm  <span class="pp">|</span> Gaussian on bins  <span class="pp">|</span> sticky trans.  <span class="pp">|</span> per-bin <span class="in">`ALT_FREQ`</span> (dense skim)  <span class="pp">|</span> nilhifi        <span class="pp">|</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> ATLAS   <span class="pp">|</span> gt / categorical  <span class="pp">|</span> geometric      <span class="pp">|</span> competitive gene-level GT counts <span class="pp">|</span> GOOGA-shadow   <span class="pp">|</span></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>The Julia-free RTIGER port (memory <span class="in">`rtiger-fork`</span>) is what lets all four share</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>one R + Rcpp engine. Each caller gets a §2.2 subsection in the manuscript; the</span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>prose is drafted in the RILAB LaTeX template in the separate manuscript repo</span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>(see the README section→note→figure map).</span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="fu"># 3. Smoke test — every caller returns a valid segment table</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>This chunk proves the pipeline: the same engine, four callers, each producing a</span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>common-schema segment table. It renders off-mount by falling back to a tiny</span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>bundled fixture when the real count files are absent.</span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="in">```{r smoke, eval=requireNamespace(&quot;nilHMM&quot;, quietly = TRUE)}</span></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: point at a small bundled fixture under data/ once the manifest (B3) is</span></span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="co"># frozen. Until then this documents the intended call surface.</span></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>demo_calls <span class="ot">&lt;-</span> <span class="cf">function</span>(path, ...) {</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(path)) {</span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_common_schema</span>(<span class="fu">call_ancestry</span>(<span class="fu">read_counts</span>(path), ...),</span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> <span class="st">&quot;demo&quot;</span>, <span class="at">name =</span> <span class="fu">basename</span>(path)</span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="co"># nNIL:   demo_calls(f, caller = &quot;nnil&quot;,   design = &quot;BC2S2&quot;, rrate = 1e-4, err = 0.01)</span></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="co"># RTIGER: demo_calls(f, caller = &quot;rtiger&quot;, rigidity = 5L)</span></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;nilHMM&quot;</span>, <span class="fu">as.character</span>(<span class="fu">packageVersion</span>(<span class="st">&quot;nilHMM&quot;</span>)), <span class="st">&quot;loaded; engine ready.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a><span class="fu"># 4. What each caller is for</span></span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**nNIL** — the count baseline; Holland&#39;s near-isogenic-line caller.</span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**RTIGER** — rigidity replaces a free geometric duration; robust at low depth.</span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**binhmm** — anchors REF at the coverage floor on dense per-bin <span class="in">`ALT_FREQ`</span>;</span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>  the only track that keeps the full ~27.6 M-SNP density (skim only).</span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**ATLAS** — competitive transcript mapping → hard GT → categorical emission;</span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>  expression-agnostic, built for BRB-seq (RNA), where a count model is confounded</span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>  by expression and allele-specific expression.</span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>See <span class="in">`simulation-calibration.qmd`</span> for how each caller&#39;s parameters are</span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>calibrated from simulations, and <span class="in">`source-method-comparison.qmd`</span> for the</span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>cross-modality benchmark.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>Design start-priors come from <span class="in">`breeding_prior(&quot;BC2S2&quot;)`</span> (the <span class="in">`c(REF, HET, ALT)`</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>genotype frequencies expected from the pedigree, computed for any <span class="in">`&quot;BCnSm&quot;`</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>design). The data-agnostic contract is</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="in">`call_ancestry(data, caller, design, params...) → segment table`</span>.</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="fu"># 2. The four callers</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Caller  <span class="pp">|</span> Emission          <span class="pp">|</span> Duration       <span class="pp">|</span> Typical input                    <span class="pp">|</span> Lineage        <span class="pp">|</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|-------------------|----------------|----------------------------------|----------------|</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> nNIL    <span class="pp">|</span> count / BetaBinom <span class="pp">|</span> geometric      <span class="pp">|</span> SNP-panel allele counts          <span class="pp">|</span> Holland nNIL   <span class="pp">|</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RTIGER  <span class="pp">|</span> count / BetaBinom <span class="pp">|</span> rigidity (<span class="in">`r`</span>) <span class="pp">|</span> SNP-panel allele counts          <span class="pp">|</span> RTIGER (port)  <span class="pp">|</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> binhmm  <span class="pp">|</span> Gaussian on bins  <span class="pp">|</span> sticky trans.  <span class="pp">|</span> per-bin <span class="in">`ALT_FREQ`</span> (dense skim)  <span class="pp">|</span> nilhifi        <span class="pp">|</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> ATLAS   <span class="pp">|</span> gt / categorical  <span class="pp">|</span> geometric      <span class="pp">|</span> competitive gene-level GT counts <span class="pp">|</span> GOOGA-shadow   <span class="pp">|</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>The Julia-free RTIGER port (memory <span class="in">`rtiger-fork`</span>) is what lets all four share</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>one R + Rcpp engine. Each caller gets a §2.2 subsection in the manuscript; the</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>prose is drafted in the RILAB LaTeX template in the separate manuscript repo</span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>(see the README section→note→figure map).</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="fu"># 3. Smoke test — every caller returns a valid segment table</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>This chunk proves the pipeline: the same engine, four callers, each producing a</span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>common-schema segment table. It renders off-mount by falling back to a tiny</span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>bundled fixture when the real count files are absent.</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="in">```{r smoke, eval=requireNamespace(&quot;nilHMM&quot;, quietly = TRUE)}</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: point at a small bundled fixture under data/ once the manifest (B3) is</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="co"># frozen. Until then this documents the intended call surface.</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>demo_calls <span class="ot">&lt;-</span> <span class="cf">function</span>(path, ...) {</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(path)) {</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_common_schema</span>(<span class="fu">call_ancestry</span>(<span class="fu">read_counts</span>(path), ...),</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>    <span class="at">source =</span> <span class="st">&quot;demo&quot;</span>, <span class="at">name =</span> <span class="fu">basename</span>(path)</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="co"># nNIL:   demo_calls(f, caller = &quot;nnil&quot;,   design = &quot;BC2S2&quot;, rrate = 1e-4, err = 0.01)</span></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="co"># RTIGER: demo_calls(f, caller = &quot;rtiger&quot;, rigidity = 5L)</span></span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;nilHMM&quot;</span>, <span class="fu">as.character</span>(<span class="fu">packageVersion</span>(<span class="st">&quot;nilHMM&quot;</span>)), <span class="st">&quot;loaded; engine ready.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="fu"># 4. What each caller is for</span></span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**nNIL** — the count baseline; Holland&#39;s near-isogenic-line caller.</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**RTIGER** — rigidity replaces a free geometric duration; robust at low depth.</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**binhmm** — anchors REF at the coverage floor on dense per-bin <span class="in">`ALT_FREQ`</span>;</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>  the only track that keeps the full ~27.6 M-SNP density (skim only).</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**ATLAS** — competitive transcript mapping → hard GT → categorical emission;</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>  expression-agnostic, built for BRB-seq (RNA), where a count model is confounded</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>  by expression and allele-specific expression.</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>See <span class="in">`simulation-calibration.qmd`</span> for how each caller&#39;s parameters are</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>calibrated from simulations, and <span class="in">`source-method-comparison.qmd`</span> for the</span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>cross-modality benchmark.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
