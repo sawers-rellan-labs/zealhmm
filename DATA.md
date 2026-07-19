@@ -405,3 +405,24 @@ fork workspace).
   - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
     throughput and convergence iters/runtime per size.
   Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
+
+## nNIL equivalence inputs (`data/zhong2025/`, `data/nnil_equiv/`)
+
+Backs the optimization supplement Sec. 2 (nNIL reproduction) and `scripts/nnil_equiv/`.
+Gitignored. Zhong et al. 2025, The Plant Journal (doi:10.1111/tpj.70228), nested
+near-isogenic lines; Holland's HMM caller.
+
+- `data/zhong2025/` -- the Wiley supplement (Files S1-S22; DOI above), PLUS the two
+  >100 MB files not in the Wiley zip, sourced from the authors' Box folder:
+  - `File_S01.nNIL_raw_SNPs_bgi_id_miss20.txt` -- raw GBS SNP calls, HapMap-numeric
+    (901 samples x 93,540 markers, B73 v4), `{0=minor-homoz, 0.5=het, 1=major-homoz,
+    NA}`. The caller INPUT.
+  - `File_S18.nNIL_gbs_HMM_introgressionCalls_full_set.csv` -- Holland's PUBLISHED
+    per-marker calls `{0,1,2}` (888 lines x 64,025 markers). The reproduction ORACLE.
+  - Files S3/S4 (grid search), S9 (bgi->line translation), S11 (Holland's
+    `call_intros`, hmmlearn), S16 (optimal params).
+- `data/nnil_equiv/` -- the shared faithful input built by `scripts/nnil_equiv/01_build_input.py`
+  (File S1 subset to File S18's exact markers/lines, recoded `{0,1,2,3}`) and its
+  compact PLINK `.bed` (`make_bed.py`, round-trip-asserted so `0=REF`). Consumed by
+  `02_holland_calls.py` (hmmlearn) and `03_nilhmm_calls.R` (BEDMatrix stream).
+- Python: existing `~/anaconda3/envs/nilhmm` env (hmmlearn, bed-reader). R: BEDMatrix, genio.
