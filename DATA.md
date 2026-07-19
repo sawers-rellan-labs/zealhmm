@@ -383,3 +383,25 @@ wall (the genotype↔ancestry-mosaic distinction — `nilhmm/design/TERMINOLOGY.
 in `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
 ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
 allele at invariant sites; only `hwe_post` does.
+
+## RTIGER C++/Rcpp-vs-Julia benchmark inputs (`data/rtiger_shared3_input/`, `data/bench_ref/`)
+
+Backs `scripts/bench_rtiger_cpp_vs_julia.R` and the optimization supplement
+(`nilhmm-paper/supplement_optimization.tex` §1). Gitignored; staged from
+`~/repos/rtiger-fork-assets/` (safety copy of the `faustovrz/RTIGER@optimize-julia-core`
+fork workspace).
+
+- `data/rtiger_shared3_input/sample{BN,Z,AU}.txt` — the **109,703-locus shared-3
+  panel**: real *Arabidopsis* Col-0 x Ler allele counts (BioProject PRJNA720439 /
+  SRA SRP313911), the loci covered in all three of the BN/Z/AU samples, one common
+  grid (built by the fork's `27_build_shared_panel.R`). RTIGER count format:
+  `chr pos refAllele refCount altAllele altCount`. The C++ core's benchmark input;
+  thinned by odd index to 6,857 / 13,713 / 27,426 / 54,852 / 109,703 markers.
+- `data/bench_ref/` — the **upstream-original Julia baseline**, NOT re-run (the
+  110k convergence fit is ~3.4 h upstream). Fixed reference, from the fork:
+  - `orig_conv/log_orig_conv_L{0..4}.log` — per-EM-iteration `delta`/`elapsed`.
+  - `orig_conv/conv_orig_L{0..4}.txt` — converged params + Viterbi paths (the
+    equivalence oracle the C++ paths are compared against).
+  - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
+    throughput and convergence iters/runtime per size.
+  Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
