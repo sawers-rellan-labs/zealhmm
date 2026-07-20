@@ -452,3 +452,35 @@ near-isogenic lines; Holland's HMM caller.
   and `07_equiv_sweep.R` (`07_holland_level.py` per-size Holland calls vs nilHMM
   position-by-position -> `results/bench/nnil_equiv_sweep.csv`, supplement Table 5).
 - Python: existing `~/anaconda3/envs/nilhmm` env (hmmlearn, bed-reader). R: BEDMatrix, genio.
+
+## nNIL calibration foil (`data/nnil_foil/`, `scripts/nnil_foil/`)
+
+Backs `analysis/nnil-calibration-foil.qmd` (the recombination rate `r` is a benign
+hyperparameter; the emission `nir` carries the calibration signal). All markers on
+maize **v5** (`S<chr>_<pos_v5>`); the v4-keyed `data/nnil_equiv/geno.bed` is joined
+via the crosswalk and relabelled. Reproduction chain (`scripts/nnil_foil/`):
+- `01_liftover_cm.R` -- lift the 64,025 nNIL markers AGPv4->v5 (vendored chain
+  `data/ref/chain_files/B73_RefGen_v4_to_...NAM-5.0.chain`, `~/bio/bin/liftOver` via
+  `lift_unique()`), keep 1:1 same-chr (63,904), interpolate cM from the TeoNAM native
+  v5 map (`data/teonam/markers_v5_gwas118k_cm.tsv`) -> `markers_v5.tsv` (crosswalk).
+- `02_chip_truth.py` -- reproduces Holland's chip calls by porting File S14 + calling
+  File S11 (chip xlsx `File_S02`, V3->V4 beds `File_S12/S13` from `agent/nNIL/`);
+  24 both-platform NILs x 11,310 shared v5 markers -> `chip_truth_projected.csv`.
+- `03_chip_calibrate.R` -- sweep nnil `rrate` vs the chip calls (Holland's emission) ->
+  `chip_rrate_sweep.csv`, `chip_calib.json` (mismatch flat over [1e-6, 8.2e-3]).
+- `04_sim_calibrate.R` -- BC5S2 simcross on the 63,904 v5 markers + native cM,
+  n=1500, degraded FORWARD through Holland's `emission_gt` at the measured biological
+  `nir=0.594`; calibrate `rrate` on 300 vs dense truth -> `sim_rrate_sweep.csv`,
+  `sim_calib.json`, `sim_truth_segments.csv` (single-locus BC5S2 check PASS).
+- `05_foil_figure.R` -> `nilhmm-paper/figures/nnil_calibration_foil.png`.
+- `06_fragsize_figure.R` -> `fragsize_ecdf.csv` + `agent/nnil_foil_fragsize.png`.
+- `07_holland_sensitivity.R` -- variance decomposition of Holland's File S04 grid
+  (nir 97.7%, r 0.03%) -> `holland_param_sensitivity.csv`.
+- `08_nir_sweep.R` -- nir sweep at the map `r` (3 metrics) -> `nir_sweep.csv`,
+  `nir_fragsize_ecdf.csv` (chip-supervised nir optimum ~0.9 vs founder f0 ~0.59).
+- `09_sim_nir_sweep.R` -- sim-only nir sweep: data generated at `nir=0.594`, caller
+  scored vs the simcross truth -> `sim_nir_sweep.csv`; recovers `nir* = 0.594` (the
+  excess to 0.9 on the real chip-supervised fit is the GBS data-quality effect).
+- Biological nir estimate: `agent/nnil_foil_estimate_nir.py` (chip NAM-founder donors).
+- Env: `~/anaconda3/envs/nilhmm` (+ `openpyxl` for the chip xlsx). R: nilHMM, BEDMatrix,
+  data.table, GenomicRanges/IRanges/rtracklayer, ggplot2, patchwork.
