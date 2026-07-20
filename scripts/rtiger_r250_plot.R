@@ -48,14 +48,12 @@ axis(2, yt, c("0.01", "0.1", "1", "10", "100", "1000"), las = 1)
 xx <- 10^seq(log10(min(allmps)), log10(max(allmps)), length = 50)
 lines(xx, 10^predict(fo, data.frame(mps = xx)), col = COL_ORIG, lty = 2, lwd = 2)
 lines(xx, 10^predict(fc, data.frame(mps = xx)), col = COL_CPP, lty = 2, lwd = 2)
-points(so$mps, so$per_iter, col = COL_ORIG, pch = 17, cex = 1.3) # measured original
-points(o_proj$mps, o_proj$per_iter, col = COL_ORIG, pch = 2, cex = 1.3) # projected (open)
+points(so$mps, so$per_iter, col = COL_ORIG, pch = 17, cex = 1.3)
 points(sc$mps, sc$per_iter, col = COL_CPP, pch = 19, cex = 1.3)
 legend("topleft", bty = "n", cex = 0.9, legend = c(
-  sprintf("original Julia ~ markers^%.2f (measured)", et(so, "per_iter")),
-  "original Julia (projected)",
+  sprintf("original Julia ~ markers^%.2f", et(so, "per_iter")),
   sprintf("nilHMM C++/Rcpp ~ markers^%.2f", et(sc, "per_iter"))
-), col = c(COL_ORIG, COL_ORIG, COL_CPP), pch = c(17, 2, 19), lty = c(2, NA, 2), lwd = 2)
+), col = c(COL_ORIG, COL_CPP), pch = c(17, 19), lty = 2, lwd = 2)
 
 # ---- panel B: peak RSS vs markers (r=250) ----
 cppm <- cppm[order(cppm$markers), ]
@@ -75,13 +73,11 @@ lines(xxm, 10^predict(fom, data.frame(markers = xxm)), col = COL_ORIG, lty = 2, 
 fcm <- stats::lm(log10(peak_rss_mib) ~ log10(markers), cppm)
 lines(xxm, 10^predict(fcm, data.frame(markers = xxm)), col = COL_CPP, lty = 2, lwd = 2)
 points(julm$markers, julm$peak_rss_mib, col = COL_ORIG, pch = 17, cex = 1.3)
-points(jul_proj_mps, jul_proj, col = COL_ORIG, pch = 2, cex = 1.3)
 points(cppm$markers, cppm$peak_rss_mib, col = COL_CPP, pch = 19, cex = 1.3)
 legend("left", bty = "n", cex = 0.9, legend = c(
-  sprintf("original Julia (retains) ~ markers^%.2f (measured)", em(julm)),
-  "original Julia (projected)",
+  sprintf("original Julia (retains) ~ markers^%.2f", em(julm)),
   sprintf("nilHMM C++/Rcpp (streams) ~ markers^%.2f", em(cppm))
-), col = c(COL_ORIG, COL_ORIG, COL_CPP), pch = c(17, 2, 19), lty = c(2, NA, 2), lwd = 2)
+), col = c(COL_ORIG, COL_CPP), pch = c(17, 19), lty = 2, lwd = 2)
 dev.off()
 cat("wrote rtiger_marker_scaling_r250.png\n")
 
@@ -102,10 +98,11 @@ if (nrow(tc) >= 2 && nrow(to) >= 2) {
   par(mfrow = c(1, 2), mar = c(4.4, 5.0, 3.6, 1))
   plot(seq_len(nrow(tc)), tc$per_iter,
     log = "y", type = "b", pch = 19, col = COL_CPP,
-    ylim = range(c(to$per_iter, tc$per_iter)), yaxt = "n", xlab = "EM iteration",
+    ylim = range(c(to$per_iter, tc$per_iter)), xaxt = "n", yaxt = "n", xlab = "EM iteration",
     ylab = "per-iteration wall time (s)",
     main = sprintf("Per-iteration time -- %s markers/sample, r=250\norig ~%.0f s vs C++ ~%.2f s per iter", format(mps_eq, big.mark = ","), mean(to$per_iter), mean(tc$per_iter))
   )
+  axis(1, at = seq_len(max(nrow(tc), nrow(to)))) # EM iterations are integers
   axis(2, dt, dl, las = 1)
   points(seq_len(nrow(to)), to$per_iter, type = "b", pch = 17, col = COL_ORIG, cex = 1.2)
   legend("right", c(sprintf("nilHMM C++/Rcpp (%d it)", nrow(tc)), sprintf("original Julia (%d it)", nrow(to))),
