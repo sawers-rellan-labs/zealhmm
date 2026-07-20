@@ -13,6 +13,8 @@ SCRIPT <- file.path(ROOT, "scripts/bench_rtiger_cpp_memory_markers.R")
 files <- c(S1 = "sampleBN.txt", S2 = "sampleZ.txt", S3 = "sampleAU.txt")
 chrs <- paste0("Chr", 1:5)
 LEVELS <- 0:4 # 109,703 -> 6,857 markers/sample
+RIG <- as.integer(Sys.getenv("RTIGER_RIG", "2")) # operating rigidity (env-set)
+OUTCSV <- if (RIG == 2L) "rtiger_memory_markers.csv" else sprintf("rtiger_memory_markers_r%d.csv", RIG)
 args <- commandArgs(trailingOnly = TRUE)
 
 raw <- lapply(files, function(f) {
@@ -51,7 +53,7 @@ if ("--worker" %in% args) { # fit at one marker level, quit
   mps <- length(build_obs(level)[[1]][[1]]$k) # placeholder
   mps <- sum(vapply(obs$S1, function(x) length(x$k), 0L))
   invisible(nilHMM:::.rtiger_fit(obs,
-    r = 2L, nstates = 3L, eps = 0.01, max_iter = 6L,
+    r = RIG, nstates = 3L, eps = 0.01, max_iter = 6L,
     init_alpha = c(20, 20, 1), init_beta = c(1, 20, 20)
   ))
   cat(sprintf("MEMMARK_DONE level=%d markers=%d\n", level, mps))
@@ -71,5 +73,5 @@ for (lv in LEVELS) {
   cat(sprintf("[mem-markers] %6.0f markers  %.0f MiB\n", mk, by / 1024^2))
 }
 d <- do.call(rbind, rows)
-write.csv(d, file.path(OUTDIR, "rtiger_memory_markers.csv"), row.names = FALSE)
-cat("wrote rtiger_memory_markers.csv\n")
+write.csv(d, file.path(OUTDIR, OUTCSV), row.names = FALSE)
+cat(sprintf("wrote %s (rigidity=%d)\n", OUTCSV, RIG))

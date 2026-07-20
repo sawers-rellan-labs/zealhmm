@@ -9,9 +9,10 @@ include(joinpath(SRC, "AuxilaryFunctions.jl"))
 include(joinpath(SRC, "rHMM_methods.jl"))
 
 level = parse(Int, ARGS[1])
+rig = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 2   # operating rigidity (default 2)
 files = ["S1" => "sampleBN.txt", "S2" => "sampleZ.txt", "S3" => "sampleAU.txt"]
 chrs  = ["Chr1", "Chr2", "Chr3", "Chr4", "Chr5"]
-eps = 0.01; rig = 2
+eps = 0.01
 
 raw = Dict{String,Matrix{Any}}()
 for (s, f) in files; raw[s] = readdlm(joinpath(PANEL, f)); end
@@ -43,4 +44,4 @@ end
 O = build(idx); mps = length(idx)
 # fit(Obs, info, init, max_iter, eps, trace, all, random, nsamples, specific, post_processing, DEBUG)
 fit(O, nothing, rinit(rig), 1, eps, false, true, false, 20, nothing, true, false)
-println("MEMJUL_DONE level=$level markers=$mps")
+println("MEMJUL_DONE level=$level markers=$mps rig=$rig")

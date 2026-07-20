@@ -386,10 +386,11 @@ allele at invariant sites; only `hwe_post` does.
 
 ## RTIGER C++/Rcpp-vs-Julia benchmark inputs (`data/rtiger_shared3_input/`, `data/bench_ref/`)
 
-Backs `scripts/bench_rtiger_cpp_vs_julia.R` and the optimization supplement
-(`nilhmm-paper/supplement_optimization.tex` §1). Gitignored; staged from
+Backs the optimization supplement (`nilhmm-paper/supplement_optimization.tex` §1) and
+its companion `analysis/rtiger-optimization-benchmark.qmd`. Gitignored; staged from
 `~/repos/rtiger-fork-assets/` (safety copy of the `faustovrz/RTIGER@optimize-julia-core`
-fork workspace).
+fork workspace). The **paper reports the operating rigidity r=250**; the r=2 pair
+(`scripts/bench_rtiger_cpp_vs_julia.R`, `data/bench_ref/`) is the earlier companion.
 
 - `data/rtiger_shared3_input/sample{BN,Z,AU}.txt` — the **109,703-locus shared-3
   panel**: real *Arabidopsis* Col-0 x Ler allele counts (BioProject PRJNA720439 /
@@ -405,6 +406,15 @@ fork workspace).
   - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
     throughput and convergence iters/runtime per size.
   Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
+- **r=250 (operating-point) benchmark** (the paper's §1): `scripts/bench_rtiger_r250.R`
+  (C++ core, all five sizes, to convergence + equivalence), `scripts/rtiger_julia_conv_worker.jl`
+  (original Julia at r=250, the three small sizes -> `results/bench/orig_conv_r250/`,
+  large sizes projected), `scripts/{bench_rtiger_cpp_memory_markers.R (RTIGER_RIG=250),
+  rtiger_julia_mem_worker.jl}` (peak RSS), `scripts/rtiger_r250_plot.R` (figures).
+  Outputs: `results/bench/rtiger_{equiv,marker_scaling,conv_trace}_r250.csv`,
+  `rtiger_{memory_markers,julia_memory_markers}_r250.csv`; figures
+  `nilhmm-paper/figures/rtiger_{equivalence,marker_scaling}_r250.png`. The original
+  needs chains >= 2r = 500 markers (holds at every size).
 
 ## nNIL equivalence inputs (`data/zhong2025/`, `data/nnil_equiv/`)
 
