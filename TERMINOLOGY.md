@@ -121,3 +121,62 @@ see **`nilhmm/design/TERMINOLOGY.md`**.
   type, no prefix or alias: `GENO=hwe_post_gt` (genotype); `GENO=rtiger_mosaic` / `nnil_mosaic`
   / `binhmm_mosaic` / `lbimpute_mosaic` (mosaic). Dead/removed: the `mosaic:` prefix, the bare
   `mosaic`=rtiger alias, `persnp`, `ml_gt`.
+
+## nNIL calibration foil (nilHMM methods)
+
+These are **nilHMM methods** terms, not ZEAL biology: the calibration *procedure*, the
+*reference* it is scored against, the *objective metric*, and the two HMM *knobs* used by
+the nNIL calibration foil (`scripts/nnil_foil/`, `analysis/nnil-calibration-foil.qmd`),
+which diagnoses how Zhong et al. (2025) calibrated the `nnil` caller. Keeping them distinct
+matters, because conflating them caused real confusion. (Package coding/naming conventions
+still live in **`nilhmm/design/TERMINOLOGY.md`**.)
+
+| term | meaning | notes / do not confuse with |
+|------|---------|-----------------------------|
+| **chip-supervised GBS calibration** (of the HMM) | Tuning the GBS caller's parameters to minimize disagreement between its GBS calls and the chip calls on the 24 both-platform lines. **GBS is the sole HMM input; the chip supplies reference labels.** This is Holland's File_S16. | Deprecated labels: "joint calibration", "GBS ∪ chip", "GBS-vs-chip calibration". It is **not** a union co-fit (chip genotypes are never stacked as input) and **not** Kennedy-O'Hagan (no simulator). |
+| **in-sample calibration** | The calibration lines are a subset of the prediction set (GBS_calib ⊂ GBS_predict); the tuned parameters are then applied to the same and larger GBS set. | Not held out. The clean nilHMM analysis keeps calibration (on simulation) separate from evaluation (on held-out GBS). |
+| **chip calls** | The chip-only HMM introgression calls (Holland File_S14), used as the reference labels for chip-supervised calibration. | Always "calls", **never "chip truth"**: it is a chip-only fit, not ground truth. |
+| **simcross truth** | The latent generating ancestry in the `simcross` simulation. The one genuine ground truth in the foil. | Only the simulation has it; the real nNIL has only the sparse chip calls. |
+| **GBS-vs-chip calls mismatch** | Per-marker disagreement between the GBS caller's calls and the chip calls on shared markers. Holland's original objective. | The metric everywhere the target is the chip calls. Distinct from **marker mismatch**. |
+| **marker mismatch** | The analogous per-marker disagreement against the **simcross truth** in the simulation. | Kept as a distinct name on purpose: the target differs (latent truth, not chip calls). |
+| **nir** (emission non-informative rate) | Probability that a donor haplotype still shows the REF (B73) allele at a marker. An *emission* parameter, **not** a segment-length prior. | Carries the calibration signal (97.7% of File_S04's mismatch variance). |
+| **GBS nir** | The *caller's* nir as applied to the GBS data; grid-tuned to ~0.9. Labels the GBS-caller sweep (e.g. panel D of the fragment-size figure). | Distinguish from the founder value below. |
+| **founder non-informative rate (f0)** | The *biological/structural* non-informative rate from the nested B73 × NAM-founder design (~0.59, measured on the NAM-founder chip genotypes). | The gap **GBS nir (0.9) minus founder nir (0.59)** is the GBS data-quality effect, not biology. |
+| **r** / **map r** (intermarker recombination fraction) | Per-adjacent-marker transition probability (off-diagonal HMM mass), unitless and per-marker-interval (not per bp or per cM, not realized recombination). **map r** = 2L/(100N) from the genetic map (native TeoNAM v5). | A benign hyperparameter here (0.03% of File_S04's variance); a genetic map sets it, no chip or simulation needed. |
+
+## Model calibration: Kennedy-O'Hagan (KOH)
+
+**Kennedy-O'Hagan (KOH)** is the orthodox Bayesian framework for calibrating a simulator
+against real data:
+
+> z(x) = rho * eta(x, theta) + delta(x) + epsilon
+
+where **eta** is the simulator, **theta** the calibration parameters, **delta(x)** a
+model-discrepancy term absorbing what the simulator systematically gets wrong, and
+**epsilon** observation error. **theta** and **delta** are confounded: with no explicit
+discrepancy term a calibration parameter silently absorbs model inadequacy and stops
+meaning what you think (Brynjarsdottir and O'Hagan 2014).
+
+Mapping to the nNIL foil:
+
+- **eta** = `simcross` ancestry + Holland's emission (a genuine generative model).
+- **theta** = {`r` (identified: the map value, insensitive), `nir`}.
+- **delta** = the GBS data-quality gap, made identifiable by the paired 24-line design
+  (chip and GBS on the same individuals).
+- The **nir 0.594 to 0.9 gap is the discrepancy** leaking into `theta`.
+
+What is and is not KOH here:
+
+- **Sim-only nir recovery** (`09_sim_nir_sweep.R`): generate at a known nir = 0.594, score
+  against `simcross` truth, recover 0.594. Legitimate simulation-based parameter recovery,
+  and the **eta-only, delta = 0 corner** of KOH, not a full KOH calibration.
+- **chip-supervised calibration** (Holland File_S16): fits `theta` to the chip calls with
+  **no discrepancy term** and in-sample. **Not KOH** (no simulator; the target is a second
+  inference on a second platform).
+- **KOH proper** (not yet done): infer `theta` and an explicit `delta` jointly from the
+  simulator plus the paired chip data. Only reach for `delta` on genuinely noisy sets
+  (nNIL GBS, ZEAL skim/BrB), never on the clean TeoNAM GBS.
+
+References: Kennedy and O'Hagan (2001), *J. R. Stat. Soc. B* 63(3):425-464,
+doi:10.1111/1467-9868.00294; Brynjarsdottir and O'Hagan (2014), *Inverse Problems*
+30(11):114007, doi:10.1088/0266-5611/30/11/114007.
