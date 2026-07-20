@@ -23,41 +23,49 @@ PYBIN <- path.expand("~/anaconda3/envs/nilhmm/bin/python")
 LEVELS <- 0:6 # 64025 -> ~1000 markers, full population
 log_info <- function(...) cat(sprintf("[07_equiv_sweep] %s\n", sprintf(...)))
 
-geno <- BEDMatrix(file.path(OUT, "geno.bed"))
-md <- read.csv(file.path(OUT, "markers.csv"))
-params <- jsonlite::fromJSON(file.path(OUT, "params.json"))
-N <- nrow(geno)
-
-thin_idx <- function(level) {
-  idx <- seq_len(ncol(geno))
-  for (j in seq_len(level)) idx <- idx[c(TRUE, FALSE)] # odd-index thin (== python [::2])
-  idx
+# SPLIT: every worker reads its own pre-split thin_L<level>/ (no in-script thinning);
+# materialize them once up front if absent.
+if (!file.exists(file.path(OUT, "thin_L0", "geno.bed"))) {
+  log_info("materializing thinned .bed per level ...")
+  system2(PYBIN, file.path(SDIR, "materialize_thinned_bed.py"))
 }
 
-# nilHMM nnil calls at one thinned size (same path as 03_nilhmm_calls / 05 worker).
-nilhmm_calls <- function(idx) {
-  chrom_idx <- split(seq_along(idx), md$chrom[idx])
-  r <- 2 * 1500 / (100 * length(idx)) # per-size avg_r (File S16 formula)
+params <- jsonlite::fromJSON(file.path(OUT, "params.json"))
+N <- length(readLines(file.path(OUT, "lines.csv"))) # lines, constant across levels
+
+# nilHMM nnil calls + observed genotypes for one PRE-SPLIT level dir (thin_L<level>/,
+# written by materialize_thinned_bed.py); loads only that dir, no in-script thinning.
+nilhmm_calls <- function(dir) {
+  geno <- BEDMatrix(file.path(dir, "geno.bed"))
+  md <- read.csv(file.path(dir, "markers.csv"))
+  M <- ncol(geno)
+  chrom_idx <- split(seq_len(M), md$chrom)
+  r <- 2 * 1500 / (100 * M) # per-size avg_r (File S16 formula)
   em <- emission_gt(germ = params$germ, gert = params$gert, p = params$p, mr = params$mr, nir = params$nir)
   du <- duration_geometric(rrate = r)
   priors <- list(f_1 = params$f_1, f_2 = params$f_2)
-  calls <- matrix(NA_integer_, N, length(idx))
+  calls <- matrix(NA_integer_, N, M)
+  g <- matrix(NA_integer_, N, M) # observed genotypes (for the informative-marker strat)
   for (li in seq_len(N)) {
-    g_all <- as.integer(geno[li, idx])
+    g_all <- as.integer(geno[li, ])
     g_all[is.na(g_all)] <- 3L
+    g[li, ] <- g_all
     for (cc in names(chrom_idx)) {
       ix <- chrom_idx[[cc]]
-      g <- g_all[ix]
-      calls[li, ix] <- decode(fit(list(g = g), em, du, priors = priors), list(g = g))
+      gg <- g_all[ix]
+      calls[li, ix] <- decode(fit(list(g = gg), em, du, priors = priors), list(g = gg))
     }
   }
-  calls
+  list(calls = calls, g = g, M = M)
 }
 
 rows <- list()
 for (lv in LEVELS) {
-  idx <- thin_idx(lv)
-  M <- length(idx)
+  # nilHMM calls + observed genotypes from the pre-split level dir
+  nc <- nilhmm_calls(file.path(OUT, sprintf("thin_L%d", lv)))
+  nh <- nc$calls
+  g <- nc$g
+  M <- nc$M
   # Holland calls at this level, via the python worker (writes a C-order int8 binary)
   binf <- file.path(SWEEP, sprintf("holland_L%d.bin", lv))
   out <- system2(PYBIN, c(
@@ -75,15 +83,6 @@ for (lv in LEVELS) {
   ho <- matrix(readBin(binf, "integer", n = N * M, size = 1L, signed = TRUE),
     nrow = N, ncol = M, byrow = TRUE
   )
-  # nilHMM calls at the same level
-  nh <- nilhmm_calls(idx)
-  # observed genotypes at the same markers (for the informative-marker stratification)
-  g <- matrix(NA_integer_, N, M)
-  for (li in seq_len(N)) {
-    gi <- as.integer(geno[li, idx])
-    gi[is.na(gi)] <- 3L
-    g[li, ] <- gi
-  }
   states <- N * M
   mm <- nh != ho
   mism <- sum(mm)

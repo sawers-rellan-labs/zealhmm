@@ -445,8 +445,10 @@ near-isogenic lines; Holland's HMM caller.
   `{0,1,2,3}`) and its compact PLINK `.bed` (`make_bed.py`, round-trip-asserted so
   `0=REF`). Consumed by `02_holland_calls.py` (hmmlearn) and `03_nilhmm_calls.R`
   (BEDMatrix stream); `04_compare.R` for the full-panel equivalence.
-- Sweeps (both odd-index marker-density thinning of the 64,025-marker panel over the
-  full 888-line population): `06_sweep.R` (time + peak RSS -> `nnil_marker_scaling.png`)
+- Sweeps use a SPLIT-first design (like RTIGER): `materialize_thinned_bed.py` writes
+  an odd-index-thinned `thin_L{0..6}/geno.bed` + `markers.csv` per density level, and
+  every sweep worker reads ONLY its level's split (no in-script thinning). `06_sweep.R`
+  (time + peak RSS -> `nnil_marker_scaling.png`; auto-materializes the split if absent)
   and `07_equiv_sweep.R` (`07_holland_level.py` per-size Holland calls vs nilHMM
-  position-by-position -> `results/bench/nnil_equiv_sweep.csv`, supplement Table 4).
+  position-by-position -> `results/bench/nnil_equiv_sweep.csv`, supplement Table 5).
 - Python: existing `~/anaconda3/envs/nilhmm` env (hmmlearn, bed-reader). R: BEDMatrix, genio.

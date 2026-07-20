@@ -31,17 +31,15 @@ a = ap.parse_args()
 spec = importlib.util.spec_from_file_location("cintro", S11)
 ci = importlib.util.module_from_spec(spec); spec.loader.exec_module(ci)
 
-md = pd.read_csv(os.path.join(OUT, "markers.csv"))
+DIR = os.path.join(OUT, f"thin_L{a.level}")                   # PRE-SPLIT: only this level
+md = pd.read_csv(os.path.join(DIR, "markers.csv"))
 params = json.load(open(os.path.join(OUT, "params.json")))
-val = open_bed(os.path.join(OUT, "geno.bed")).read()          # lines x markers, {0,1,2,NaN}
+val = open_bed(os.path.join(DIR, "geno.bed")).read()          # lines x M (already thinned), {0,1,2,NaN}
 
-idx = np.arange(val.shape[1])                                  # odd-index thin
-for _ in range(a.level):
-    idx = idx[::2]
-geno = np.where(np.isnan(val[:, idx]), 3, val[:, idx]).astype(float)
-chrom = md["chrom"].to_numpy()[idx]
+geno = np.where(np.isnan(val), 3, val).astype(float)
+chrom = md["chrom"].to_numpy()
 marker_dict = {c: np.where(chrom == c)[0] for c in range(1, 11)}
-r = 2 * 1500 / (100 * len(idx))                               # per-size avg_r
+r = 2 * 1500 / (100 * geno.shape[1])                          # per-size avg_r
 
 calls = ci.call_intros(geno=geno, marker_dict=marker_dict, nir=params["nir"], germ=params["germ"],
                        gert=params["gert"], p=params["p"], mr=params["mr"], r=r,

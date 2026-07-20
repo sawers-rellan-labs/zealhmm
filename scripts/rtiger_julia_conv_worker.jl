@@ -13,7 +13,9 @@ include(joinpath(srcdir, "AuxilaryFunctions.jl"))
 include(joinpath(srcdir, "rHMM_methods.jl"))
 core = occursin("orig", srcdir) ? "orig" : "opt"
 
-paneldir = "/Users/fvrodriguez/repos/zealhmm/data/rtiger_shared3_input"
+# PRE-SPLIT: this worker loads ONLY the thinned panel for the level it benchmarks
+# (thin_L<level>/, written by scripts/materialize_thinned_panel.R); no in-script thinning.
+paneldir = "/Users/fvrodriguez/repos/zealhmm/data/rtiger_shared3_input/thin_L$(level)"
 outdir = "/Users/fvrodriguez/repos/zealhmm/results/bench/orig_conv_r$(rig)"
 mkpath(outdir)
 files = ["S1" => "sampleBN.txt", "S2" => "sampleZ.txt", "S3" => "sampleAU.txt"]
@@ -27,12 +29,6 @@ for (s, f) in files
 end
 N = size(raw["S1"], 1)
 chrcol = string.(raw["S1"][:, 1])
-idx = let ix = collect(1:N)                 # odd-index decimation, `level` times
-    for _ in 1:level
-        ix = ix[1:2:end]
-    end
-    ix
-end
 
 function rinit(r)
     a = fill(0.1, 3, 3) + 10 * Matrix{Float64}(I, 3, 3)
@@ -59,8 +55,8 @@ end
 
 fit(build(collect(1:600)), nothing, rinit(rig), 2, eps, false, true, false, 20, nothing, true)  # warmup (>=2r markers)
 
-O = build(idx)
-mps = length(idx)
+O = build(collect(1:N))   # the FULL pre-split panel for this level (no thinning)
+mps = N
 logpath = joinpath(outdir, "log_$(core)_conv_L$(level).log")
 isfile(logpath) && rm(logpath)
 GC.gc()
