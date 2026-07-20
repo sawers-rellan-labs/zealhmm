@@ -1,0 +1,477 @@
+---
+title: "nNIL introgression calling: insensitivity to the intermarker recombination fraction and sensitivity to the non-informative rate"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+::: {.callout-note}
+## Scope: this notebook is a *diagnostic of Holland's calibration*, not the nilHMM analysis
+It dissects how Zhong et al. (2025) calibrated the `nnil` caller and what that
+chip-supervised GBS calibration (in-sample) is actually sensitive to. The clean analysis for the
+nilHMM paper (calibrate on **simulation**, use the **chip as an independent truth**,
+without mixing the two) is built separately; this notebook is the reference it is
+contrasted against.
+:::
+
+Zhong et al. (2025) call introgressions in a B73 x NAM-founder nested
+near-isogenic line (nNIL) population with a fixed-parameter HMM (the `nnil`
+caller reproduced verbatim in nilHMM). Their calibration is **chip-supervised GBS
+calibration of the HMM**: the chip never enters the HMM as input, it supplies the
+reference labels the GBS calls are tuned against. Twenty-four lines were genotyped
+on *both* the low-coverage GBS platform and a high-quality Affymetrix chip; Holland ran the HMM
+on those lines' **GBS** genotypes and picked the parameters that **minimise the
+disagreement between the resulting GBS calls and the chip calls** (his File_S16
+grid, saved as `File_S04`). A separate chip-only fit (File_S14) produces the chip
+calls used as the target. He then applies the chosen parameters to the **full
+888-line GBS set** to produce the published calls (File_S18): `nir` = 0.9,
+`germ` = 0.01, `gert` = 1e-4, `p` = 0.9, `r` = avg_r.
+
+The methodological point to flag, because it is easy to miss, is that **the
+calibration is not held out**. The 24 GBS lines used to tune the parameters are a
+*subset* of the 888 GBS lines the tuned caller then predicts on, so the data used
+for calibration is reused for prediction (GBS_calib ⊂ GBS_predict). Chip-supervising
+the calibration on those 24 GBS lines and then predicting on the GBS set is in-sample by construction. That
+coupling is exactly what the clean nilHMM analysis is built to avoid: calibrate on
+an independent simulation, and keep the real GBS strictly for held-out evaluation.
+
+So the object under the microscope here is that **chip-supervised GBS** calibration. The
+question is which parameter it actually determines:
+
+> The recombination knob `r` (the per-adjacent-marker transition rate, i.e. the
+> segment-length prior) is a **benign hyperparameter**. The caller's output is
+> insensitive to it across more than four orders of magnitude in both the
+> chip-supervised evaluation and a `simcross` simulation of the breeding design, and it
+> explains **0.03%** of the variance in Holland's chip-supervised objective. The textbook
+> map-distance heuristic $r = 2\,\mathrm{total\_cM}/(100\,N)$ is therefore more than
+> adequate: a genetic map sets it, no chip or simulation required. The parameter
+> that governs the caller (**97.7%** of the objective's variance) is the emission
+> non-informative rate `nir`, which is not a segment-length prior at all, and whose
+> chip-supervised fit value (0.9) departs from the founder-genotype non-informative rate
+> (~0.59, measured directly on the NAM-founder chip genotypes).
+
+**Which data each section uses** (the point that was previously unclear; it matches
+the scripts):
+
+| Section | Analysis | Data / truth |
+|---|---|---|
+| 2 | parameter sensitivity | Holland's **chip-supervised** grid (`File_S04`) |
+| 3 | `r` sweep | **simulation** (simcross truth) *and* **chip-supervised** (caller on the 24-line GBS, scored vs the chip calls) |
+| 4 | fragment sizes | A-B **simulation**; C-D **chip-supervised** |
+| 5 | `nir` sweep | **chip-supervised** |
+
+There is no chip-only sweep here; wherever a curve is labelled "chip-supervised" it means the
+GBS calls scored against the chip calls (the chip-supervised objective). Everything below
+reads the outputs of the tracked scripts in `scripts/nnil_foil/` (`01`-`08`); the
+heavy compute lives there. All markers are on maize **v5** (`S<chr>_<pos_v5>`).
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(ggplot2)
+  library(patchwork)
+  library(jsonlite)
+  library(here)
+})
+FOIL <- here("data/nnil_foil")
+theme_foil <- theme_classic(base_size = 10) +
+  theme(
+    text = element_text(family = "sans"),
+    plot.tag = element_text(face = "bold"),
+    legend.position = "top", legend.title = element_blank()
+  )
+col_sim <- "#0072B2"
+col_chip <- "#D55E00"
+col_holl <- "grey30"
+col_bio <- "#009E73"
+logx <- scale_x_log10(
+  breaks = 10^(-6:-1),
+  labels = c("1e-6", "1e-5", "1e-4", "1e-3", "1e-2", "1e-1")
+)
+
+markers <- fread(file.path(FOIL, "markers_v5.tsv"))
+chip_sw <- fread(file.path(FOIL, "chip_rrate_sweep.csv"))
+sim_sw <- fread(file.path(FOIL, "sim_rrate_sweep.csv"))
+nir_sw <- fread(file.path(FOIL, "nir_sweep.csv"))
+sens <- fread(file.path(FOIL, "holland_param_sensitivity.csv"))
+ecdf_dt <- fread(file.path(FOIL, "fragsize_ecdf.csv"))
+nir_ecdf <- fread(file.path(FOIL, "nir_fragsize_ecdf.csv"))
+cj <- fromJSON(file.path(FOIL, "chip_calib.json"))
+sj <- fromJSON(file.path(FOIL, "sim_calib.json"))
+map_r <- cj$map_r # map-defined per-marker recombination fraction (native v5 map)
+r_sim <- sj$rrate_sim_star
+```
+
+## 1. Reproduction setup
+
+The nNIL population's markers are AGPv4. To place them on a genetic map we lift
+them to v5 and interpolate cM from the **TeoNAM native v5 map** (the same map the
+`simcross` validation uses), so both sides of the foil live on one coordinate
+system (`scripts/nnil_foil/01_liftover_cm.R`).
+
+```{r setup-numbers}
+tot_cm <- markers[, sum(tapply(cm, chr, \(x) max(x) - min(x)))]
+data.table(
+  quantity = c(
+    "nNIL markers lifted v4->v5", "total native cM", "chip both-platform lines",
+    "chip shared markers", "sim design", "sim NILs", "map r (native v5 map)",
+    "sim-selected r*"
+  ),
+  value = c(
+    nrow(markers), round(tot_cm), cj$n_lines, cj$n_shared_markers,
+    sj$design, sj$n_sim, signif(map_r, 4), signif(r_sim, 4)
+  )
+) |> knitr::kable()
+```
+
+The total native map length (`r round(tot_cm)` cM) essentially matches Holland's
+assumed 1500 cM, so the two recombination scales agree by construction. The chip
+calls are reproduced by porting Holland's own File S14 pipeline and calling his
+File S11 HMM (`02_chip_truth.py`): chip genotypes lifted V3->V4, QC-filtered, HMM
+called with his chip-optimal parameters, then projected onto the nearest GBS
+markers. The design is **BC5S2** (five backcrosses, two selfs), which matches
+Holland's HMM priors `f_1 = 1/128`, `f_2 ~= 0.0117` exactly; the `simcross`
+single-locus check passes (`04_sim_calibrate.R`).
+
+## 2. Holland's own grid: the objective is driven by `nir`, not `r`
+
+The decisive evidence is Holland's own full-factorial grid search over the
+**chip-supervised objective** (File S04, 945 combinations of `nir x germ x gert x p x r`
+scored by the mismatch between the GBS calls and the chip calls). A variance
+decomposition (`07_holland_sensitivity.R`) attributes that mismatch variance almost
+entirely to `nir`:
+
+```{r sensitivity-table}
+sens[, .(
+  parameter = param, `variance share` = sprintf("%.1f%%", 100 * var_share),
+  `marginal effect (x vs r)` = round(rel_to_best_r, 1)
+)][order(-`variance share`)] |>
+  knitr::kable()
+```
+
+```{r fig-sensitivity, fig.width = 8, fig.height = 2.4, fig.cap = "Holland's full-factorial grid (File S04): the GBS-vs-chip calls mismatch is driven almost entirely by the emission non-informative rate nir, not by the recombination fraction r. Each panel plots the mean mismatch, marginalised over the other parameters, against one parameter (log x); the percentage in each strip label is that parameter's share of the mismatch variance."}
+d4 <- fread(here("agent/nNIL/File_S04.nNIL_gbs_vs_chip_data_HMMgridSearch.csv"))
+params <- c("nir", "germ", "gert", "p", "r")
+plt <- rbindlist(lapply(params, function(pp) {
+  m <- d4[, .(mm = mean(mismatchMean)), by = c(pp)]
+  setnames(m, pp, "level")
+  m[, param := pp][]
+}))
+plt[, param := factor(param,
+  levels = sens[order(-var_share)]$param,
+  labels = sprintf("%s (%.0f%%)", sens[order(-var_share)]$param, 100 * sens[order(-var_share)]$var_share)
+)]
+ggplot(plt, aes(level, mm)) +
+  geom_line(linewidth = 0.5, colour = "grey30") +
+  geom_point(size = 1.2, colour = col_chip) +
+  facet_wrap(~param, scales = "free_x", nrow = 1) +
+  scale_x_log10() +
+  labs(x = "parameter value (log scale)", y = "mean GBS-vs-chip calls mismatch") +
+  theme_foil +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+`nir` explains **`r sprintf("%.1f%%", 100 * sens[param == "nir"]$var_share)`** of
+the variance; `r` explains
+**`r sprintf("%.2f%%", 100 * sens[param == "r"]$var_share)`**. The 3-point `r`
+grid Holland used sits entirely inside the flat basin we map in Section 3, so of
+course it moved nothing; `nir`, swept across three orders of magnitude, moved
+everything. The rest of the notebook takes each knob in turn: `r` (Section 3, the
+fragment sizes in Section 4) and `nir` (Section 5).
+
+## 3. The fit is insensitive to r
+
+**What is `r`?** In this HMM `r` is the **expected recombination *fraction*
+between two adjacent markers**: the probability that the ancestry state switches
+across one marker interval (the off-diagonal transition mass; self-stay
+$= 1 - r$). It is *not* a per-bp or per-cM rate (it carries no length units, it is
+per-marker-interval), and it is *not* realized recombination in the population; it
+is a prior/hyperparameter of the caller. The **"map `r`"** is one specific value
+of it, the mean the genetic map implies:
+$r_\text{map} = 2\,L/(100\,N)$, with $L$ the total map length in cM
+(native TeoNAM v5, `r round(tot_cm)` cM), $N$ the number of markers, and the
+factor 2 approximating the effective meioses of the backcross-plus-selfing scheme
+(Haldane--Waddington). Here $r_\text{map} =$ `r signif(map_r, 3)`. This is
+**not "Holland's `r`"**: Holland did not tune `r` against the chip (as Section 2
+shows, the chip objective is flat in `r`); he plugged in this map heuristic, and
+his chip calibration determined `nir` instead.
+
+We sweep the caller's `r` over `[1e-6, 1e-1]` two ways: on the **real 24-line GBS
+scored against the chip calls** (the chip-supervised objective, `03_chip_calibrate.R`), and
+on a **dense `simcross` simulation against its own truth** (BC5S2, 1500 NILs,
+`04_sim_calibrate.R`), scoring **donor-fragment DSC** (Dice-Sørensen coefficient,
+the reciprocal-overlap match of donor blocks). The chip-supervised side additionally
+reports Holland's own objective (GBS-vs-chip calls mismatch).
+
+```{r fig-rsweep, fig.width = 8, fig.height = 3.2, fig.cap = "The intermarker recombination fraction r is a benign hyperparameter. A, donor-fragment DSC versus r for the dense simcross simulation (blue) and the chip-supervised calibration on the 24 both-platform lines (orange); the shaded band is the chip-admissible range where Holland's mismatch stays within 5% of its minimum. B, Holland's objective (GBS-vs-chip calls mismatch) versus r, near-flat across four orders of magnitude. Dashed line, the map-defined r; dotted line, the simulation-optimal r."}
+band <- cj$mismatch_plateau
+cur <- rbind(
+  data.table(rrate = sim_sw$rrate, dice = sim_sw$donor_frag_dice, src = "Simulation (dense truth)"),
+  data.table(rrate = chip_sw$rrate, dice = chip_sw$donor_frag_dice, src = "chip-supervised (24 lines)")
+)
+xlab_r <- expression("intermarker recombination fraction, " * italic(r))
+pA <- ggplot(cur, aes(rrate, dice, colour = src)) +
+  annotate("rect", xmin = band[1], xmax = band[2], ymin = -Inf, ymax = Inf, fill = "grey85", alpha = 0.5) +
+  geom_vline(xintercept = map_r, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
+  geom_vline(xintercept = r_sim, linetype = "dotted", colour = col_sim, linewidth = 0.5) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1) +
+  scale_colour_manual(values = c("Simulation (dense truth)" = col_sim, "chip-supervised (24 lines)" = col_chip)) +
+  logx +
+  labs(x = xlab_r, y = "Donor-fragment DSC", tag = "A") +
+  annotate("text",
+    x = map_r, y = 0.8, label = "map~italic(r)", parse = TRUE,
+    angle = 90, vjust = -0.4, hjust = 0.5, size = 2.6, colour = col_holl
+  ) +
+  annotate("text",
+    x = r_sim, y = 0.8, label = "italic(r)[sim]^'*'", parse = TRUE,
+    angle = 90, vjust = 1.3, hjust = 0.5, size = 2.6, colour = col_sim
+  ) +
+  annotate("text", x = sqrt(band[1] * band[2]), y = 0.12, label = "chip-admissible band", size = 2.6, colour = "grey40") +
+  theme_foil
+pB <- ggplot(chip_sw, aes(rrate, holland_mismatch)) +
+  annotate("rect", xmin = band[1], xmax = band[2], ymin = -Inf, ymax = Inf, fill = "grey85", alpha = 0.5) +
+  geom_vline(xintercept = map_r, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
+  geom_line(linewidth = 0.6, colour = col_chip) +
+  geom_point(size = 1, colour = col_chip) +
+  logx +
+  labs(x = xlab_r, y = "GBS-vs-chip calls mismatch\n(Holland's objective)", tag = "B") +
+  annotate("text",
+    x = map_r, y = mean(range(chip_sw$holland_mismatch)), label = "map~italic(r)",
+    parse = TRUE, angle = 90, vjust = -0.4, hjust = 0.5, size = 2.6, colour = col_holl
+  ) +
+  theme_foil +
+  theme(legend.position = "none")
+pA + pB + plot_layout(widths = c(1.25, 1))
+```
+
+The insensitivity is clearest in the **DSC curve of the dense simulation** (**A**,
+blue): it is a broad plateau, near-optimal from `1e-6` up to ~`1e-2` before it
+collapses. That plateau *is* the safe basin. The chip metrics do not pin `r` down
+either, but neither is a plateau: the chip DSC (**A**, orange) declines
+monotonically and Holland's marker mismatch (**B**) rises monotonically, both only
+weakly -- the mismatch stays within 5% of its minimum across
+`r sprintf("[%.0e, %.0e]", band[1], band[2])` (the shaded band), so it barely
+prefers any `r`. The simulation's interior DSC optimum,
+`r_sim* = ` `r signif(r_sim, 3)`, is close to the map value
+`map r = ` `r signif(map_r, 3)`, but given the plateau that near-match is almost
+trivial; the map value sits comfortably inside the basin regardless. Contrast this
+with `nir`, the orthogonal slice through the same operating point, in Section 5.
+
+## 4. The fragment-size distribution is recovered across the whole basin
+
+The same failure mode, over-fragmentation, is what both knobs eventually cause, so
+we look at it directly through the donor-fragment-size distribution. The top row
+sweeps `r` (`06_fragsize_figure.R`); the bottom row sweeps `nir` at the map `r`
+(`08_nir_sweep.R`).
+
+**A-B (varying `r`, on the simulation).** KS(called, simcross truth) is low and
+flat below ~`1e-2` and blows up only above it (**A**); at the map `r`, the DSC r*,
+and the KS r* the ECDFs are indistinguishable from truth (**B**), and only a
+clearly-broken `r` (2.2e-2) peels off toward small fragments.
+
+**C-D (varying `nir` at the map `r`, on the real 24-line GBS vs the chip calls).**
+KS(called, chip) falls monotonically as `nir` rises (**C**), and the ECDF marches
+from badly over-fragmented at low `nir` up to the chip calls by `nir` ~0.9 (**D**;
+~1,400 donor blocks at `nir` 0.1 down to ~110 at 0.9 versus ~90 in the truth).
+
+Two things to read carefully. First, **the data sources differ by row**: we have a
+dense ground truth only in simulation (A-B); the real nNIL offers only the sparse
+chip subset (C-D), so its "truth" is the chip, not simcross. Second, **only C-D
+show a spike of ~100 bp (1e-4 Mb) fragments** -- because the GBS markers are
+densely clustered (median spacing 28 bp; ~65% of gaps under 200 bp) and the real
+reads carry fine-scale noise, so isolated/paired spurious ALT calls become tiny
+two-marker donor blocks. The simulation (A-B) generates coherent donor markers and
+so produces essentially none of these (its smallest blocks are ~0.03 Mb); it does
+not reproduce the real GBS's fine-scale clustering/noise. That artifact is present
+at every `nir` in D (even 0.9 leaves ~21% of blocks under 1e-3 Mb), which is why
+the KS in C plateaus rather than reaching 0.
+
+```{r fig-fragsize, fig.width = 8, fig.height = 6.4, fig.cap = "Donor-fragment-size distributions across the r and nir sweeps. Top row (A, B) varies r on the simulation against the dense simcross truth; bottom row (C, D) varies nir at the map-defined r on the real 24-line GBS against the chip calls. A, KS distance between called and true fragment sizes versus r. B, fragment-size ECDFs at r reference points, indistinguishable from truth until r is clearly broken. C, KS distance versus nir. D, fragment-size ECDFs for a ladder of GBS-caller nir values (blue ramp) against the chip calls (black dashed); the distribution recovers from badly over-fragmented at low nir up to the chip calls by nir about 0.9. The spike near 1e-4 Mb in D is a real-GBS artifact absent from the clean simulation."}
+r_dice <- sim_sw$rrate[which.max(sim_sw$donor_frag_dice)]
+r_ks <- sim_sw$rrate[which.min(sim_sw$ks_fragsize)]
+pK <- ggplot(sim_sw, aes(rrate, ks_fragsize)) +
+  geom_vline(xintercept = map_r, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
+  geom_vline(xintercept = r_dice, linetype = "dotted", colour = col_sim, linewidth = 0.5) +
+  geom_vline(xintercept = r_ks, linetype = "dotdash", colour = col_bio, linewidth = 0.5) +
+  geom_line(linewidth = 0.6, colour = "grey20") +
+  geom_point(size = 1, colour = "grey20") +
+  logx +
+  labs(x = xlab_r, y = "KS(called, truth)\nfragment size", tag = "A") +
+  annotate("text",
+    x = map_r, y = 0.5, label = "map~italic(r)",
+    parse = TRUE, angle = 90, vjust = -0.4, hjust = 0.5, size = 2.6, colour = col_holl
+  ) +
+  annotate("text",
+    x = r_dice, y = 0.5, label = "DSC~italic(r)^'*'",
+    parse = TRUE, angle = 90, vjust = 1.3, hjust = 0.5, size = 2.6, colour = col_sim
+  ) +
+  annotate("text",
+    x = r_ks, y = 0.5, label = "KS~italic(r)^'*'",
+    parse = TRUE, angle = 90, vjust = 1.3, hjust = 0.5, size = 2.6, colour = col_bio
+  ) +
+  theme_foil
+# Okabe-Ito palette keyed by series name (matches 06_fragsize_figure.R)
+.lv <- unique(as.character(ecdf_dt$series))
+.key <- c("Truth", "^map r", "mismatch", "DSC", "KS", "over-frag")
+.lv <- .lv[order(vapply(.lv, function(s) which(vapply(.key, grepl, logical(1), x = s))[1], integer(1)))]
+ecdf_dt[, series := factor(series, levels = .lv)]
+pal <- vapply(.lv, function(s) {
+  if (grepl("Truth", s)) {
+    "black"
+  } else if (grepl("^map r", s)) {
+    col_holl
+  } else if (grepl("mismatch", s)) {
+    "#CC79A7"
+  } else if (grepl("DSC", s)) {
+    col_sim
+  } else if (grepl("KS", s)) col_bio else col_chip
+}, character(1))
+pE <- ggplot(ecdf_dt, aes(size_mb, colour = series)) +
+  stat_ecdf(linewidth = 0.6) +
+  scale_x_log10() +
+  scale_colour_manual(values = setNames(pal, .lv)) +
+  labs(x = "donor fragment size (Mb)", y = "ECDF", tag = "B") +
+  theme_foil +
+  theme(
+    legend.key.height = unit(0.4, "lines"), legend.key.spacing.y = unit(1, "pt"),
+    legend.text = element_text(size = 8)
+  ) +
+  guides(colour = guide_legend(nrow = 3))
+
+# Panels C-D: the same fragment-size view holding r at the map value and varying
+# nir instead. NOTE the data source differs: A-B are the SIMULATION (simcross
+# truth); C-D are the REAL 24-line GBS vs the chip calls (we have dense truth only
+# in simulation; the real nNIL has only the sparse chip subset).
+pKn <- ggplot(nir_sw, aes(nir, frag_ks)) +
+  geom_vline(xintercept = 0.9, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
+  geom_vline(xintercept = 0.594, linetype = "dotted", colour = col_bio, linewidth = 0.5) +
+  geom_line(linewidth = 0.6, colour = "grey20") +
+  geom_point(size = 1, colour = "grey20") +
+  labs(
+    x = expression("non-informative rate, " * italic(nir) * "   (at map " * italic(r) * ")"),
+    y = "KS(called, chip)\nfragment size", tag = "C"
+  ) +
+  annotate("text",
+    x = 0.9, y = max(nir_sw$frag_ks) * 0.9, label = "grid-tuned",
+    angle = 90, vjust = -0.4, hjust = 1, size = 2.4, colour = col_holl
+  ) +
+  annotate("text",
+    x = 0.594, y = max(nir_sw$frag_ks) * 0.9, label = "founder",
+    angle = 90, vjust = 1.3, hjust = 1, size = 2.4, colour = col_bio
+  ) +
+  theme_foil
+nir_ecdf[, series := factor(series,
+  levels = c("Chip calls", "GBS nir 0.1", "GBS nir 0.3", "GBS nir 0.59", "GBS nir 0.8", "GBS nir 0.9")
+)]
+# chip calls = black dashed (distinct from the darkest blue); GBS nir = a light->medium
+# blue ramp that never approaches black, so GBS nir 0.9 stays visually separate.
+pal_n <- c(
+  "Chip calls" = "black", "GBS nir 0.1" = "#c6dbef", "GBS nir 0.3" = "#9ecae1",
+  "GBS nir 0.59" = "#6baed6", "GBS nir 0.8" = "#4292c6", "GBS nir 0.9" = "#2171b5"
+)
+pEn <- ggplot(nir_ecdf, aes(size_mb, colour = series, linetype = series == "Chip calls")) +
+  stat_ecdf(linewidth = 0.7) +
+  scale_x_log10() +
+  scale_colour_manual(values = pal_n) +
+  scale_linetype_manual(values = c(`FALSE` = "solid", `TRUE` = "21"), guide = "none") +
+  labs(x = "donor fragment size (Mb)", y = "ECDF", tag = "D") +
+  theme_foil +
+  theme(
+    legend.key.height = unit(0.4, "lines"), legend.key.spacing.y = unit(1, "pt"),
+    legend.text = element_text(size = 8)
+  ) +
+  guides(colour = guide_legend(nrow = 3))
+pK + pE + pKn + pEn + plot_layout(ncol = 2, widths = c(1, 1.15))
+```
+
+## 5. `nir` at the map-defined `r`: the grid-tuned 0.9 is the chip-supervised optimum
+
+Holding `r` at the map value and sweeping `nir` on the **real 24-line GBS scored
+against the chip** (`08_nir_sweep.R`). **Read the
+three panels by direction, not by slope:** two are *error* metrics that should
+fall (marker mismatch and fragment-size KS: lower is better) and one is an
+*agreement* metric that should rise (donor-fragment DSC: higher is better). All
+three do exactly that as `nir` increases, so DSC climbing is the **same verdict**
+as mismatch and KS dropping, not the opposite -- **every metric improves with
+higher `nir`**. There is no disagreement: mismatch and DSC are both best around
+**`nir ~= 0.9-0.95`** (mismatch bottoms at 0.95 and turns back up by 0.99; DSC
+peaks at 0.95), and KS has no interior optimum, improving monotonically to 0.99.
+So Holland's **grid-tuned `nir = 0.9`** sits at or just below the chip-supervised optimum,
+and the **founder-genotype `nir ~= 0.59`** (f0 on the NAM-founder chip genotypes,
+`agent/nnil_foil_estimate_nir.py`) is well down every curve (at 0.59 the caller
+recovers DSC ~0.34 versus ~0.64 at 0.9).
+
+```{r fig-nirsweep, fig.width = 8, fig.height = 2.6, fig.cap = "nir sweep at the map-defined r, on the real 24-line GBS scored against the chip calls. The three metrics versus the caller's nir all improve as nir rises: GBS-vs-chip calls mismatch and fragment-size KS fall (lower is better) and donor-fragment DSC rises (higher is better). Dashed line, Holland's grid-tuned nir = 0.9; dotted line, the founder-genotype nir about 0.59 (f0 measured on the NAM-founder chip genotypes)."}
+long <- rbind(
+  data.table(nir = nir_sw$nir, val = nir_sw$marker_mismatch, metric = "GBS-vs-chip calls mismatch"),
+  data.table(nir = nir_sw$nir, val = nir_sw$donor_frag_dice, metric = "Donor-fragment DSC"),
+  data.table(nir = nir_sw$nir, val = nir_sw$frag_ks, metric = "Fragment-size KS")
+)
+long[, metric := factor(metric,
+  levels = c("GBS-vs-chip calls mismatch", "Donor-fragment DSC", "Fragment-size KS"),
+  labels = c(
+    "GBS-vs-chip calls mismatch (lower better)", "Donor-fragment DSC (higher better)",
+    "Fragment-size KS (lower better)"
+  )
+)]
+ggplot(long, aes(nir, val)) +
+  geom_vline(xintercept = 0.9, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
+  geom_vline(xintercept = 0.594, linetype = "dotted", colour = col_bio, linewidth = 0.5) +
+  geom_line(linewidth = 0.6, colour = col_chip) +
+  geom_point(size = 1.2, colour = col_chip) +
+  facet_wrap(~metric, scales = "free_y", nrow = 1) +
+  labs(x = expression(italic(nir) * "   (dashed = grid-tuned 0.9, dotted = founder nir 0.59)"), y = NULL) +
+  theme_foil
+```
+
+Why does raising `nir` improve *every* metric, and why does the best value exceed
+the founder-genotype rate? `nir` is the caller's assumed rate at which a donor
+haplotype still shows the REF (B73) allele. At **low `nir`** the caller trusts each
+marker literally: it calls donor only at the sparse ALT markers and reverts to REF
+across the intervening (non-informative) REF markers, **shattering each true donor
+tract into many tiny blocks** (~1,400 called blocks versus ~90 in the truth). DSC is
+near 0 because those fragments do not reciprocally overlap the true blocks, KS is
+far from truth, and the donor part of the mismatch is inflated. Raising `nir` tells
+the caller to hold the donor state across the REF markers, merging the fragments
+back into the true tracts (down to ~110 blocks at `nir` 0.9) -- which is why all
+three metrics improve together. The caller therefore *needs* a high `nir`, higher even
+than the founder value: 0.59 already under-calls (DSC only ~0.34), so the data
+prefer ~0.9. That extra headroom (0.9 vs 0.59) is `nir` doing double duty -- it
+absorbs the additional REF-bias that low-coverage GBS adds (dropout, allele
+miscalls) on top of the founder informativeness. The clean "`nir` = donor-founder
+match rate" reading does not survive the fit.
+
+The fragment-size consequence of sweeping `nir` (over-fragmentation at low `nir`,
+recovery by ~0.9) is shown alongside its `r` counterpart in Section 4, panels C-D.
+
+## Conclusion
+
+- **`r` needs no calibration.** The caller's output is insensitive to it over
+  four-plus orders of magnitude (chip and sim), it explains 0.03% of Holland's
+  objective, and the map-distance heuristic lands in the middle of the safe basin. A genetic map is
+  sufficient; neither a chip nor a simulation is required to set it.
+- **The calibration signal is in the emission `nir`**, which the chip-supervised
+  fit pins sharply to a grid-tuned ~0.9. That value is not the founder-match
+  non-informative rate (~0.59); the chip-supervised objective prefers 0.9 because `nir` also
+  absorbs the GBS data quality that separates the two platforms.
+- **Because `nir` absorbs data quality, it cannot be read off the reference panel.**
+  The founder-genotype estimate (~0.59) fits the chip worse than the tuned 0.9, so
+  "estimate `nir` from the donor-founder match" is *not* a safe shortcut. `nir` is
+  the real calibration burden: it needs tuning against truth (a chip or a
+  simulation), or an emission model that separates founder informativeness from
+  data quality. `r`, by contrast, comes free from the map. The division of labour
+  is the point -- calibrate the emission, not the recombination knob.
+
+Reproduce end to end: `scripts/nnil_foil/01_liftover_cm.R` ->
+`02_chip_truth.py` -> `03_chip_calibrate.R` -> `04_sim_calibrate.R` ->
+`05_foil_figure.R` -> `06_fragsize_figure.R` -> `07_holland_sensitivity.R` ->
+`08_nir_sweep.R`.

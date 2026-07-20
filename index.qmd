@@ -55,6 +55,9 @@ listing:
       - title: "Simulation calibration"
         path: analysis/simulation-calibration.qmd
         description: "Two-stage simcross parameter search (calibrate on sim, validate on truth)"
+      - title: "nNIL calibration foil"
+        path: analysis/nnil-calibration-foil.qmd
+        description: "Which parameter did Holland's chip calibration actually determine? The recombination rate is a benign hyperparameter (map suffices); the emission nir carries 97.7% of the signal"
       - title: "GWAS-landscape geometry"
         path: analysis/GWAS_autocorrelation.qmd
         description: "Framework: rank ancestry callers by the spatial coherence (autocorrelation / band-limited noise) of the GWAS profile"
