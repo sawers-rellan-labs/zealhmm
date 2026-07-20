@@ -383,3 +383,62 @@ wall (the genotype↔ancestry-mosaic distinction — `nilhmm/design/TERMINOLOGY.
 in `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
 ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
 allele at invariant sites; only `hwe_post` does.
+
+## RTIGER C++/Rcpp-vs-Julia benchmark inputs (`data/rtiger_shared3_input/`, `data/bench_ref/`)
+
+Backs the optimization supplement (`nilhmm-paper/supplement_optimization.tex` §1) and
+its companion `analysis/rtiger-optimization-benchmark.qmd`. Gitignored; staged from
+`~/repos/rtiger-fork-assets/` (safety copy of the `faustovrz/RTIGER@optimize-julia-core`
+fork workspace). The **paper reports the operating rigidity r=250**; the r=2 pair
+(`scripts/bench_rtiger_cpp_vs_julia.R`, `data/bench_ref/`) is the earlier companion.
+
+- `data/rtiger_shared3_input/sample{BN,Z,AU}.txt` — the **109,703-locus shared-3
+  panel**: real *Arabidopsis* Col-0 x Ler allele counts (BioProject PRJNA720439 /
+  SRA SRP313911), the loci covered in all three of the BN/Z/AU samples, one common
+  grid (built by the fork's `27_build_shared_panel.R`). RTIGER count format:
+  `chr pos refAllele refCount altAllele altCount`. The C++ core's benchmark input;
+  thinned by odd index to 6,857 / 13,713 / 27,426 / 54,852 / 109,703 markers.
+- `data/bench_ref/` — the **upstream-original Julia baseline**, NOT re-run (the
+  110k convergence fit is ~3.4 h upstream). Fixed reference, from the fork:
+  - `orig_conv/log_orig_conv_L{0..4}.log` — per-EM-iteration `delta`/`elapsed`.
+  - `orig_conv/conv_orig_L{0..4}.txt` — converged params + Viterbi paths (the
+    equivalence oracle the C++ paths are compared against).
+  - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
+    throughput and convergence iters/runtime per size.
+  Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
+- **r=250 (operating-point) benchmark** (the paper's §1): `scripts/bench_rtiger_r250.R`
+  (C++ core, all five sizes, to convergence + equivalence), `scripts/rtiger_julia_conv_worker.jl`
+  (original Julia at r=250, the three small sizes -> `results/bench/orig_conv_r250/`,
+  large sizes projected), `scripts/{bench_rtiger_cpp_memory_markers.R (RTIGER_RIG=250),
+  rtiger_julia_mem_worker.jl}` (peak RSS), `scripts/rtiger_r250_plot.R` (figures).
+  Outputs: `results/bench/rtiger_{equiv,marker_scaling,conv_trace}_r250.csv`,
+  `rtiger_{memory_markers,julia_memory_markers}_r250.csv`; figures
+  `nilhmm-paper/figures/rtiger_{equivalence,marker_scaling}_r250.png`. The original
+  needs chains >= 2r = 500 markers (holds at every size).
+
+## nNIL equivalence inputs (`data/zhong2025/`, `data/nnil_equiv/`)
+
+Backs the optimization supplement Sec. 2 (nNIL reproduction) and `scripts/nnil_equiv/`.
+Gitignored. Zhong et al. 2025, The Plant Journal (doi:10.1111/tpj.70228), nested
+near-isogenic lines; Holland's HMM caller.
+
+- `data/zhong2025/` -- the Wiley supplement (Files S1-S22; DOI above), PLUS the two
+  >100 MB files not in the Wiley zip, sourced from the authors' Box folder:
+  - `File_S01.nNIL_raw_SNPs_bgi_id_miss20.txt` -- raw GBS SNP calls, HapMap-numeric
+    (901 samples x 93,540 markers, B73 v4), `{0=minor-homoz, 0.5=het, 1=major-homoz,
+    NA}`. The caller INPUT.
+  - `File_S18.nNIL_gbs_HMM_introgressionCalls_full_set.csv` -- Holland's PUBLISHED
+    per-marker calls `{0,1,2}` (888 lines x 64,025 markers). The reproduction ORACLE.
+  - Files S3/S4 (grid search), S9 (bgi->line translation), S11 (Holland's
+    `call_intros`, hmmlearn), S16 (optimal params).
+- `data/nnil_equiv/` -- the shared faithful input built by `scripts/nnil_equiv/01_build_input.py`
+  (File S1 put through Holland's own `File_S10` filter, reproducing his filtered
+  genotype table exactly: 888 lines x 64,025 markers, 0 cell differences; recoded
+  `{0,1,2,3}`) and its compact PLINK `.bed` (`make_bed.py`, round-trip-asserted so
+  `0=REF`). Consumed by `02_holland_calls.py` (hmmlearn) and `03_nilhmm_calls.R`
+  (BEDMatrix stream); `04_compare.R` for the full-panel equivalence.
+- Sweeps (both odd-index marker-density thinning of the 64,025-marker panel over the
+  full 888-line population): `06_sweep.R` (time + peak RSS -> `nnil_marker_scaling.png`)
+  and `07_equiv_sweep.R` (`07_holland_level.py` per-size Holland calls vs nilHMM
+  position-by-position -> `results/bench/nnil_equiv_sweep.csv`, supplement Table 4).
+- Python: existing `~/anaconda3/envs/nilhmm` env (hmmlearn, bed-reader). R: BEDMatrix, genio.
