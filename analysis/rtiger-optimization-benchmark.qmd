@@ -36,7 +36,7 @@ two things, in order of importance:
    float-summation tolerance, from identical initialization on real data. **Result:
    0 mismatches at every panel size, same iteration count, params to <=8e-6.**
 2. **Then speed/memory.** Only after equivalence is established do we report the
-   throughput and memory gains. **Result: near-linear (markers^0.96) vs the
+   throughput and memory gains. **Result: near-linear (markers^0.94) vs the
    original's quadratic (markers^2.10); ~10,000x at 110k markers.**
 
 **Reference point.** The prior *optimized-Julia vs original-Julia* fork
@@ -132,14 +132,14 @@ knitr::kable(
 The two cores descend the identical path to convergence at the full panel
 (right); the left panel is the speed contrast:
 
-![Shared panel, 109,703 markers/sample, both cores run to convergence (19 iterations each). Left: per-iteration wall time (original Julia ~648 s/iter vs nilHMM C++/Rcpp ~0.1 s/iter). Right: each iteration's C++ delta against the original Julia delta on a log-log 1:1 line, early (yellow) to late (purple).](../nilhmm-paper/figures/rtiger_equivalence_110K_cpp.png)
+![Shared panel, 109,703 markers/sample, both cores run to convergence (19 iterations each). Left: per-iteration wall time (original Julia ~648 s/iter vs nilHMM C++/Rcpp ~0.1 s/iter). Right: each iteration's EM parameter-convergence delta (max |Delta(alpha,beta)|, RTIGER's convergence criterion, not a log-likelihood change), C++ against original Julia on a log-log 1:1 line, early (yellow) to late (purple).](../nilhmm-paper/figures/rtiger_equivalence_110K_cpp.png)
 
 ## 3. Throughput, scaling with markers
 
 Shared-panel head-to-head, per-iteration wall time vs markers/sample, on the five
 thinned sizes (6,857 -> 13,713 -> 27,426 -> 54,852 -> 109,703). On a log-log
 plot the slope is the empirical complexity exponent: the original is
-markers^2.10 (quadratic), the C++/Rcpp core markers^0.96 (linear).
+markers^2.10 (quadratic), the C++/Rcpp core markers^0.94 (linear).
 
 ```{r scaling-table}
 sc <- fread(f("rtiger_marker_scaling.csv"))
@@ -154,7 +154,7 @@ knitr::kable(wide[order(-`markers/sample`)],
 )
 ```
 
-![Per-iteration wall time vs markers per sample on the shared panel, log-log; points are measurements, dashed lines the power-law fits. Original Julia ~markers^2.10 (quadratic), nilHMM C++/Rcpp ~markers^0.96 (linear).](../nilhmm-paper/figures/rtiger_marker_scaling_cpp.png)
+![RTIGER scaling on the shared panel, original array-retaining Julia vs nilHMM C++/Rcpp (both measured on the same machine); points are measurements, dashed lines the power-law fits. Left: per-iteration wall time (original ~markers^2.10 quadratic, C++/Rcpp ~markers^0.94 linear). Right: peak resident memory; the C++ core streams sufficient statistics and stays ~5x lower.](../nilhmm-paper/figures/rtiger_marker_scaling.png)
 
 ## 4. Memory
 

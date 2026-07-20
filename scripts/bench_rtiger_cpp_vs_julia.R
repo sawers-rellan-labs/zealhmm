@@ -37,7 +37,7 @@
 suppressMessages(library(nilHMM))
 ROOT <- tryCatch(here::here(), error = function(e) getwd())
 if (!file.exists(file.path(ROOT, "scripts/logging.R"))) {
-  ROOT <- "/Users/fvrodriguez/repos/zealhmm"
+  stop("Could not resolve repo root: run from within the zealhmm repo.")
 }
 source(file.path(ROOT, "scripts/logging.R"))
 
@@ -177,6 +177,7 @@ parse_orig_dump <- function(level) { # converged params + Viterbi oracle
 }
 parse_orig_sweep <- function() { # fixed-iter throughput points
   p <- file.path(REFDIR, "30_panel_sweep_orig.txt")
+  if (!file.exists(p)) stop(sprintf("missing original sweep reference: %s", p))
   ln <- grep("^SWEEP", readLines(p), value = TRUE)
   g <- function(f) as.numeric(sub(paste0(".*", f, "=([0-9.eE+-]+).*"), "\\1", ln))
   data.frame(

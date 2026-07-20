@@ -66,6 +66,12 @@ for (lv in LEVELS) {
   ), stdout = TRUE, stderr = TRUE)
   res <- grep("^RESULT", out, value = TRUE)
   if (!length(res)) stop(sprintf("holland worker failed at level %d:\n%s", lv, paste(out, collapse = "\n")))
+  if (file.info(binf)$size != N * M) {
+    stop(sprintf(
+      "holland worker wrote %d bytes at level %d, expected %d (N*M)",
+      file.info(binf)$size, lv, N * M
+    ))
+  }
   ho <- matrix(readBin(binf, "integer", n = N * M, size = 1L, signed = TRUE),
     nrow = N, ncol = M, byrow = TRUE
   )
