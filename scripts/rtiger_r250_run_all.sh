@@ -21,14 +21,14 @@ RIG=250
 BENCH="$ROOT/results/bench"
 mkdir -p "$BENCH/orig_conv_r$RIG"
 
-echo "== 1/6 original Julia to convergence at r=$RIG, all five sizes =="
+echo "== 1/6 SPLIT: materialize thinned panels (every benchmark reads only its split) =="
+Rscript scripts/materialize_thinned_panel.R
+
+echo "== 2/6 original Julia to convergence at r=$RIG, all five sizes =="
 for lv in 0 1 2 3 4; do
   echo ">>> conv orig L$lv (r=$RIG)"
   julia scripts/rtiger_julia_conv_worker.jl "$ORIG" "$lv" "$RIG"
 done
-
-echo "== 2/6 materialize thinned panels (clean per-level memory) =="
-Rscript scripts/materialize_thinned_panel.R
 
 echo "== 3/6 original Julia peak RSS at r=$RIG, all five sizes =="
 JMEM="$BENCH/rtiger_julia_memory_markers_r$RIG.csv"

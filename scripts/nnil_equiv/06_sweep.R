@@ -13,8 +13,16 @@ OUTDIR <- file.path(ROOT, "results/bench")
 dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE)
 FIGDIR <- file.path(ROOT, "nilhmm-paper/figures")
 PYBIN <- path.expand("~/anaconda3/envs/nilhmm/bin/python")
+DATADIR <- file.path(ROOT, "data/nnil_equiv")
 LEVELS <- 0:6 # 64025 -> ~1000 markers, full 888 lines
 log_info <- function(...) cat(sprintf("[06_sweep] %s\n", sprintf(...)))
+
+# SPLIT: every worker reads its own pre-split thin_L<level>/ (no in-script thinning);
+# materialize them once up front if absent.
+if (!file.exists(file.path(DATADIR, "thin_L0", "geno.bed"))) {
+  log_info("materializing thinned .bed per level ...")
+  system2(PYBIN, file.path(SDIR, "materialize_thinned_bed.py"))
+}
 
 run1 <- function(caller, level) {
   cmd <- if (caller == "holland") {

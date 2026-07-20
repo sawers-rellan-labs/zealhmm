@@ -23,26 +23,22 @@ REPS <- 3L
 LEVELS <- 0:4
 ORIG_LEVELS <- c(4L, 3L, 2L) # the small sizes we actually run the original at
 
-raw <- lapply(files, function(f) {
-  read.table(file.path(PANELDIR, f),
-    sep = "\t", col.names = c("chr", "pos", "refA", "refC", "altA", "altF"),
-    stringsAsFactors = FALSE
-  )
-})
-thin <- function(n, level) {
-  ix <- seq_len(n)
-  for (j in seq_len(level)) ix <- ix[c(TRUE, FALSE)]
-  ix
-}
-mps_of <- function(level) length(thin(nrow(raw[[1]]), level))
-build_obs <- function(level) {
-  ix <- thin(nrow(raw[[1]]), level)
+# Each benchmark reads its PRE-SPLIT panel (thin_L<level>/, written by
+# scripts/materialize_thinned_panel.R) and does NO in-script thinning: it loads only
+# the dataset it is benchmarking, never the full panel.
+build_obs_from <- function(dir) {
+  raw <- lapply(files, function(f) {
+    read.table(file.path(dir, f),
+      sep = "\t", col.names = c("chr", "pos", "refA", "refC", "altA", "altF"),
+      stringsAsFactors = FALSE
+    )
+  })
   obs <- list()
   for (s in names(files)) {
     d <- raw[[s]]
     obs[[s]] <- list()
     for (cc in chrs) {
-      rows <- ix[d$chr[ix] == cc]
+      rows <- which(d$chr == cc)
       if (!length(rows)) next
       k <- as.integer(round(d$refC[rows]))
       n <- k + as.integer(round(d$altF[rows]))
@@ -101,8 +97,8 @@ speed_rows <- list()
 equiv_rows <- list()
 
 for (level in LEVELS) {
-  obs <- build_obs(level)
-  mps <- mps_of(level)
+  obs <- build_obs_from(file.path(PANELDIR, sprintf("thin_L%d", level)))
+  mps <- sum(vapply(obs[[1]], function(x) length(x$k), 0L))
 
   # C++ per-iteration delta trace via cold restarts (fit(max_iter=m), m=1..K)
   p_prev <- list(alpha = INIT_A, beta = INIT_B)
