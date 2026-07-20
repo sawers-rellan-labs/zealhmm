@@ -132,7 +132,7 @@ data.table(
 ) |> knitr::kable()
 ```
 
-The total native map length (`r round(tot_cm)` cM) essentially matches Holland's
+The total native map length (1559 cM) essentially matches Holland's
 assumed 1500 cM, so the two recombination scales agree by construction. The chip
 calls are reproduced by porting Holland's own File S14 pipeline and calling his
 File S11 HMM (`02_chip_truth.py`): chip genotypes lifted V3->V4, QC-filtered, HMM
@@ -179,9 +179,9 @@ ggplot(plt, aes(level, mm)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-`nir` explains **`r sprintf("%.1f%%", 100 * sens[param == "nir"]$var_share)`** of
+`nir` explains **97.7%** of
 the variance; `r` explains
-**`r sprintf("%.2f%%", 100 * sens[param == "r"]$var_share)`**. The 3-point `r`
+**0.03%**. The 3-point `r`
 grid Holland used sits entirely inside the flat basin we map in Section 3, so of
 course it moved nothing; `nir`, swept across three orders of magnitude, moved
 everything. The rest of the notebook takes each knob in turn: `r` (Section 3, the
@@ -197,9 +197,9 @@ per-marker-interval), and it is *not* realized recombination in the population; 
 is a prior/hyperparameter of the caller. The **"map `r`"** is one specific value
 of it, the mean the genetic map implies:
 $r_\text{map} = 2\,L/(100\,N)$, with $L$ the total map length in cM
-(native TeoNAM v5, `r round(tot_cm)` cM), $N$ the number of markers, and the
+(native TeoNAM v5, 1559 cM), $N$ the number of markers, and the
 factor 2 approximating the effective meioses of the backcross-plus-selfing scheme
-(Haldane--Waddington). Here $r_\text{map} =$ `r signif(map_r, 3)`. This is
+(Haldane--Waddington). Here $r_\text{map} = 4.88\times10^{-4}$. This is
 **not "Holland's `r`"**: Holland did not tune `r` against the chip (as Section 2
 shows, the chip objective is flat in `r`); he plugged in this map heuristic, and
 his chip calibration determined `nir` instead.
@@ -259,10 +259,10 @@ collapses. That plateau *is* the safe basin. The chip metrics do not pin `r` dow
 either, but neither is a plateau: the chip DSC (**A**, orange) declines
 monotonically and Holland's marker mismatch (**B**) rises monotonically, both only
 weakly -- the mismatch stays within 5% of its minimum across
-`r sprintf("[%.0e, %.0e]", band[1], band[2])` (the shaded band), so it barely
+[1e-06, 8e-03] (the shaded band), so it barely
 prefers any `r`. The simulation's interior DSC optimum,
-`r_sim* = ` `r signif(r_sim, 3)`, is close to the map value
-`map r = ` `r signif(map_r, 3)`, but given the plateau that near-match is almost
+`r_sim* = ` $6.7\times10^{-4}$, is close to the map value
+`map r = ` $4.88\times10^{-4}$, but given the plateau that near-match is almost
 trivial; the map value sits comfortably inside the basin regardless. Contrast this
 with `nir`, the orthogonal slice through the same operating point, in Section 5.
 
