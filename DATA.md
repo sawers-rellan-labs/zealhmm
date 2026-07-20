@@ -422,7 +422,13 @@ near-isogenic lines; Holland's HMM caller.
   - Files S3/S4 (grid search), S9 (bgi->line translation), S11 (Holland's
     `call_intros`, hmmlearn), S16 (optimal params).
 - `data/nnil_equiv/` -- the shared faithful input built by `scripts/nnil_equiv/01_build_input.py`
-  (File S1 subset to File S18's exact markers/lines, recoded `{0,1,2,3}`) and its
-  compact PLINK `.bed` (`make_bed.py`, round-trip-asserted so `0=REF`). Consumed by
-  `02_holland_calls.py` (hmmlearn) and `03_nilhmm_calls.R` (BEDMatrix stream).
+  (File S1 put through Holland's own `File_S10` filter, reproducing his filtered
+  genotype table exactly: 888 lines x 64,025 markers, 0 cell differences; recoded
+  `{0,1,2,3}`) and its compact PLINK `.bed` (`make_bed.py`, round-trip-asserted so
+  `0=REF`). Consumed by `02_holland_calls.py` (hmmlearn) and `03_nilhmm_calls.R`
+  (BEDMatrix stream); `04_compare.R` for the full-panel equivalence.
+- Sweeps (both odd-index marker-density thinning of the 64,025-marker panel over the
+  full 888-line population): `06_sweep.R` (time + peak RSS -> `nnil_marker_scaling.png`)
+  and `07_equiv_sweep.R` (`07_holland_level.py` per-size Holland calls vs nilHMM
+  position-by-position -> `results/bench/nnil_equiv_sweep.csv`, supplement Table 4).
 - Python: existing `~/anaconda3/envs/nilhmm` env (hmmlearn, bed-reader). R: BEDMatrix, genio.

@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # nNIL time + memory scaling with marker density, comparable to the RTIGER §1
 # marker sweep: odd-index thinning of the 64,025-marker panel to seven sizes, over
-# the full 884-line population, both callers (Holland hmmlearn vs nilHMM nnil) on
+# the full 888-line population, both callers (Holland hmmlearn vs nilHMM nnil) on
 # the same memory-mapped .bed, each under `/usr/bin/time -l` for peak RSS.
 # Two-panel figure: wall time vs markers (log-log, power-law fits + exponents) and
 # peak RSS vs markers.
@@ -13,7 +13,7 @@ OUTDIR <- file.path(ROOT, "results/bench")
 dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE)
 FIGDIR <- file.path(ROOT, "nilhmm-paper/figures")
 PYBIN <- path.expand("~/anaconda3/envs/nilhmm/bin/python")
-LEVELS <- 0:6 # 64025 -> ~1000 markers, full 884 lines
+LEVELS <- 0:6 # 64025 -> ~1000 markers, full 888 lines
 log_info <- function(...) cat(sprintf("[06_sweep] %s\n", sprintf(...)))
 
 run1 <- function(caller, level) {
@@ -33,7 +33,7 @@ run1 <- function(caller, level) {
   )
 }
 
-log_info("marker sweep, full 884 lines, levels %s x {nilhmm, holland} ...", paste(LEVELS, collapse = ","))
+log_info("marker sweep, full population, levels %s x {nilhmm, holland} ...", paste(LEVELS, collapse = ","))
 rows <- list()
 for (lv in LEVELS) {
   for (ca in c("nilhmm", "holland")) {
@@ -43,6 +43,7 @@ for (lv in LEVELS) {
   }
 }
 d <- do.call(rbind, rows)
+NLINES <- d$lines[1]
 write.csv(d, file.path(OUTDIR, "nnil_scaling.csv"), row.names = FALSE)
 log_info("wrote nnil_scaling.csv")
 
@@ -50,14 +51,14 @@ log_info("wrote nnil_scaling.csv")
 cols <- c(nilhmm = "steelblue", holland = "firebrick")
 pch <- c(nilhmm = 19, holland = 17)
 expo <- function(ca) coef(stats::lm(log10(seconds) ~ log10(markers), d[d$caller == ca, ]))[2]
-png(file.path(FIGDIR, "nnil_scaling.png"), width = 1500, height = 640, res = 130)
+png(file.path(FIGDIR, "nnil_marker_scaling.png"), width = 1500, height = 640, res = 130)
 par(mfrow = c(1, 2), mar = c(4.6, 5.2, 3.2, 1))
 
 # panel A: wall time vs markers, log-log, power-law fits (RTIGER-style)
 plot(NA,
   log = "xy", xlim = range(d$markers), ylim = range(d$seconds),
-  xlab = "markers per line", ylab = "wall time, 884 lines (s)",
-  main = "nNIL runtime vs marker density (884 lines)"
+  xlab = "markers per line", ylab = sprintf("wall time, %d lines (s)", NLINES),
+  main = sprintf("nNIL runtime vs marker density (%d lines)", NLINES)
 )
 grid(col = "grey92")
 for (ca in c("holland", "nilhmm")) {
@@ -103,4 +104,4 @@ legend("topleft",
   col = cols[c("holland", "nilhmm")], pch = pch[c("holland", "nilhmm")], lty = 2, lwd = 2
 )
 dev.off()
-log_info("wrote figures/nnil_scaling.png")
+log_info("wrote figures/nnil_marker_scaling.png")

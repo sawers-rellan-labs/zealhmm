@@ -462,8 +462,9 @@ if (nrow(tr0c) >= 2 && nrow(tr0o) >= 2) {
   cols <- rev(hcl.colors(n, "viridis"))
   plot(dc, do,
     log = "xy", pch = 19, col = cols, cex = 1.3, xlim = rng, ylim = rng,
-    xaxt = "n", yaxt = "n", xlab = "nilHMM C++/Rcpp delta", ylab = "original Julia delta",
-    main = sprintf("Convergence trajectory (per-iter delta)\n1:1 => identical (max rel %.0e)", drel)
+    xaxt = "n", yaxt = "n",
+    xlab = "nilHMM C++/Rcpp EM parameter delta", ylab = "original Julia EM parameter delta",
+    main = sprintf("EM parameter-convergence delta (per iteration)\n1:1 => identical (max rel %.0e)", drel)
   )
   axis(1, dt, dl)
   axis(2, dt, dl, las = 1)

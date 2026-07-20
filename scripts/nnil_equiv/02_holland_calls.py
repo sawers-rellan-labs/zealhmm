@@ -46,6 +46,7 @@ calls = ci.call_intros(
     mr=params["mr"], r=params["r"], f_1=params["f_1"], f_2=params["f_2"],
     return_calls=True,
 )
-np.save(os.path.join(OUT, "holland_calls.npy"), calls.astype(np.int8))   # compact output
+lines = [l.strip() for l in open(os.path.join(OUT, "lines.csv"))]
+pd.DataFrame(calls, index=lines, columns=markers).to_csv(os.path.join(OUT, "holland_calls.csv"))
 vc = pd.Series(calls.ravel()).value_counts(normalize=True).round(4).to_dict()
-log(f"wrote holland_calls.npy {calls.shape}; state fractions {vc}")
+log(f"wrote holland_calls.csv {calls.shape}; state fractions {vc}")
