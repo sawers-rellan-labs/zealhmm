@@ -17,26 +17,22 @@ RIG <- as.integer(Sys.getenv("RTIGER_RIG", "2")) # operating rigidity (env-set)
 OUTCSV <- if (RIG == 2L) "rtiger_memory_markers.csv" else sprintf("rtiger_memory_markers_r%d.csv", RIG)
 args <- commandArgs(trailingOnly = TRUE)
 
-raw <- lapply(files, function(f) {
-  read.table(file.path(PANEL, f),
-    sep = "\t",
-    col.names = c("chr", "pos", "refA", "refC", "altA", "altF"), stringsAsFactors = FALSE
-  )
-})
-thin <- function(n, level) {
-  ix <- seq_len(n)
-  for (j in seq_len(level)) ix <- ix[c(TRUE, FALSE)]
-  ix
-}
-build_obs <- function(level) {
-  N <- nrow(raw[[1]])
-  ix <- thin(N, level)
+# Build obs from a PRE-THINNED panel directory (thin_L<level>/, written by
+# scripts/materialize_thinned_panel.R). The measured worker reads ONLY the thinned
+# set, so its peak RSS is not floored by a full-panel read.
+build_obs_from <- function(dir) {
+  raw <- lapply(files, function(f) {
+    read.table(file.path(dir, f),
+      sep = "\t",
+      col.names = c("chr", "pos", "refA", "refC", "altA", "altF"), stringsAsFactors = FALSE
+    )
+  })
   obs <- list()
   for (s in names(files)) {
     d <- raw[[s]]
     obs[[s]] <- list()
     for (c in chrs) {
-      rows <- ix[d$chr[ix] == c]
+      rows <- which(d$chr == c)
       if (!length(rows)) next
       k <- as.integer(round(d$refC[rows]))
       n <- k + as.integer(round(d$altF[rows]))
@@ -49,8 +45,7 @@ build_obs <- function(level) {
 if ("--worker" %in% args) { # fit at one marker level, quit
   suppressMessages(library(nilHMM))
   level <- as.integer(args[which(args == "--worker") + 1L])
-  obs <- build_obs(level)
-  mps <- length(build_obs(level)[[1]][[1]]$k) # placeholder
+  obs <- build_obs_from(file.path(PANEL, sprintf("thin_L%d", level)))
   mps <- sum(vapply(obs$S1, function(x) length(x$k), 0L))
   invisible(nilHMM:::.rtiger_fit(obs,
     r = RIG, nstates = 3L, eps = 0.01, max_iter = 6L,

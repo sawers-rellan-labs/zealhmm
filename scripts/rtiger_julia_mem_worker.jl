@@ -14,13 +14,10 @@ files = ["S1" => "sampleBN.txt", "S2" => "sampleZ.txt", "S3" => "sampleAU.txt"]
 chrs  = ["Chr1", "Chr2", "Chr3", "Chr4", "Chr5"]
 eps = 0.01
 
+paneldir = joinpath(PANEL, "thin_L$(level)")   # PRE-THINNED: measured process loads only this set
 raw = Dict{String,Matrix{Any}}()
-for (s, f) in files; raw[s] = readdlm(joinpath(PANEL, f)); end
-N = size(raw["S1"], 1); chrcol = string.(raw["S1"][:, 1])
-idx = let ix = collect(1:N)
-    for _ in 1:level; ix = ix[1:2:end]; end
-    ix
-end
+for (s, f) in files; raw[s] = readdlm(joinpath(paneldir, f)); end
+chrcol = string.(raw["S1"][:, 1])
 
 function rinit(r)
     a = fill(0.1, 3, 3) + 10 * Matrix{Float64}(I, 3, 3); a = a ./ sum(a, dims = 2)
@@ -28,12 +25,12 @@ function rinit(r)
          :paraBetaAlpha => [20.0, 20.0, 1.0], :paraBetaBeta => [1.0, 20.0, 20.0],
          :nstates => 3, :rigidity => r)
 end
-function build(ix)
+function build()
     O = Dict{Any,Any}()
     for (s, _) in files
         M = raw[s]; O[s] = Dict{Any,Any}()
         for c in chrs
-            rows = ix[chrcol[ix] .== c]; isempty(rows) && continue
+            rows = findall(==(c), chrcol); isempty(rows) && continue
             k = Int.(round.(M[rows, 4])); n = k .+ Int.(round.(M[rows, 6]))
             O[s][c] = hcat(k, n)
         end
@@ -41,7 +38,7 @@ function build(ix)
     O
 end
 
-O = build(idx); mps = length(idx)
+O = build(); mps = size(raw["S1"], 1)
 # fit(Obs, info, init, max_iter, eps, trace, all, random, nsamples, specific, post_processing, DEBUG)
 fit(O, nothing, rinit(rig), 1, eps, false, true, false, 20, nothing, true, false)
 println("MEMJUL_DONE level=$level markers=$mps rig=$rig")

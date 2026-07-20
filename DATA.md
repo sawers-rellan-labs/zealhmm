@@ -406,15 +406,19 @@ fork workspace). The **paper reports the operating rigidity r=250**; the r=2 pai
   - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
     throughput and convergence iters/runtime per size.
   Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
-- **r=250 (operating-point) benchmark** (the paper's §1): `scripts/bench_rtiger_r250.R`
-  (C++ core, all five sizes, to convergence + equivalence), `scripts/rtiger_julia_conv_worker.jl`
-  (original Julia at r=250, the three small sizes -> `results/bench/orig_conv_r250/`,
-  large sizes projected), `scripts/{bench_rtiger_cpp_memory_markers.R (RTIGER_RIG=250),
-  rtiger_julia_mem_worker.jl}` (peak RSS), `scripts/rtiger_r250_plot.R` (figures).
+- **r=250 (operating-point) benchmark** (the paper's §2): `scripts/bench_rtiger_r250.R`
+  (C++ core + equivalence/throughput, all five sizes to convergence),
+  `scripts/rtiger_julia_conv_worker.jl` (original Julia at r=250, all five sizes ->
+  `results/bench/orig_conv_r250/`; the full 109,703 panel is ~43 min). Peak RSS:
+  `scripts/materialize_thinned_panel.R` writes `data/rtiger_shared3_input/thin_L{0..4}/`
+  so each measured process loads ONLY its marker set (clean per-level memory, no
+  full-panel floor), then `scripts/{bench_rtiger_cpp_memory_markers.R (RTIGER_RIG=250),
+  rtiger_julia_mem_worker.jl}` read those. `scripts/rtiger_r250_plot.R` (figures).
   Outputs: `results/bench/rtiger_{equiv,marker_scaling,conv_trace}_r250.csv`,
   `rtiger_{memory_markers,julia_memory_markers}_r250.csv`; figures
-  `nilhmm-paper/figures/rtiger_{equivalence,marker_scaling}_r250.png`. The original
-  needs chains >= 2r = 500 markers (holds at every size).
+  `nilhmm-paper/figures/rtiger_{equivalence,marker_scaling}_r250.png`. Everything
+  measured (no projection); equivalence 0 mismatches through the full panel; the
+  original needs chains >= 2r = 500 markers (holds at every size).
 
 ## nNIL equivalence inputs (`data/zhong2025/`, `data/nnil_equiv/`)
 
