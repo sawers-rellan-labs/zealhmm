@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """Timing worker: Holland File_S11 caller at one thinned marker size (odd-index
-thinning, as in the RTIGER sweep), over the FULL 884-line population, from the
-memory-mapped .bed. Peak RSS via parent /usr/bin/time -l.
+thinning, as in the RTIGER sweep), over the full 888-line population, from the
+memory-mapped .bed. Peak RSS via parent /usr/bin/time -l; reads ONLY the thinned
+columns so peak RSS reflects the caller's working set at that density, not a
+full-panel read.
 Usage: python 05_holland_worker.py --level L"""
 import argparse
 import importlib.util
@@ -25,12 +27,13 @@ ci = importlib.util.module_from_spec(spec); spec.loader.exec_module(ci)
 
 md = pd.read_csv(os.path.join(OUT, "markers.csv"))
 params = json.load(open(os.path.join(OUT, "params.json")))
-val = open_bed(os.path.join(OUT, "geno.bed")).read()          # 884 x 64025, {0,1,2,NaN}
 
-idx = np.arange(val.shape[1])                                  # odd-index thin
+idx = np.arange(md.shape[0])                                   # odd-index thin (from marker count)
 for _ in range(a.level):
     idx = idx[::2]
-geno = np.where(np.isnan(val[:, idx]), 3, val[:, idx]).astype(float)
+# read ONLY the thinned columns from disk -> peak RSS scales with the density
+val = open_bed(os.path.join(OUT, "geno.bed")).read(index=np.s_[:, idx])  # N x len(idx), {0,1,2,NaN}
+geno = np.where(np.isnan(val), 3, val).astype(float)
 chrom = md["chrom"].to_numpy()[idx]
 marker_dict = {c: np.where(chrom == c)[0] for c in range(1, 11)}
 r = 2 * 1500 / (100 * len(idx))                               # per-size avg_r
