@@ -197,9 +197,16 @@ per-marker-interval), and it is *not* realized recombination in the population; 
 is a prior/hyperparameter of the caller. The **"map `r`"** is one specific value
 of it, the mean the genetic map implies:
 $r_\text{map} = 2\,L/(100\,N)$, with $L$ the total map length in cM
-(native TeoNAM v5, 1559 cM), $N$ the number of markers, and the
-factor 2 approximating the effective meioses of the backcross-plus-selfing scheme
-(Haldane--Waddington). Here $r_\text{map} = 4.88\times10^{-4}$. This is
+(native TeoNAM v5, 1559 cM) and $N$ the number of markers. It folds in two
+approximations. (i) $L/N$ cM per interval becomes a recombination fraction via
+$r \approx \mathrm{cM}/100$, the small-distance (asymptotic) limit in which the map
+function is linear and recombination fraction meets genetic distance as the interval
+shrinks. (ii) The factor 2 is the map expansion of an inbred, RIL-like pedigree:
+recombination accumulates over the roughly two effective meioses of the
+backcross-plus-selfing route to homozygosity, so per-interval recombination is about
+double the single-meiosis value (Haldane and Waddington 1931, *Genetics*
+16(4):357-374, doi:10.1093/genetics/16.4.357) -- the doubling Holland invokes in his
+code. Here $r_\text{map} = 4.88\times10^{-4}$. This is
 **not "Holland's `r`"**: Holland did not tune `r` against the chip (as Section 2
 shows, the chip objective is flat in `r`); he plugged in this map heuristic, and
 his chip calibration determined `nir` instead.
