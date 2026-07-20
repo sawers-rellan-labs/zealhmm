@@ -57,8 +57,8 @@ par(mfrow = c(1, 2), mar = c(4.6, 5.2, 3.2, 1))
 # panel A: wall time vs markers, log-log, power-law fits (RTIGER-style)
 plot(NA,
   log = "xy", xlim = range(d$markers), ylim = range(d$seconds),
-  xlab = "markers per line", ylab = sprintf("wall time, %d lines (s)", NLINES),
-  main = sprintf("nNIL runtime vs marker density (%d lines)", NLINES)
+  xlab = "markers per line", ylab = "wall time (s)",
+  main = sprintf("nNIL decode time (%d lines)", NLINES)
 )
 grid(col = "grey92")
 for (ca in c("holland", "nilhmm")) {
@@ -84,7 +84,7 @@ expm <- function(ca) coef(stats::lm(log10(rss_gib) ~ log10(markers), d[d$caller 
 plot(NA,
   log = "xy", xlim = range(d$markers), ylim = range(d$rss_gib),
   xlab = "markers per line", ylab = "peak RSS (GiB)",
-  main = "nNIL peak memory vs marker density"
+  main = sprintf("nNIL peak memory (%d lines)", NLINES)
 )
 grid(col = "grey92")
 for (ca in c("holland", "nilhmm")) {
