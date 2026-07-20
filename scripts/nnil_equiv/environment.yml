@@ -1,0 +1,26 @@
+# Native arm64 (osx-arm64) conda env for the nilHMM Python pipeline: the nNIL callers
+# (hmmlearn), genotype I/O (bed-reader), and the scientific stack the sweep/equivalence
+# scripts import. Replaces the earlier x86_64 (Rosetta) env at the SAME name/location.
+#
+#   CONDA_SUBDIR=osx-arm64 conda env create -f scripts/nnil_equiv/environment.yml
+#   conda activate nilhmm && conda config --env --set subdir osx-arm64   # keep arm64
+#
+# Versions pinned to the minor line of the previous env (agent/nilhmm_env_inventory.txt).
+name: nilhmm
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - libblas=*=*accelerate   # Apple Silicon Accelerate BLAS/LAPACK (native arm64, fastest for numpy/hmmlearn)
+  - numpy=1.26
+  - scipy=1.13
+  - pandas=2.2
+  - scikit-learn=1.5
+  - joblib
+  - threadpoolctl
+  - ipykernel   # so the IDE can use this env as a kernel
+  - pip
+  - pip:
+      - hmmlearn==0.3.3
+      - bed-reader==1.1.0
