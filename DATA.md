@@ -406,7 +406,11 @@ fork workspace). The **paper reports the operating rigidity r=250**; the r=2 pai
   - `30_panel_sweep_orig.txt`, `33_panel_convergence.txt` — original per-iteration
     throughput and convergence iters/runtime per size.
   Provenance/method: `~/repos/rtiger-fork-assets/.../docs/optimization.md`.
-- **r=250 (operating-point) benchmark** (the paper's §2): `scripts/bench_rtiger_r250.R`
+- **r=250 (operating-point) benchmark** (the paper's §2). Reproduce the whole dataset
+  + both figures end-to-end with the tracked driver `scripts/rtiger_r250_run_all.sh`
+  (orig-Julia conv + materialize thinned panels + orig/C++ peak RSS + C++ bench +
+  plot, in order; ~1.5 h, the full-panel orig fit being the pole). Component scripts:
+  `scripts/bench_rtiger_r250.R`
   (C++ core + equivalence/throughput, all five sizes to convergence),
   `scripts/rtiger_julia_conv_worker.jl` (original Julia at r=250, all five sizes ->
   `results/bench/orig_conv_r250/`; the full 109,703 panel is ~43 min). Peak RSS:
