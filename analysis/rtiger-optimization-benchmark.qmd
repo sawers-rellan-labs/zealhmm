@@ -122,7 +122,7 @@ knitr::kable(
 The two cores descend the identical path to convergence at the full panel (right);
 the left panel is the speed contrast:
 
-![Full panel (109,703 markers/sample), r=250, both cores run to convergence (4 iterations each). Left: per-iteration wall time (original Julia ~638 s/iter vs nilHMM C++/Rcpp ~0.05 s/iter). Right: each iteration's EM parameter-convergence delta (max |Delta(alpha,beta)|, RTIGER's convergence criterion, not a log-likelihood change), C++ against original Julia on a log-log 1:1 line, early (yellow) to late (purple).](../nilhmm-paper/figures/rtiger_equivalence_r250.png)
+![Full panel (109,703 markers/sample), r=250, both cores run to convergence (4 iterations each). Left: per-iteration wall time (original Julia ~638 s/iteration vs nilHMM C++/Rcpp ~0.05 s/iteration). Right: each iteration's EM parameter-convergence delta (max |Delta(alpha,beta)|, RTIGER's convergence criterion, not a log-likelihood change), C++ against original Julia on a log-log 1:1 line, early (yellow) to late (purple).](../nilhmm-paper/figures/rtiger_equivalence_r250.png)
 
 ## 3. Throughput, scaling with markers
 

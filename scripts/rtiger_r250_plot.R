@@ -94,18 +94,18 @@ if (nrow(tc) >= 2 && nrow(to) >= 2) {
   drel <- max(abs(do - dc) / pmax(abs(dc), 1e-12))
   dt <- c(1e-3, 0.01, 0.1, 1, 10, 100, 1000)
   dl <- c("0.001", "0.01", "0.1", "1", "10", "100", "1000")
-  png(file.path(FIGDIR, "rtiger_equivalence_r250.png"), width = 1400, height = 640, res = 130)
+  png(file.path(FIGDIR, "rtiger_equivalence_r250.png"), width = 1600, height = 640, res = 130)
   par(mfrow = c(1, 2), mar = c(4.4, 5.0, 3.6, 1))
   plot(seq_len(nrow(tc)), tc$per_iter,
     log = "y", type = "b", pch = 19, col = COL_CPP,
     ylim = range(c(to$per_iter, tc$per_iter)), xaxt = "n", yaxt = "n", xlab = "EM iteration",
     ylab = "per-iteration wall time (s)",
-    main = sprintf("Per-iteration time -- %s markers/sample, r=250\norig ~%.0f s vs C++ ~%.2f s per iter", format(mps_eq, big.mark = ","), mean(to$per_iter), mean(tc$per_iter))
+    main = sprintf("Per-iteration time, r=250 (%s markers)\nJulia ~%.0f s vs C++ ~%.2f s per iteration", format(mps_eq, big.mark = ","), mean(to$per_iter), mean(tc$per_iter))
   )
   axis(1, at = seq_len(max(nrow(tc), nrow(to)))) # EM iterations are integers
   axis(2, dt, dl, las = 1)
   points(seq_len(nrow(to)), to$per_iter, type = "b", pch = 17, col = COL_ORIG, cex = 1.2)
-  legend("right", c(sprintf("nilHMM C++/Rcpp (%d it)", nrow(tc)), sprintf("original Julia (%d it)", nrow(to))),
+  legend("right", c(sprintf("nilHMM C++/Rcpp (%d iterations)", nrow(tc)), sprintf("original Julia (%d iterations)", nrow(to))),
     col = c(COL_CPP, COL_ORIG), pch = c(19, 17), bty = "n", cex = 0.85
   )
   rng <- range(c(do, dc))
@@ -113,7 +113,7 @@ if (nrow(tc) >= 2 && nrow(to) >= 2) {
   plot(dc, do,
     log = "xy", pch = 19, col = cols, cex = 1.3, xlim = rng, ylim = rng, xaxt = "n", yaxt = "n",
     xlab = "nilHMM C++/Rcpp EM parameter delta", ylab = "original Julia EM parameter delta",
-    main = sprintf("EM parameter-convergence delta (per iteration), r=250\n1:1 => identical (max rel %.0e)", drel)
+    main = "EM parameter delta per iteration, r=250"
   )
   axis(1, dt, dl)
   axis(2, dt, dl, las = 1)
