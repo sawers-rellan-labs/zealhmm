@@ -1,4 +1,4 @@
-# Native arm64 (osx-arm64) conda env for the nilHMM Python pipeline: the nNIL callers
+# Native arm64 (osx-arm64) conda env for the nilHMM Python pipeline: the nnil callers
 # (hmmlearn), genotype I/O (bed-reader), and the scientific stack the sweep/equivalence
 # scripts import. Replaces the earlier x86_64 (Rosetta) env at the SAME name/location.
 #

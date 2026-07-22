@@ -255,7 +255,7 @@ the caller under-reports it purely because it is undetectable at $0.4\times$. Se
 We can estimate $d$ directly from the cohort AD, independent of the panel, by
 conditioning on ancestry-segment state and reading off the mean alt-read fraction:
 REF segments $\to \varepsilon$, HET $\to d/2$, HOM $\to d$
-(`agent/estimate_dose_from_reads.R`, segments from RTIGER calls which resolve
+(`agent/estimate_dose_from_reads.R`, segments from rtiger calls which resolve
 zygosity; alt-fraction pooled over all covered sites of all NILs in a taxon).
 
 | taxon (donor) | panel $d$ | REF-bg alt-frac | HET alt-frac ($\hat d/2$) | HOM alt-frac ($\hat d$) | $2\times$HET | covered sites |
@@ -309,7 +309,7 @@ from human aDNA or inbred-founder PHGs do not transfer here.
 
 - **Fit the emission means, don't assume them.** The state means are
   $\approx\{0,\,d/2,\,d\}$ with a per-donor $d$; a fixed $\{ \varepsilon, \tfrac12,
-  1-\varepsilon\}$ emission is mis-specified. This is why RTIGER's per-taxon
+  1-\varepsilon\}$ emission is mis-specified. This is why rtiger's per-taxon
   `fit_means` outperforms the fixed-mean count emission on this data.
 - **Prefer donor-enriched sites where possible.** Selecting sites with high
   species-level $f_2$ raises $d$ toward 1 and widens state separation, up to the

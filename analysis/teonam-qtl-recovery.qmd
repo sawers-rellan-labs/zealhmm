@@ -213,7 +213,7 @@ plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
 #' −log10P vs genomic position along the union grid; `group = interaction(CHR,
 #' coverage)` so lines never connect across chromosomes. Color = coverage on a
 #' viridis ramp, the λ = ∞ truth baseline in black. LOD = 5 dotted. NO gene labels.
-#' Reused for the control / nNIL / RTIGER panels of the degradation composite.
+#' Reused for the control / nnil / rtiger panels of the degradation composite.
 #' @param sweep_csv combined sweep CSV (SNP, CHR, BP[v5], P, coverage; coverage=Inf
 #'   for the λ=∞ baseline rows)
 #' @param title panel title (markdown)
@@ -382,13 +382,13 @@ ggsave(here("results/sim/teonam/stam_composite.png"), composite,
 composite
 ```
 
-## RTIGER ancestry vs sequencing coverage (degradation sweep)
+## rtiger ancestry vs sequencing coverage (degradation sweep)
 
 The panel-C baseline above is the **λ = ∞, perfect-caller** curve (GWAS on the
 interpolated *truth* genotypes). All sweeps below run on the same full
 **51,004**-marker GWAS grid as the Fig-4C panels above. Here we ask
 how low-coverage sequencing degrades
-that signal **through the RTIGER ancestry caller**: for each family × coverage
+that signal **through the rtiger ancestry caller**: for each family × coverage
 `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20}×` we simulate reads from the real genotypes
 (`.draw_counts`, `pi_floor=0, k_decay=1, error=0.01`), call ancestry with
 `call_ancestry(caller = "rtiger", rigidity = 2)` (the calibrated `rigidity_star`),
@@ -400,7 +400,7 @@ sweep CSV and plots.
 The read as a **line-Manhattan** (`geom_line`, one line per coverage; chromosomes
 never connect because `group = interaction(CHR, coverage)`): coverage on a viridis
 ramp, the λ = ∞ truth baseline in **black** as the reference curve, LOD = 5 dotted.
-The striking result is how **robust** RTIGER is — ancestry is a long-block signal,
+The striking result is how **robust** rtiger is — ancestry is a long-block signal,
 so even 0.1× (~9.5 % of markers carrying a read) reconstructs the blocks well
 enough that the *tb1* peak only slips from ≈17.3 (baseline) to ≈16.1. Degradation
 is real but lives mostly in HET recovery (het-recall 0.77 at 0.1× → 1.00 at ≥20×),
@@ -409,7 +409,7 @@ not in the additive QTL peaks.
 ```{r line-manhattan, fig.width=9, fig.height=4.6}
 p_sweep <- plot_sweep_line(
   here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
-  "STAM — RTIGER ancestry, GWAS −log10P vs coverage",
+  "STAM — rtiger ancestry, GWAS −log10P vs coverage",
   base_size = 15
 )
 ggsave(here("results/sim/teonam/stam_gwas_rtiger_sweep_manhattan.png"),
@@ -419,7 +419,7 @@ ggsave(here("results/sim/teonam/stam_gwas_rtiger_sweep_manhattan.png"),
 p_sweep
 ```
 
-## Coverage-degradation composite: interpolation control / nNIL / RTIGER / LB-Impute
+## Coverage-degradation composite: interpolation control / nnil / rtiger / lbimpute
 
 The four-panel contrast (`agent/teonam-control-sweep-plan.md`). All four degrade
 the **identical** truth mosaics over the same coverage grid
@@ -429,12 +429,12 @@ feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs
 - **A — interpolation control** (`nilHMM::call_gt(prior = "hwe")` + per-RIL
   step-interpolation; `scripts/teonam_control_sweep.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
-- **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
+- **B — nnil** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
   `f_1 = 0.08`, `f_2 = 0.15`; `scripts/teonam_nnil_sweep.R`): count emission + geometric
   duration.
-- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep.R`):
+- **C — rtiger** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep.R`):
   count emission + rigidity duration.
-- **D — LB-Impute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = recombdist_star ≈ 5.5)`;
+- **D — lbimpute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = recombdist_star ≈ 5.5)`;
   `scripts/teonam_lbimpute_sweep.R`): coverage-aware emission + distance-dependent
   (map-aware cM) transition with a double-recombination penalty, full-chromosome
   Viterbi (nilHMM native port of Fragoso et al. 2014). `recombdist` is the
@@ -444,7 +444,7 @@ feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs
 The **contrast is het handling**. The three duration/distance-aware HMMs (B, C, D) tie
 neighbouring markers into ancestry blocks, so a lone ALT read cannot open a het call —
 het-call fraction stays near the ~8 % truth level and the STAM peaks hold near the
-baseline down to 0.1×. LB-Impute (D), at the calibrated `recombdist_star ≈ 5.5 cM`,
+baseline down to 0.1×. lbimpute (D), at the calibrated `recombdist_star ≈ 5.5 cM`,
 degrades gracefully like B and C rather than over-smoothing: its *tb1* peak holds
 near the baseline across the grid (≈16.3 at 0.1× vs ≈17.3 baseline), never
 over-shooting. (The tighter calibrated distance scale allows more transitions than
@@ -468,11 +468,11 @@ the recombination rate collapses to ≈0.06 cM/Mb across ≈80–100 Mb (~40× b
 ≈2 cM/Mb near the telomeres). Recombination is so suppressed there that cM barely
 advances across tens of Mb, so with the map-aware cM transition adjacent markers
 are separated by ~zero cM and the state stays highly persistent; at 0.1× (only
-~9.5 % of markers carrying a read) LB-Impute lays down a long spurious homozygous
+~9.5 % of markers carrying a read) lbimpute lays down a long spurious homozygous
 block through this low-recombination valley that tracks the phenotype. It is a **block-caller**
 effect: the no-HMM interpolation control (A) shows **no** central ghost (excess
-≈0), nNIL (B) and RTIGER (C) show milder versions (excess ≈+2.3–2.6), and
-**LB-Impute (D) is the most affected** (≈+3.9).
+≈0), nnil (B) and rtiger (C) show milder versions (excess ≈+2.3–2.6), and
+**lbimpute (D) is the most affected** (≈+3.9).
 
 Note this ghost is a genuine consequence of the **calibrated** `recombdist_star`
 (≈5.5 cM): with the earlier hardcoded `recombdist = 50` the chr3 middle stayed near
@@ -487,7 +487,7 @@ peak as a coverage-limit artifact, not signal.
 het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction.csv"))[, .(coverage, control = round(het_frac, 3))]
 het_nnil <- fread(here("results/sim/teonam/stam_nnil_het_fraction.csv"))[, .(coverage, nnil = round(het_frac, 3))]
 het_tab <- merge(het_ctrl, het_nnil, by = "coverage")
-het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nNIL (flat ~truth)
+het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nnil (flat ~truth)
 ```
 
 ```{r sweep-composite, fig.width=9, fig.height=16}
@@ -497,15 +497,15 @@ pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_sweep.csv"),
   legend = TRUE
 )
 pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_sweep.csv"),
-  "STAM — bbNIL ancestry",
+  "STAM — bbnil ancestry",
   legend = FALSE
 )
 pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_sweep.csv"),
-  "STAM — RTIGER ancestry",
+  "STAM — rtiger ancestry",
   legend = FALSE
 )
 pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_sweep.csv"),
-  "STAM — LB-Impute ancestry (map-aware cM)",
+  "STAM — lbimpute ancestry (map-aware cM)",
   legend = FALSE
 )
 
@@ -525,7 +525,7 @@ The composite above is an OLS scan (`STAM ~ Family + marker`), which models neit
 kinship nor fine population structure — exactly what inflates broad signals in
 low-recombination regions. Chen 2019's GWAS instead used a **mixed model with
 Q = 5 PCs + K = kinship**. To test whether the 0.1× chr3-pericentromere ghost is a
-real QTL or a structure/LD confound, we re-scan the **same 0.1× LB-Impute
+real QTL or a structure/LD confound, we re-scan the **same 0.1× lbimpute
 genotypes** three ways (compute in `scripts/teonam_mlm_loco_lb01.R` — an EMMAX port:
 VanRaden K + 5 PCs + REML δ + P3D GLS; genotype matrix from
 `scripts/teonam_lbimpute_sweep.R --generate --save-matrix`):
@@ -555,9 +555,9 @@ full_s <- ml[is.finite(p_full) & p_full > 0, .(SNP = marker, CHR = chr, BP = bp,
 loco_s <- ml[is.finite(p_loco) & p_loco > 0, .(SNP = marker, CHR = chr, BP = bp, P = p_loco)]
 
 ghost <- list(chr = 3, bp = 112e6) # chr3 pericentromere ghost locus
-pO <- plot_stam_manhattan(ols_s, "STAM — LB-Impute 0.1×, OLS (Family)", mark = ghost)
-pF <- plot_stam_manhattan(full_s, "STAM — LB-Impute 0.1×, MLM (Q + K)", mark = ghost)
-pL <- plot_stam_manhattan(loco_s, "STAM — LB-Impute 0.1×, LOCO", mark = ghost)
+pO <- plot_stam_manhattan(ols_s, "STAM — lbimpute 0.1×, OLS (Family)", mark = ghost)
+pF <- plot_stam_manhattan(full_s, "STAM — lbimpute 0.1×, MLM (Q + K)", mark = ghost)
+pL <- plot_stam_manhattan(loco_s, "STAM — lbimpute 0.1×, LOCO", mark = ghost)
 
 ghost_grid <- cowplot::plot_grid(pO, pF, pL,
   ncol = 1, align = "v", axis = "lr",

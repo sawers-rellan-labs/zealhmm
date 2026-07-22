@@ -44,8 +44,8 @@ mnt <- bzea_mounts()
 
 # 1. The three source paths (calibrated params from B2.2)
 
-- **Skim** (low-cov WGS + TP teosinte–B73 wideseq filtering): nNIL, RTIGER, binhmm.
-- **BrB** (3′ RNA-seq + TP filtering): nNIL, RTIGER, ATLAS.
+- **Skim** (low-cov WGS + TP teosinte–B73 wideseq filtering): nnil, rtiger, binhmm.
+- **BrB** (3′ RNA-seq + TP filtering): nnil, rtiger, atlas.
 - **Target-seq** (MolBreeding 45K, high coverage): `gt` path — *completeness
   only*, and doubles as the optional Holland-style calibration cross-check; not
   headline.
@@ -70,5 +70,5 @@ comparable (helpers in `R/metrics.R`):
 # 3. Read (to write once data is in)
 
 Cross-source / cross-caller concordance distributions, and where the modalities
-systematically disagree (expected: BRB-RTIGER RNA false-donor floor; ATLAS most
+systematically disagree (expected: BRB-rtiger RNA false-donor floor; atlas most
 conservative). This is F4.

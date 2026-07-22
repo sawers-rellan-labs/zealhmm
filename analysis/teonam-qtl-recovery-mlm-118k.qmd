@@ -218,16 +218,16 @@ ggsave(here("results/sim/teonam/stam_composite_mlm_118k.png"), composite, width 
 composite
 ```
 
-## RTIGER ancestry × coverage under MLM (degradation sweep)
+## rtiger ancestry × coverage under MLM (degradation sweep)
 
-The RTIGER coverage sweep under the MLM (Family+K). Reads are Poisson-sampled from the
+The rtiger coverage sweep under the MLM (Family+K). Reads are Poisson-sampled from the
 **authentic 118K per-SNP genotypes** over `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20, ∞}×`;
-RTIGER infers ancestry **directly on all 118K markers, per chromosome** (no thinning, no
+rtiger infers ancestry **directly on all 118K markers, per chromosome** (no thinning, no
 back-projection), and the per-coverage GL-dosage null (its honest Family+K at that
-depth) is applied. λ = ∞ is RTIGER's deterministic ceiling. Compute:
+depth) is applied. λ = ∞ is rtiger's deterministic ceiling. Compute:
 `scripts/teonam_rtiger_sweep_118k.R` (writes the OLS and `_mlm` sweep CSVs); this chunk plots.
 
-**Rigidity.** RTIGER's `rigidity` is a *marker-count* minimum-segment length. The
+**Rigidity.** rtiger's `rigidity` is a *marker-count* minimum-segment length. The
 calibrated `rigidity_star = 2` over-segments ~5–6× on this dense grid; a cM-distance rule
 fails too because the interpolated cM map is heavily tied (median gap ≈ 0). So rigidity
 is calibrated **empirically on the full grid** — chr1, one family, λ=∞, swept against the
@@ -245,14 +245,14 @@ recovery in the pericentromere). One replicate per cell.
 ```{r line-manhattan, fig.width=9, fig.height=4.6}
 p_sweep <- plot_sweep_line(
   here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"),
-  "STAM — RTIGER ancestry, MLM (Family+K) −log10P vs coverage",
+  "STAM — rtiger ancestry, MLM (Family+K) −log10P vs coverage",
   base_size = 15, legend_corner = "topright"
 )
 ggsave(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep_manhattan.png"), p_sweep, width = 9, height = 4.6, dpi = 200, bg = "white")
 p_sweep
 ```
 
-## MLM coverage-degradation composite: control / nNIL / RTIGER / LB-Impute / binhmm
+## MLM coverage-degradation composite: control / nnil / rtiger / lbimpute / binhmm
 
 The five-caller contrast under MLM. Same pipeline as the OLS composite (authentic
 per-SNP truth → per-caller ancestry on the 0.1 cM grid → back-project → GWAS), scanned
@@ -266,9 +266,9 @@ recovered ancestry *geometry*):
 
 - **A — interpolation control** (GL + HWE, no HMM): noisiest — dense false peaks
   genome-wide (to ~15), driven by mid coverages; no smoothing for K to work with.
-- **B — nNIL**: cleaner but still busy — scattered false peaks, chr3 elevated.
-- **C — RTIGER**: cleanest — little survives LOD; only the chr3 0.1× artifact and a modest *tb1*.
-- **D — LB-Impute**: also clean — *tb1* to ~10–11 at 0.1×, flat elsewhere.
+- **B — nnil**: cleaner but still busy — scattered false peaks, chr3 elevated.
+- **C — rtiger**: cleanest — little survives LOD; only the chr3 0.1× artifact and a modest *tb1*.
+- **D — lbimpute**: also clean — *tb1* to ~10–11 at 0.1×, flat elsewhere.
 - **E — binhmm** (1 Mb bins): clean, like C/D — the coarse bin resolution suppresses
   fine-scale false peaks; a chr1 *tb1* cluster (to ~8, strongest at low coverage) and a
   modest chr3, otherwise flat.
@@ -278,9 +278,9 @@ removes). One replicate per (family, λ) cell.
 
 ```{r sweep-composite, fig.width=9, fig.height=20}
 pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — interpolation control (GL + HWE)", legend = TRUE, legend_corner = "topright")
-pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — bbNIL ancestry", legend = FALSE)
-pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — RTIGER ancestry", legend = FALSE)
-pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — LB-Impute ancestry (map-aware cM)", legend = FALSE)
+pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — bbnil ancestry", legend = FALSE)
+pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — rtiger ancestry", legend = FALSE)
+pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — lbimpute ancestry (map-aware cM)", legend = FALSE)
 pE <- plot_sweep_line(here("results/sim/teonam/stam_gwas_binhmm_118k_mlm_sweep.csv"), "STAM MLM (Family+K) — binhmm ancestry (1 Mb bins)", legend = FALSE)
 composite <- cowplot::plot_grid(pA, pB, pC, pD, pE, ncol = 1, align = "v", axis = "lr", labels = c("A", "B", "C", "D", "E"), label_size = 18)
 ggsave(here("results/sim/teonam/stam_sweep_composite_mlm_118k.png"), composite, width = 9, height = 20, dpi = 200, bg = "white")
@@ -296,7 +296,7 @@ ancestry-confounded QTL.
 
 ```{r tb1-vs-cov}
 tb1 <- ov[symbol == "tb1"]
-callers <- c(control = "control", nNIL = "nnil", RTIGER = "rtiger", `LB-Impute` = "lbimpute", binhmm = "binhmm")
+callers <- c(control = "control", nnil = "nnil", rtiger = "rtiger", lbimpute = "lbimpute", binhmm = "binhmm")
 rows <- rbindlist(lapply(names(callers), function(nm) {
   sw <- fread(here(sprintf("results/sim/teonam/stam_gwas_%s_118k_mlm_sweep.csv", callers[nm])))
   sw[CHR == tb1$chr & abs(BP - tb1$start) <= 5e5 & is.finite(P) & P > 0,
@@ -307,7 +307,7 @@ rows <- rbindlist(lapply(names(callers), function(nm) {
 wide <- dcast(rows, coverage ~ caller, value.var = "tb1_logP")
 wide[, covlab := ifelse(is.finite(coverage), formatC(coverage), "Inf")]
 setorder(wide, -coverage)
-knitr::kable(wide[, .(coverage = covlab, control, nNIL, RTIGER, `LB-Impute`, binhmm)],
+knitr::kable(wide[, .(coverage = covlab, control, nnil, rtiger, lbimpute, binhmm)],
   caption = "tb1 peak -log10P (+/-500 kb) by caller x coverage under MLM (Family+K). Height decreases with coverage (Inf lowest): sharper K absorbs the ancestry-confounded QTL more fully at high depth."
 )
 ```
@@ -320,7 +320,7 @@ defined noise band **(R, P10)** — R = 0.1 cM grid resolution, P10 = 10th-perce
 ancestry **geometry** (the back-projected block structure), which is identical between
 OLS and MLM — only the downstream GWAS model differs — so the ranking below (measured
 on the tracks in the OLS notebook, `scripts/teonam_sweep_noisiness.R`) carries over:
-**RTIGER ≈ LB-Impute run ~9× cleaner than control ≈ nNIL**, which is exactly the
+**rtiger ≈ lbimpute run ~9× cleaner than control ≈ nnil**, which is exactly the
 false-positive ordering seen in the MLM composite above.
 
 ```{r noisiness-band}
@@ -337,7 +337,7 @@ knitr::kable(nz, caption = "Noise-band power fraction at lambda=Inf (each caller
 lag-1 autocorrelation of the −log₁₀P marker track, measured directly (not from the
 FFT) — ranks the callers in exactly the *reverse* order of the band-power: `binhmm`
 / `rtiger` are both least noisy and most autocorrelated (acf ≈ 0.999), `control` /
-`nNIL` noisiest and least (acf ≈ 0.959). This is not a coincidence but
+`nnil` noisiest and least (acf ≈ 0.959). This is not a coincidence but
 **Wiener–Khinchin**: the periodogram is the Fourier transform of the
 autocorrelation function, so band-limited high-frequency power and short-range
 autocorrelation are two views of the same second-order structure. Either one

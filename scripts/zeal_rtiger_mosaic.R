@@ -1,16 +1,16 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL Phase 3 — RTIGER ancestry mosaic (the usable one; supersedes the
+# ZEAL Phase 3 — rtiger ancestry mosaic (the usable one; supersedes the
 # LB-Impute mosaic, which under-called teosinte ~8x — see agent/zeal_dta_repro_plan.md).
 #
-# Reproduce-don't-approximate: use the EXISTING, validated per-accession RTIGER-SNP50K
+# Reproduce-don't-approximate: use the EXISTING, validated per-accession rtiger-SNP50K
 # calls from zealtiger (fit_rtiger_by_donor.R, rigidity=8 autotune pick on the SNP50K
 # sim, benchmarked on real NILs) rather than a fresh sim calibration. Those calls are
 # ancestry SEGMENTS (name, chr, start_bp, end_bp, state 0/1/2); here we back-project them
 # onto the full SNP50K marker grid to get the marker x line state matrix used by the GWAS.
 # Presence (het+teo) ~10.7% matches the established BzeaSeq block estimate (~10.1%).
 #
-# Input : data/zeal/rtiger_50K_calls.csv     (RTIGER segments; staged from zealtiger)
+# Input : data/zeal/rtiger_50K_calls.csv     (rtiger segments; staged from zealtiger)
 #         data/zeal/markers_snp50k_v5.tsv    (marker, chr, pos)
 #         data/zeal/samplesheet_3way.csv     (gwas_nil skim_id -> pedigree)
 # Output: data/zeal/zeal_rtiger_mosaic.rds   list(markers, state[marker x line], lines)
@@ -32,7 +32,7 @@ ss <- fread(here("data/zeal/samplesheet_3way.csv"))[gwas_nil == TRUE & !is.na(sk
 panel <- ss[skim_id %in% unique(seg$name), skim_id]
 ped <- ss[match(panel, skim_id), pedigree]
 miss <- ss[!skim_id %in% seg$name, .N]
-log_info("panel lines with RTIGER calls: %d (%d gwas_nil lines lack calls, dropped)", length(panel), miss)
+log_info("panel lines with rtiger calls: %d (%d gwas_nil lines lack calls, dropped)", length(panel), miss)
 log_info("markers=%d | segments=%d over %d samples", nrow(mk), nrow(seg), uniqueN(seg$name))
 
 # back-project segments -> per-marker state, per line (segments tile each chromosome;

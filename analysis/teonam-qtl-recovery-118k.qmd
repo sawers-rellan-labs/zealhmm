@@ -246,7 +246,7 @@ plot_stam_lollipop <- function(jlm_txt, scan_csv, title, out_png = NULL) {
 #' −log10P vs genomic position along the union grid; `group = interaction(CHR,
 #' coverage)` so lines never connect across chromosomes. Color = coverage on a
 #' viridis ramp, the λ = ∞ truth baseline in black. LOD = 5 dotted. NO gene labels.
-#' Reused for the control / nNIL / RTIGER panels of the degradation composite.
+#' Reused for the control / nnil / rtiger panels of the degradation composite.
 #' @param sweep_csv combined sweep CSV (SNP, CHR, BP[v5], P, coverage; coverage=Inf
 #'   for the λ=∞ baseline rows)
 #' @param title panel title (markdown)
@@ -422,22 +422,22 @@ ggsave(here("results/sim/teonam/stam_composite_118k.png"), composite,
 composite
 ```
 
-## RTIGER ancestry vs sequencing coverage (degradation sweep)
+## rtiger ancestry vs sequencing coverage (degradation sweep)
 
-How low-coverage sequencing degrades the STAM signal **through the RTIGER ancestry
+How low-coverage sequencing degrades the STAM signal **through the rtiger ancestry
 caller**: for each family × coverage `λ ∈ {0.1, 0.2, 0.5, 1, 5, 10, 20, ∞}×` we
 Poisson-sample reads from the **authentic 118K per-SNP genotypes** (`.draw_counts`,
 `pi_floor=0, k_decay=1, error=0.01`), infer ancestry with
 `call_ancestry(caller = "rtiger", rigidity = 2)` (calibrated `rigidity_star`) on the
 **0.1 cM inference grid**, back-project the segments onto the full 118,514-marker union,
-and run the `STAM ~ Family + marker` scan. λ = ∞ is RTIGER at perfect coverage (its
+and run the `STAM ~ Family + marker` scan. λ = ∞ is rtiger at perfect coverage (its
 own ceiling). Compute: `scripts/teonam_rtiger_sweep_118k.R --generate`; this chunk
 loads and plots.
 
 Line-Manhattan (`geom_line`, one line per coverage; chromosomes never connect via
 `group = interaction(CHR, coverage)`): coverage on a viridis ramp, λ = ∞ in **black**,
-LOD = 5 dotted. RTIGER holds the *tb1* / chr3 signal well down to low coverage, but on
-the real per-SNP truth the peak height is **not** monotone in coverage — RTIGER's fixed
+LOD = 5 dotted. rtiger holds the *tb1* / chr3 signal well down to low coverage, but on
+the real per-SNP truth the peak height is **not** monotone in coverage — rtiger's fixed
 rigidity smooths differently as read depth changes, so moderate coverage can look
 cleaner than perfect coverage. Read *where signal survives*, not exact peak heights;
 one replicate per cell.
@@ -445,7 +445,7 @@ one replicate per cell.
 ```{r line-manhattan, fig.width=9, fig.height=4.6}
 p_sweep <- plot_sweep_line(
   here("results/sim/teonam/stam_gwas_rtiger_118k_sweep.csv"),
-  "STAM — RTIGER ancestry, GWAS −log10P vs coverage",
+  "STAM — rtiger ancestry, GWAS −log10P vs coverage",
   base_size = 15
 )
 ggsave(here("results/sim/teonam/stam_gwas_rtiger_118k_sweep_manhattan.png"),
@@ -455,7 +455,7 @@ ggsave(here("results/sim/teonam/stam_gwas_rtiger_118k_sweep_manhattan.png"),
 p_sweep
 ```
 
-## Coverage-degradation composite: interpolation control / nNIL / RTIGER / LB-Impute
+## Coverage-degradation composite: interpolation control / nnil / rtiger / lbimpute
 
 The four-panel contrast (`agent/teonam-control-sweep-plan.md`). Reads are Poisson-
 sampled per SNP from the **authentic 118K per-SNP genotypes**
@@ -471,12 +471,12 @@ in-pipeline, so each panel's ∞ line is caller-specific (no shared baseline).
 - **A — interpolation control** (`nilHMM::call_gt(prior = "hwe")` + per-RIL
   step-interpolation; `scripts/teonam_control_sweep_118k.R`): the deliberately het-prone
   no-HMM caller — a single ALT read is called HET via the `2p(1−p)` HWE prior term.
-- **B — nNIL** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
+- **B — nnil** (`call_ancestry(caller = "nnil", rrate = rrate_star, err = 0.01)`,
   `f_1 = 0.08`, `f_2 = 0.15`; `scripts/teonam_nnil_sweep_118k.R`): count emission + geometric
   duration.
-- **C — RTIGER** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep_118k.R`):
+- **C — rtiger** (`caller = "rtiger", rigidity = 2`; `scripts/teonam_rtiger_sweep_118k.R`):
   count emission + rigidity duration.
-- **D — LB-Impute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = recombdist_star ≈ 5.5)`;
+- **D — lbimpute** (`call_ancestry(caller = "lbimpute", unit = "cm", recombdist = recombdist_star ≈ 5.5)`;
   `scripts/teonam_lbimpute_sweep_118k.R`): coverage-aware emission + distance-dependent
   (map-aware cM) transition with a double-recombination penalty, full-chromosome
   Viterbi (nilHMM native port of Fragoso et al. 2014). `recombdist` is the
@@ -500,7 +500,7 @@ coloured by coverage, LOD = 5, chromosomes never connect
 het_ctrl <- fread(here("results/sim/teonam/stam_control_het_fraction_118k.csv"))[, .(coverage, control = round(het_frac, 3))]
 het_nnil <- fread(here("results/sim/teonam/stam_nnil_het_fraction_118k.csv"))[, .(coverage, nnil = round(het_frac, 3))]
 het_tab <- merge(het_ctrl, het_nnil, by = "coverage")
-het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nNIL (flat ~truth)
+het_tab[] # HET-call fraction vs coverage: control (het excess at low λ) vs nnil (flat ~truth)
 ```
 
 ```{r sweep-composite, fig.width=9, fig.height=16}
@@ -510,15 +510,15 @@ pA <- plot_sweep_line(here("results/sim/teonam/stam_gwas_control_118k_sweep.csv"
   legend = TRUE
 )
 pB <- plot_sweep_line(here("results/sim/teonam/stam_gwas_nnil_118k_sweep.csv"),
-  "STAM — nNIL ancestry",
+  "STAM — nnil ancestry",
   legend = FALSE
 )
 pC <- plot_sweep_line(here("results/sim/teonam/stam_gwas_rtiger_118k_sweep.csv"),
-  "STAM — RTIGER ancestry",
+  "STAM — rtiger ancestry",
   legend = FALSE
 )
 pD <- plot_sweep_line(here("results/sim/teonam/stam_gwas_lbimpute_118k_sweep.csv"),
-  "STAM — LB-Impute ancestry (map-aware cM)",
+  "STAM — lbimpute ancestry (map-aware cM)",
   legend = FALSE
 )
 
@@ -560,7 +560,7 @@ knitr::kable(bp, caption = sprintf(
 nz <- fread(here("results/sim/teonam/sweep_noisiness_118k.csv"))
 knitr::kable(nz, caption = paste(
   "Noise-band power fraction at λ=∞ (each caller's ceiling), sorted least→most noisy.",
-  "RTIGER ≈ LB-Impute run ~9× cleaner than control ≈ nNIL; the FFT (headline) and",
+  "rtiger ≈ lbimpute run ~9× cleaner than control ≈ nnil; the FFT (headline) and",
   "Haar-wavelet measures agree on the ranking."
 ))
 ```
@@ -568,8 +568,8 @@ knitr::kable(nz, caption = paste(
 ```{r noisiness-vscov}
 vz <- fread(here("results/sim/teonam/sweep_noisiness_vscov_118k.csv"))
 knitr::kable(vz, caption = paste(
-  "FFT noise-band power fraction vs coverage. RTIGER/LB-Impute stay low at every depth;",
-  "control and nNIL are clean at low coverage but grow noisy as depth rises — at high",
+  "FFT noise-band power fraction vs coverage. rtiger/lbimpute stay low at every depth;",
+  "control and nnil are clean at low coverage but grow noisy as depth rises — at high",
   "depth they are forced to honour the authentic per-SNP het scatter that the",
   "stronger-smoothing callers suppress."
 ))

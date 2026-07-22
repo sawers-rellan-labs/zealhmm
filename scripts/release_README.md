@@ -26,8 +26,8 @@ conventions: `TERMINOLOGY.md` there.
 ## One shared panel
 
 Every object uses the **same** line panel — the intersection of all objects' callable lines.
-RTIGER's per-chromosome "≥ 2×rigidity informative markers" QC is the binding constraint: 8
-near-empty libraries (< 0.3% of SNP50K sites covered) that RTIGER cannot call are dropped, so
+rtiger's per-chromosome "≥ 2×rigidity informative markers" QC is the binding constraint: 8
+near-empty libraries (< 0.3% of SNP50K sites covered) that rtiger cannot call are dropped, so
 every object carries the identical set of ~1,395 lines in the same column order.
 
 ## Contents
@@ -46,15 +46,15 @@ MANIFEST.tsv                       file, bytes, sha256
 
 | name | layer | caller / method |
 |------|-------|-----------------|
-| `rtiger_mosaic` | ancestry | RTIGER (reference mosaic; recovers teosinte presence ~0.10) |
-| `nnil_mosaic` | ancestry | nilHMM nNIL |
+| `rtiger_mosaic` | ancestry | rtiger (reference mosaic; recovers teosinte presence ~0.10) |
+| `nnil_mosaic` | ancestry | nilHMM nnil |
 | `binhmm_mosaic` | ancestry | bin-HMM (1 Mb) |
 | `lbimpute_mosaic` | ancestry | LB-Impute |
 | `hwe_post_gt` | **genotype** | `bcftools mpileup \| call -mv` (HWE-prior MAP) — real cohort calls, panel-subset |
 
-The legacy **200K** RTIGER introgression set (inv4m paper; a separate GATK → Beagle-imputed
+The legacy **200K** rtiger introgression set (inv4m paper; a separate GATK → Beagle-imputed
 lineage, not from this pipeline) is intentionally **not** in this release — regenerate with
-recalibrated RTIGER if it is ever needed.
+recalibrated rtiger if it is ever needed.
 
 ## Encoding
 

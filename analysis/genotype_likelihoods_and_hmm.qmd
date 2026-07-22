@@ -377,7 +377,7 @@ P(S \mid \text{reads}_{1:n}) \;\propto\; \pi(S)\prod_{j=1}^{n}
 \underbrace{\Big[\textstyle\sum_{G} P(\text{reads}_j\mid G)\,P(G\mid S)\Big]}_{\text{emission}_j \;=\; \sum (\text{GL}) \times (\text{state-conditional genotype dist})}.
 $$
 
-This is exactly RTIGER / binhmm / PHG's `findPaths`. It works **without a panel**
+This is exactly rtiger / binhmm / PHG's `findPaths`. It works **without a panel**
 because the linkage is physical contiguity plus the breeding design (few
 recombinations) — not population LD.
 
@@ -407,7 +407,7 @@ $(n_{\text{ref}}, n_{\text{alt}})$ and their qualities.
 GATK's HaplotypeCaller *does* use an HMM, but it is orthogonal to the one Ruben
 wants:
 
-| | GATK **PairHMM** | **ancestry HMM** (RTIGER / nilHMM / PHG) |
+| | GATK **PairHMM** | **ancestry HMM** (rtiger / nilHMM / PHG) |
 |---|---|---|
 | hidden path over | **bases within one read** | **marker sites along the chromosome** |
 | emission | read base vs candidate haplotype (indels, base-Q) | reads at a site vs latent ancestry state |

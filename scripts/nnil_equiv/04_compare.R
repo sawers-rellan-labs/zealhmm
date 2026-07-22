@@ -29,7 +29,7 @@ concord <- function(a, b) {
 }
 per_line_min <- function(a, b) min(rowMeans(a == b))
 
-cat("\n================  nNIL caller equivalence  ================\n")
+cat("\n================  nnil caller equivalence  ================\n")
 e <- concord(nh, ho)
 log_info(
   "nilHMM vs Holland (File_S11): %d/%d states match (%.6f%%), %d mismatches",

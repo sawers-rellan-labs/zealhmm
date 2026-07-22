@@ -39,7 +39,7 @@ coverage-degradation notebook:
 - the [interpolated-grid step](teonam-qtl-recovery.html#step-interpolated-grid-artifact-only)
   collapses the GWAS significance *dispersion* onto an almost-single profile — an
   artifact of neighbour interpolation rather than a biological signal; and
-- the [RTIGER coverage-degradation sweep](teonam-qtl-recovery.html#rtiger-ancestry-vs-sequencing-coverage-degradation-sweep)
+- the [rtiger coverage-degradation sweep](teonam-qtl-recovery.html#rtiger-ancestry-vs-sequencing-coverage-degradation-sweep)
   shows that introducing uncertainty through a subpar ancestry method (neighbour
   interpolation) inflates the het fraction and the significance-profile noise.
 
@@ -426,7 +426,7 @@ notebooks the caller-noisiness table reports both the band-limited FFT power
 (`fft_band`) and the lag-one spatial autocorrelation (`acf_lag1`) of each caller's
 $-\log_{10}P$ track; they rank the callers in exactly the reverse order of one
 another (e.g. for STAM, `binhmm`/`rtiger` acf $\approx 0.999$ and least noisy,
-`control`/`nNIL` acf $\approx 0.96$ and noisiest), precisely as Wiener–Khinchin
+`control`/`nnil` acf $\approx 0.96$ and noisiest), precisely as Wiener–Khinchin
 predicts. See the [STAM MLM noisiness table](teonam-qtl-recovery-mlm-118k.html#caller-noisiness-band-limited-spectral-power).
 
 ---
@@ -487,9 +487,9 @@ cutoff should match.
 Different ancestry callers impose different levels of smoothing through their segmentation parameters. Each parameter acts as a **low-pass filter** with a tunable cutoff:
 
 - **binhmm** bins the signal into a fixed ~1 Mb window (an ad-hoc pre-smoothing), then runs a 3-state Gaussian HMM on the binned track — *two* stacked smoothing scales.
-- **nNIL** sets a per-marker recombination rate `rrate` (the HMM self-transition), so its smoothing is the transition prior, not a fixed window.
-- **RTIGER** enforces a minimum segment length of `rigidity` markers.
-- **LB-Impute** sets a linkage-decay distance `recombdist` (cM).
+- **nnil** sets a per-marker recombination rate `rrate` (the HMM self-transition), so its smoothing is the transition prior, not a fixed window.
+- **rtiger** enforces a minimum segment length of `rigidity` markers.
+- **lbimpute** sets a linkage-decay distance `recombdist` (cM).
 
 Increasing these parameters can *artificially* increase autocorrelation and lower band-limited noise, whether or not the reconstruction is more faithful. Therefore smoothness cannot be maximized directly. The correct objective is
 

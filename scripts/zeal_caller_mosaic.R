@@ -34,7 +34,7 @@ log_info("caller=%s | panel %d lines x %d markers", CALLER, length(panel), nrow(
 # per-caller call_states args
 args_for <- function(sub) {
   base <- list(caller = CALLER, design = DESIGN, err = ERR, min_reads = 1L, threads = 1L)
-  if (CALLER == "nnil") base$rrate <- 3.3e-5 # settled nNIL rate (memory nnil-rrate-flat-plateau)
+  if (CALLER == "nnil") base$rrate <- 3.3e-5 # settled nnil rate (memory nnil-rrate-flat-plateau)
   if (CALLER == "binhmm") {
     base$bin_size <- 1e6
     base$cluster_method <- "gauss"

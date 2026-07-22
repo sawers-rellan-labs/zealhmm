@@ -28,11 +28,11 @@ the control stays REF. Memory: `wideseq-chrpainting-code`,
 **data source** and a **nilHMM caller method** (naming convention
 `<DataSource>-<Caller>`, source first — memory `method-naming-source-caller`).
 There are only **two data sources** and **four distinct callers**; Skim and BRB
-each run three tracks and *share* the nNIL and RTIGER callers:
+each run three tracks and *share* the nnil and rtiger callers:
 
 - **Data sources (2):** `Skim` = low-coverage WGS; `BrB` = 3′ RNA-seq (BRB-seq).
-- **Callers (4 distinct):** `binhmm` (Gaussian on per-bin `ALT_FREQ`), `nNIL`
-  (count / BetaBinomial HMM), `RTIGER` (Julia-free port), `ATLAS`
+- **Callers (4 distinct):** `binhmm` (Gaussian on per-bin `ALT_FREQ`), `nnil`
+  (count / BetaBinomial HMM), `rtiger` (Julia-free port), `atlas`
   (GOOGA-shadow gene-level GT).
 
 The tracks are ordered **first by data source, then by caller** (all three Skim
@@ -41,14 +41,14 @@ tracks, then all three BRB tracks):
 | # | Track | Data source | nilHMM caller | Input marker set |
 |---|---|---|---|---|
 | 1 | **Skim-binhmm** | Skim (low-cov WGS) | `binhmm` — 3-state Gaussian on per-bin `ALT_FREQ`, REF anchored at the floor | **dense ~27.6 M-SNP set** — per-1 Mb `ALT_FREQ` `bin_genotypes` from GATK `CollectAllelicCounts` at the full teosinte-informative wideseq positions (mount, `bzeaseq/ancestry`) |
-| 2 | **Skim-nNIL** | Skim (low-cov WGS) | `nNIL` — count / BetaBinomial HMM (`rrate=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) |
-| 3 | **Skim-rtiger** | Skim (low-cov WGS) | `RTIGER` port (`rigidity=5`) | **50K panel** counts (thinned SNP50K) |
-| 4 | **BrB-nNIL** | BrB (3′ RNA-seq) | `nNIL` — count HMM, `fit_means` (`rrate=1e-8`) | **wideseq-thinned** BRB counts |
-| 5 | **BrB-rtiger** | BrB (3′ RNA-seq) | `RTIGER` port (`rigidity=7`) | **wideseq-thinned** BRB counts |
-| 6 | **BrB-atlas** | BrB (3′ RNA-seq) | `ATLAS` — GOOGA-shadow gene-level GT (`≥.95`/`≥.25`, min 5 reads) → geometric-duration HMM | cassini **pangene** counts, per donor species |
+| 2 | **Skim-nNIL** | Skim (low-cov WGS) | `nnil` — count / BetaBinomial HMM (`rrate=1e-4`, `err=0.01`) | **50K panel** counts (thinned SNP50K) |
+| 3 | **Skim-rtiger** | Skim (low-cov WGS) | `rtiger` port (`rigidity=5`) | **50K panel** counts (thinned SNP50K) |
+| 4 | **BrB-nNIL** | BrB (3′ RNA-seq) | `nnil` — count HMM, `fit_means` (`rrate=1e-8`) | **wideseq-thinned** BRB counts |
+| 5 | **BrB-rtiger** | BrB (3′ RNA-seq) | `rtiger` port (`rigidity=7`) | **wideseq-thinned** BRB counts |
+| 6 | **BrB-atlas** | BrB (3′ RNA-seq) | `atlas` — GOOGA-shadow gene-level GT (`≥.95`/`≥.25`, min 5 reads) → geometric-duration HMM | cassini **pangene** counts, per donor species |
 
 So the grid is 2 sources × 3 caller-slots = 6 tracks, drawing on 4 unique
-callers (`binhmm` is Skim-only, `ATLAS` is BRB-only, `nNIL`/`RTIGER` run on both).
+callers (`binhmm` is Skim-only, `atlas` is BRB-only, `nnil`/`rtiger` run on both).
 
 ::: {.callout-note title="Marker-set provenance — the tracks run at different SNP densities"}
 The three Skim tracks are **not** all on the same markers. **Skim-binhmm runs on
@@ -105,7 +105,7 @@ suppressMessages({
 SS <- here::here("data/skimsweep") # the vary-skim cohort
 SKIM <- file.path(SS, "skim") # skim counts (counts_50k/) + bins (bins/)
 BRB <- file.path(SS, "brb") # brb counts (counts_wideseq/) + pangene (pangene/)
-REF <- here::here("data/ref") # genome-level ATLAS gene maps
+REF <- here::here("data/ref") # genome-level atlas gene maps
 
 # samples: control + 10 vary-skim NILs (ordered by skim lambda)
 mem <- fread(file.path(SS, "coverage_sweep_members.csv"))[sweep == "vary_skim"][order(vary_cov)]
@@ -129,13 +129,13 @@ rows <- rbind(
 )
 ```
 
-# 2. ATLAS: competitive-mapping ancestry (GOOGA-shadow)
+# 2. atlas: competitive-mapping ancestry (GOOGA-shadow)
 
-**ATLAS** = **A**ncestry by **T**ranscript-**L**evel **A**lignment **S**cores.
+**atlas** = **A**ncestry by **T**ranscript-**L**evel **A**lignment **S**cores.
 
 **The basic principle is competitive mapping: count the reads that match each
 founder genome.** Where the SNP-panel callers read an *allele fraction* at
-predefined variant sites, ATLAS instead aligns each transcript read against
+predefined variant sites, atlas instead aligns each transcript read against
 **both founder references at once** — B73 (the recurrent parent) and the
 teosinte **donor** transcriptome — and lets the **alignment scores** decide
 which parent that read came from. Per read, the best alignment score (with a
@@ -162,7 +162,7 @@ mis-scored, so `n_donor` is only as good as the stand-in's match to the real don
 **GOOGA is the template.** GOOGA (Fishman lab, *PLoS Genet* 2024,
 [pgen.1011072](https://doi.org/10.1371/journal.pgen.1011072)) is a *Mimulus* F2
 genetic-map-building pipeline whose ancestry step is **threshold-then-HMM**.
-ATLAS is a "GOOGA-shadow": it ports that step onto the shared nilHMM engine —
+atlas is a "GOOGA-shadow": it ports that step onto the shared nilHMM engine —
 
 1. **Per-gene hard call from the count fractions** (GOOGA `s2.py`, verbatim):
    `n_recur + n_donor < 5` → missing; recurrent fraction `≥ 0.95` → **REF** (AA);
@@ -195,7 +195,7 @@ gmap <- merge(g2p, co, by = "gene")
 gmap[, chr := as.integer(sub("chr", "", chr))]
 gmap <- unique(gmap[!is.na(chr)], by = "pan_gene")[, .(pan_gene, chr, pos = end)]
 # The GOOGA hard-call (`≥.95`/`≥.25`, min 5 reads) + gt/geometric-duration HMM
-# are the packaged ATLAS caller (`call_ancestry(caller = "atlas")`). Here we do
+# are the packaged atlas caller (`call_ancestry(caller = "atlas")`). Here we do
 # only the consumer-side staging — read pangene counts, map to B73 gene
 # coordinates — and hand the engine `(name, chr, pos, n_ref = recurrent,
 # n_alt = donor)`. `rrate = 1e-3` matches the geometric duration used originally.
@@ -243,13 +243,13 @@ binhmm_gauss <- function(skim, design = "BC2S2") {
 }
 ```
 
-# 4. Count / RTIGER via the engine
+# 4. Count / rtiger via the engine
 
-**nNIL and RTIGER are the same engine, different duration.** Both are
+**nnil and rtiger are the same engine, different duration.** Both are
 count-emission callers: they read per-SNP allele counts and score each marker
 with the count / BetaBinomial emission through the *one* `nilHMM` engine. The
-only thing that separates them is the duration layer — **nNIL** uses a
-**geometric** duration (a free per-marker switch probability), **RTIGER** a
+only thing that separates them is the duration layer — **nnil** uses a
+**geometric** duration (a free per-marker switch probability), **rtiger** a
 **rigidity** layer (an integer minimum run length). So both are just
 `call_ancestry(read_counts(path), caller = …)` with different arguments; there is
 no separate RTIGER program and no Julia.
@@ -260,8 +260,8 @@ of the geometric duration (Holland's nNIL calibrates it as
 `2·total_cM / (100·n_markers)` ≈ `30/n_markers` for a 1500 cM maize map, and it is
 tunable from data by KS-vs-sim); `caller = "rtiger"` takes **`rigidity`**, the
 integer minimum run length (e.g. `5`). (`nilHMM`'s rigidity *duration* also has an
-exit rate `xrate`, but the faithful RTIGER port doesn't use it.) The four count
-tracks below (Skim-nNIL, Skim-RTIGER, BrB-nNIL, BrB-RTIGER) differ only in caller,
+exit rate `xrate`, but the faithful rtiger port doesn't use it.) The four count
+tracks below (Skim-nNIL, Skim-rtiger, BrB-nNIL, BrB-rtiger) differ only in caller,
 design prior, and these knobs — assembled in §5.
 
 `eng()` is the thin adapter that wires a count file into the engine: locate and
@@ -286,8 +286,8 @@ eng <- function(path, ...) {
   seg <- as.data.table(call_ancestry(read_counts(path), ...))
   seg[, .(chr, start_bp, end_bp, state)]
 }
-SK50 <- file.path(SKIM, "counts_50k") # skim 50K-panel counts   (Skim-nNIL, Skim-RTIGER)
-BRBW <- file.path(BRB, "counts_wideseq") # BRB wideseq-thinned counts (BrB-nNIL, BrB-RTIGER)
+SK50 <- file.path(SKIM, "counts_50k") # skim 50K-panel counts   (Skim-nNIL, Skim-rtiger)
+BRBW <- file.path(BRB, "counts_wideseq") # BRB wideseq-thinned counts (BrB-nNIL, BrB-rtiger)
 ```
 
 # 5. Assemble all tracks
@@ -361,7 +361,7 @@ p <- ggplot(df, aes(xmin = start_bp / 1e6, xmax = end_bp / 1e6, ymin = ylo, ymax
   ) +
   labs(
     title = "nilHMM sanity check paint — vary-skim sweep (B73 control + 10 NILs)",
-    subtitle = "6 tracks = data source × nilHMM caller (2 sources: Skim, BrB | 4 callers: binhmm, nNIL, RTIGER, ATLAS) | ordered by source then caller | all nilHMM, no Julia",
+    subtitle = "6 tracks = data source × nilHMM caller (2 sources: Skim, BrB | 4 callers: binhmm, nnil, rtiger, atlas) | ordered by source then caller | all nilHMM, no Julia",
     x = "Position (Mb)", fill = "Genotype"
   ) +
   ggpubr::theme_classic2(base_size = 8) +

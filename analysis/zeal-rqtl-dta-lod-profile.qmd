@@ -1,6 +1,6 @@
 ---
 title: "ZEAL DTA — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
-subtitle: "Classic R/qtl interval mapping (Haley–Knott) on the BC2S3 RTIGER ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold. Models: no covariate vs + taxon (5-family), and per-family scans with a per-family MAF filter."
+subtitle: "Classic R/qtl interval mapping (Haley–Knott) on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold. Models: no covariate vs + taxon (5-family), and per-family scans with a per-family MAF filter."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -26,7 +26,7 @@ produced by `scripts/zeal_rqtl_scan.R` (TRAIT=DTA).
   not native to ZEAL.
 - **Marker set + map = the TeoNAM JLM set** (9,063 markers, 0.1 cM, TeoNAM cM), the *same* grid the
   TeoNAM JLM reproduction uses — so the two analyses are directly comparable.
-- ZEAL SNP50K and TeoNAM markers are **disjoint platforms**, so the ZEAL RTIGER-mosaic ancestry is
+- ZEAL SNP50K and TeoNAM markers are **disjoint platforms**, so the ZEAL rtiger-mosaic ancestry is
   **projected** onto the JLM positions (each site takes the nearest ZEAL marker's block state).
 - Genotype = ancestry mosaic recoded `0/1/2` → `A/H/B`. This scan has no kinship term; the
   permutation calibrates the threshold to the (structured) null.
@@ -192,7 +192,7 @@ sub-peak's **1.5-LOD-drop interval**, and resolves overlapping sub-peaks into a 
 **non-overlapping** QTL via an interval graph (igraph independent vertex sets). Positions and the
 1.5-LOD-drop confidence intervals are shown in **v5 Mb** (markers are v5-named, so `pos (Mb)` reads
 off the name), with the **candidate-in-CI** flag. Peak splitting from genotyping noise is handled
-**before** the scan, not here: the hard RTIGER/projected calls carry het/hom-teosinte miscalls that
+**before** the scan, not here: the hard rtiger/projected calls carry het/hom-teosinte miscalls that
 punch artificial LOD dives (which would split a QTL and clip its CI). `calc.genoprob` runs the R/qtl
 HMM with a realistic `error.prob` so those calls are down-weighted, and the scans use the resulting
 genotype **probabilities** (Haley–Knott) / **expected dosage** (per-taxon) rather than raw calls —

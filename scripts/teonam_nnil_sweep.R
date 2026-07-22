@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# STAM GWAS degradation sweep: nNIL ancestry vs sequencing coverage (TeoNAM)
+# STAM GWAS degradation sweep: nnil ancestry vs sequencing coverage (TeoNAM)
 # Plan: agent/teonam-control-sweep-plan.md (Part 3) -- the middle panel of the
-#       control / nNIL / RTIGER composite. A trivial variant of the RTIGER sweep
+#       control / nnil / rtiger composite. A trivial variant of the rtiger sweep
 #       (scripts/teonam_rtiger_sweep.R): swap caller = "rtiger" for caller = "nnil".
 # -----------------------------------------------------------------------------
 # For each TeoNAM family x coverage lambda:
 #   1. simulate low-coverage reads from the real (truth) 0/1/2 genotypes
 #      [R/simulate.R::.draw_counts(pi_floor=0, k_decay=1, error=0.01)]
-#   2. nNIL-call ancestry [call_ancestry(caller="nnil", rrate=rrate_star, err=0.01)]
+#   2. nnil-call ancestry [call_ancestry(caller="nnil", rrate=rrate_star, err=0.01)]
 #      -- count emission + geometric duration (Holland's nNIL).
 #   3. step-interpolate the recovered per-family block onto the union cM grid
 #      [nilHMM::interpolate_genotype(mode="step")]
@@ -22,17 +22,17 @@
 # KEY DECISIONS:
 #  - Coverage grid: {0.1, 0.2, 0.5, 1, 5, 10, 20} (+ lambda=Inf baseline = panel C).
 #  - rrate = rrate_star, READ from results/sim/calib_params.csv (do not invent).
-#  - Design priors: nNIL (geometric duration) CONSUMES f_1/f_2 (unlike RTIGER,
+#  - Design priors: nnil (geometric duration) CONSUMES f_1/f_2 (unlike rtiger,
 #    which fits its own start freqs). We use the Chen 2019 OBSERVED frequencies,
 #    not the Mendelian breeding_prior("BC1S4") expectation: real TeoNAM shows het
 #    excess / teosinte-hom deficit (~8% het / ~15% teosinte-hom), so f_1 = 0.08,
 #    f_2 = 0.15.
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (identical scheme to the
-#    RTIGER + control sweeps, so all three degrade the same truth mosaics).
+#    rtiger + control sweeps, so all three degrade the same truth mosaics).
 #  - min_reads = 0L: decode EVERY family marker -> a COMPLETE rectangular per-family
 #    block for step-interpolation (uncovered markers carry a flat count emission and
-#    are filled by the geometric HMM from neighbours), matching the RTIGER sweep.
+#    are filled by the geometric HMM from neighbours), matching the rtiger sweep.
 #
 # Run:  Rscript scripts/teonam_nnil_sweep.R --generate
 # =============================================================================
@@ -58,13 +58,13 @@ if (!("--generate" %in% commandArgs(TRUE))) {
 
 LAMBDAS <- c(0.1, 0.2, 0.5, 1, 5, 10, 20)
 cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
-RRATE <- as.numeric(cp$value[cp$key == "rrate_star"]) # calibrated nNIL rrate
+RRATE <- as.numeric(cp$value[cp$key == "rrate_star"]) # calibrated nnil rrate
 if (!is.finite(RRATE)) stop("rrate_star not found in results/sim/calib_params.csv")
 F1 <- 0.08
 F2 <- 0.15 # TeoNAM BC1S4 (Chen 2019 obs freqs)
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
-message(sprintf("nNIL: rrate_star = %.5g (calib_params.csv), f_1 = %.2f, f_2 = %.2f", RRATE, F1, F2))
+message(sprintf("nnil: rrate_star = %.5g (calib_params.csv), f_1 = %.2f, f_2 = %.2f", RRATE, F1, F2))
 
 # --- marker map + union target grid (identical to the other sweeps) ----------
 # GWAS grid = the FULL genotype set (51,004 markers): every genotyped marker with
@@ -138,7 +138,7 @@ for (f in names(fams)) {
   ))
 }
 
-# --- one (family,lambda) cell: simulate -> nNIL -> interpolate to union -------
+# --- one (family,lambda) cell: simulate -> nnil -> interpolate to union -------
 recover_block <- function(fam, li) {
   lambda <- LAMBDAS[li]
   fi <- match(fam, names(fams))
@@ -149,7 +149,7 @@ recover_block <- function(fam, li) {
   M <- nrow(mt)
   N <- length(keys)
 
-  set.seed(1000L + 100L * fi + li) # per-cell seed (as RTIGER sweep)
+  set.seed(1000L + 100L * fi + li) # per-cell seed (as rtiger sweep)
   ac <- .draw_counts(as.vector(D),
     lambda = lambda,
     pi_floor = READ_PARS$pi_floor, k_decay = READ_PARS$k_decay,
@@ -190,7 +190,7 @@ grid <- expand.grid(
   stringsAsFactors = FALSE
 )
 message(sprintf(
-  "nNIL sweep: %d (family,lambda) batch calls, %d threads ...",
+  "nnil sweep: %d (family,lambda) batch calls, %d threads ...",
   nrow(grid), THREADS
 ))
 t0 <- Sys.time()
@@ -200,12 +200,12 @@ cells <- mclapply(seq_len(nrow(grid)), function(i) {
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) {
   stop(
-    "nNIL failed for cell(s): ",
+    "nnil failed for cell(s): ",
     paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]]
   )
 }
 message(sprintf(
-  "  nNIL sweep done in %.1f min",
+  "  nnil sweep done in %.1f min",
   as.numeric(Sys.time() - t0, units = "mins")
 ))
 

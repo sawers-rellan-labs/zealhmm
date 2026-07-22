@@ -14,7 +14,7 @@ execute:
   echo: true
 ---
 
-**Context.** A unified ancestry-caller engine (RTIGER / nilHMM / Skim-BIN as one
+**Context.** A unified ancestry-caller engine (rtiger / nilHMM / Skim-BIN as one
 duration-aware HMM, see `generative_vs_discriminative_callers`) keeps **3 hidden genotype
 states** (REF / HET / ALT) and a shared **duration/rigidity** layer, and treats the
 **emission as a swappable module**. This note pins down *which* emission to use *when*: the
@@ -53,7 +53,7 @@ part.
 ## 2.1 Upper boundary — why ≥20× saturates to a hard call
 
 The BetaBinomial emission cost scales with the **number of distinct $(n, k)$ count pairs,
-which scales with coverage** — so RTIGER and the optimized nilHMM **cap depth at ~20–30×**
+which scales with coverage** — so rtiger and the optimized nilHMM **cap depth at ~20–30×**
 (`rtiger-betabinomial-cost`). That cap is statistically free for exactly the reason it makes
 hard GT viable: **at $\geq 20\times$ the emission is so peaked that the genotype is already
 certain.** The likelihood over $\{\text{ref},\text{het},\text{alt}\}$ becomes a delta on one

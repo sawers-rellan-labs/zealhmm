@@ -1,6 +1,6 @@
 ---
 title: "nNIL reproduction benchmark: faithful port + calibration foil on Tao Zhong's population"
-subtitle: "Supplement (optimization): nilHMM nNIL reproduces Holland's caller; chip-calibration vs simulation-calibration land in the same place"
+subtitle: "Supplement (optimization): nilHMM `nnil` reproduces Holland's caller; chip-calibration vs simulation-calibration land in the same place"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -28,7 +28,7 @@ avoid, do not approximate with a lookalike panel.
 
 **Thesis (two parts).**
 
-1. **Faithful port.** nilHMM's `nNIL` caller (categorical genotype-confusion
+1. **Faithful port.** nilHMM's `nnil` caller (categorical genotype-confusion
    emission + geometric duration; the `rrate` axis of the engine) is a
    reimplementation of Holland's original nested-NIL HMM \[Zhong 2025\]. Run on the
    same nNIL genotypes it should reproduce Holland's introgression calls.
@@ -41,7 +41,7 @@ avoid, do not approximate with a lookalike panel.
 
 ::: {.callout-note title="Compute is separated from this note"}
 Run by `scripts/bench_nnil_reproduction.R` (to be written): loads the nNIL panel,
-runs nilHMM `nNIL`, compares against (a) the published Holland calls and (b) the
+runs nilHMM `nnil`, compares against (a) the published Holland calls and (b) the
 chip truth on the 24-line subset, then overlays the simulation-calibrated `rrate`
 operating point. Writes CSVs to `results/bench/` (gitignored). This note loads and
 plots them. Regenerate: `Rscript scripts/bench_nnil_reproduction.R --generate`.
@@ -62,15 +62,15 @@ have_repro <- file.exists(f("nnil_reproduction.csv"))
 have_calib <- file.exists(f("nnil_chip_vs_sim_calibration.csv"))
 ```
 
-## 1. Faithful reproduction of Holland's nNIL calls
+## 1. Faithful reproduction of Holland's `nnil` calls
 
-Concordance of nilHMM `nNIL` against the published Zhong et al. introgression
+Concordance of nilHMM `nnil` against the published Zhong et al. introgression
 calls on the 888-line panel: marker-level agreement and donor-segment overlap.
 
 ```{r repro-table}
 if (have_repro) {
   rp <- fread(f("nnil_reproduction.csv"))
-  knitr::kable(rp, caption = "nilHMM nNIL vs published Holland calls, marker concordance and donor-segment Jaccard.")
+  knitr::kable(rp, caption = "nilHMM `nnil` vs published Holland calls, marker concordance and donor-segment Jaccard.")
 } else {
   cat(
     "[TO MEASURE] Reproduction concordance. Target: high marker concordance and",
@@ -89,7 +89,7 @@ segmentations coincide.
 ```{r calib-plot}
 if (have_calib) {
   cc <- fread(f("nnil_chip_vs_sim_calibration.csv"))
-  knitr::kable(cc, caption = "Chip-calibrated vs simulation-calibrated nNIL operating point and resulting segmentation agreement.")
+  knitr::kable(cc, caption = "Chip-calibrated vs simulation-calibrated `nnil` operating point and resulting segmentation agreement.")
 } else {
   cat(
     "[TO MEASURE] Chip-calibrated rrate vs simulation-calibrated rrate, and the",
@@ -101,12 +101,12 @@ if (have_calib) {
 
 ## 3. Throughput at population scale
 
-nNIL is the geometric-duration categorical caller; the C++/Rcpp core lets it run
+`nnil` is the geometric-duration categorical caller; the C++/Rcpp core lets it run
 across the full 888-line panel cheaply (cf. `rtiger-optimization-benchmark.qmd`).
 
 ```{r scale-note}
 cat(
-  "[TO MEASURE] Wall time / memory for the full 888-line nNIL fit through the",
+  "[TO MEASURE] Wall time / memory for the full 888-line `nnil` fit through the",
   "nilHMM C++ core."
 )
 ```

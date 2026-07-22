@@ -7,7 +7,7 @@
 #   * GRID  = the full 118,514-marker v5 set on native cM; LB-Impute runs on EVERY
 #     marker per chromosome (NO 0.1 cM thinning, NO back-projection).
 #   * LB-Impute has NO EM (coverage-aware emission + distance-dependent transition,
-#     full-chr Viterbi), so -- unlike RTIGER -- there is NO fit-once step: decode
+#     full-chr Viterbi), so -- unlike rtiger -- there is NO fit-once step: decode
 #     each (family, chromosome) directly. It is the MAP-AWARE caller (unit="cm"):
 #     it KEEPS zero-read markers (flat emission) so the cM-distance transition sees
 #     true marker spacing, i.e. min_reads is a NO-OP -- it decodes the full grid
@@ -102,7 +102,7 @@ DECODE_CORES <- max(1L, min(detectCores() - 1L, 8L)) # per-chromosome workers (e
 
 # ALL-marker reads for one family at coverage li (LB-Impute keeps zero-read markers),
 # carrying the native cM per marker for the map-aware transition. Same read model +
-# seeds as the RTIGER/nNIL sweeps.
+# seeds as the rtiger/nnil sweeps.
 build_reads <- function(fam, li) {
   lambda <- LAMBDAS[li]
   fi <- match(fam, FAMS)

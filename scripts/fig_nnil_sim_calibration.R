@@ -8,7 +8,7 @@
 #   B  Simulated GBS: sim-calibrated nnil calls vs simulated ancestry (ECDF).
 #   C  Real GBS (24 both-platform NILs): chip- and sim-calibrated nnil vs chip calls.
 #   D  QQ of introgression size, chip- vs sim-calibrated nnil, on the real 24 NILs.
-# RTIGER (count caller) has no real-data leg (no counts), so it is excluded here.
+# rtiger (count caller) has no real-data leg (no counts), so it is excluded here.
 #
 # Font: ONE base size (BASE) drives all panels; no per-element size overrides.
 # Speed: the ~25-decode compute is CACHED to fig_nnil_sim_calibration_cache.rds. Re-renders reuse it;
