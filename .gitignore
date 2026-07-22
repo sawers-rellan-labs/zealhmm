@@ -33,6 +33,7 @@
 *_files/
 # copied image resources under the rendered site (inlined via embed-resources)
 docs/**/figures/
+docs/results/
 
 # stray R plot device output
 Rplots.pdf
