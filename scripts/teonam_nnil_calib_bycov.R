@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# Per-coverage nNIL rrate calibration on SIMULATED ground truth (118K grid).
+# Per-coverage nnil rrate calibration on SIMULATED ground truth (118K grid).
 #
-# The nNIL analog of scripts/teonam_rtiger_calib_bycov.R. The tuned knob is `rrate`
+# The nnil analog of scripts/teonam_rtiger_calib_bycov.R. The tuned knob is `rrate`
 # (per-marker recombination/transition rate of the geometric-duration HMM): low rrate
-# -> long segments, high rrate -> fragmented. Unlike RTIGER's integer rigidity, rrate
-# is CONTINUOUS and nNIL has no EM (emission fixed from `err` + the BC1S4 priors
+# -> long segments, high rrate -> fragmented. Unlike rtiger's integer rigidity, rrate
+# is CONTINUOUS and nnil has no EM (emission fixed from `err` + the BC1S4 priors
 # f_1/f_2), so we keep the golden-ratio refine (cheap here -- each probe is a decode,
 # not a refit) and center the coarse grid on the density default
 # rrate0 = 2*total_cM/(100*n_markers).
@@ -37,10 +37,10 @@ READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 LAMBDAS <- if (SMOKE) c(1) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf)
 # caller_sweep now segments in-worker (nilhmm), so the master no longer rbinds the
 # full marker matrix -- decode workers hold one sample transiently and the master
-# aggregates only compact segments. Safe to use the RTIGER thread convention.
+# aggregates only compact segments. Safe to use the rtiger thread convention.
 THREADS <- as.integer(Sys.getenv("NNIL_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
 
-# nNIL start priors for BC1S4 from breeding_prior() -- same as 02_calibrate.R
+# nnil start priors for BC1S4 from breeding_prior() -- same as 02_calibrate.R
 EXP <- breeding_prior("BC1S4") # (n_bc = 1, n_self = 4)
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
@@ -71,7 +71,7 @@ log_info(
   total_cM, nrow(mc), rrate0, paste(sprintf("%.2e", RRATE_VALUES), collapse = " ")
 )
 log_info(
-  "=== nNIL per-coverage rrate calibration: %d coverages x %d rrates + golden refine, %d threads ===",
+  "=== nnil per-coverage rrate calibration: %d coverages x %d rrates + golden refine, %d threads ===",
   length(LAMBDAS), length(RRATE_VALUES), THREADS
 )
 

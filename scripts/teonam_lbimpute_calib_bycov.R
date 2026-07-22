@@ -6,7 +6,7 @@
 # is `recombdist` (cM): the linkage-decay DISTANCE over which the distance-dependent
 # transition relaxes toward the stationary switch probability. Small recombdist ->
 # the transition relaxes quickly -> shorter/more segments; large recombdist ->
-# stiffer -> longer segments. Unlike RTIGER's index-based rigidity and nNIL's
+# stiffer -> longer segments. Unlike rtiger's index-based rigidity and nnil's
 # coordinate-free rrate, LB-Impute is the MAP-AWARE caller (unit = "cm" consumes the
 # genetic map's cM gaps), so its parameter lives on the cM scale and its grid is
 # centred on the ~50 cM default. recombdist is CONTINUOUS and touches only the
@@ -43,13 +43,13 @@ LAMBDAS <- if (SMOKE) c(1) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf)
 GENOTYPEERR <- 0.05 # emission floor/ceiling (errg)
 DRP <- TRUE # double-recombination penalty
 # caller_sweep segments the lbimpute states per-column (n_markers x V matrix), so the
-# master holds ~24M rows, not the n_values-stacked matrix that OOMed nNIL pre-fix.
-# Same RTIGER thread convention; env-overridable if memory needs capping.
+# master holds ~24M rows, not the n_values-stacked matrix that OOMed nnil pre-fix.
+# Same rtiger thread convention; env-overridable if memory needs capping.
 THREADS <- as.integer(Sys.getenv("LBIMPUTE_THREADS", as.character(max(1L, parallel::detectCores() - 2L))))
 
 # LB-Impute start-distribution seed for BC1S4 (the Mendelian breeding_prior).
 # For lbimpute f_1/f_2 only SEED the start dist (no state-frequency prior in the
-# transition) -- same source as the nNIL/rtiger calibrations.
+# transition) -- same source as the nnil/rtiger calibrations.
 EXP <- breeding_prior("BC1S4") # (n_bc = 1, n_self = 4)
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])

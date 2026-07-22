@@ -17,7 +17,7 @@ execute:
 **What this is.** The stem-pubescence (StPu) sibling of
 [`zeal-qtl-recovery-stpi-mlm-snp50k`](zeal-qtl-recovery-stpi-mlm-snp50k.html), built from the
 same real ZEAL pipeline: field StPu → **per-genotype empirical logit** → SNP50K teosinte-ancestry
-dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
+dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPu is a **binary 0/1** macrohair-presence call
 per plot (pubescent stem / not); the per-genotype phenotype is the **proportion of pubescent plots**,
 `k/n`, and only **72 of 1,423 genotypes (~5%)** are ever pubescent. Like StPi (and unlike the
@@ -48,7 +48,7 @@ pubescent genotypes but cannot add power the sparse phenotype lacks. Built by `z
 SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
 unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
 **counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is λ_GC-deflated (sparse mean-imputation);
-the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed genotype (teosinte presence
+the **rtiger ancestry mosaic (Panel C)** is the usable, block-smoothed genotype (teosinte presence
 0.111, matching the established BzeaSeq ~0.101). Only the phenotype changes vs the DTA notebook.
 :::
 
@@ -142,7 +142,7 @@ For each StPu trichome/macrohair candidate (B73 v5) — the uncloned macrohair Q
 `OCL4`; the WOX3 homeobox genes `wox3a` (ZmWOX3A) / `wox3b`; the SIAMESE-related CDK inhibitor
 `smr4` (ZmSMR4); and the SBP-box/SPL family (`tga1`, `tsh4`, `ub2`, `ub3`, and the peak-proximal
 `sbp11`/`sbp22`) — the closest marker to the gene body vs the highest
-−log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Family+K)** scan (Panel C). `pathway`
+−log₁₀P marker within ±500 kb in the rtiger-mosaic **MLM (Family+K)** scan (Panel C). `pathway`
 records the locus role.
 
 ```{r candidate-markers}
@@ -172,7 +172,7 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = sprintf("StPu candidate (B73 v5): closest vs window-max (±500 kb) marker across the mhl1/inv9f interval, RTIGER-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+  caption = sprintf("StPu candidate (B73 v5): closest vs window-max (±500 kb) marker across the mhl1/inv9f interval, rtiger-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
@@ -180,12 +180,12 @@ knitr::kable(ctab,
 
 Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level structure correction) that the MLM and per-marker OLS scans were actually computed with — a stronger correction than the 5 donor **taxa** the JLM nests on. It likely over-corrects population structure and costs some power; a taxon-level (5) MLM/OLS rerun is a pending comparison (see `TERMINOLOGY.md`).
 
-The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the RTIGER mosaic, same
+The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the rtiger mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL StPu — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL StPu — OLS (Family + marker, no K), rtiger mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/stpu_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -199,7 +199,7 @@ lam_tab <- data.table(
   `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the rtiger mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -223,7 +223,7 @@ knitr::kable(cmp, caption = "Local peak -log10P (±500 kb) at the candidate: OLS
 Published macrohair-density QTL (Perez-Limón *et al.* 2022, *G3* 12(3):jkab447; a B73×Palomero
 Toluqueño highland-maize mapping population) — peak, Bayes support interval, additive
 variance explained, and the analyses detecting each — lifted from B73 v4 to v5 and overlaid as red
-bands on the JLM and RTIGER-mosaic Manhattans below. None of the StPu permutation-FWER peaks fall inside a qMH
+bands on the JLM and rtiger-mosaic Manhattans below. None of the StPu permutation-FWER peaks fall inside a qMH
 interval; the one biologically coherent overlap is **qMH9 ⊃ `mhl1`/`inv9f`** (its Bayes interval
 spans most of 9L), and the chr8 StPu peak lies ~2.4 Mb proximal to the tight, high-variance **qMH8**.
 
@@ -243,7 +243,7 @@ tabq <- qmh[, .(
   `max StPu −log10P in CI` = mapply(best_in, chr, ci_lo_bp, ci_hi_bp),
   `contains mhl1/inv9f` = ifelse(chr == 9 & ci_hi_bp >= mhl_iv[1] & ci_lo_bp <= mhl_iv[2], "yes", "no")
 )]
-knitr::kable(tabq, caption = "Prior macrohair-density QTL from Perez-Limón et al. 2022 (G3 12(3):jkab447), the B73×Palomero Toluqueño highland-maize mapping population (peak + Bayes support interval + additive variance % + detecting analyses; B73v4 lifted to v5). Red bands on the JLM/RTIGER Manhattans below mark these intervals; `max StPu −log10P in CI` is the best RTIGER-mosaic MLM signal inside each.")
+knitr::kable(tabq, caption = "Prior macrohair-density QTL from Perez-Limón et al. 2022 (G3 12(3):jkab447), the B73×Palomero Toluqueño highland-maize mapping population (peak + Bayes support interval + additive variance % + detecting analyses; B73v4 lifted to v5). Red bands on the JLM/rtiger Manhattans below mark these intervals; `max StPu −log10P in CI` is the best rtiger-mosaic MLM signal inside each.")
 ```
 
 ## JLM QTL genomic distribution (Panel A)
@@ -261,18 +261,18 @@ p_lolli <- add_qmh_bands(plot_lollipop(
 p_lolli
 ```
 
-## MLM (Family + K), RTIGER ancestry mosaic (Panel C)
+## MLM (Family + K), rtiger ancestry mosaic (Panel C)
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- add_qmh_bands(plot_manhattan(mlm,
-  sprintf("ZEAL StPu — MLM (Family + K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%; red bands = prior qMH)", lam(mlm$P)),
+  sprintf("ZEAL StPu — MLM (Family + K), rtiger mosaic (λ_GC = %.2f; dotted = perm FWER 5%%; red bands = prior qMH)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/stpu_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 ), mlm)
 p_mlm
 cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
 ```
 
-## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+## Composite (A: JLM · B: per-SNP MLM · C: rtiger-mosaic MLM)
 
 Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated but catches sharp SNP hits the mosaic
 block-terraces away. Panel C (the ancestry mosaic) is the usable, well-calibrated genotype.
@@ -283,7 +283,7 @@ p_B <- plot_manhattan(gt,
   overlap_csv = overlap, lod = thr_gt
 )
 p_C <- add_qmh_bands(plot_manhattan(mlm,
-  sprintf("StPu — MLM (Family+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  sprintf("StPu — MLM (Family+K), rtiger ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm
 ), mlm)
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
@@ -291,17 +291,17 @@ ggsave(here("results/sim/zeal/stpu_composite_snp50k.png"), composite, width = 9,
 composite
 ```
 
-## Multi-caller StPu scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+## Multi-caller StPu scan (control · nnil · rtiger · lbimpute · binhmm)
 
 The same StPu MLM (Family+K) scan on each ancestry caller's recovered genotypes, at the real
 ~0.4× depth. The robust, trait-independent finding is **teosinte-presence recovery**: the
-block/bin-aggregated callers (RTIGER 0.111; binhmm 0.101) recover the established BzeaSeq fraction
-(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nNIL, LB-Impute)
+block/bin-aggregated callers (rtiger 0.111; binhmm 0.101) recover the established BzeaSeq fraction
+(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nnil, lbimpute)
 **under-call**. Genomic inflation is phenotype-dependent (reported per caller below). Caller
 genotypes are population-level and trait-independent; only the phenotype (StPu) changes.
 
 ```{r caller-table}
-callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+callers <- c(control = "hwe_post_gt", nnil = "nnil_mosaic", rtiger = "rtiger_mosaic", lbimpute = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
 gg <- fread(here("data/teonam/stpu_candidate_genes.tsv"))[, chr := as.integer(chr)]
 max_cand_logp <- function(sc) {
   lp <- -log10(sc$P)

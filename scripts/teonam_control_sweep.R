@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # =============================================================================
 # STAM GWAS degradation sweep: GL+HWE interpolation CONTROL vs coverage (TeoNAM)
-# Plan: agent/teonam-control-sweep-plan.md  (sibling of the RTIGER sweep,
+# Plan: agent/teonam-control-sweep-plan.md  (sibling of the rtiger sweep,
 #       scripts/teonam_rtiger_sweep.R, which this mirrors)
 # -----------------------------------------------------------------------------
 # The no-HMM control for the coverage-degradation comparison. The shared failure
@@ -16,7 +16,7 @@
 #   2. GL+HWE-call genotypes [nilHMM::call_gt(prior="hwe", af=<per-marker truth
 #      teosinte AF>, error=0.01)] -> 0/1/2, NA at zero depth (het-excess control)
 #   3. PER-RIL step-interpolate each RIL's called (non-NA) markers onto the union
-#      cM grid [nilHMM::interpolate_genotype(mode="step")]. Unlike RTIGER (which
+#      cM grid [nilHMM::interpolate_genotype(mode="step")]. Unlike rtiger (which
 #      decodes EVERY marker -> a complete rectangular block), call_gt leaves NA at
 #      uncovered markers, so covered markers vary per RIL and interpolation is
 #      per-RIL. Cheap: no HMM.
@@ -34,7 +34,7 @@
 #    that family's RILs (population parameter, per family per marker).
 #  - Coverage grid EXACTLY {0.1, 0.2, 0.5, 1, 5, 10, 20} (+ lambda=Inf baseline).
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
-#    RNG seed = 1000 + 100*family_index + lambda_index (same scheme as the RTIGER
+#    RNG seed = 1000 + 100*family_index + lambda_index (same scheme as the rtiger
 #    sweep, so both sweeps degrade the identical truth mosaics).
 #  - Zero-depth markers -> NA (call_gt); "covered" = non-NA. No min_reads floor:
 #    interpolation fills uncovered union markers from each RIL's flanking calls.
@@ -66,7 +66,7 @@ ERROR <- 0.01 # GL per-read error (matches read model)
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
 
-# --- marker map + union target grid (identical to the RTIGER sweep) ----------
+# --- marker map + union target grid (identical to the rtiger sweep) ----------
 # GWAS grid = the FULL genotype set (51,004 markers): every genotyped marker with
 # a v5 position, scanned at every coverage level (a blind test). Roster + v5
 # physical positions come from data/teonam/markers_v5.tsv (the map-neutral v2->v5
@@ -152,7 +152,7 @@ recover_block <- function(fam, li) {
   M <- nrow(mt)
   N <- length(keys)
 
-  set.seed(1000L + 100L * fi + li) # per-cell seed (as RTIGER sweep)
+  set.seed(1000L + 100L * fi + li) # per-cell seed (as rtiger sweep)
   ac <- .draw_counts(as.vector(D),
     lambda = lambda,
     pi_floor = READ_PARS$pi_floor, k_decay = READ_PARS$k_decay,

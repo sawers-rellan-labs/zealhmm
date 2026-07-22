@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Equivalence worker: Holland's File_S11 caller at one thinned marker size
-(odd-index thinning, as in the RTIGER sweep), over the FULL population, from the
+(odd-index thinning, as in the rtiger sweep), over the FULL population, from the
 memory-mapped .bed. Unlike 05_holland_worker.py (timing only) this one SAVES the
 decoded calls so 07_equiv_sweep.R can compare them position-by-position against
 nilHMM's nnil at the same size.

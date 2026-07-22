@@ -6,7 +6,7 @@
 #   1. (optional) generate the DESIGN truth + degraded skim counts   [R/simulate.R]
 #      -> results/sim/skim.rds (compact bundle: grid once + count matrices) +
 #         <design>_truth_segments.csv. Load with load_sim() / sim_counts().
-#   2. two-stage calibrate each knob — nNIL rrate, RTIGER rigidity, LB-Impute
+#   2. two-stage calibrate each knob — nnil rrate, rtiger rigidity, LB-Impute
 #      recombdist: log sweep to bracket the optimum, then golden-ratio refine
 #      (maximize donor-fragment Dice)  [R/calibrate.R]
 #   3. benchmark each caller at its refined Dice-optimal knob against truth
@@ -94,8 +94,8 @@ ids <- sort(bundle$names)
 NMAX <- max(N_CAL_NNIL, N_CAL_RTIG, N_CAL_LBI, N_BENCH)
 skim <- as.data.table(sim_counts(bundle, ids[seq_len(min(NMAX, length(ids)))]))
 skim[grid, cm := i.cm, on = c("chr", "pos")] # lbimpute needs cM per marker
-# --- hard-call for the categorical nNIL caller --------------------------------
-# nNIL is categorical: it takes hard genotype calls, not read counts, so hard-call
+# --- hard-call for the categorical nnil caller --------------------------------
+# nnil is categorical: it takes hard genotype calls, not read counts, so hard-call
 # each marker to g in {0,1,2,3} (3 = missing). We pass the DESIGN's breeding prior
 # explicitly -- call_gt's default is HWE, which is WRONG for NILs (no random mating:
 # P(HET) is the scheme's expectation, not 2p(1-p)) and underperforms even a flat
@@ -136,7 +136,7 @@ t0 <- Sys.time()
 log_info("calibration start | design %s | 4 callers | smoke=%s | threads=%d", DESIGN, SMOKE, THREADS)
 nnil_cal <- calibrate_param("nnil", N_CAL_NNIL, NNIL_VALUES, integer = FALSE, f_1 = F1, f_2 = F2, err = 0.01)
 .eta(1L, 4L, t0, "nnil")
-# bbNIL: same geometric rrate knob as nNIL, but count/BetaBinomial emission (the
+# bbnil: same geometric rrate knob as nnil, but count/BetaBinomial emission (the
 # dispatcher-correct caller for skim read counts). Same grid/start-prior/err so
 # the two differ only in emission (categorical hard-call vs BetaBinomial counts).
 bbnil_cal <- calibrate_param("bbnil", N_CAL_NNIL, NNIL_VALUES, integer = FALSE, f_1 = F1, f_2 = F2, err = 0.01)

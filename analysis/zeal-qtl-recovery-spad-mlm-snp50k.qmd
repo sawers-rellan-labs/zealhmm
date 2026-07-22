@@ -17,7 +17,7 @@ execute:
 **What this is.** The leaf-greenness (SPAD) sibling of
 [`zeal-qtl-recovery-ph-mlm-snp50k`](zeal-qtl-recovery-ph-mlm-snp50k.html), built from the
 same real ZEAL pipeline end-to-end: field SPAD → SpATS spatial BLUE → SNP50K teosinte-ancestry
-dosage → RTIGER ancestry mosaic → K → JLM + MLM. **SPAD** is the leaf greenness index read by a
+dosage → rtiger ancestry mosaic → K → JLM + MLM. **SPAD** is the leaf greenness index read by a
 SPAD meter on one leaf above the primary ear node — a proxy for leaf chlorophyll content. It was
 scored in **CLY25 only**, so the BLUE is a **single-field** SpATS mean (no cross-field union). Only
 the phenotype changes vs the PH/EH notebooks.
@@ -29,7 +29,7 @@ the phenotype changes vs the PH/EH notebooks.
 - **BLUE:** per contiguous map grid, a **SpATS** 2-D P-spline `PSANOVA(Row, Range)` with genotype
   **fixed** + row/range random effects and |t|>4 outlier removal (`scripts/zeal_spats_blues.R`,
   `TRAIT=SPAD PHENO=blue`); the genotype value is the mean of its grid BLUEs. GWAS on the
-  RTIGER-mosaic MLM with `FAMILY_COL=donor_accession`.
+  rtiger-mosaic MLM with `FAMILY_COL=donor_accession`.
 - **CLY25 only:** CLY23's `SPAD1` is a placeholder (all `1.0`, no dates) and its real reading
   `SPAD2` (dated **Aug 2023**) is a different measurement, **not** merged into this single-SPAD
   BLUE. The two measurement dates are analysed separately in the sibling notebooks
@@ -43,7 +43,7 @@ the phenotype changes vs the PH/EH notebooks.
 SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
 unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
 **counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is therefore λ_GC-deflated (sparse
-mean-imputation); the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed
+mean-imputation); the **rtiger ancestry mosaic (Panel C)** is the usable, block-smoothed
 genotype (teosinte presence 0.111, matching the established BzeaSeq ~0.101). Identical in mechanism
 to the DTA/PH notebooks — only the phenotype changes.
 :::
@@ -109,7 +109,7 @@ candidate_table(TR)
 ## Candidate genes: closest marker vs window-max marker
 
 For each maize chlorophyll/greenness candidate (B73 v5), the closest marker to the gene body vs the
-highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Family+K)** scan (Panel C).
+highest −log₁₀P marker within ±500 kb in the rtiger-mosaic **MLM (Family+K)** scan (Panel C).
 `pathway` records the chlorophyll-pathway role (biosynthesis / catabolism-stay-green /
 light-harvesting / regulator).
 
@@ -140,7 +140,7 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = sprintf("SPAD candidates (B73 v5; maize chlorophyll biosynthesis / catabolism / light-harvesting / regulators): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+  caption = sprintf("SPAD candidates (B73 v5; maize chlorophyll biosynthesis / catabolism / light-harvesting / regulators): closest vs window-max (±500 kb) marker, rtiger-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
@@ -148,12 +148,12 @@ knitr::kable(ctab,
 
 Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level structure correction) that the MLM and per-marker OLS scans were actually computed with — a stronger correction than the 5 donor **taxa** the JLM nests on. It likely over-corrects population structure and costs some power; a taxon-level (5) MLM/OLS rerun is a pending comparison (see `TERMINOLOGY.md`).
 
-The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the RTIGER mosaic, same
+The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the rtiger mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD); K deflates λ toward 1.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL SPAD — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL SPAD — OLS (Family + marker, no K), rtiger mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/spad_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -167,7 +167,7 @@ lam_tab <- data.table(
   `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the rtiger mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -201,18 +201,18 @@ p_lolli <- plot_lollipop(
 p_lolli
 ```
 
-## MLM (Family + K), RTIGER ancestry mosaic (Panel C)
+## MLM (Family + K), rtiger ancestry mosaic (Panel C)
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL SPAD — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL SPAD — MLM (Family + K), rtiger ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/spad_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm
 cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
 ```
 
-## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+## Composite (A: JLM · B: per-SNP MLM · C: rtiger-mosaic MLM)
 
 Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated but catches sharp SNP hits the mosaic
 block-terraces away. Panel C (the ancestry mosaic) is the usable, well-calibrated genotype.
@@ -223,7 +223,7 @@ p_B <- plot_manhattan(gt,
   overlap_csv = overlap, lod = thr_gt
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("SPAD — MLM (Family+K), RTIGER ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
+  sprintf("SPAD — MLM (Family+K), rtiger ancestry mosaic (λ_GC = %.2f)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
@@ -231,17 +231,17 @@ ggsave(here("results/sim/zeal/spad_composite_snp50k.png"), composite, width = 9,
 composite
 ```
 
-## Multi-caller SPAD scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+## Multi-caller SPAD scan (control · nnil · rtiger · lbimpute · binhmm)
 
 The same SPAD MLM (Family+K) scan on each ancestry caller's recovered genotypes, at the real
 ~0.4× depth. The robust, trait-independent finding is **teosinte-presence recovery**: the
-block/bin-aggregated callers (RTIGER 0.111; binhmm 0.101) recover the established BzeaSeq fraction
-(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nNIL, LB-Impute)
+block/bin-aggregated callers (rtiger 0.111; binhmm 0.101) recover the established BzeaSeq fraction
+(~0.10), while per-SNP calling (control) and the per-SNP HMM recalls (nnil, lbimpute)
 **under-call**. Genomic inflation is phenotype-dependent (reported per caller below). Caller
 genotypes are population-level and trait-independent; only the phenotype (SPAD) changes.
 
 ```{r caller-table}
-callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+callers <- c(control = "hwe_post_gt", nnil = "nnil_mosaic", rtiger = "rtiger_mosaic", lbimpute = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
 gg <- fread(here("data/teonam/spad_candidate_genes.tsv"))[, chr := as.integer(chr)]
 max_cand_logp <- function(sc) {
   lp <- -log10(sc$P)

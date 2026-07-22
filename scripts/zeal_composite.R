@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # ZEAL Phase 4 — DTA composite (A: JLM QTL lollipop · B: MLM Taxon+K Manhattan).
 # Analog of the TeoNAM DTA composite (teonam-qtl-recovery-dta-mlm-118k.qmd). ZEAL has one
-# ancestry mosaic (RTIGER), so this is a 2-panel A/B (TeoNAM's Panel C was a 2nd caller).
+# ancestry mosaic (rtiger), so this is a 2-panel A/B (TeoNAM's Panel C was a 2nd caller).
 # JLM (Panel A) is the model-independent DTA analysis (recovers zmcct10, chr10); MLM
 # (Panel B) shows the ancestry-confound suppression. TRAIT via env (default DTA).
 suppressMessages({
@@ -41,9 +41,9 @@ p_B <- plot_manhattan(gt,
   sprintf("ZEAL %s — MLM (Taxon+K), per-SNP genotype (bcftools HWE-posterior) (lambda_GC = %.2f)", TRAIT, lam(gt$P)),
   overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_hwe_post_gt_manhattan_snp50k.png", TTAG))
 )
-# C: RTIGER ancestry mosaic MLM (block-smoothed; well-calibrated)
+# C: rtiger ancestry mosaic MLM (block-smoothed; well-calibrated)
 p_C <- plot_manhattan(rtiger,
-  sprintf("ZEAL %s — MLM (Taxon+K), RTIGER ancestry mosaic (lambda_GC = %.2f)", TRAIT, lam(rtiger$P)),
+  sprintf("ZEAL %s — MLM (Taxon+K), rtiger ancestry mosaic (lambda_GC = %.2f)", TRAIT, lam(rtiger$P)),
   overlap_csv = overlap, out_png = file.path(OUT, sprintf("%s_gwas_mlm_rtiger_mosaic_manhattan_snp50k.png", TTAG))
 )
 

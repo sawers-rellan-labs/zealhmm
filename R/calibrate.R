@@ -22,7 +22,7 @@ log_grid <- function(lo, hi, n = 12L, integer = FALSE) {
 
 #' Keep only the rigidity values a cohort can support
 #'
-#' RTIGER requires more than `2 * rigidity` covered markers on every chromosome of
+#' rtiger requires more than `2 * rigidity` covered markers on every chromosome of
 #' every sample (below that the E-step degenerates and `caller_sweep` hard-stops).
 #' Drop grid values that violate this against the tightest `(sample, chromosome)`
 #' in `data`, so a rigidity sweep never trips the floor.

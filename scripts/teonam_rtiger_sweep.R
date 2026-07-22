@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# STAM GWAS degradation sweep: RTIGER ancestry vs sequencing coverage (TeoNAM)
+# STAM GWAS degradation sweep: rtiger ancestry vs sequencing coverage (TeoNAM)
 # Plan: agent/teonam-rtiger-degradation-plan.md
 # -----------------------------------------------------------------------------
 # For each TeoNAM family x coverage lambda:
 #   1. simulate low-coverage reads from the real (truth) 0/1/2 genotypes
 #      [R/simulate.R::.draw_counts(pi_floor=0, k_decay=1, error=0.01)]
-#   2. RTIGER-call ancestry [call_ancestry(caller="rtiger", rigidity=2)]
+#   2. rtiger-call ancestry [call_ancestry(caller="rtiger", rigidity=2)]
 #   3. step-interpolate the recovered per-family block onto the union cM grid
 #      [nilHMM::interpolate_genotype(mode="step")]
 # Then assemble the union matrix (51,004 markers x 1,237 lines; full GWAS set) at each lambda
@@ -18,21 +18,21 @@
 #
 # KEY DECISIONS (recorded per plan S7):
 #  - Coverage grid: {0.1, 0.2, 0.5, 1, 5, 10, 20} (+ lambda=Inf baseline = panel C).
-#  - RTIGER rigidity = 2  (rigidity_star from results/sim/calib_params.csv).
-#  - Design priors: RTIGER fits its OWN start frequencies -- call_states() returns
+#  - rtiger rigidity = 2  (rigidity_star from results/sim/calib_params.csv).
+#  - Design priors: rtiger fits its OWN start frequencies -- call_states() returns
 #    from the caller=="rtiger" branch BEFORE any design/f_1/f_2 is resolved, so
 #    the design priors are IGNORED by this caller. (TeoNAM's observed BC1S4
 #    frequencies ~15% teo-hom / ~8% het would map to f_2~=0.15, f_1~=0.08 had a
 #    prior-consuming caller been used.)
 #  - Read model: pi_floor=0, k_decay=1, error=0.01; 1 replicate per (family,lambda),
 #    RNG seed = 1000 + 100*family_index + lambda_index (deterministic per cell).
-#  - min_reads = 0L for the RTIGER call: decode EVERY family marker (uncovered
+#  - min_reads = 0L for the rtiger call: decode EVERY family marker (uncovered
 #    markers carry a flat emission and are filled by the rigidity HMM from
 #    neighbours). This yields a COMPLETE rectangular per-family block for step-
 #    interpolation and avoids the 2*rigidity per-(sample,chr) coverage floor
 #    aborting the batch at low lambda.
 #
-# Batch RTIGER: ONE call_ancestry per (family,lambda) (joint EM across all family
+# Batch rtiger: ONE call_ancestry per (family,lambda) (joint EM across all family
 # RILs), not one fit per RIL. The 5 families x 7 lambda = 35 batch calls are
 # fanned out with parallel::mclapply.
 #
@@ -141,7 +141,7 @@ for (f in names(fams)) {
   ))
 }
 
-# --- one (family,lambda) cell: simulate -> RTIGER -> interpolate to union -----
+# --- one (family,lambda) cell: simulate -> rtiger -> interpolate to union -----
 recover_block <- function(fam, li) {
   lambda <- LAMBDAS[li]
   fi <- match(fam, names(fams))
@@ -171,7 +171,7 @@ recover_block <- function(fam, li) {
   st <- call_states(long,
     caller = "rtiger", rigidity = RIGIDITY,
     min_reads = 0L, threads = 1L
-  ) # RTIGER ignores priors
+  ) # rtiger ignores priors
   W <- dcast(as.data.table(st), chr + pos ~ name, value.var = "state")
   W <- W[mt[, .(chr, pos)], on = c("chr", "pos")] # align rows to mt (cm order)
   R <- as.matrix(W[, keys, with = FALSE])
@@ -190,7 +190,7 @@ grid <- expand.grid(
   stringsAsFactors = FALSE
 )
 message(sprintf(
-  "RTIGER sweep: %d (family,lambda) batch calls, %d threads ...",
+  "rtiger sweep: %d (family,lambda) batch calls, %d threads ...",
   nrow(grid), THREADS
 ))
 t0 <- Sys.time()
@@ -200,12 +200,12 @@ cells <- mclapply(seq_len(nrow(grid)), function(i) {
 bad <- vapply(cells, function(x) inherits(x, "try-error") || is.null(x), logical(1))
 if (any(bad)) {
   stop(
-    "RTIGER failed for cell(s): ",
+    "rtiger failed for cell(s): ",
     paste(which(bad), collapse = ", "), " -> ", cells[[which(bad)[1]]]
   )
 }
 message(sprintf(
-  "  RTIGER sweep done in %.1f min",
+  "  rtiger sweep done in %.1f min",
   as.numeric(Sys.time() - t0, units = "mins")
 ))
 

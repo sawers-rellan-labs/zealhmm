@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Run nilHMM's nNIL caller on the shared genotype table, STREAMING rows from the
+# Run nilHMM's nnil caller on the shared genotype table, STREAMING rows from the
 # memory-mapped PLINK .bed (BEDMatrix) instead of slurping the 114 MB wide CSV.
 # Each line's row is pulled from disk on demand, decoded, and discarded, so peak
 # memory is ~R baseline + the output matrix -- flat in the (held) input. Uses the

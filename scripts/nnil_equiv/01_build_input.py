@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Build the shared nNIL caller input by reproducing Holland's File_S10 filter on the
+Build the shared nnil caller input by reproducing Holland's File_S10 filter on the
 File S1 raw genotypes -- verified 0-cell-identical to his filtered set (same 888
 lines, same 64,025 markers, same values as File S18's set). This supersedes the
 earlier "subset to File S18" heuristic (which recovered only 884 lines because it

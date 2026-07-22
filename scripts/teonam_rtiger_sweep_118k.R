@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# STAM GWAS degradation sweep on the AUTHENTIC 118K panel (TeoNAM, RTIGER)
-# simulate reads -> RTIGER ancestry-segment inference -> back-project -> GWAS.
+# STAM GWAS degradation sweep on the AUTHENTIC 118K panel (TeoNAM, rtiger)
+# simulate reads -> rtiger ancestry-segment inference -> back-project -> GWAS.
 #   * TRUTH = the AUTHENTIC 118K per-SNP genotypes (teonam_gwas118k_dosage_polar.rds,
 #     W22<->teo polarized) -- the REAL genotypes with real per-SNP structure, NOT an
 #     ancestry-smoothed mosaic. Reads are Poisson-sampled from these at each SNP.
@@ -66,13 +66,13 @@ union_pos <- as.integer(u$pos)
 union_chr <- as.integer(u$chr)
 
 # --- ancestry-inference grid: the FULL 118K marker set, per chromosome (NO thinning,
-# NO back-projection). RTIGER runs the HMM directly on every marker; the recovered
+# NO back-projection). rtiger runs the HMM directly on every marker; the recovered
 # states ARE the union genotypes for the GWAS. Slower than the 0.1 cM thin grid but
 # removes the thin->union interpolation and the grid-density rigidity coupling.
 mt_thin <- copy(mc)[, .(marker, chr, pos, cm)] # full union = inference grid
 stopifnot(all(is.finite(RIG_BY_COV)))
 log_info(
-  "118K grid: RTIGER on the FULL %d markers/genome, per chromosome, min_reads=1; per-coverage rigidity = %s",
+  "118K grid: rtiger on the FULL %d markers/genome, per chromosome, min_reads=1; per-coverage rigidity = %s",
   nrow(mt_thin), paste(sprintf("%s:%d", names(RIG_BY_COV), RIG_BY_COV), collapse = " ")
 )
 
@@ -105,8 +105,8 @@ fam_data <- lapply(FAMS, load_family)
 names(fam_data) <- FAMS
 for (f in FAMS) log_info("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt), length(fam_data[[f]]$keys))
 
-# Memory-safe recovery: fit the joint per-family RTIGER emission ONCE, then decode
-# each chromosome in a separate low-memory worker (fit_rtiger + rtiger_fit=). RTIGER's
+# Memory-safe recovery: fit the joint per-family rtiger emission ONCE, then decode
+# each chromosome in a separate low-memory worker (fit_rtiger + rtiger_fit=). rtiger's
 # HMM is per-chromosome, so this is identical to a whole-family call (verified,
 # agent/verify_fit_reuse.R) at ~1/10 the peak memory. Families run SEQUENTIALLY (the
 # fit is the memory-heavy step); chromosomes decode in parallel.
@@ -210,7 +210,7 @@ tb1_peak <- function(scan) {
 
 FAM_USE <- if (SMOKE) FAMS[1] else FAMS
 log_info(
-  "RTIGER-118K sweep: %d coverages x %d families; fit-once-per-family, per-chromosome decode (%d cores)",
+  "rtiger-118K sweep: %d coverages x %d families; fit-once-per-family, per-chromosome decode (%d cores)",
   length(LAMBDAS), length(FAM_USE), DECODE_CORES
 )
 t0 <- Sys.time()

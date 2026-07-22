@@ -10,8 +10,8 @@
 #                    (values = the bcftools calls, not a reconstruction). NO single-sample GL.
 # All objects share ONE panel (intersection of callable lines; 8 near-empty libs dropped).
 #
-# plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 200K RTIGER
-# introgression set is NOT shipped — it would be regenerated with recalibrated RTIGER.)
+# plus shared markers/ + lines/ tables, a MANIFEST and README. (The legacy 200K rtiger
+# introgression set is NOT shipped — it would be regenerated with recalibrated rtiger.)
 #
 # IMPORTANT (see TERMINOLOGY.md): a mosaic is ANCESTRY, not a genotype. The PLINK/VCF
 # 0/1/2 for a mosaic is the ANCESTRY dosage (0=B73, 1=het, 2=teosinte), encoded on the
@@ -42,7 +42,7 @@ fwrite(mkref, file.path(OUT, "markers", "snp50k_markers.tsv"), sep = "\t")
 log_info("markers: %d SNP50K sites (B73 v5) with ref/alt/cM", nrow(mkref))
 
 # --- shared line metadata -----------------------------------------------------
-# The release panel = the intersection of every object's callable lines. RTIGER's
+# The release panel = the intersection of every object's callable lines. rtiger's
 # per-chromosome ">= 2x rigidity informative markers" QC is the binding constraint: 8
 # near-empty libraries (<0.3% of SNP50K sites covered) it cannot call are dropped so ALL
 # objects (mosaics + hwe_post) share one panel of lines. (See DATA.md / TERMINOLOGY.md.)

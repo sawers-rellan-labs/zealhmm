@@ -1,17 +1,17 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# STAM GWAS degradation sweep on the AUTHENTIC 118K panel (TeoNAM, nNIL)
-# simulate reads -> nNIL ancestry inference -> assemble -> GWAS. Memory-safe
+# STAM GWAS degradation sweep on the AUTHENTIC 118K panel (TeoNAM, nnil)
+# simulate reads -> nnil ancestry inference -> assemble -> GWAS. Memory-safe
 # rewrite mirroring scripts/teonam_rtiger_sweep_118k.R (shared design there):
 #   * TRUTH = authentic 118K per-SNP genotypes (teonam_gwas118k_dosage_polar.rds).
-#   * GRID  = the full 118,514-marker v5 set on native cM; nNIL runs on EVERY marker
+#   * GRID  = the full 118,514-marker v5 set on native cM; nnil runs on EVERY marker
 #     per chromosome (NO 0.1 cM thinning, NO back-projection -- the recovered states
-#     ARE the union genotypes, same as the RTIGER 118K sweep).
-#   * nNIL has NO EM (count emission fixed from err + BC1S4 priors, geometric
-#     duration), so -- unlike RTIGER -- there is NO fit-once step: decode each
+#     ARE the union genotypes, same as the rtiger 118K sweep).
+#   * nnil has NO EM (count emission fixed from err + BC1S4 priors, geometric
+#     duration), so -- unlike rtiger -- there is NO fit-once step: decode each
 #     (family, chromosome) directly. min_reads=1 (covered markers) + within-chr
-#     carry-forward fill to the full grid, matching RTIGER's assembly.
-#   * rrate: nNIL is the MAP-BLIND baseline and its rrate is NOT worth per-coverage
+#     carry-forward fill to the full grid, matching rtiger's assembly.
+#   * rrate: nnil is the MAP-BLIND baseline and its rrate is NOT worth per-coverage
 #     tuning -- calibration (teonam_nnil_calib_bycov.R) showed donor_frag_FDR is a
 #     flat low-rrate plateau (recall ~1 throughout), so a SINGLE fixed rrate=3.3e-5
 #     (the all-coverage plateau floor) is used for every coverage. See memory
@@ -56,7 +56,7 @@ F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])
 THREADS <- max(1L, detectCores() - 2L)
 READ_PARS <- list(pi_floor = 0, k_decay = 1, error = 0.01)
-log_info("nNIL-118K: FIXED rrate = %.5g (plateau floor), f_1 = %.3f, f_2 = %.3f", RRATE, F1, F2)
+log_info("nnil-118K: FIXED rrate = %.5g (plateau floor), f_1 = %.3f, f_2 = %.3f", RRATE, F1, F2)
 
 # --- 118K cM grid (native est.map + Marey spline) ----------------------------
 mc <- fread(file.path(ROOT, "data/teonam/markers_v5_gwas118k_cm.tsv")) # marker, chr, pos_v5, cm
@@ -70,7 +70,7 @@ union_chr <- as.integer(u$chr)
 mt_thin <- copy(mc)[, .(marker, chr, pos, cm)] # full union = inference grid (no thinning)
 CHRS <- sort(unique(mt_thin$chr))
 log_info(
-  "118K grid: nNIL on the FULL %d markers/genome, per chromosome, min_reads=1 + carry-forward fill",
+  "118K grid: nnil on the FULL %d markers/genome, per chromosome, min_reads=1 + carry-forward fill",
   nrow(mt_thin)
 )
 
@@ -103,7 +103,7 @@ for (f in FAMS) log_info("  %s: %d markers x %d RILs", f, nrow(fam_data[[f]]$mt)
 DECODE_CORES <- max(1L, min(detectCores() - 1L, 8L)) # per-chromosome workers (each ~1 GB)
 
 # covered-marker reads (n>=1) for one family at coverage li -- same read model + seeds
-# as the RTIGER sweep; filtering to covered markers gives the per-chr decode the
+# as the rtiger sweep; filtering to covered markers gives the per-chr decode the
 # min_reads=1 support the rrate was calibrated at.
 build_reads <- function(fam, li) {
   lambda <- LAMBDAS[li]
@@ -199,7 +199,7 @@ tb1_peak <- function(scan) {
 
 FAM_USE <- if (SMOKE) FAMS[1] else FAMS
 log_info(
-  "nNIL-118K sweep: %d coverages x %d families; per-chromosome decode (%d cores), families sequential",
+  "nnil-118K sweep: %d coverages x %d families; per-chromosome decode (%d cores), families sequential",
   length(LAMBDAS), length(FAM_USE), DECODE_CORES
 )
 t0 <- Sys.time()

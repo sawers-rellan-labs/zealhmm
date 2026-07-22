@@ -1,6 +1,6 @@
 ---
 title: "ZEAL EN — R/qtl (bcsft) on the TeoNAM JLM grid: LOD profile + per-family effects"
-subtitle: "R/qtl interval mapping (Haley–Knott) for EN on the BC2S3 RTIGER ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold (a single shared permutation null across all traits). Candidates = the EN candidate-gene panel (B73 v5)."
+subtitle: "R/qtl interval mapping (Haley–Knott) for EN on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B). Marker set + genetic map = the TeoNAM JLM 0.1-cM set (9,063 markers, TeoNAM cM — NOT computed from ZEAL); the ZEAL mosaic is projected onto those positions. Significance = genome-wide 1000-permutation LOD threshold (a single shared permutation null across all traits). Candidates = the EN candidate-gene panel (B73 v5)."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -24,7 +24,7 @@ per-family scans as in the other R/qtl notebooks.
 ## Marker set, map, and genotype — read this first
 - **No ZEAL genetic map is estimated** (excess heterozygotes make a ZEAL `est.map` unreliable), so
   **every cM is a TeoNAM distance**; the marker set + map is the TeoNAM JLM grid, and the ZEAL
-  RTIGER mosaic is **projected** onto it (nearest block). Markers are named `S<chr>_<pos_v5>`.
+  rtiger mosaic is **projected** onto it (nearest block). Markers are named `S<chr>_<pos_v5>`.
 - Genotypes are **HMM-error-corrected before the scan** (`calc.genoprob(error.prob=0.01)`); the
   per-taxon additive scan uses the HMM **expected dosage**. Peak CIs are the 1.5-LOD support on the
   real markers (matching R/qtl `lodint`).

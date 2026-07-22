@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""SPLIT step for the nNIL sweeps: write an odd-index-thinned PLINK .bed (+ markers.csv)
+"""SPLIT step for the nnil sweeps: write an odd-index-thinned PLINK .bed (+ markers.csv)
 per density level, so every sweep worker loads ONLY the dataset it benchmarks and does
-no in-script thinning (mirrors scripts/materialize_thinned_panel.R for RTIGER).
+no in-script thinning (mirrors scripts/materialize_thinned_panel.R for rtiger).
 
   ~/anaconda3/envs/nilhmm/bin/python scripts/nnil_equiv/materialize_thinned_bed.py
 

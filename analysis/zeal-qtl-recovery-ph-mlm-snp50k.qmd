@@ -17,7 +17,7 @@ execute:
 **What this is.** The plant-height (PH) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
 same real ZEAL pipeline end-to-end: field PH → SpATS spatial BLUEs → SNP50K teosinte-ancestry
-dosage → RTIGER ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near-isogenic
+dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near-isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa** (Zx *mexicana* 578, Zv *parviglumis* 385, Zd
 *diploperennis* 255, Zl *luxurians* 118, Zh *huehuetenangensis* 61). The PH BLUE is the per-field
 SpATS mean across two fields (CLY23-D4, CLY25-B5); union mean ≈ 183 ± 16 cm.
@@ -27,7 +27,7 @@ SpATS mean across two fields (CLY23-D4, CLY25-B5); union mean ≈ 183 ± 16 cm.
 SNP50K is 51,991 teosinte-vs-B73 sites pileup-genotyped at ~0.4× — hard genotypes are
 unusable (70% missing, ~0% hom-ALT), so ancestry is inferred from the per-sample allele
 **counts**. The **per-SNP genotype (bcftools HWE-posterior) (Panel B)** is therefore λ_GC-deflated (sparse
-mean-imputation); the **RTIGER ancestry mosaic (Panel C)** is the usable, block-smoothed
+mean-imputation); the **rtiger ancestry mosaic (Panel C)** is the usable, block-smoothed
 genotype (teosinte presence 0.111, matching the established BzeaSeq ~0.101). This is the
 SNP50K-specific reason ancestry inference is mandatory, and is identical to the DTA notebook —
 only the phenotype changes.
@@ -95,7 +95,7 @@ candidate_table(TR)
 ## Candidate genes: closest marker vs window-max marker
 
 For each maize plant-height candidate (B73 v5), the closest marker to the gene body vs the
-highest −log₁₀P marker within ±500 kb in the RTIGER-mosaic **MLM (Family+K)** scan (Panel C).
+highest −log₁₀P marker within ±500 kb in the rtiger-mosaic **MLM (Family+K)** scan (Panel C).
 Candidates are the dwarf/GA/BR/auxin height genes from Peiffer *et al.* 2014 (v5 coordinates);
 `pathway` records the hormone/growth pathway each acts in.
 
@@ -126,7 +126,7 @@ ctab <- rbindlist(lapply(seq_len(nrow(gg)), function(i) {
 setorder(ctab, chr, `gene start (v5)`)
 knitr::kable(ctab,
   format.args = list(big.mark = ","),
-  caption = sprintf("PH candidates (B73 v5, Peiffer et al. 2014): closest vs window-max (±500 kb) marker, RTIGER-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
+  caption = sprintf("PH candidates (B73 v5, Peiffer et al. 2014): closest vs window-max (±500 kb) marker, rtiger-mosaic MLM (Family+K) scan; 'clears perm 5%%' = window-max exceeds the 1000-permutation FWER line (-log10P = %.2f).", thr_mlm)
 )
 ```
 
@@ -134,14 +134,14 @@ knitr::kable(ctab,
 
 Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level structure correction) that the MLM and per-marker OLS scans were actually computed with — a stronger correction than the 5 donor **taxa** the JLM nests on. It likely over-corrects population structure and costs some power; a taxon-level (5) MLM/OLS rerun is a pending comparison (see `TERMINOLOGY.md`).
 
-The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the RTIGER mosaic, same
+The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the rtiger mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD, unfixable by any fixed factor);
 K deflates λ toward 1 and removes the ancestry-correlated bulk that a near-isogenic,
 teosinte-ancestry-structured height panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
 plot_manhattan(ols,
-  sprintf("ZEAL PH — OLS (Family + marker, no K), RTIGER mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
+  sprintf("ZEAL PH — OLS (Family + marker, no K), rtiger mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(ols$P)),
   overlap_csv = overlap, lod = thr_ols,
   out_png = here("results/sim/zeal/ph_gwas_ols_manhattan_fdr_snp50k.png")
 )
@@ -158,7 +158,7 @@ lam_tab <- data.table(
   `n > perm 5%` = c(nsig(ols$P, thr_ols), nsig(mlm$P, thr_mlm)),
   max_logP = round(c(max(-log10(ols$P)), max(-log10(mlm$P))), 2)
 )
-knitr::kable(lam_tab, caption = "OLS vs MLM on the RTIGER mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
+knitr::kable(lam_tab, caption = "OLS vs MLM on the rtiger mosaic (same Family fixed part): K deflates genomic inflation; n markers above each scan's 1000-permutation 5% FWER line.")
 ```
 
 ```{r ols-vs-mlm-peaks}
@@ -194,18 +194,18 @@ p_lolli <- plot_lollipop(
 p_lolli
 ```
 
-## MLM (Family + K), RTIGER ancestry mosaic (Panel C)
+## MLM (Family + K), rtiger ancestry mosaic (Panel C)
 
 ```{r manhattan-mlm, fig.width=9, fig.height=4.4}
 p_mlm <- plot_manhattan(mlm,
-  sprintf("ZEAL PH — MLM (Family + K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("ZEAL PH — MLM (Family + K), rtiger ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm, out_png = here("results/sim/zeal/ph_gwas_mlm_rtiger_mosaic_manhattan_fdr_snp50k.png")
 )
 p_mlm
 cat(sprintf("%d markers clear the 5%% FWER line (-log10P = %.2f)\n", nsig(mlm$P, thr_mlm), thr_mlm))
 ```
 
-## Composite (A: JLM · B: per-SNP MLM · C: RTIGER-mosaic MLM)
+## Composite (A: JLM · B: per-SNP MLM · C: rtiger-mosaic MLM)
 
 Panel B (per-SNP genotype (bcftools HWE-posterior)) is λ_GC-deflated — the 70%-missing per-SNP panel at 0.4×
 is sparse — but catches sharp SNP hits the mosaic block-terraces away. Panel C (the ancestry
@@ -219,7 +219,7 @@ p_B <- plot_manhattan(gt,
   overlap_csv = overlap, lod = thr_gt
 )
 p_C <- plot_manhattan(mlm,
-  sprintf("PH — MLM (Family+K), RTIGER ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
+  sprintf("PH — MLM (Family+K), rtiger ancestry mosaic (λ_GC = %.2f; dotted = perm FWER 5%%)", lam(mlm$P)),
   overlap_csv = overlap, lod = thr_mlm
 )
 composite <- cowplot::plot_grid(p_lolli, p_B, p_C, ncol = 1, labels = c("A", "B", "C"), label_size = 20, align = "v", axis = "lr")
@@ -227,23 +227,23 @@ ggsave(here("results/sim/zeal/ph_composite_snp50k.png"), composite, width = 9, h
 composite
 ```
 
-## Multi-caller PH scan (control · nNIL · RTIGER · LB-Impute · binhmm)
+## Multi-caller PH scan (control · nnil · rtiger · lbimpute · binhmm)
 
 The same PH MLM (Family+K) scan on each ancestry caller's recovered genotypes, at the real
 ~0.4× depth (not a coverage sweep). The scientific content is **caller reliability at low
 coverage**. The robust, trait-independent finding is **teosinte-presence recovery**: the two
-block/bin-aggregated callers (RTIGER per-donor segments 0.111; binhmm 1 Mb bins 0.101) recover
+block/bin-aggregated callers (rtiger per-donor segments 0.111; binhmm 1 Mb bins 0.101) recover
 the established BzeaSeq fraction (~0.10), while per-SNP calling (control) and the fresh per-SNP
-HMM recalls (nNIL, LB-Impute) **under-call**. Genomic inflation, by contrast, is
-phenotype-dependent: for PH the per-SNP callers stay λ-deflated (control 0.79, LB-Impute 0.85),
-the RTIGER mosaic is the best-calibrated (λ ≈ 1.3), and binhmm actually runs **inflated**
+HMM recalls (nnil, lbimpute) **under-call**. Genomic inflation, by contrast, is
+phenotype-dependent: for PH the per-SNP callers stay λ-deflated (control 0.79, lbimpute 0.85),
+the rtiger mosaic is the best-calibrated (λ ≈ 1.3), and binhmm actually runs **inflated**
 (λ ≈ 2.9, many markers past its permutation FWER line) — a caution that recovering the right ancestry *fraction* does
 not by itself guarantee a well-calibrated scan when residual ancestry structure aligns with a
 polygenic trait like height. The caller genotypes are population-level and trait-independent;
 only the phenotype (PH) changes vs the DTA notebook.
 
 ```{r caller-table}
-callers <- c(control = "hwe_post_gt", nNIL = "nnil_mosaic", RTIGER = "rtiger_mosaic", `LB-Impute` = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
+callers <- c(control = "hwe_post_gt", nnil = "nnil_mosaic", rtiger = "rtiger_mosaic", lbimpute = "lbimpute_mosaic", binhmm = "binhmm_mosaic")
 gg <- fread(here("data/teonam/ph_candidate_genes.tsv"))[, chr := as.integer(chr)]
 # best (max -log10P) PH candidate window per caller — PH is polygenic, no single headline gene
 max_cand_logp <- function(sc) {
@@ -271,7 +271,7 @@ ctab2 <- rbindlist(lapply(names(callers), function(nm) {
     `best candidate -log10P` = max_cand_logp(sc)
   )
 }))
-knitr::kable(ctab2, caption = "PH MLM (Family+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the PH candidate windows. Aggregated callers (RTIGER, binhmm) recover teosinte presence ~0.10; per-SNP (control) and per-SNP recalls (nNIL, LB-Impute) under-call and deflate λ_GC.")
+knitr::kable(ctab2, caption = "PH MLM (Family+K) by ancestry caller at 0.4×, with n markers above the caller's own 1000-permutation 5% FWER line and the best (max) -log10P across the PH candidate windows. Aggregated callers (rtiger, binhmm) recover teosinte presence ~0.10; per-SNP (control) and per-SNP recalls (nnil, lbimpute) under-call and deflate λ_GC.")
 ```
 
 ```{r caller-composite, fig.width=9, fig.height=20}

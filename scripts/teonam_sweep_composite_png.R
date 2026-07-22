@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Four-panel coverage-degradation composite (control / nNIL / RTIGER / LB-Impute) for
+# Four-panel coverage-degradation composite (control / nnil / rtiger / LB-Impute) for
 # one GWAS variant. Same plot_sweep_line as the notebook.
 #   Rscript scripts/teonam_sweep_composite_png.R mlm   # MLM (Family+K) sweeps
 #   Rscript scripts/teonam_sweep_composite_png.R ols   # OLS sweeps
@@ -68,8 +68,8 @@ plot_sweep_line <- function(csv, title, legend = TRUE, ytop = 20) {
 f <- function(c) file.path(ROOT, sprintf("results/sim/teonam/stam_gwas_%s_118k%s_sweep.csv", c, sfx))
 lab <- if (variant == "mlm") "MLM (Family+K)" else "OLS"
 pA <- plot_sweep_line(f("control"), sprintf("STAM %s — interpolation control (GL+HWE)", lab), legend = TRUE)
-pB <- plot_sweep_line(f("nnil"), sprintf("STAM %s — nNIL ancestry", lab), legend = FALSE)
-pC <- plot_sweep_line(f("rtiger"), sprintf("STAM %s — RTIGER ancestry", lab), legend = FALSE)
+pB <- plot_sweep_line(f("nnil"), sprintf("STAM %s — nnil ancestry", lab), legend = FALSE)
+pC <- plot_sweep_line(f("rtiger"), sprintf("STAM %s — rtiger ancestry", lab), legend = FALSE)
 pD <- plot_sweep_line(f("lbimpute"), sprintf("STAM %s — LB-Impute ancestry", lab), legend = FALSE)
 comp <- cowplot::plot_grid(pA, pB, pC, pD, ncol = 1, align = "v", axis = "lr", labels = c("A", "B", "C", "D"), label_size = 20)
 out <- file.path(ROOT, sprintf("results/sim/teonam/stam_sweep_composite%s_118k.png", sfx))

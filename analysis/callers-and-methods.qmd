@@ -1,6 +1,6 @@
 ---
 title: "The nilHMM caller family: one duration-aware HMM, swappable emissions"
-subtitle: "Materials & Methods §2.1–2.2 — the shared 3-state engine and the four callers (nNIL, RTIGER, binhmm, ATLAS)"
+subtitle: "Materials & Methods §2.1–2.2 — the shared 3-state engine and the four callers (nnil, rtiger, binhmm, atlas)"
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -25,7 +25,7 @@ restating signatures.
 > **Emits (paper):** Figure F1 (engine + caller-family schematic). Ports/refactors
 > the zealtiger notes `generative_vs_discriminative_callers`,
 > `emission_by_depth_regime`, `genotype_likelihoods_and_hmm`,
-> `snp50k_genotype_identifiability`, and the ATLAS section of
+> `snp50k_genotype_identifiability`, and the atlas section of
 > `nilhmm_sanity_check_paint`, rewritten onto `library(nilHMM)`.
 
 ```{r setup}
@@ -59,10 +59,10 @@ design). The data-agnostic contract is
 
 | Caller  | Emission          | Duration       | Typical input                    | Lineage        |
 |---------|-------------------|----------------|----------------------------------|----------------|
-| nNIL    | count / BetaBinom | geometric      | SNP-panel allele counts          | Holland nNIL   |
-| RTIGER  | count / BetaBinom | rigidity (`r`) | SNP-panel allele counts          | RTIGER (port)  |
+| nnil    | count / BetaBinom | geometric      | SNP-panel allele counts          | Holland nNIL   |
+| rtiger  | count / BetaBinom | rigidity (`r`) | SNP-panel allele counts          | RTIGER (port)  |
 | binhmm  | Gaussian on bins  | sticky trans.  | per-bin `ALT_FREQ` (dense skim)  | nilhifi        |
-| ATLAS   | gt / categorical  | geometric      | competitive gene-level GT counts | GOOGA-shadow   |
+| atlas   | gt / categorical  | geometric      | competitive gene-level GT counts | GOOGA-shadow   |
 
 The Julia-free RTIGER port (memory `rtiger-fork`) is what lets all four share
 one R + Rcpp engine. Each caller gets a §2.2 subsection in the manuscript; the
@@ -86,18 +86,18 @@ demo_calls <- function(path, ...) {
     source = "demo", name = basename(path)
   )
 }
-# nNIL:   demo_calls(f, caller = "nnil",   design = "BC2S2", rrate = 1e-4, err = 0.01)
-# RTIGER: demo_calls(f, caller = "rtiger", rigidity = 5L)
+# nnil:   demo_calls(f, caller = "nnil",   design = "BC2S2", rrate = 1e-4, err = 0.01)
+# rtiger: demo_calls(f, caller = "rtiger", rigidity = 5L)
 cat("nilHMM", as.character(packageVersion("nilHMM")), "loaded; engine ready.\n")
 ```
 
 # 4. What each caller is for
 
-- **nNIL** — the count baseline; Holland's near-isogenic-line caller.
-- **RTIGER** — rigidity replaces a free geometric duration; robust at low depth.
+- **nnil** — the count baseline; Holland's near-isogenic-line caller.
+- **rtiger** — rigidity replaces a free geometric duration; robust at low depth.
 - **binhmm** — anchors REF at the coverage floor on dense per-bin `ALT_FREQ`;
   the only track that keeps the full ~27.6 M-SNP density (skim only).
-- **ATLAS** — competitive transcript mapping → hard GT → categorical emission;
+- **atlas** — competitive transcript mapping → hard GT → categorical emission;
   expression-agnostic, built for BRB-seq (RNA), where a count model is confounded
   by expression and allele-specific expression.
 

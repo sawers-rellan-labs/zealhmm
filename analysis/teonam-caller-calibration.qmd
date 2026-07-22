@@ -39,9 +39,9 @@ map-aware:
 
 | caller | parameter | type | map-aware? |
 |---|---|---|---|
-| **RTIGER** | `rigidity` | integer — minimum run length in **markers** | no (index-based) |
-| **nNIL** | `rrate` | continuous — per-marker recombination rate (self-stay $= 1-$`rrate`) | **no** (one fixed transition every marker) |
-| **LB-Impute** | `recombdist` | continuous — linkage-decay **distance (cM)** | **yes** (consumes the cM gaps) |
+| **rtiger** | `rigidity` | integer — minimum run length in **markers** | no (index-based) |
+| **nnil** | `rrate` | continuous — per-marker recombination rate (self-stay $= 1-$`rrate`) | **no** (one fixed transition every marker) |
+| **lbimpute** | `recombdist` | continuous — linkage-decay **distance (cM)** | **yes** (consumes the cM gaps) |
 
 ```{r setup}
 suppressMessages({
@@ -82,7 +82,7 @@ parameter lives on a different scale, so the panels have independent $y$-axes.
 ```{r pick-table}
 knitr::kable(
   dcast(picks, coverage ~ caller, value.var = "param_value"),
-  caption = "param*(λ): rigidity (RTIGER), rrate (nNIL), recombdist cM (LB-Impute)."
+  caption = "param*(λ): rigidity (rtiger), rrate (nnil), recombdist cM (lbimpute)."
 )
 ```
 
@@ -93,9 +93,9 @@ ggplot(picks, aes(coverage, param_value, group = caller, colour = caller)) +
   facet_wrap(~caller,
     scales = "free_y",
     labeller = as_labeller(c(
-      rtiger = "RTIGER · rigidity (markers)",
-      nnil = "nNIL · rrate",
-      lbimpute = "LB-Impute · recombdist (cM)"
+      rtiger = "rtiger · rigidity (markers)",
+      nnil = "nnil · rrate",
+      lbimpute = "lbimpute · recombdist (cM)"
     ))
   ) +
   labs(x = "coverage λ (×)", y = "chosen parameter", colour = NULL) +
@@ -103,12 +103,12 @@ ggplot(picks, aes(coverage, param_value, group = caller, colour = caller)) +
   theme(legend.position = "none")
 ```
 
-- **RTIGER `rigidity` rises with coverage** (16 → 128): deeper coverage exposes
+- **rtiger `rigidity` rises with coverage** (16 → 128): deeper coverage exposes
   more per-marker detail, so a longer minimum run is needed to keep segments stable.
-- **LB-Impute `recombdist`** is high at the lowest coverages (stiffer, longer
+- **lbimpute `recombdist`** is high at the lowest coverages (stiffer, longer
   segments compensate for sparse reads) and settles to $\approx 8$–25 cM once
   coverage is informative.
-- **nNIL `rrate` does not trend** — it bounces over an order of magnitude. That is
+- **nnil `rrate` does not trend** — it bounces over an order of magnitude. That is
   not signal; see the flat FDR plateau below.
 
 # Why each pick — FDR against the parameter
@@ -127,8 +127,8 @@ ggplot(curves, aes(value, donor_frag_FDR, colour = coverage, group = coverage)) 
   facet_wrap(~caller,
     ncol = 1, scales = "free_x",
     labeller = as_labeller(c(
-      rtiger = "RTIGER · rigidity", nnil = "nNIL · rrate",
-      lbimpute = "LB-Impute · recombdist (cM)"
+      rtiger = "rtiger · rigidity", nnil = "nnil · rrate",
+      lbimpute = "lbimpute · recombdist (cM)"
     ))
   ) +
   scale_x_log10() +
@@ -140,11 +140,11 @@ ggplot(curves, aes(value, donor_frag_FDR, colour = coverage, group = coverage)) 
   theme_bw(base_size = 12)
 ```
 
-**nNIL is a flat low-`rrate` plateau.** Across the whole low-`rrate` range the FDR
+**nnil is a flat low-`rrate` plateau.** Across the whole low-`rrate` range the FDR
 barely moves (recall is already $\approx 1$), so the "minimum" is essentially noise
 — which is why the per-coverage `rrate*` bounces around above. The operational
-decision is therefore to run nNIL at a **single fixed `rrate` = 3.3e-5** in the
-sweep rather than the per-coverage argmin; RTIGER and LB-Impute do carry their
+decision is therefore to run nnil at a **single fixed `rrate` = 3.3e-5** in the
+sweep rather than the per-coverage argmin; rtiger and lbimpute do carry their
 per-coverage values.
 
 # Recall is not the discriminating metric
@@ -166,8 +166,8 @@ ggplot(picks, aes(coverage, recall, group = caller, colour = caller)) +
 # Bottom line
 
 The calibration gives each caller a coverage-matched parameter for the
-degradation sweep: RTIGER's `rigidity` climbs 16 → 128 with depth, LB-Impute's
-`recombdist` settles near 8–25 cM, and nNIL's FDR plateau means a single fixed
+degradation sweep: rtiger's `rigidity` climbs 16 → 128 with depth, lbimpute's
+`recombdist` settles near 8–25 cM, and nnil's FDR plateau means a single fixed
 `rrate` is the honest choice. All three hold donor recall at $\approx 1$; the
 tuning only trades off spurious donor fragments (FDR). Parameters are read from
 `results/sim/teonam/{rtiger,nnil,lbimpute}_calib_bycov.csv`; the full selection

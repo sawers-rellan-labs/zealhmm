@@ -14,8 +14,8 @@ execute:
   echo: true
 ---
 
-**Thesis.** Ancestry-caller segmentation parameters (`rrate` for nNIL, `rigidity`
-for RTIGER) can be **calibrated from cheap Broman `simcross` simulations** where
+**Thesis.** Ancestry-caller segmentation parameters (`rrate` for nnil, `rigidity`
+for rtiger) can be **calibrated from cheap Broman `simcross` simulations** where
 the donor mosaic is known truth, rather than tuned by eye on real data.
 
 **Method — a two-stage search** (`R/calibrate.R`, driven by
@@ -92,13 +92,13 @@ calib_panel <- function(sweep, refine, star, xlab, xtrans) {
     labs(x = xlab, y = "score", colour = NULL) +
     theme(legend.position = "top")
 }
-p_nnil <- calib_panel(nnil_sw, nnil_rf, par["rrate_star"], "nNIL rrate", scale_x_log10()) +
-  ggtitle(sprintf("nNIL — refined rrate = %.2g", par["rrate_star"]))
+p_nnil <- calib_panel(nnil_sw, nnil_rf, par["rrate_star"], "nnil rrate", scale_x_log10()) +
+  ggtitle(sprintf("nnil — refined rrate = %.2g", par["rrate_star"]))
 p_rtig <- calib_panel(
-  rtig_sw, rtig_rf, par["rigidity_star"], "RTIGER rigidity",
+  rtig_sw, rtig_rf, par["rigidity_star"], "rtiger rigidity",
   scale_x_continuous(trans = "log2")
 ) +
-  ggtitle(sprintf("RTIGER — refined rigidity = %d", as.integer(par["rigidity_star"])))
+  ggtitle(sprintf("rtiger — refined rigidity = %d", as.integer(par["rigidity_star"])))
 patchwork_ok <- requireNamespace("patchwork", quietly = TRUE)
 if (patchwork_ok) {
   print(patchwork::wrap_plots(p_nnil, p_rtig))
@@ -117,9 +117,9 @@ show <- function(s, pcol) {
     n_breakpoints, truth_bp, ks = round(ks_fragsize, 3)
   )]
 }
-cat("nNIL rrate log sweep:\n")
+cat("nnil rrate log sweep:\n")
 print(show(nnil_sw))
-cat("\nRTIGER rigidity log sweep (powers of 2, feasibility-capped):\n")
+cat("\nrtiger rigidity log sweep (powers of 2, feasibility-capped):\n")
 print(show(rtig_sw))
 ```
 

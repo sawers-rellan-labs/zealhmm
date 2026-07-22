@@ -27,7 +27,7 @@
 # LB-IMPUTE PARAMS (map-aware; owner decision 2026-07-06):
 #  - unit = "cm": transition decays over v5 consensus cM, so local recombination-
 #    rate variation (maize centromeric suppression) is captured — consistent with
-#    the cM step-interpolation and RTIGER/nNIL's map-based operation.
+#    the cM step-interpolation and rtiger/nnil's map-based operation.
 #  - recombdist + drp: CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
 #    scripts/02_calibrate.R) and read from calib_params.csv (drp=TRUE for RILs).
 #  - err = 0.01 (read/allele error, = the read-sim error), genotypeerr = 0.05
@@ -36,7 +36,7 @@
 #    are filled by the distance transition -> complete rectangular block).
 #  - Flat start (no design prior): LB-Impute has no state-frequency prior in its
 #    transition, so the start distribution is left flat.
-#  - Read model + seeds identical to the RTIGER sweep (deterministic per cell:
+#  - Read model + seeds identical to the rtiger sweep (deterministic per cell:
 #    seed = 1000 + 100*family_index + lambda_index).
 #
 # Writes results/sim/teonam/stam_gwas_lbimpute_lambda<L>.csv (per lambda) and the
@@ -164,7 +164,7 @@ recover_block <- function(fam, li) {
   M <- nrow(mt)
   N <- length(keys)
 
-  set.seed(1000L + 100L * fi + li) # per-cell seed (identical to the RTIGER sweep)
+  set.seed(1000L + 100L * fi + li) # per-cell seed (identical to the rtiger sweep)
   ac <- .draw_counts(as.vector(D),
     lambda = lambda,
     pi_floor = READ_PARS$pi_floor, k_decay = READ_PARS$k_decay,

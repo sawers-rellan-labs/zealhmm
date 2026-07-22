@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# Per-coverage RTIGER rigidity calibration on SIMULATED ground truth (118K grid).
+# Per-coverage rtiger rigidity calibration on SIMULATED ground truth (118K grid).
 #
 # Why per-coverage: a fair coverage-degradation sweep needs each caller at its
 # per-coverage optimum, not one rigidity tuned at a single depth. Ground truth is a
@@ -66,7 +66,7 @@ log_info(
   mean(mpm$N), center, paste(RIG_VALUES, collapse = ", ")
 )
 log_info(
-  "=== RTIGER per-coverage rigidity calibration: %d coverages x %d rigidities, %d threads ===",
+  "=== rtiger per-coverage rigidity calibration: %d coverages x %d rigidities, %d threads ===",
   length(LAMBDAS), length(RIG_VALUES), THREADS
 )
 
@@ -101,7 +101,7 @@ for (i in seq_along(LAMBDAS)) {
   cov_frac <- mean(d$n_ref + d$n_alt > 0)
   vals <- feasible_rigidity(d, RIG_VALUES) # 2*r < min covered markers/chr
   t0 <- Sys.time()
-  # ONE shared RTIGER EM fit + a decode per rigidity (EM is rigidity-independent),
+  # ONE shared rtiger EM fit + a decode per rigidity (EM is rigidity-independent),
   # so no golden-refine (which would re-fit per probe). The integer grid + flat-top
   # Dice make sub-octave refinement pointless.
   sw <- sweep_calibrate(d, truth, grid,

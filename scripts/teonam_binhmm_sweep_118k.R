@@ -2,7 +2,7 @@
 # =============================================================================
 # STAM GWAS degradation sweep on the AUTHENTIC 118K panel (TeoNAM, binhmm)
 # simulate reads -> binhmm (1 Mb bins) ancestry -> back-project -> GWAS. Fifth
-# caller of the coverage-degradation composite, alongside control/nNIL/RTIGER/
+# caller of the coverage-degradation composite, alongside control/nnil/rtiger/
 # LB-Impute (shared design in scripts/teonam_rtiger_sweep_118k.R).
 #   * TRUTH = authentic 118K per-SNP genotypes (teonam_gwas118k_dosage_polar.rds).
 #   * binhmm bins the COVERAGE-SUBSAMPLED simulated reads into 1 Mb windows
@@ -48,7 +48,7 @@ if (!SMOKE && !("--generate" %in% ARGS)) {
 LAMBDAS <- if (SMOKE) c(1, Inf) else c(0.1, 0.2, 0.5, 1, 5, 10, 20, Inf) # Inf = perfect-coverage ceiling
 BIN_SIZE <- 1e6 # 1 Mb bins, FIXED (no tuning) -- binhmm's segmentation scale
 # BC1S4 start priors (start distribution for binhmm's sticky transition) -- same
-# source as the nNIL/LB-Impute calibrations: breeding_prior("BC1S4").
+# source as the nnil/LB-Impute calibrations: breeding_prior("BC1S4").
 EXP <- breeding_prior("BC1S4")
 F1 <- as.numeric(EXP["HET"])
 F2 <- as.numeric(EXP["ALT"])

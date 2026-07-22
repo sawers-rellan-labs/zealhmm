@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL trait scan — JOINT multi-trait R/qtl (bcsft) interval mapping on the RTIGER
+# ZEAL trait scan — JOINT multi-trait R/qtl (bcsft) interval mapping on the rtiger
 # ancestry mosaic. Every trait shares ONE cross (identical genotype = the projected
 # mosaic; only the phenotype columns differ), so calc.genoprob, scanone, and the
 # 1000x permutation null are each computed ONCE over the whole panel — the permutation
