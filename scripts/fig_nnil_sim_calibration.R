@@ -21,6 +21,7 @@ suppressMessages({
   library(data.table)
   library(here)
   library(ggplot2)
+  library(ggtext)
   library(patchwork)
   library(nilHMM)
 })
@@ -239,6 +240,26 @@ mk_ecdf <- function(d, ttl) {
 }
 
 p_C <- mk_ecdf(ecdf_C, "Real GBS, 24 NILs:\nnnil calls vs chip calls")
+
+# Two-sample KS on panel C: chip-calibrated vs sim-calibrated nnil introgression
+# sizes (same real 24 NILs). Non-significant p => the two calibrations agree.
+ks_C <- suppressWarnings(ks.test(sz_chipcal, sz_simcal))
+ks_p <- ks_C$p.value
+ks_txt <- if (ks_p >= 0.01) sprintf("%.2f", ks_p) else sprintf("%.0e", ks_p)
+lg("[fig] panel C KS (chip-cal vs sim-cal nnil): D=%.3f p=%.3g", ks_C$statistic, ks_p)
+# chip/sim coloured to match the panel-C legend; p-value symbol in italics (ggtext)
+ks_rich <- sprintf(
+  "calibration<br><span style='color:%s'>chip</span> vs <span style='color:%s'>sim</span><br>*p* = %s",
+  pal[[L_nnil_chip]], pal[[L_nnil_on_sim]], ks_txt
+)
+p_C <- p_C + geom_richtext(
+  data = data.frame(x = 11, y = 0.15, label = ks_rich),
+  aes(x, y, label = label), inherit.aes = FALSE,
+  hjust = 0, vjust = 0.5, size = ANN, lineheight = 0.9, colour = "grey20",
+  fill = "white", label.color = NA, label.r = grid::unit(0, "pt"),
+  label.padding = grid::unit(2, "pt")
+)
+
 p_B <- mk_ecdf(ecdf_B, "Simulated GBS:\nnnil calls vs simulated ancestry")
 
 p_D <- ggplot(qq, aes(chip_cal, sim_cal)) +
