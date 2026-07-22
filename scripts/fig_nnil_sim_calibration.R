@@ -168,8 +168,9 @@ L_sim_anc <- sprintf("simulated ancestry\n%s truth", DESIGN)
 L_nnil_on_sim <- sprintf("sim-calibrated nnil\n(nir=%.2f)", nir_sim)
 L_chip_calls <- "chip calls\n(Zhong 2025)"
 L_nnil_chip <- sprintf("chip-calibrated nnil\n(nir=%.2f)", nir_chip)
+# colour = data domain: blue = simulation, orange = chip-calibrated, black = chip-calls truth
 pal <- setNames(
-  c("black", "#0072B2", "#D55E00", "black"),
+  c("#0072B2", "#0072B2", "#D55E00", "black"),
   c(L_sim_anc, L_nnil_on_sim, L_nnil_chip, L_chip_calls)
 )
 # ground truth = dotted, callers = solid (panels B and C)
@@ -187,6 +188,9 @@ ecdf_C <- rbindlist(list(
   data.table(size_mb = sz_chipcal, series = L_nnil_chip),
   data.table(size_mb = sz_simcal, series = L_nnil_on_sim)
 ))
+# ground truth first so it sits at the top of each legend
+ecdf_B[, series := factor(series, levels = c(L_sim_anc, L_nnil_on_sim))]
+ecdf_C[, series := factor(series, levels = c(L_chip_calls, L_nnil_chip, L_nnil_on_sim))]
 qs <- ppoints(200)
 qq <- data.table(chip_cal = quantile(sz_chipcal, qs), sim_cal = quantile(sz_simcal, qs))
 
@@ -210,11 +214,11 @@ p_A <- ggplot(sweep, aes(param, mismatch, colour = truth)) +
     colour = "#0072B2", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN, alpha = 0.5
   ) +
   annotate("text",
-    x = nir_real_donor - 0.052, y = 0.01, label = "real donor",
+    x = nir_real_donor - 0.052, y = 0.01, label = "chip donor",
     colour = "black", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN, alpha = 0.5
   ) +
   scale_colour_manual(
-    values = c(sim = "#0072B2", chip = "black"),
+    values = c(sim = "#0072B2", chip = "#D55E00"),
     labels = c(sim = "sim GBS vs sim ancestry", chip = "real GBS vs chip calls"),
     name = "calibration"
   ) +
