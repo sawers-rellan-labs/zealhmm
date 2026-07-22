@@ -164,12 +164,17 @@ lg(
 # ================================ plot ======================================
 ANN <- BASE * 0.8 / .pt # match the legend category-label size (theme legend.text = rel(0.8) of BASE)
 
-L_sim_anc <- sprintf("simulated ancestry\n(%s truth)", DESIGN)
+L_sim_anc <- sprintf("simulated ancestry\n%s truth", DESIGN)
 L_nnil_on_sim <- sprintf("sim-calibrated nnil\n(nir=%.2f)", nir_sim)
 L_chip_calls <- "chip calls\n(Zhong 2025)"
 L_nnil_chip <- sprintf("chip-calibrated nnil\n(nir=%.2f)", nir_chip)
 pal <- setNames(
   c("black", "#0072B2", "#D55E00", "black"),
+  c(L_sim_anc, L_nnil_on_sim, L_nnil_chip, L_chip_calls)
+)
+# ground truth = dotted, callers = solid (panels B and C)
+lty_pal <- setNames(
+  c("dotted", "solid", "solid", "dotted"),
   c(L_sim_anc, L_nnil_on_sim, L_nnil_chip, L_chip_calls)
 )
 
@@ -194,16 +199,19 @@ MB_LABELS <- c("0.1", "1", "10", "100")
 p_A <- ggplot(sweep, aes(param, mismatch, colour = truth)) +
   geom_line() +
   geom_point(size = 1) +
-  geom_point(data = opt, size = 3, shape = 21, fill = "white") +
-  geom_vline(xintercept = nir_sim_donor, linetype = "dotted", colour = "#0072B2", linewidth = 0.8) +
-  geom_vline(xintercept = nir_real_donor, linetype = "dotted", colour = "black", linewidth = 0.8) +
+  geom_point(
+    data = opt, size = 3, shape = 21, fill = "white",
+    colour = ifelse(opt$truth == "sim", "#0072B2", "#D55E00") # dot = the caller it yields in C/D
+  ) +
+  geom_vline(xintercept = nir_sim_donor, linetype = "dashed", colour = "#0072B2", linewidth = 0.8, alpha = 0.35) +
+  geom_vline(xintercept = nir_real_donor, linetype = "dashed", colour = "black", linewidth = 0.8, alpha = 0.35) +
   annotate("text",
     x = nir_sim_donor + 0.035, y = 0.01, label = "sim donor",
-    colour = "#0072B2", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN
+    colour = "#0072B2", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN, alpha = 0.5
   ) +
   annotate("text",
     x = nir_real_donor - 0.052, y = 0.01, label = "real donor",
-    colour = "black", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN
+    colour = "black", angle = 90, hjust = 0.5, vjust = 0.5, size = ANN, alpha = 0.5
   ) +
   scale_colour_manual(
     values = c(sim = "#0072B2", chip = "black"),
@@ -226,10 +234,11 @@ p_A <- ggplot(sweep, aes(param, mismatch, colour = truth)) +
   )
 
 mk_ecdf <- function(d, ttl) {
-  ggplot(d, aes(size_mb, colour = series)) +
+  ggplot(d, aes(size_mb, colour = series, linetype = series)) +
     stat_ecdf(linewidth = 1) +
     scale_x_log10(breaks = MB_BREAKS, labels = MB_LABELS, limits = xlim_mb, oob = scales::oob_keep) +
     scale_colour_manual(values = pal, name = NULL) +
+    scale_linetype_manual(values = lty_pal, name = NULL) +
     labs(x = "introgression size (Mb)", y = "ECDF", title = ttl) +
     theme_bw(base_size = BASE) +
     theme(
@@ -263,7 +272,7 @@ p_C <- p_C + geom_richtext(
 p_B <- mk_ecdf(ecdf_B, "Simulated GBS:\nnnil calls vs simulated ancestry")
 
 p_D <- ggplot(qq, aes(chip_cal, sim_cal)) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_abline(slope = 1, intercept = 0, colour = "grey50") +
   geom_point(size = 1.3, colour = "#0072B2") +
   scale_x_log10(limits = xlim_mb, breaks = MB_BREAKS, labels = MB_LABELS, oob = scales::oob_keep) +
   scale_y_log10(limits = xlim_mb, breaks = MB_BREAKS, labels = MB_LABELS, oob = scales::oob_keep) +
@@ -282,5 +291,4 @@ fig <- (p_A | p_B) / (p_C | p_D) +
     plot.tag.location = "plot", plot.tag.position = "topleft"
   )
 ggsave(file.path(SIMDIR, "fig_nnil_sim_calibration.png"), fig, width = 13, height = 13, dpi = 150)
-ggsave(file.path(SIMDIR, "fig_nnil_sim_calibration.pdf"), fig, width = 13, height = 13)
-lg("[fig] wrote fig_nnil_sim_calibration.{png,pdf}")
+lg("[fig] wrote fig_nnil_sim_calibration.png")
