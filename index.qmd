@@ -57,7 +57,10 @@ listing:
         description: "Two-stage simcross parameter search (calibrate on sim, validate on truth)"
       - title: "nNIL calibration foil"
         path: analysis/nnil-calibration-foil.qmd
-        description: "Which parameter did Holland's chip calibration actually determine? The recombination rate is a benign hyperparameter (map suffices); the emission nir carries 97.7% of the signal"
+        description: "calibration insensitivity to the intermarker recombination fraction and sensitivity to the non-informative rate"
+      - title: "nNIL sim calibration"
+        path: analysis/nnil-sim-calibration.qmd
+        description: "Calibrating the emission nir on a count-from-parents simcross reproduces Zhong et al.'s scarce SNP-chip calibration, giving the same calls on real GBS"
       - title: "GWAS-landscape geometry"
         path: analysis/GWAS_autocorrelation.qmd
         description: "Framework: rank ancestry callers by the spatial coherence (autocorrelation / band-limited noise) of the GWAS profile"
