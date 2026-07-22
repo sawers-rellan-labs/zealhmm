@@ -31,6 +31,12 @@ donors are of *mixed taxonomic rank* (some species, e.g. *Z. diploperennis* /
 umbrella. Taxa: **Zv / Zx / Zl / Zd / Zh**. Dotted codes `Zx.####` are individual
 **founder accessions** (82 across the 5 taxa; see the `bzea-taxa-naming` memory).
 
+This applies to **attribute / column / label names** too: call the field `taxon` (or the
+`maizegdb_prefix` code Zd/Zh/Zl/Zn/Zv/Zx), **never** `species` — even where a source table
+uses it (e.g. the reference-panel metadata's `Species` / `reference_group` columns): relabel
+to taxon in our prose, columns, figures, and levels. "Taxon-level" (not "species-level") is
+the correct phrase for a per-taxon quantity (e.g. the per-taxon non-informative rate / dose).
+
 ## Population-structure covariate (Family vs. taxon)
 
 The structure covariate differs by dataset **and by analysis** — and, importantly, the ZEAL

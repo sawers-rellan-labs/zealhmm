@@ -273,7 +273,7 @@ empirical-truth anchor and is unaffected by the GWAS-set gap.
 
 ## Still to freeze (plan B5 — blocks B2.3 / B2.4)
 
-- [ ] **~400 paired BrB + skim cohort manifest** — IDs, donor species, per-source
+- [ ] **~400 paired BrB + skim cohort manifest** — IDs, donor taxon, per-source
       depth. Trace from `sample_metatada.csv` / `bzea-sample-donor-metadata` +
       the BRB and skim sample maps. Blocks `source-method-comparison.qmd`.
 - [ ] Which MolBreeding target-seq samples for the calibration cross-check.
@@ -379,6 +379,21 @@ recalibrated RTIGER if ever needed).
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
 into `data/zeal/` (gitignored) and consumed by `scripts/zeal_hwe_post_gt.R`. The README states the
+
+**Teosinte reference panel on the SNP50K frame (for the ZEAL count-from-parents sim).** From the
+same `50K/results/joint/`: `bzea_50K_ref_panel.vcf.gz` (**217 teosinte individuals**, Grzybowski
+et al. 2023 resequencing panel, projected to the SNP50K sites) is the reference/donor pool the sim
+resamples WITH replacement as taxon-matched stand-ins; `bzea_50K_cohort_ref.vcf.gz` (1,656 samples =
+cohort + reference) and `bzea_50K_cohort_ref_metadata.csv` classify every sample (`is_reference`,
+`maizegdb_prefix` = Zd/Zh/Zl/Zn/Zv/Zx/Zm, `donor_accession`, `donor_taxa`, `NIL_pedigree`). Staged
+locally (mount unstable) into `data/zeal/reference_panel/` (gitignored) with a derived
+`reference_ids_by_taxon.csv` (217 rows: Zv 88, Zx 79, Zn 14, Zl 9, Zh 9, Zd 5, Zm 1, NA 12). NOTE
+(snp50k_genotype_identifiability.qmd §2.6): these are **taxon-level** panel common variants
+(taxon, never "species" — the taxa span ranks; TERMINOLOGY.md), not the individual donor
+accessions' own genotypes — hence the stand-in resampling. Skim coverage/missing
+regime input: `data/missing_data/snp50k_per_sample.tsv`.
+
+The README states the
 wall (the genotype↔ancestry-mosaic distinction — `nilhmm/design/TERMINOLOGY.md`; ZEAL object names
 in `TERMINOLOGY.md`): a `_mosaic` PLINK/012 file encodes **ancestry** dosage on the SNP's
 ref/alt alleles for tooling compatibility — it is not a genotype and does not report the true
