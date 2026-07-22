@@ -99,29 +99,11 @@ cached compute step): `scripts/fig_nnil_sim_calibration.R`. Real GBS calls:
 
 ## Figure
 
-::: {.callout-note title="Figure caption"}
-**Calibrating the nNIL non-informative rate (`nir`) against a count-from-parents
-simulation reproduces calibration against the scarce SNP-chip truth.**
-**(A)** Marker-mismatch calibration curves: total marker mismatch of the `nnil`
-caller versus `nir`, scored against the simulated ancestry (blue; 640 BC5S4 nNILs
-from 16 real NAM founders) and against the SNP-chip introgression calls on the 24
-both-platform nNILs (black); open circles mark each minimum (simulation `nir`\* =
-0.70, chip `nir`\* = 0.80, both on the shallow high-`nir` plateau near Zhong et al.'s
-0.90). Dotted verticals mark the donors' measured non-informative rate `f0` (blue,
-realized in the simulation; black, from the real founder genotypes), ≈ 0.54 — well
-below the mismatch-optimal `nir`, because the >90% REF background makes marker
-mismatch a weak criterion that tolerates over-smoothing. **(B)** Donor
-introgression-size ECDF on the simulated GBS: sim-calibrated `nnil` calls versus the
-simulated ancestry truth. **(C)** On the 24 real nNILs, introgression-size ECDFs of
-the chip- and sim-calibrated `nnil` calls versus the chip calls (Zhong et al. 2025).
-**(D)** QQ plot of per-line introgression sizes from the sim-calibrated versus
-chip-calibrated `nnil`, both applied to the same real GBS; points on the dashed 1:1
-line indicate the two calibrations yield equivalent calls. RTIGER is omitted because
-it requires read counts, which the released GBS lacks.
-:::
-
-```{r figure, echo=FALSE, out.width="100%"}
-#| fig-cap: "See caption above."
+```{r}
+#| label: fig-nnil-calibration
+#| echo: false
+#| out-width: "100%"
+#| fig-cap: "**Calibrating the nNIL non-informative rate (`nir`) against a count-from-parents simulation reproduces calibration against the scarce SNP-chip truth.** **(A)** Marker-mismatch calibration curves: total marker mismatch of the `nnil` caller versus `nir`, scored against the simulated ancestry (blue; 640 BC5S4 nNILs from 16 real NAM founders) and against the SNP-chip introgression calls on the 24 both-platform nNILs (black); open circles mark each minimum (simulation `nir`\\* = 0.70, chip `nir`\\* = 0.80, both on the shallow high-`nir` plateau near Zhong et al.'s 0.90). Dotted verticals mark the donors' measured non-informative rate `f0` (blue, realized in the simulation; black, from the real founder genotypes), ≈ 0.54 — well below the mismatch-optimal `nir`, because the >90% REF background makes marker mismatch a weak criterion that tolerates over-smoothing. **(B)** Donor introgression-size ECDF on the simulated GBS: sim-calibrated `nnil` calls versus the simulated ancestry truth. **(C)** On the 24 real nNILs, introgression-size ECDFs of the chip- and sim-calibrated `nnil` calls versus the chip calls (Zhong et al. 2025). Significance: p-value from a two-sample Kolmogorov–Smirnov test. **(D)** QQ plot of per-line introgression sizes from the sim-calibrated versus chip-calibrated `nnil`, both applied to the same real GBS; points on the dashed 1:1 line indicate the two calibrations yield equivalent calls. RTIGER is omitted because it requires read counts, which the released GBS lacks."
 if (file.exists(FIG)) {
   knitr::include_graphics(FIG)
 } else {
@@ -162,4 +144,3 @@ if (file.exists(FIG)) {
 - Marker mismatch is Zhong et al.'s criterion and is used here so the sim↔chip
   comparison is on their terms; a donor-recovery metric (e.g. Dice) would sharpen the
   optimum but is a separate analysis.
-```
