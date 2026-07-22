@@ -173,7 +173,7 @@ Even setting the caller aside, the *signal itself* is far weaker than the naive
 The reference allele model is the Grzybowski (2023) resequencing panel
 (`##source="schnable2021"`), filtered to biallelic SNPs with
 `--min-af 0.05:minor` and intersected to the ZEAL HQ sites. **Not imputed.** So
-panel sites are *common* teosinte-vs-B73 variants — segregating in the species,
+panel sites are *common* teosinte-vs-B73 variants — segregating in the taxon,
 but not fixed in any one accession.
 
 ### 2.2 Transmission model
@@ -196,10 +196,10 @@ like B73.
 
 ### 2.3 Panel data
 
-Per-donor-species genotype composition at panel sites (217-sample teosinte panel;
+Per-donor-taxon genotype composition at panel sites (217-sample teosinte panel;
 each row is the per-individual average):
 
-| donor species | f₀ (REF) | f₁ (HET) | f₂ (ALT-hom) | het\|non-ref | **d = f₂ + ½·f₁** |
+| donor taxon | f₀ (REF) | f₁ (HET) | f₂ (ALT-hom) | het\|non-ref | **d = f₂ + ½·f₁** |
 |---|---:|---:|---:|---:|---:|
 | parviglumis (Zv) | 64.2% | 15.2% | 20.6% | 42.5% | **0.282** |
 | mexicana (Zx) | 57.7% | 18.8% | 23.6% | 44.3% | **0.330** |
@@ -279,7 +279,7 @@ Three things the reads confirm:
    (Zl essentially exact: 0.329 vs 0.333). Two fully independent measurements —
    donor-panel genotype composition and NIL read fractions — agree that
    **d ≈ 0.3, not ≈ 1.** The reads run slightly high, consistent with
-   (i) the specific donor accessions carrying more alt than the species average and
+   (i) the specific donor accessions carrying more alt than the taxon average and
    (ii) HET segments absorbing some true-HOM markers (see next point).
 3. **The HET/HOM split is not clean — as predicted.** Under the model $2\times$HET
    should equal HOM; instead HOM $>2\times$HET (e.g. Zx 0.49 vs 0.37) because at
@@ -297,7 +297,7 @@ Estimates: `agent/dose_estimates_by_taxon.csv`.
 Restricting to sites where the donor is **fixed-ALT** ($f_2\to1$, $d\to1$) would
 restore the clean $\{0, \tfrac12, 1\}$ model. But "fixed in *this* donor" cannot be
 known without the **donor accession's own genotypes**, which we do not have; the
-`--min-af 0.05:minor` species panel identifies *common* variants, not
+`--min-af 0.05:minor` taxon panel identifies *common* variants, not
 accession-fixed ones. This is a more basic reference-data gap than phasing/LD:
 without the donor genotype we cannot even label which markers are informative for a
 given cross. It is the fundamental reason low-coverage genotype-imputation results
@@ -312,7 +312,7 @@ from human aDNA or inbred-founder PHGs do not transfer here.
   1-\varepsilon\}$ emission is mis-specified. This is why rtiger's per-taxon
   `fit_means` outperforms the fixed-mean count emission on this data.
 - **Prefer donor-enriched sites where possible.** Selecting sites with high
-  species-level $f_2$ raises $d$ toward 1 and widens state separation, up to the
+  taxon-level $f_2$ raises $d$ toward 1 and widens state separation, up to the
   accession ceiling in §2.6.
 - **Report honestly.** The donor *footprint* (where introgression is) is
   recoverable; the het-vs-donor-hom split is marginal ($0.15$ vs $0.30$); per-site
@@ -331,7 +331,7 @@ D=/Volumes/rsstu/users/r/rrellan/BZea/bzeaseq/50K/results/joint
 bcftools query -f '%AC\t%AN\n' "$D/cohort.vcf.gz" \
  | awk '$1!="."&&$2>0{p=$1/$2;n++;s+=p;if(p<.01)b++} END{print "mean AF",s/n,"  frac<0.01",b/n}'
 
-# §2.3 per-species donor dose d = f2 + 0.5*f1  (ref_<species>.txt = panel sample lists)
+# §2.3 per-taxon donor dose d = f2 + 0.5*f1  (ref_<taxon>.txt = panel sample lists)
 bcftools view -S ref_Z__parviglumis.txt --force-samples "$D/bzea_50K_ref_panel.vcf.gz" \
  | bcftools query -f '[%GT\n]' | awk -F'[/|]' '
    {n++; if($1=="."||$2==".")next; if($1==0&&$2==0)r++; else if($1==$2)a++; else h++}
