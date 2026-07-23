@@ -177,19 +177,19 @@ ancestry-state calls differ from the chip.
 Holland's File_S04 `mismatchMean` at the same configuration is
 `{r} sprintf("%.4f", his_opt$mismatchMean)` (~0.078%) — **the identical quantity
 divided by the number of lines.** In his grid code (`File_S16.py`, line 122) the
-per-line mismatch is `np.nanmean(NIL_vs_chip, axis = 1) / NIL_vs_chip.shape[0]`:
-`np.nanmean(…, axis = 1)` already *is* the per-line disagreement rate, and the extra
-`/ NIL_vs_chip.shape[0]` divides it again by `shape[0]` = the number of NILs (24).
-So `mismatchMean` = our per-cell rate ÷ n_lines, and the ~24× we observe is exactly
-those 24 lines. Zhong et al. (2025) report this value verbatim ("mismatch rate of
-0.0007", "0.078%") and describe it in words only as a GBS-vs-chip "mismatch rate,"
-with no mention of the per-line division — so it reads as a stray denominator, not
-an intended per-line-contribution metric.
+per-line mismatch is `np.nanmean(NIL_vs_chip, axis = 1) / NIL_vs_chip.shape[0]`;
+since `np.nanmean(…, axis = 1)` is the per-line disagreement rate and `shape[0]` is
+the number of NILs (24), each value equals that rate divided by 24. So
+`mismatchMean` = our per-cell rate ÷ n_lines, and the ~24× we observe is exactly
+those 24 lines. Zhong et al. (2025) report this value ("mismatch rate of 0.0007",
+"0.078%") and describe it as a GBS-vs-chip "mismatch rate"; the two metrics differ
+only by this constant factor of n_lines.
 
-This changes none of their conclusions: dividing every one of the 945
-configurations by the same constant is monotone, so the optimum, the ranking, and
-the `nir`-dominance are identical (hence Pearson = 1.000, same `argmin`). Only the
-reported *magnitude* is 24× low. We keep the honest per-cell rate; the next section
+This difference does not affect any of their conclusions: dividing every one of the
+945 configurations by the same constant is monotone, so the optimum, the ranking,
+and the `nir`-dominance are identical (hence Pearson = 1.000, same `argmin`). Only
+the reported *magnitude* differs by the n_lines factor. We report the per-cell rate
+here so the value reads directly as an ancestry-call error rate; the next section
 asks what that ~1.8% floor is made of.
 
 ## 3. The ~2% marker-mismatch floor is donor-recall, not HET-calling error
@@ -244,8 +244,8 @@ at every configuration. The objective is the GBS-vs-chip **ancestry-call** misma
 rate: `1 - marker accuracy` over all ancestry-state calls (one value per
 (marker × NIL) cell), including the >90% recurrent background (`marker_dice`,
 `R/metrics.R`). Holland's File_S04 reports this same rate divided by the number of
-lines (`File_S16.py:122`, a stray `/NIL_vs_chip.shape[0]` = ÷24); the two are
-otherwise identical (Pearson 1.000). Grid run:
+lines (`File_S16.py:122` includes a per-line `/NIL_vs_chip.shape[0]`, = ÷24); the
+two are otherwise identical (Pearson 1.000). Grid run:
 `scripts/nnil_foil/12_holland_grid.R`; floor decomposition:
 `scripts/nnil_foil/13_het_error_decomposition.R`. Both read the same real 24-line
 GBS and chip calls as `08_nir_sweep.R`.
