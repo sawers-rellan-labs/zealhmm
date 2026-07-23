@@ -162,20 +162,43 @@ ggplot(marg, aes(level, mm, colour = src)) +
   )
 ```
 
-The rows are on different scales by design: the **absolute** mismatch level differs,
-our optimum at
-`{r} sprintf("%.4f", our_opt$mismatch)` (~1.8%), Holland's File_S04 at
-`{r} sprintf("%.4f", his_opt$mismatchMean)` (~0.07%). Pearson = 1 means this is a
-pure vertical offset, so it changes no conclusion drawn from the grid, but it does
-raise the question the last section answers: what is that ~2% floor.
+### What the mismatch rate is, and why File_S04's is ~24× smaller
+
+We report the mismatch as **the fraction of ancestry-state calls that disagree with
+the chip: one value per cell of the (marker × NIL) matrix** — the ancestry state
+being recurrent (REF), heterozygous introgression (HET), or homozygous donor
+introgression (ALT). `nnil` ingests hard genotype calls but *outputs* these
+ancestry states, and the mismatch is between the GBS and chip ancestry calls. It is
+pooled over all 24 NILs and 11,310 shared markers (`1 - marker accuracy`, all
+states, including the >90% recurrent background). Our optimum is
+`{r} sprintf("%.4f", our_opt$mismatch)` (~1.8%): about 18 of every 1000
+ancestry-state calls differ from the chip.
+
+Holland's File_S04 `mismatchMean` at the same configuration is
+`{r} sprintf("%.4f", his_opt$mismatchMean)` (~0.078%) — **the identical quantity
+divided by the number of lines.** In his grid code (`File_S16.py`, line 122) the
+per-line mismatch is `np.nanmean(NIL_vs_chip, axis = 1) / NIL_vs_chip.shape[0]`:
+`np.nanmean(…, axis = 1)` already *is* the per-line disagreement rate, and the extra
+`/ NIL_vs_chip.shape[0]` divides it again by `shape[0]` = the number of NILs (24).
+So `mismatchMean` = our per-cell rate ÷ n_lines, and the ~24× we observe is exactly
+those 24 lines. Zhong et al. (2025) report this value verbatim ("mismatch rate of
+0.0007", "0.078%") and describe it in words only as a GBS-vs-chip "mismatch rate,"
+with no mention of the per-line division — so it reads as a stray denominator, not
+an intended per-line-contribution metric.
+
+This changes none of their conclusions: dividing every one of the 945
+configurations by the same constant is monotone, so the optimum, the ranking, and
+the `nir`-dominance are identical (hence Pearson = 1.000, same `argmin`). Only the
+reported *magnitude* is 24× low. We keep the honest per-cell rate; the next section
+asks what that ~1.8% floor is made of.
 
 ## 3. The ~2% marker-mismatch floor is donor-recall, not HET-calling error
 
 A natural guess is that the floor is a heterozygote-calling-error minimum
 (spurious/dropped hets that no `nir` removes). It is not. Decomposing the
-chip-truth by nnil-call confusion at the optimum `nir` shows the mismatch is
-dominated by **REF↔ALT (homozygote↔homozygote)** disagreement, with only about a
-quarter touching a HET call.
+chip vs nnil ancestry-state confusion at the optimum `nir` shows the mismatch is
+dominated by **REF↔ALT (recurrent vs homozygous-donor ancestry)** disagreement,
+with only about a quarter touching a HET call.
 
 ```{r floor-decomp}
 d95 <- decomp[nir == 0.95]
@@ -191,25 +214,25 @@ kable(floor_tab, caption = "Decomposition of the marker-mismatch floor at the op
 cw <- dcast(conf, V1 ~ V2, value.var = "N")
 setnames(cw, "V1", "chip")
 cw <- cw[match(c("REF", "HET", "ALT"), chip), .(chip, REF, HET, ALT)]
-kable(cw, digits = 5, caption = "Chip-truth (rows) by nnil-call (columns) confusion at nir = 0.95, as a genome fraction. Rows are the chip truth state, columns the nnil call. The largest off-diagonal cell is chip-ALT called REF (donor under-recall).")
+kable(cw, digits = 5, caption = "Chip vs nnil ancestry-state confusion at nir = 0.95 (genome fraction). Rows are the chip ancestry state, columns the nnil ancestry call; states are recurrent (REF), heterozygous introgression (HET), homozygous donor (ALT). The largest off-diagonal cell is chip-ALT called REF (donor under-recall).")
 ```
 
 The single largest error cell is **chip-ALT called REF**
 (`{r} sprintf("%.4f", conf[V1 == "ALT" & V2 == "REF"]$N)`): the caller misses
 roughly 0.9% of the genome the chip calls donor, calling it recurrent. That is a
 donor-recall / boundary-placement gap (the caller slightly under-fragments), not a
-het artifact. Removing every HET-involving disagreement leaves ~1.3% mismatch,
-nowhere near Holland's 0.07%. So:
+het artifact. Removing every HET-involving disagreement still leaves ~1.3% per-cell
+mismatch: the floor is overwhelmingly donor-recall. So:
 
 ::: {.callout-important}
 ## The het-error-floor hypothesis is refuted
-At the optimum the ~1.8% GBS-vs-chip floor is **~74% genuine REF↔ALT donor-recall
+At the optimum the ~1.8% per-cell mismatch is **~74% genuine REF↔ALT donor-recall
 disagreement** (dominated by chip-donor blocks the caller calls recurrent) and only
-**~26% HET-involving**, and this split is stable across `nir` (0.594, 0.9, 0.95).
-The offset from Holland's absolute 0.07% is therefore a donor-recall / scoring
-difference between our `nnil` and his `hmmlearn`, not a het-calling artifact. It
-does not affect the simulation-calibration comparison (`fig:simcal`), which rests
-on the `nir` argmin agreeing, not on the floor's composition.
+**~26% HET-involving**, stable across `nir` (0.594, 0.9, 0.95). This is the
+*composition* of our per-cell rate, and it is a separate matter from why File_S04's
+number is ~24× smaller (that is the ÷n_lines denominator of Section 2, not a caller
+difference). Neither affects the simulation-calibration comparison (`fig:simcal`),
+which rests on the `nir` `argmin` agreeing, not on the floor's value.
 :::
 
 ## Methods
@@ -217,9 +240,12 @@ on the `nir` argmin agreeing, not on the floor's composition.
 `caller_grid()` (nilHMM, the unified `viterbi_sweep_cpp` kernel) runs the emission
 grid at the R level (one genotype-emission build per combination) and batches the
 transition (`r`) grid through the C++ Viterbi, reproducing a cold `call_ancestry()`
-at every configuration. The objective is Holland's File_S16 criterion: total
-GBS-vs-chip marker mismatch, `1 - marker accuracy` over all states including the
->90% REF background (`marker_dice`, `R/metrics.R`). Grid run:
+at every configuration. The objective is the GBS-vs-chip **ancestry-call** mismatch
+rate: `1 - marker accuracy` over all ancestry-state calls (one value per
+(marker × NIL) cell), including the >90% recurrent background (`marker_dice`,
+`R/metrics.R`). Holland's File_S04 reports this same rate divided by the number of
+lines (`File_S16.py:122`, a stray `/NIL_vs_chip.shape[0]` = ÷24); the two are
+otherwise identical (Pearson 1.000). Grid run:
 `scripts/nnil_foil/12_holland_grid.R`; floor decomposition:
 `scripts/nnil_foil/13_het_error_decomposition.R`. Both read the same real 24-line
 GBS and chip calls as `08_nir_sweep.R`.
