@@ -30,6 +30,7 @@ suppressMessages({
   library(here)
   library(ggplot2)
   library(patchwork)
+  library(ggtext)
 })
 devtools::load_all(path.expand("~/repos/nilhmm"), quiet = TRUE) # caller_grid, call_gt (feat branch, not installed nilHMM)
 source(here::here("R/metrics.R"))
@@ -43,6 +44,7 @@ R_MOLB <- 1.67e-3
 TRUTH_CFG <- data.frame(nir = 0.7, germ = 1e-3, gert = 1e-4, p = 0.9, mr = 0) # MolB truth caller
 KEEP <- c("name", "chr", "start_bp", "end_bp", "state")
 BASE <- 20
+ANN <- BASE * 0.8 / .pt # match the legend category-label size (theme legend.text = rel(0.8) of BASE)
 CACHE <- file.path(OUT, "fig_zeal_molbreeding_skim_calibration_cache.rds")
 
 if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
@@ -201,7 +203,7 @@ p_A <- ggplot(sweep, aes(nir, mismatch, colour = truth)) +
   labs(x = expression("non-informative rate " * italic(nir)), y = "marker mismatch rate", title = "nnil nir calibration") +
   theme_bw(base_size = BASE) +
   theme(
-    aspect.ratio = 1, legend.position = c(0.5, 0.99), legend.justification = c(0.5, 1),
+    aspect.ratio = 1, legend.position = c(0.02, 0.99), legend.justification = c(0, 1),
     legend.background = element_rect(fill = "transparent", colour = NA),
     legend.key = element_rect(fill = "transparent", colour = NA)
   )
@@ -234,11 +236,30 @@ ecdf_C <- rbindlist(list(
 p_B <- mk_ecdf(ecdf_B, "Simulation:\nnnil calls vs latent ancestry", c(L_st, L_sim, L_molb))
 p_C <- mk_ecdf(ecdf_C, "Real skim:\nnnil calls vs MolBreeding truth", c(L_mt, L_molb, L_sim))
 
+# Two-sample KS on panel C: sim-calibrated vs molb-calibrated nnil introgression sizes
+# (same 14 real skim NILs). Non-significant p => the two calibrations agree.
+ks_C <- suppressWarnings(ks.test(skim_sz_sim, skim_sz_molb))
+ks_p <- ks_C$p.value
+ks_txt <- if (ks_p >= 0.01) sprintf("%.2f", ks_p) else sprintf("%.0e", ks_p)
+log_info("[fig] panel C KS (sim-cal vs molb-cal nnil): D=%.3f p=%.3g", ks_C$statistic, ks_p)
+# molb/sim coloured to match the panel-C legend; p-value symbol in italics (ggtext)
+ks_rich <- sprintf(
+  "calibration<br><span style='color:%s'>molb</span> vs <span style='color:%s'>sim</span><br>*p* = %s",
+  col_molb, col_sim, ks_txt
+)
+p_C <- p_C + geom_richtext(
+  data = data.frame(x = 20, y = 0.25, label = ks_rich),
+  aes(x, y, label = label), inherit.aes = FALSE,
+  hjust = 0, vjust = 0.5, size = ANN, lineheight = 0.9, colour = "grey20",
+  fill = "transparent", label.color = NA, label.r = grid::unit(0, "pt"),
+  label.padding = grid::unit(2, "pt")
+)
+
 qs <- ppoints(200)
 qq <- data.table(sim = quantile(skim_sz_sim, qs), molb = quantile(skim_sz_molb, qs))
 p_D <- ggplot(qq, aes(molb, sim)) +
   geom_abline(slope = 1, intercept = 0, colour = "grey50") +
-  geom_point(size = 1.3, colour = "grey20") +
+  geom_point(size = 1.3, colour = col_sim) +
   scale_x_log10(limits = xlim_mb, breaks = MB_BREAKS, oob = scales::oob_keep) +
   scale_y_log10(limits = xlim_mb, breaks = MB_BREAKS, oob = scales::oob_keep) +
   labs(
