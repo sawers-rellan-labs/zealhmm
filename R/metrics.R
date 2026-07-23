@@ -186,31 +186,54 @@ fragment_size_ks <- function(a, b) {
   suppressWarnings(as.numeric(stats::ks.test(a, b)$statistic))
 }
 
+#' Rasterize a multi-sample segment table to per-name state vectors (once, reusable)
+#'
+#' The truth is CONSTANT across a parameter sweep, so rasterize it ONCE with this and
+#' pass the result to `marker_dice(..., truth_raster = )`, instead of re-rasterizing it
+#' inside every config's call (the dominant serial cost of a large grid).
+#' @param seg Common-schema segments (multi-sample).
+#' @param grid Shared evaluation grid (`data.table(chr, pos)`).
+#' @return Named list: sample name -> integer state vector over `grid` rows (NA uncovered).
+#' @export
+rasterize_named <- function(seg, grid) {
+  seg <- data.table::as.data.table(seg)
+  nms <- unique(seg$name)
+  stats::setNames(lapply(nms, function(nm) rasterize_states(seg[name == nm], grid)$state), nms)
+}
+
 #' Per-state marker precision/recall/Dice vs truth (pooled over samples)
 #'
 #' The marker-level score. Includes a binary `donor(>0)` row (introgression
-#' present) — its **recall is the "marker true-positive rate" Holland maximized**;
-#' its **Dice** is what we argue to optimize instead (penalizes the false donor
-#' calls that drive over-fragmentation).
+#' present) — its **recall** is the donor-marker true-positive rate (fraction of
+#' true donor markers recovered), a detection metric; its **Dice** combines that
+#' with precision, penalizing the false donor calls that drive over-fragmentation.
+#' (Holland's File_S04 objective was minimizing the GBS-vs-chip per-cell mismatch,
+#' not maximizing this recall — see analysis/nnil-holland-grid-reproduction.qmd.)
 #'
 #' @param called,truth Common-schema segments for the same samples.
 #' @param grid Shared evaluation grid (`data.table(chr, pos)`).
+#' @param truth_raster Optional pre-rasterized truth from [rasterize_named()]; supply it
+#'   across a sweep so the constant truth is rasterized once, not per config.
 #' @return List: `per_class` (REF/HET/ALT + donor(>0): precision, recall, dice,
 #'   n_truth), `macro_dice` (mean over the 3 states), `accuracy`, `n`.
 #' @export
-marker_dice <- function(called, truth, grid) {
+marker_dice <- function(called, truth, grid, truth_raster = NULL) {
   called <- data.table::as.data.table(called)
-  truth <- data.table::as.data.table(truth)
-  nms <- intersect(unique(called$name), unique(truth$name))
-  cc <- integer(0)
-  tt <- integer(0)
-  for (nm in nms) {
-    c1 <- rasterize_states(called[name == nm], grid)$state
-    t1 <- rasterize_states(truth[name == nm], grid)$state
+  # Rasterize the (constant) truth ONCE via truth_raster and reuse it across configs;
+  # rasterize_named() builds it. Falls back to rasterizing truth here if not supplied.
+  if (is.null(truth_raster)) truth_raster <- rasterize_named(truth, grid)
+  nms <- intersect(unique(called$name), names(truth_raster))
+  cl <- vector("list", length(nms))
+  tl <- vector("list", length(nms))
+  for (i in seq_along(nms)) {
+    c1 <- rasterize_states(called[name == nms[i]], grid)$state
+    t1 <- truth_raster[[nms[i]]]
     ok <- !is.na(c1) & !is.na(t1)
-    cc <- c(cc, c1[ok])
-    tt <- c(tt, t1[ok])
+    cl[[i]] <- c1[ok]
+    tl[[i]] <- t1[ok]
   }
+  cc <- unlist(cl, use.names = FALSE)
+  tt <- unlist(tl, use.names = FALSE)
   prf <- function(pred, tru) {
     tp <- sum(pred & tru)
     fp <- sum(pred & !tru)
@@ -251,11 +274,15 @@ marker_dice <- function(called, truth, grid) {
 #' @param called,truth Common-schema segments for the same samples.
 #' @param states Donor states (default HET+ALT = "introgression present").
 #' @param min_overlap Reciprocal-overlap threshold (default 0.5).
+#' @param truth_blocks Optional pre-merged truth blocks (`.donor_blocks(truth, states)`);
+#'   supply it across a sweep so the constant truth blocks are merged once, not per config.
 #' @return List: `precision, recall, dice, fdr, n_truth, n_called`.
 #' @export
-donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap = 0.5) {
+donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap = 0.5, truth_blocks = NULL) {
   cb <- .donor_blocks(called, states)
-  tb <- .donor_blocks(truth, states)
+  # truth blocks are constant across a sweep -> precompute once with .donor_blocks(truth)
+  # and pass as truth_blocks to skip recomputing them every config.
+  tb <- if (is.null(truth_blocks)) .donor_blocks(truth, states) else data.table::copy(truth_blocks)
   cb[, gk := paste(name, chr, sep = "\r")]
   tb[, gk := paste(name, chr, sep = "\r")]
   cb[, hit := FALSE]
@@ -320,7 +347,7 @@ calibrate_sweep <- function(data, truth, grid, caller, param, values, ...) {
     data.table::data.table(
       param = param, value = v,
       marker_macro_dice = mf$macro_dice,
-      donor_marker_recall = donor_row$recall, # the Holland "true-positive" objective
+      donor_marker_recall = donor_row$recall, # donor-marker true-positive rate (detection metric)
       donor_marker_dice = donor_row$dice,
       donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
       n_breakpoints = breakpoint_count(called), # over-fragmentation proxy
