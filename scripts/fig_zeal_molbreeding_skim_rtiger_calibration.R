@@ -116,9 +116,25 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALRTIG_RECOMPUTE") == "") {
   ))
   skim_m <- metrics_leg(skim_seg, molb_truth, molb_grid, molb_traster, molb_tblocks)
 
+  # KS criterion: introgression-size KS distance vs a genotype-derived ancestry reference
+  # (same as the nnil KS figure): sim = nnil on the simulated true genotypes g_true; molb =
+  # nnil on the observed hardcalls. Never scored against an rtiger run.
+  sim_gtrue_long <- data.table(
+    name = rep(sub_names, each = M), chr = rep(as.integer(sim$grid$chr), length(sub)),
+    pos = rep(as.integer(sim$grid$pos), length(sub)), g = as.integer(sim$g_true[, sub])
+  )
+  sim_gref_sz <- donor_block_sizes(as.data.table(caller_grid(sim_gtrue_long,
+    caller = "nnil",
+    emission_grid = TRUTH_CFG, rrate = sim$map_r, design = "BC2S3", threads = threads
+  ))[, ..KEEP])
+  molb_ref_sz <- donor_block_sizes(molb_truth)
+  sim_m[, ks := sapply(RIG_GRID, function(v) fragment_size_ks(donor_block_sizes(seg_at(sim_seg, v)[, ..KEEP]), sim_gref_sz))]
+  skim_m[, ks := sapply(RIG_GRID, function(v) fragment_size_ks(donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP]), molb_ref_sz))]
+
   D <- list(
     sweep = rbind(cbind(truth = "sim", sim_m), cbind(truth = "molb", skim_m)),
     sim_truth_sz = donor_block_sizes(sim_truth),
+    sim_gref_sz = sim_gref_sz,
     molb_truth_sz = donor_block_sizes(molb_truth),
     sim_sz_by_rig = setNames(lapply(RIG_GRID, function(v) donor_block_sizes(seg_at(sim_seg, v)[, ..KEEP])), keyv(RIG_GRID)),
     skim_sz_by_rig = setNames(lapply(RIG_GRID, function(v) donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP])), keyv(RIG_GRID))
@@ -141,12 +157,20 @@ CRIT <- list(
   mismatch = list(
     metric = "mismatch", opt = which.min, ylab = "marker mismatch rate",
     title = "rtiger rigidity calibration", legA = c(0.02, 0.02), legAj = c(0, 0),
+    sim_ref = "sim_truth_sz", st_lab = "sim latent ancestry\nBC2S3",
     out = "fig_zeal_molbreeding_skim_rtiger_calibration.png"
   ),
   fdr = list(
     metric = "fdr", opt = which.min, ylab = "donor fragment FDR",
     title = "rtiger rigidity FDR calibration", legA = c(0.98, 0.98), legAj = c(1, 1),
+    sim_ref = "sim_truth_sz", st_lab = "sim latent ancestry\nBC2S3",
     out = "fig_zeal_molbreeding_skim_rtiger_fdr_calibration.png"
+  ),
+  ks = list(
+    metric = "ks", opt = which.min, ylab = "introgression-size KS distance (D)",
+    title = "rtiger rigidity KS calibration", legA = c(0.98, 0.98), legAj = c(1, 1),
+    sim_ref = "sim_gref_sz", st_lab = "sim nnil-on-g_true\nancestry",
+    out = "fig_zeal_molbreeding_skim_rtiger_ks_calibration.png"
   )
 )
 
@@ -164,11 +188,12 @@ make_cal_fig <- function(crit) {
 
   L_sim <- sprintf("sim calibrated \nrtiger (R=%d)", rig_sim)
   L_molb <- sprintf("molb calibrated \nrtiger (R=%d)", rig_molb)
-  L_st <- "sim latent ancestry\nBC2S3"
+  st_sz <- get(cf$sim_ref) # panel-B sim reference block sizes (latent, or genotype-derived for ks)
+  L_st <- cf$st_lab
   L_mt <- "molb calls"
   pal <- c(setNames(c(col_sim, col_molb), c(L_sim, L_molb)), setNames(c("black", "black"), c(L_st, L_mt)))
   lty <- c(setNames(c("solid", "solid"), c(L_sim, L_molb)), setNames(c("dotted", "dotted"), c(L_st, L_mt)))
-  allsz <- c(sim_truth_sz, sim_sz_sim, sim_sz_molb, molb_truth_sz, skim_sz_sim, skim_sz_molb)
+  allsz <- c(st_sz, sim_sz_sim, sim_sz_molb, molb_truth_sz, skim_sz_sim, skim_sz_molb)
   xlim_mb <- c(0.1, max(allsz[is.finite(allsz) & allsz > 0]))
 
   # A: criterion vs rigidity (log x), y from 0; open circle = operating point
@@ -207,7 +232,7 @@ make_cal_fig <- function(crit) {
       )
   }
   ecdf_B <- rbindlist(list(
-    data.table(size_mb = sim_truth_sz, series = L_st),
+    data.table(size_mb = st_sz, series = L_st),
     data.table(size_mb = sim_sz_sim, series = L_sim),
     data.table(size_mb = sim_sz_molb, series = L_molb)
   ))
@@ -260,3 +285,4 @@ make_cal_fig <- function(crit) {
 
 make_cal_fig("mismatch")
 make_cal_fig("fdr")
+make_cal_fig("ks")

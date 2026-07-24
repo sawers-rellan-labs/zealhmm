@@ -76,7 +76,10 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
   )
   sim_truth <- as.data.table(sim$truth)[name %in% sub_names]
   sim_grid <- data.table(chr = as.integer(sim$grid$chr), pos = as.integer(sim$grid$pos))
-  sim_traster <- rasterize_named(sim_truth, sim_grid) # rasterize the (constant) sim truth ONCE
+  # marker-mismatch truth is GENOTYPE-level (level 2): the true simulated genotype g_true,
+  # NOT the latent ancestry -- so non-informative donor sites (g_true=0) are not an
+  # impossible target. DSC stays against the ancestry blocks (fragments are ancestry-level).
+  sim_graster <- setNames(lapply(sub_names, function(nm) as.integer(sim$g_true[, nm])), sub_names)
   sim_tblocks <- .donor_blocks(sim_truth) # merge sim truth blocks ONCE (for the DSC criterion)
   R_SKIM <- sim$map_r # SNP50K map-derived r (same cM map as the skim)
   EG <- data.frame(
@@ -98,8 +101,20 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
     )
     s
   }))
-  sim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, sim_grid, truth_raster = sim_traster)$accuracy)
+  sim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(sim_seg, v)[, ..KEEP], NULL, sim_grid, truth_raster = sim_graster)$accuracy)
   sim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dice)
+  # genotype-derived ancestry reference: nnil on the simulated true genotypes g_true -- the
+  # sim analog of nnil-on-molb-hardcalls (an achievable ancestry, unlike the latent mosaic).
+  # Its introgression-size distribution is the target for the KS-distance criterion.
+  sim_gtrue_long <- data.table(
+    name = rep(sub_names, each = M), chr = rep(as.integer(sim$grid$chr), length(sub)),
+    pos = rep(as.integer(sim$grid$pos), length(sub)), g = as.integer(sim$g_true[, sub])
+  )
+  sim_gref_sz <- donor_block_sizes(as.data.table(caller_grid(sim_gtrue_long,
+    caller = "nnil",
+    emission_grid = TRUTH_CFG, rrate = R_SKIM, design = "BC2S3", threads = threads
+  ))[, ..KEEP])
+  sim_ks <- sapply(NIR_GRID, function(v) fragment_size_ks(donor_block_sizes(seg_at(sim_seg, v)[, ..KEEP]), sim_gref_sz))
 
   # ---- MolB truth: nnil on molbreeding hard calls; skim test: ML-called counts ----
   pair <- fread(here::here("data/zeal/correspondence/calibration_pairing.csv"))[in_calibration == TRUE]
@@ -131,10 +146,20 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
     caller = "nnil",
     emission_grid = EGk, rrate = R_SKIM, design = "BC2S3", threads = 4L
   ))
-  molb_traster <- rasterize_named(molb_truth, molb_grid) # rasterize the MolB truth ONCE
-  molb_tblocks <- .donor_blocks(molb_truth) # merge MolB truth blocks ONCE
-  skim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, molb_grid, truth_raster = molb_traster)$accuracy)
+  # marker-mismatch truth is the caller-agnostic OBSERVED molb hard genotypes (level 2),
+  # keyed by test_sample and aligned to molb_grid (g=3 -> NA, excluded). DSC stays against
+  # the nnil-on-hardcalls ancestry blocks (fragments are ancestry-level).
+  molb_graster <- setNames(lapply(pair$test_sample, function(ts) {
+    tsr <- pair$truth_sample[match(ts, pair$test_sample)]
+    gg <- hc[name == tsr][molb_grid, on = c("chr", "pos")]$g
+    gg[gg == 3L] <- NA_integer_
+    as.integer(gg)
+  }), pair$test_sample)
+  molb_tblocks <- .donor_blocks(molb_truth) # merge MolB truth blocks ONCE (DSC)
+  skim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(skim_seg, v)[, ..KEEP], NULL, molb_grid, truth_raster = molb_graster)$accuracy)
   skim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dice)
+  molb_ref_sz <- donor_block_sizes(molb_truth) # genotype-derived ancestry (nnil on hardcalls) = KS target
+  skim_ks <- sapply(NIR_GRID, function(v) fragment_size_ks(donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP]), molb_ref_sz))
 
   # Criterion-agnostic cache: store BOTH calibration curves (marker mismatch AND donor-
   # fragment DSC) for each truth, and the introgression-size distribution at EVERY nir grid
@@ -143,10 +168,11 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
   keyv <- function(v) sprintf("%.2f", v)
   D <- list(
     sweep = rbind(
-      data.table(truth = "sim", nir = NIR_GRID, mismatch = sim_mm, dsc = sim_dsc),
-      data.table(truth = "molb", nir = NIR_GRID, mismatch = skim_mm, dsc = skim_dsc)
+      data.table(truth = "sim", nir = NIR_GRID, mismatch = sim_mm, dsc = sim_dsc, ks = sim_ks),
+      data.table(truth = "molb", nir = NIR_GRID, mismatch = skim_mm, dsc = skim_dsc, ks = skim_ks)
     ),
     sim_truth_sz = donor_block_sizes(sim_truth),
+    sim_gref_sz = sim_gref_sz, # genotype-derived ancestry (nnil on g_true) block sizes = KS target / panel-B ref
     molb_truth_sz = donor_block_sizes(molb_truth),
     sim_sz_by_nir = setNames(lapply(NIR_GRID, function(v) donor_block_sizes(seg_at(sim_seg, v)[, ..KEEP])), keyv(NIR_GRID)),
     skim_sz_by_nir = setNames(lapply(NIR_GRID, function(v) donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP])), keyv(NIR_GRID))
@@ -181,18 +207,30 @@ col_molb <- "#D55E00"
 MB_BREAKS <- c(0.1, 1, 10, 100)
 keyv <- function(v) sprintf("%.2f", v)
 
+# sim_ref/st_lab: which sim block-size distribution is panel B's dotted reference. mismatch/
+# fragment show the latent mosaic; ks shows the genotype-derived ancestry (nnil on g_true),
+# which is what the KS distance is minimized against.
 CRIT <- list(
   mismatch = list(
-    metric = "mismatch", opt = which.min, ylab = "marker mismatch rate",
+    metric = "mismatch", opt = which.min, ylab = "marker mismatch rate", molb_lab = "real skim vs molb genotypes",
     title = "nnil nir mismatch calibration", legA = c(0.02, 0.99), legAj = c(0, 1),
     taxon_y = 0.30, ks_x = 20, ks_y = 0.25, ks_hjust = 0,
+    sim_ref = "sim_truth_sz", st_lab = "sim latent ancestry\nBC2S3",
     out = "fig_zeal_molbreeding_skim_calibration.png"
   ),
   fragment = list(
-    metric = "dsc", opt = which.max, ylab = "donor fragment DSC",
+    metric = "dsc", opt = which.max, ylab = "donor fragment DSC", molb_lab = "real skim vs molb ancestry",
     title = "nnil nir fragment calibration", legA = c(0.02, 0.99), legAj = c(0, 1),
     taxon_y = 0.30, ks_x = 20, ks_y = 0.25, ks_hjust = 0,
+    sim_ref = "sim_truth_sz", st_lab = "sim latent ancestry\nBC2S3",
     out = "fig_zeal_molbreeding_skim_fragment_calibration.png"
+  ),
+  ks = list(
+    metric = "ks", opt = which.min, ylab = "introgression-size KS distance (D)", molb_lab = "real skim vs molb ancestry",
+    title = "nnil nir KS calibration", legA = c(0.98, 0.98), legAj = c(1, 1),
+    taxon_y = 0.50, ks_x = 20, ks_y = 0.25, ks_hjust = 0,
+    sim_ref = "sim_gref_sz", st_lab = "sim nnil-on-g_true\nancestry",
+    out = "fig_zeal_molbreeding_skim_ks_calibration.png"
   )
 )
 
@@ -210,11 +248,12 @@ make_cal_fig <- function(crit) {
 
   L_sim <- sprintf("sim calibrated \nnnil (nir=%.2f)", nir_sim)
   L_molb <- sprintf("molb calibrated \nnnil (nir=%.2f)", nir_molb)
-  L_st <- "sim latent ancestry\nBC2S3"
+  st_sz <- get(cf$sim_ref) # panel-B sim reference block sizes (latent, or genotype-derived for ks)
+  L_st <- cf$st_lab
   L_mt <- "molb calls"
   pal <- c(setNames(c(col_sim, col_molb), c(L_sim, L_molb)), setNames(c("black", "black"), c(L_st, L_mt)))
   lty <- c(setNames(c("solid", "solid"), c(L_sim, L_molb)), setNames(c("dotted", "dotted"), c(L_st, L_mt)))
-  allsz <- c(sim_truth_sz, sim_sz_sim, sim_sz_molb, molb_truth_sz, skim_sz_sim, skim_sz_molb)
+  allsz <- c(st_sz, sim_sz_sim, sim_sz_molb, molb_truth_sz, skim_sz_sim, skim_sz_molb)
   xlim_mb <- c(0.1, max(allsz[is.finite(allsz) & allsz > 0]))
 
   # A: sim (blue) + MolBreeding (orange) calibration curves; open circle = operating point
@@ -230,7 +269,7 @@ make_cal_fig <- function(crit) {
     ) +
     scale_colour_manual(
       values = c(sim = col_sim, molb = col_molb),
-      labels = c(sim = "sim skim vs sim ancestry", molb = "real skim vs molb ancestry"), name = "calibration"
+      labels = c(sim = "sim skim vs sim latent ancestry", molb = cf$molb_lab), name = "calibration"
     ) +
     labs(x = expression("non-informative rate " * italic(nir)), y = cf$ylab, title = cf$title) +
     theme_bw(base_size = BASE) +
@@ -256,7 +295,7 @@ make_cal_fig <- function(crit) {
       )
   }
   ecdf_B <- rbindlist(list(
-    data.table(size_mb = sim_truth_sz, series = L_st),
+    data.table(size_mb = st_sz, series = L_st),
     data.table(size_mb = sim_sz_sim, series = L_sim),
     data.table(size_mb = sim_sz_molb, series = L_molb)
   ))
@@ -311,3 +350,4 @@ make_cal_fig <- function(crit) {
 
 make_cal_fig("mismatch")
 make_cal_fig("fragment")
+make_cal_fig("ks")
