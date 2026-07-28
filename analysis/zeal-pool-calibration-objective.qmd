@@ -126,9 +126,9 @@ kable(opt_tab, caption = sprintf(
 
 Two facts make the mismatch objective the wrong one here.
 
-**Its dynamic range is small.** Across all `r nrow(g)` configurations the per-cell
-mismatch spans only `r sprintf("%.3f to %.3f", min(g$mismatch), max(g$mismatch))`
-: a factor of about `r sprintf("%.2f", max(g$mismatch) / min(g$mismatch))`, so
+**Its dynamic range is small.** Across all `r if (exists("g")) nrow(g) else NA` configurations the per-cell
+mismatch spans only `r if (exists("g")) sprintf("%.3f to %.3f", min(g$mismatch), max(g$mismatch)) else NA`
+: a factor of about `r if (exists("g")) sprintf("%.2f", max(g$mismatch) / min(g$mismatch)) else NA`, so
 even the parameters that move it move it by little in absolute terms.
 
 **What movement it has points at the degenerate solution.** The objective is not
@@ -138,7 +138,7 @@ along the recombination axis it *falls* as `r` rises, because higher `r` fragmen
 the mosaic and, on a mostly-recurrent pool, that shaves the pooled rate without
 recovering donor blocks. The `nir` gradient of the two objectives is the crux:
 mismatch is best at intermediate-low `nir` (marginal minimum near `nir` = 0.3, and
-its single best configuration sits at `nir` = `r mm_opt$nir`), whereas donor
+its single best configuration sits at `nir` = `r if (exists("mm_opt")) mm_opt$nir else NA`), whereas donor
 recovery, Section 2, wants `nir` = 0.7. Mismatch rewards under-calling donor;
 that is the opposite of what the calibration is for.
 
@@ -165,7 +165,7 @@ ggplot(mm_marg, aes(level, value)) +
 Scoring the same grid by **donor fragment Dice**, the overlap between the donor
 blocks the caller places and the donor blocks in the truth, restores a
 well-behaved objective. It has real dynamic range (from ~0 up to
-`r sprintf("%.2f", max(g$donor_frag_dice, na.rm = TRUE))`), and it responds
+`r if (exists("g")) sprintf("%.2f", max(g$donor_frag_dice, na.rm = TRUE)) else NA`), and it responds
 sharply and interpretably to the parameters that matter.
 
 ```{r fig-dice-marginals, fig.width = 9, fig.height = 3, fig.cap = "Marginal mean donor fragment Dice (ZEAL pool sim, nnil donor blocks vs sim truth donor blocks) versus each swept parameter. The open circle marks each panel's maximum. Unlike mismatch, Dice has a strong gradient: it rises steeply with nir to a peak near nir = 0.7, and falls monotonically as r increases across the swept range (the low-r end is an under-segmentation artifact, not a low-r optimum, see the caution below). germ, gert, and p are close to flat. Degenerate no-donor configs (undefined Dice) are dropped from each mean; the recombination-axis points are averaged only over configs where donor was called."}
