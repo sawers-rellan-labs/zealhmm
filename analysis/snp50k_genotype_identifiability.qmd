@@ -292,7 +292,52 @@ Three things the reads confirm:
 
 Estimates: `agent/dose_estimates_by_taxon.csv`.
 
-### 2.6 The site-selection ceiling
+### 2.6 Empirical validation, a third measurement: the caller's own fitted emission
+
+The `bbnil` count caller gives a third, fully independent estimate of the dose. Its
+BetaBinomial emission can EM-fit the per-state means (`fit_means = TRUE`) instead of
+assuming the fixed `c(`$\varepsilon$`, ½, 1-`$\varepsilon$`)`. If the dilution model is
+right, the fitted means should relax off the assumed $\{0, \tfrac12, 1\}$ and onto
+$\{\varepsilon,\ d/2,\ d\}$. Running the actual EM (the same `nilHMM:::.em_fit_means`
+that `call_ancestry` uses) on the real skim counts, at the map-derived transition rate
+and `conc = 20`, per calibration NIL and pooled by donor taxon:
+
+| donor taxon | n | fit REF | fit HET | d/2 (panel / reads) | fit HOM | d (panel / reads) | median ΔLL vs fixed |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| parviglumis (Zv) | 1 | 0.004 | **0.145** | 0.141 / 0.157 | 0.169 | 0.282 / 0.342 | +338 |
+| mexicana (Zx) | 10 | 0.004 | **0.201** | 0.165 / 0.187 | 0.421 | 0.330 / 0.492 | +206 |
+| diploperennis (Zd) | 3 | 0.005 | **0.209** | 0.173 / 0.198 | 0.689 | 0.346 / 0.461 | +84 |
+
+`fit *` = median EM-fit `theta`; the `d/2` and `d` reference columns are the panel
+prediction (§2.3) and the read-based estimate (§2.5). Three things line up with the model:
+
+1. **REF relaxes to the error floor.** The fitted REF mean is 0.004 to 0.005 across taxa,
+   the per-read error rate $\varepsilon$, matching the REF-background alt-fraction of §2.5.
+   The REF state emits at noise, not at 0.
+2. **HET relaxes to $d/2 \approx 0.15$, not ½.** The fitted HET mean lands at 0.145 to
+   0.209, inside the predicted $d/2$ band (panel 0.14 to 0.17, reads 0.16 to 0.20). The
+   assumed value of ½ is roughly three times too high. This is the single most important
+   number: it is exactly the compression the dilution model predicts, and it is what a
+   fixed emission gets wrong.
+3. **HOM relaxes toward $d$ but stays noisy.** The fitted HOM mean is 0.17 to 0.69,
+   scattered around and above the $d \approx 0.3$ band and consistent with the read-based
+   HOM of 0.34 to 0.49. The scatter is the identifiability limit itself (§2.5, point 3): at
+   $0.4\times$ the caller thresholds the alt-fraction rather than resolving zygosity, so the
+   HET/HOM split is marginal.
+
+The marginal log-likelihood increases for **every** sample (+57 to +338 nats), so the
+fixed `c(`$\varepsilon$`, ½, 1-`$\varepsilon$`)` emission does not merely differ from the
+fitted one, it fits the read counts strictly and substantially worse. The mis-specification
+is real, and the fit removes it.
+
+This also pins down which knob matters. Of the count emission's parameters only `fit_means`
+can reach this geometry. The a-priori error `err` sets the means symmetrically to
+`c(err, ½, 1-err)`, so HET is frozen at ½ for any `err` and can never reach 0.15; the
+concentration `conc` controls overdispersion only and does not move the means at all. So
+`fit_means` is not a tuning convenience among interchangeable knobs, it is the one degree of
+freedom that corrects the documented mis-specification.
+
+### 2.7 The site-selection ceiling
 
 Restricting to sites where the donor is **fixed-ALT** ($f_2\to1$, $d\to1$) would
 restore the clean $\{0, \tfrac12, 1\}$ model. But "fixed in *this* donor" cannot be
@@ -309,11 +354,14 @@ from human aDNA or inbred-founder PHGs do not transfer here.
 
 - **Fit the emission means, don't assume them.** The state means are
   $\approx\{0,\,d/2,\,d\}$ with a per-donor $d$; a fixed $\{ \varepsilon, \tfrac12,
-  1-\varepsilon\}$ emission is mis-specified. This is why rtiger's per-taxon
-  `fit_means` outperforms the fixed-mean count emission on this data.
+  1-\varepsilon\}$ emission is mis-specified. The `bbnil` count caller's own EM fit confirms
+  this directly (§2.6): its fitted means relax onto $\{\varepsilon,\ d/2,\ d\}$ and the
+  marginal likelihood improves for every sample. This is why rtiger's per-taxon `fit_means`
+  outperforms the fixed-mean count emission on this data, and why the a-priori knobs `err`
+  (symmetric, HET pinned at ½) and `conc` (overdispersion only) cannot substitute for it.
 - **Prefer donor-enriched sites where possible.** Selecting sites with high
   taxon-level $f_2$ raises $d$ toward 1 and widens state separation, up to the
-  accession ceiling in §2.6.
+  accession ceiling in §2.7.
 - **Report honestly.** The donor *footprint* (where introgression is) is
   recoverable; the het-vs-donor-hom split is marginal ($0.15$ vs $0.30$); per-site
   zygosity is not recoverable and should not be claimed. For B1/anthocyanin QTL the
@@ -338,6 +386,14 @@ bcftools view -S ref_Z__parviglumis.txt --force-samples "$D/bzea_50K_ref_panel.v
    END{c=r+h+a; printf "REF %.3f HET %.3f ALT %.3f  d=%.3f\n",r/c,h/c,a/c,(a+0.5*h)/c}'
 ```
 
+§2.6 (the caller's fitted emission vs the dose) is reproduced by
+`scripts/bbnil_fitmeans_theta_check.R`, which runs the actual `nilHMM:::.em_fit_means` on the
+real skim counts and writes `results/sim/zeal_nil/bbnil_fitmeans_theta_check_bytaxon.csv`:
+
+```bash
+Rscript scripts/bbnil_fitmeans_theta_check.R
+```
+
 ## References
 
 1. Grzybowski MW, Mural RV, Xu G, Turkus J, Yang J, Schnable JC (2023). A common
@@ -354,12 +410,12 @@ bcftools view -S ref_Z__parviglumis.txt --force-samples "$D/bzea_50K_ref_panel.v
    genotype imputation pipeline for ultra-low coverage ancient genomes.
    *Scientific Reports* **10**:18542.
    [doi:10.1038/s41598-020-75387-w](https://doi.org/10.1038/s41598-020-75387-w).
-   — reference-panel (aDNA) imputation that does not transfer here (§2.6).
+   — reference-panel (aDNA) imputation that does not transfer here (§2.7).
 4. Jensen SE, Charles JR, Muleta K, *et al.* (2020). A sorghum practical haplotype
    graph facilitates genome-wide imputation and cost-effective genomic prediction.
    *The Plant Genome* **13**(1):e20009.
    [doi:10.1002/tpg2.20009](https://doi.org/10.1002/tpg2.20009).
-   — inbred-founder PHG imputation that does not transfer here (§2.6).
+   — inbred-founder PHG imputation that does not transfer here (§2.7).
 
 Full caller / genotype-likelihood method-paper references (GATK HaplotypeCaller,
 ANGSD, Li–Stephens) are in the companion

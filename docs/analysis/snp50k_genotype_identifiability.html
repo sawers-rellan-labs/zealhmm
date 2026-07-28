@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Fausto Rodríguez-Zapata">
-<meta name="dcterms.date" content="2026-07-16">
+<meta name="dcterms.date" content="2026-07-27">
 
 <title>Why the SNP50K skim cannot resolve zygosity — two mechanisms, with the math – zealhmm</title>
 <style>
@@ -4228,7 +4228,8 @@ window.Quarto = {
   <li><a href="#panel-data" id="toc-panel-data" class="nav-link" data-scroll-target="#panel-data">2.3 Panel data</a></li>
   <li><a href="#the-emission-signal-is-compressed-not-at-0-½-1" id="toc-the-emission-signal-is-compressed-not-at-0-½-1" class="nav-link" data-scroll-target="#the-emission-signal-is-compressed-not-at-0-½-1">2.4 The emission signal is compressed, not at {0, ½, 1}</a></li>
   <li><a href="#empirical-validation-d-from-the-real-read-fractions" id="toc-empirical-validation-d-from-the-real-read-fractions" class="nav-link" data-scroll-target="#empirical-validation-d-from-the-real-read-fractions">2.5 Empirical validation — <span class="math inline">\(d\)</span> from the real read fractions</a></li>
-  <li><a href="#the-site-selection-ceiling" id="toc-the-site-selection-ceiling" class="nav-link" data-scroll-target="#the-site-selection-ceiling">2.6 The site-selection ceiling</a></li>
+  <li><a href="#empirical-validation-a-third-measurement-the-callers-own-fitted-emission" id="toc-empirical-validation-a-third-measurement-the-callers-own-fitted-emission" class="nav-link" data-scroll-target="#empirical-validation-a-third-measurement-the-callers-own-fitted-emission">2.6 Empirical validation, a third measurement: the caller’s own fitted emission</a></li>
+  <li><a href="#the-site-selection-ceiling" id="toc-the-site-selection-ceiling" class="nav-link" data-scroll-target="#the-site-selection-ceiling">2.7 The site-selection ceiling</a></li>
   </ul></li>
   <li><a href="#consequences" id="toc-consequences" class="nav-link" data-scroll-target="#consequences">3. Consequences</a></li>
   <li><a href="#reproduce" id="toc-reproduce" class="nav-link" data-scroll-target="#reproduce">Reproduce</a></li>
@@ -4259,7 +4260,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 16, 2026</p>
+      <p class="date">July 27, 2026</p>
     </div>
   </div>
   
@@ -4400,7 +4401,7 @@ p(1-p) &gt; (1-\varepsilon)\cdot p^2
 <p>Even setting the caller aside, the <em>signal itself</em> is far weaker than the naive <code>{REF=0, HET=0.5, HOM=1.0}</code> alt-fraction model, because teosinte donors are <strong>outbred and heterozygous</strong>, not inbred lines.</p>
 <section id="panel-provenance" class="level3">
 <h3 class="anchored" data-anchor-id="panel-provenance">2.1 Panel provenance</h3>
-<p>The reference allele model is the Grzybowski (2023) resequencing panel (<code>##source=&quot;schnable2021&quot;</code>), filtered to biallelic SNPs with <code>--min-af 0.05:minor</code> and intersected to the ZEAL HQ sites. <strong>Not imputed.</strong> So panel sites are <em>common</em> teosinte-vs-B73 variants — segregating in the species, but not fixed in any one accession.</p>
+<p>The reference allele model is the Grzybowski (2023) resequencing panel (<code>##source=&quot;schnable2021&quot;</code>), filtered to biallelic SNPs with <code>--min-af 0.05:minor</code> and intersected to the ZEAL HQ sites. <strong>Not imputed.</strong> So panel sites are <em>common</em> teosinte-vs-B73 variants — segregating in the taxon, but not fixed in any one accession.</p>
 </section>
 <section id="transmission-model" class="level3">
 <h3 class="anchored" data-anchor-id="transmission-model">2.2 Transmission model</h3>
@@ -4412,7 +4413,7 @@ d \;=\; 0\cdot f_0 \;+\; \tfrac{1}{2}\cdot f_1 \;+\; 1\cdot f_2 \;=\; f_2 + \tfr
 </section>
 <section id="panel-data" class="level3">
 <h3 class="anchored" data-anchor-id="panel-data">2.3 Panel data</h3>
-<p>Per-donor-species genotype composition at panel sites (217-sample teosinte panel; each row is the per-individual average):</p>
+<p>Per-donor-taxon genotype composition at panel sites (217-sample teosinte panel; each row is the per-individual average):</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 13%">
@@ -4424,7 +4425,7 @@ d \;=\; 0\cdot f_0 \;+\; \tfrac{1}{2}\cdot f_1 \;+\; 1\cdot f_2 \;=\; f_2 + \tfr
 </colgroup>
 <thead>
 <tr class="header">
-<th>donor species</th>
+<th>donor taxon</th>
 <th style="text-align: right;">f₀ (REF)</th>
 <th style="text-align: right;">f₁ (HET)</th>
 <th style="text-align: right;">f₂ (ALT-hom)</th>
@@ -4502,7 +4503,7 @@ d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .
 </section>
 <section id="empirical-validation-d-from-the-real-read-fractions" class="level3">
 <h3 class="anchored" data-anchor-id="empirical-validation-d-from-the-real-read-fractions">2.5 Empirical validation — <span class="math inline">\(d\)</span> from the real read fractions</h3>
-<p>We can estimate <span class="math inline">\(d\)</span> directly from the cohort AD, independent of the panel, by conditioning on ancestry-segment state and reading off the mean alt-read fraction: REF segments <span class="math inline">\(\to \varepsilon\)</span>, HET <span class="math inline">\(\to d/2\)</span>, HOM <span class="math inline">\(\to d\)</span> (<code>agent/estimate_dose_from_reads.R</code>, segments from RTIGER calls which resolve zygosity; alt-fraction pooled over all covered sites of all NILs in a taxon).</p>
+<p>We can estimate <span class="math inline">\(d\)</span> directly from the cohort AD, independent of the panel, by conditioning on ancestry-segment state and reading off the mean alt-read fraction: REF segments <span class="math inline">\(\to \varepsilon\)</span>, HET <span class="math inline">\(\to d/2\)</span>, HOM <span class="math inline">\(\to d\)</span> (<code>agent/estimate_dose_from_reads.R</code>, segments from rtiger calls which resolve zygosity; alt-fraction pooled over all covered sites of all NILs in a taxon).</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 11%">
@@ -4578,16 +4579,84 @@ d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .
 <li><strong>The REF-background floor is <span class="math inline">\(\varepsilon \approx 0.004\)</span>–<span class="math inline">\(0.007\)</span></strong>, exactly the per-read error rate — the REF state emits at the noise floor, not 0 (matching the nilhifi anchoring rationale).</li>
 <li><strong>The read-based <span class="math inline">\(d\)</span> reproduces the panel-genotype <span class="math inline">\(d\)</span></strong> for the four well-sampled donors: the interval <span class="math inline">\([\,2\times\text{HET},\ \text{HOM}\,]\)</span> brackets <span class="math inline">\(d\)</span>, and both land at <span class="math inline">\(\approx 0.3\)</span>–<span class="math inline">\(0.4\)</span> against the panel’s <span class="math inline">\(0.28\)</span>–<span class="math inline">\(0.35\)</span> (Zl essentially exact: 0.329 vs 0.333). Two fully independent measurements — donor-panel genotype composition and NIL read fractions — agree that <strong>d ≈ 0.3, not ≈ 1.</strong> The reads run slightly high, consistent with
 <ol type="i">
-<li>the specific donor accessions carrying more alt than the species average and</li>
+<li>the specific donor accessions carrying more alt than the taxon average and</li>
 <li>HET segments absorbing some true-HOM markers (see next point).</li>
 </ol></li>
 <li><strong>The HET/HOM split is not clean — as predicted.</strong> Under the model <span class="math inline">\(2\times\)</span>HET should equal HOM; instead HOM <span class="math inline">\(&gt;2\times\)</span>HET (e.g. Zx 0.49 vs 0.37) because at <span class="math inline">\(0.4\times\)</span> the caller thresholds the alt-fraction rather than resolving zygosity, so HET keeps the low tail and HOM the high tail. The estimator’s own ambiguity is the identifiability limit this document is about. Zh is the extreme case (HET alt-frac 0.34, HOM 0.89): huehuetenangensis is the most divergent donor, so <span class="math inline">\(d\)</span> is genuinely highest, but the value is uncertain (panel <span class="math inline">\(n=1\)</span>, strong het/hom bleed).</li>
 </ol>
 <p>Estimates: <code>agent/dose_estimates_by_taxon.csv</code>.</p>
 </section>
+<section id="empirical-validation-a-third-measurement-the-callers-own-fitted-emission" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-validation-a-third-measurement-the-callers-own-fitted-emission">2.6 Empirical validation, a third measurement: the caller’s own fitted emission</h3>
+<p>The <code>bbnil</code> count caller gives a third, fully independent estimate of the dose. Its BetaBinomial emission can EM-fit the per-state means (<code>fit_means = TRUE</code>) instead of assuming the fixed <code>c(</code><span class="math inline">\(\varepsilon\)</span><code>, ½, 1-</code><span class="math inline">\(\varepsilon\)</span><code>)</code>. If the dilution model is right, the fitted means should relax off the assumed <span class="math inline">\(\{0, \tfrac12, 1\}\)</span> and onto <span class="math inline">\(\{\varepsilon,\ d/2,\ d\}\)</span>. Running the actual EM (the same <code>nilHMM:::.em_fit_means</code> that <code>call_ancestry</code> uses) on the real skim counts, at the map-derived transition rate and <code>conc = 20</code>, per calibration NIL and pooled by donor taxon:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>donor taxon</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">fit REF</th>
+<th style="text-align: right;">fit HET</th>
+<th style="text-align: right;">d/2 (panel / reads)</th>
+<th style="text-align: right;">fit HOM</th>
+<th style="text-align: right;">d (panel / reads)</th>
+<th style="text-align: right;">median ΔLL vs fixed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>parviglumis (Zv)</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: right;"><strong>0.145</strong></td>
+<td style="text-align: right;">0.141 / 0.157</td>
+<td style="text-align: right;">0.169</td>
+<td style="text-align: right;">0.282 / 0.342</td>
+<td style="text-align: right;">+338</td>
+</tr>
+<tr class="even">
+<td>mexicana (Zx)</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: right;"><strong>0.201</strong></td>
+<td style="text-align: right;">0.165 / 0.187</td>
+<td style="text-align: right;">0.421</td>
+<td style="text-align: right;">0.330 / 0.492</td>
+<td style="text-align: right;">+206</td>
+</tr>
+<tr class="odd">
+<td>diploperennis (Zd)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;"><strong>0.209</strong></td>
+<td style="text-align: right;">0.173 / 0.198</td>
+<td style="text-align: right;">0.689</td>
+<td style="text-align: right;">0.346 / 0.461</td>
+<td style="text-align: right;">+84</td>
+</tr>
+</tbody>
+</table>
+<p><code>fit *</code> = median EM-fit <code>theta</code>; the <code>d/2</code> and <code>d</code> reference columns are the panel prediction (§2.3) and the read-based estimate (§2.5). Three things line up with the model:</p>
+<ol type="1">
+<li><strong>REF relaxes to the error floor.</strong> The fitted REF mean is 0.004 to 0.005 across taxa, the per-read error rate <span class="math inline">\(\varepsilon\)</span>, matching the REF-background alt-fraction of §2.5. The REF state emits at noise, not at 0.</li>
+<li><strong>HET relaxes to <span class="math inline">\(d/2 \approx 0.15\)</span>, not ½.</strong> The fitted HET mean lands at 0.145 to 0.209, inside the predicted <span class="math inline">\(d/2\)</span> band (panel 0.14 to 0.17, reads 0.16 to 0.20). The assumed value of ½ is roughly three times too high. This is the single most important number: it is exactly the compression the dilution model predicts, and it is what a fixed emission gets wrong.</li>
+<li><strong>HOM relaxes toward <span class="math inline">\(d\)</span> but stays noisy.</strong> The fitted HOM mean is 0.17 to 0.69, scattered around and above the <span class="math inline">\(d \approx 0.3\)</span> band and consistent with the read-based HOM of 0.34 to 0.49. The scatter is the identifiability limit itself (§2.5, point 3): at <span class="math inline">\(0.4\times\)</span> the caller thresholds the alt-fraction rather than resolving zygosity, so the HET/HOM split is marginal.</li>
+</ol>
+<p>The marginal log-likelihood increases for <strong>every</strong> sample (+57 to +338 nats), so the fixed <code>c(</code><span class="math inline">\(\varepsilon\)</span><code>, ½, 1-</code><span class="math inline">\(\varepsilon\)</span><code>)</code> emission does not merely differ from the fitted one, it fits the read counts strictly and substantially worse. The mis-specification is real, and the fit removes it.</p>
+<p>This also pins down which knob matters. Of the count emission’s parameters only <code>fit_means</code> can reach this geometry. The a-priori error <code>err</code> sets the means symmetrically to <code>c(err, ½, 1-err)</code>, so HET is frozen at ½ for any <code>err</code> and can never reach 0.15; the concentration <code>conc</code> controls overdispersion only and does not move the means at all. So <code>fit_means</code> is not a tuning convenience among interchangeable knobs, it is the one degree of freedom that corrects the documented mis-specification.</p>
+</section>
 <section id="the-site-selection-ceiling" class="level3">
-<h3 class="anchored" data-anchor-id="the-site-selection-ceiling">2.6 The site-selection ceiling</h3>
-<p>Restricting to sites where the donor is <strong>fixed-ALT</strong> (<span class="math inline">\(f_2\to1\)</span>, <span class="math inline">\(d\to1\)</span>) would restore the clean <span class="math inline">\(\{0, \tfrac12, 1\}\)</span> model. But “fixed in <em>this</em> donor” cannot be known without the <strong>donor accession’s own genotypes</strong>, which we do not have; the <code>--min-af 0.05:minor</code> species panel identifies <em>common</em> variants, not accession-fixed ones. This is a more basic reference-data gap than phasing/LD: without the donor genotype we cannot even label which markers are informative for a given cross. It is the fundamental reason low-coverage genotype-imputation results from human aDNA or inbred-founder PHGs do not transfer here.</p>
+<h3 class="anchored" data-anchor-id="the-site-selection-ceiling">2.7 The site-selection ceiling</h3>
+<p>Restricting to sites where the donor is <strong>fixed-ALT</strong> (<span class="math inline">\(f_2\to1\)</span>, <span class="math inline">\(d\to1\)</span>) would restore the clean <span class="math inline">\(\{0, \tfrac12, 1\}\)</span> model. But “fixed in <em>this</em> donor” cannot be known without the <strong>donor accession’s own genotypes</strong>, which we do not have; the <code>--min-af 0.05:minor</code> taxon panel identifies <em>common</em> variants, not accession-fixed ones. This is a more basic reference-data gap than phasing/LD: without the donor genotype we cannot even label which markers are informative for a given cross. It is the fundamental reason low-coverage genotype-imputation results from human aDNA or inbred-founder PHGs do not transfer here.</p>
 <hr>
 </section>
 </section>
@@ -4595,8 +4664,8 @@ d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .
 <h2 class="anchored" data-anchor-id="consequences">3. Consequences</h2>
 <ul>
 <li><strong>Fit the emission means, don’t assume them.</strong> The state means are <span class="math inline">\(\approx\{0,\,d/2,\,d\}\)</span> with a per-donor <span class="math inline">\(d\)</span>; a fixed <span class="math inline">\(\{ \varepsilon, \tfrac12,
-1-\varepsilon\}\)</span> emission is mis-specified. This is why RTIGER’s per-taxon <code>fit_means</code> outperforms the fixed-mean count emission on this data.</li>
-<li><strong>Prefer donor-enriched sites where possible.</strong> Selecting sites with high species-level <span class="math inline">\(f_2\)</span> raises <span class="math inline">\(d\)</span> toward 1 and widens state separation, up to the accession ceiling in §2.6.</li>
+1-\varepsilon\}\)</span> emission is mis-specified. The <code>bbnil</code> count caller’s own EM fit confirms this directly (§2.6): its fitted means relax onto <span class="math inline">\(\{\varepsilon,\ d/2,\ d\}\)</span> and the marginal likelihood improves for every sample. This is why rtiger’s per-taxon <code>fit_means</code> outperforms the fixed-mean count emission on this data, and why the a-priori knobs <code>err</code> (symmetric, HET pinned at ½) and <code>conc</code> (overdispersion only) cannot substitute for it.</li>
+<li><strong>Prefer donor-enriched sites where possible.</strong> Selecting sites with high taxon-level <span class="math inline">\(f_2\)</span> raises <span class="math inline">\(d\)</span> toward 1 and widens state separation, up to the accession ceiling in §2.7.</li>
 <li><strong>Report honestly.</strong> The donor <em>footprint</em> (where introgression is) is recoverable; the het-vs-donor-hom split is marginal (<span class="math inline">\(0.15\)</span> vs <span class="math inline">\(0.30\)</span>); per-site zygosity is not recoverable and should not be claimed. For B1/anthocyanin QTL the mapping unit is the <strong>segment/dosage genotype</strong>, obtained by projecting the decoded ancestry state onto the markers within a segment — not per-marker calls.</li>
 </ul>
 <hr>
@@ -4609,19 +4678,21 @@ d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;%AC\t%AN\n&#39;</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/cohort.vcf.gz&quot;</span> <span class="dt">\</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;$1!=&quot;.&quot;&amp;&amp;$2&gt;0{p=$1/$2;n++;s+=p;if(p&lt;.01)b++} END{print &quot;mean AF&quot;,s/n,&quot;  frac&lt;0.01&quot;,b/n}&#39;</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># §2.3 per-species donor dose d = f2 + 0.5*f1  (ref_&lt;species&gt;.txt = panel sample lists)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># §2.3 per-taxon donor dose d = f2 + 0.5*f1  (ref_&lt;taxon&gt;.txt = panel sample lists)</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> view <span class="at">-S</span> ref_Z__parviglumis.txt <span class="at">--force-samples</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/bzea_50K_ref_panel.vcf.gz&quot;</span> <span class="dt">\</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;[%GT\n]&#39;</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-F</span><span class="st">&#39;[/|]&#39;</span> <span class="st">&#39;</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="st">   {n++; if($1==&quot;.&quot;||$2==&quot;.&quot;)next; if($1==0&amp;&amp;$2==0)r++; else if($1==$2)a++; else h++}</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="st">   END{c=r+h+a; printf &quot;REF %.3f HET %.3f ALT %.3f  d=%.3f\n&quot;,r/c,h/c,a/c,(a+0.5*h)/c}&#39;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>§2.6 (the caller’s fitted emission vs the dose) is reproduced by <code>scripts/bbnil_fitmeans_theta_check.R</code>, which runs the actual <code>nilHMM:::.em_fit_means</code> on the real skim counts and writes <code>results/sim/zeal_nil/bbnil_fitmeans_theta_check_bytaxon.csv</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/bbnil_fitmeans_theta_check.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
 <ol type="1">
 <li>Grzybowski MW, Mural RV, Xu G, Turkus J, Yang J, Schnable JC (2023). A common resequencing-based genetic marker data set for global maize diversity. <em>The Plant Journal</em> <strong>113</strong>(6):1109–1121. <a href="https://doi.org/10.1111/tpj.16123">doi:10.1111/tpj.16123</a>. — the teosinte reference panel used to estimate the donor dose (§2).</li>
 <li>Li H (2011). A statistical framework for SNP calling, mutation discovery, association mapping and population genetical parameter estimation from sequencing data. <em>Bioinformatics</em> <strong>27</strong>(21):2987–2993. <a href="https://doi.org/10.1093/bioinformatics/btr509">doi:10.1093/bioinformatics/btr509</a>. — the samtools/bcftools caller and GL model behind the <code>call -mv</code> prior (§1).</li>
-<li>Hui R, D’Atanasio E, Cassidy LM, Scheib CL, Kivisild T (2020). Evaluating genotype imputation pipeline for ultra-low coverage ancient genomes. <em>Scientific Reports</em> <strong>10</strong>:18542. <a href="https://doi.org/10.1038/s41598-020-75387-w">doi:10.1038/s41598-020-75387-w</a>. — reference-panel (aDNA) imputation that does not transfer here (§2.6).</li>
-<li>Jensen SE, Charles JR, Muleta K, <em>et al.</em> (2020). A sorghum practical haplotype graph facilitates genome-wide imputation and cost-effective genomic prediction. <em>The Plant Genome</em> <strong>13</strong>(1):e20009. <a href="https://doi.org/10.1002/tpg2.20009">doi:10.1002/tpg2.20009</a>. — inbred-founder PHG imputation that does not transfer here (§2.6).</li>
+<li>Hui R, D’Atanasio E, Cassidy LM, Scheib CL, Kivisild T (2020). Evaluating genotype imputation pipeline for ultra-low coverage ancient genomes. <em>Scientific Reports</em> <strong>10</strong>:18542. <a href="https://doi.org/10.1038/s41598-020-75387-w">doi:10.1038/s41598-020-75387-w</a>. — reference-panel (aDNA) imputation that does not transfer here (§2.7).</li>
+<li>Jensen SE, Charles JR, Muleta K, <em>et al.</em> (2020). A sorghum practical haplotype graph facilitates genome-wide imputation and cost-effective genomic prediction. <em>The Plant Genome</em> <strong>13</strong>(1):e20009. <a href="https://doi.org/10.1002/tpg2.20009">doi:10.1002/tpg2.20009</a>. — inbred-founder PHG imputation that does not transfer here (§2.7).</li>
 </ol>
 <p>Full caller / genotype-likelihood method-paper references (GATK HaplotypeCaller, ANGSD, Li–Stephens) are in the companion <a href="genotype_likelihoods_and_hmm.html#references">genotype_likelihoods_and_hmm.html</a>.</p>
 <hr>
@@ -5084,378 +5155,434 @@ d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Why the SNP50K skim cannot resolve zygosity — two mechanisms, with the math&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;The caller&#39;s rare-allele prior and outbred-donor dilution — with the panel and read data&quot;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>This note derives, and backs with the cohort/panel data, *why* the SNP50K</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>genotype matrix looks the way it does — 97% REF / **0.00% ALT-hom** / 70% missing</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>among 73.4M cells (see <span class="co">[</span><span class="ot">snp50k-cohort-provenance.md</span><span class="co">](https://github.com/sawers-rellan-labs/zealtiger/blob/main/docs/snp50k-cohort-provenance.md)</span>)</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>— and why that shape is **not** simply &quot;coverage too low.&quot; There are two distinct</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>causes, and both are calculable:</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>a **caller-prior artifact** that forces every low-frequency non-REF call to</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>   heterozygous and makes homozygous-ALT effectively impossible (§1); and</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>an **outbred-donor dilution** that makes most panel &quot;variant&quot; sites</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>   non-informative for the specific gamete captured in a cross, compressing the</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>   ancestry-state signal from the assumed <span class="in">`{0, ½, 1}`</span> to roughly <span class="in">`{0, 0.15, 0.30}`</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>   (§2).</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>The consequence (§3): per-site zygosity is not recoverable, the emission means</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>must be **fit, not assumed**, and the useful unit is the segment, not the marker.</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>Notation: at a biallelic panel site the reference allele is the **B73** allele</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>(the sites are ascertained teosinte-vs-B73 on the B73 NAM5 reference, so B73 is</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="in">`0`</span> by construction). $\varepsilon$ = per-read error/mismap rate</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>($\approx 0.003$–$0.01$ from B73 controls). $p$ = alternate-allele frequency at</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>the site across the cohort.</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>------</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. The het-inflation is a prior effect, not a likelihood effect</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.1 Single-read likelihood (necessary, not sufficient)</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>For a diploid site covered by a single read, the genotype likelihoods are</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>L(\text{read}=\text{ref}) : \begin{cases}</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 0/0) = 1-\varepsilon<span class="sc">\\</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 0/1) = \tfrac12<span class="sc">\\</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 1/1) = \varepsilon</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>\qquad</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>L(\text{read}=\text{alt}) : \begin{cases}</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 0/0) = \varepsilon<span class="sc">\\</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 0/1) = \tfrac12<span class="sc">\\</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 1/1) = 1-\varepsilon .</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>These numbers come from the **diploid-averaging** likelihood</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>$P(\text{read}\mid G=<span class="sc">\{</span>A_1,A_2<span class="sc">\}</span>) = \tfrac12 P(\text{read}\mid A_1) + \tfrac12 P(\text{read}\mid A_2)$</span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>with per-base $P(b\mid A)=1-\varepsilon$ if $b=A$ and $\varepsilon$ (more precisely</span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>$\varepsilon/3$) otherwise. Here $\varepsilon$ is a per-read error placeholder.</span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **Which likelihood model?** The *structure* above (het pinned at $\tfrac12$;</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; the mismatch/error term for the two homozygotes) is the **GATK / &quot;dragon&quot;**</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; model, and at **depth 1** it coincides with what samtools/bcftools (Li 2011) and</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; ANGSD&#39;s GATK-model compute — so the single-read conclusion here is</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; caller-independent. The models *do* differ in general</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; (</span><span class="co">[</span><span class="ot">ANGSD GL page</span><span class="co">](https://www.popgen.dk/angsd/index.php/Genotype_Likelihoods)</span><span class="at">):</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; samtools/Li-2011 adds a between-read dependency/overdispersion term that only</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; bites at depth $\ge 2$; SOAPsnp uses empirical base-quality calibration matrices;</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; callers differ in how $\varepsilon$ is derived (raw vs recalibrated base</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; qualities, mapping quality). None of that changes the depth-1 story: any diploid</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; model averages the two alleles, so **one read fixes the het likelihood at</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; $\approx\tfrac12$ and yields at most a $\sim2{:}1$ likelihood ratio** — the</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; ceiling is a property of diploid averaging, not of a particular caller. The full</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; per-caller comparison and the PL/GQ mechanics are in</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; </span><span class="co">[</span><span class="ot">genotype-likelihoods-and-hmm.md</span><span class="co">](genotype_likelihoods_and_hmm.html)</span><span class="at">.</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>By likelihood alone, an **alt** read favors $1/1$. If genotype calling used the</span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>maximum-likelihood genotype we would therefore see homozygous-ALT calls. We see</span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>**none** (1,001 in 73.4M). So the likelihood is not what determines the call — and</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>the specific posterior/prior step below (§1.2) is the **bcftools `call -mv`**</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>model; GATK and ANGSD apply the prior at a different stage (again, see the</span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>companion doc).</span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.2 The posterior carries an allele-frequency prior</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="in">`bcftools call -mv`</span> (the multiallelic caller) reports the **maximum a posteriori**</span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>genotype. It places a Hardy–Weinberg prior at the site&#39;s estimated alternate</span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>allele frequency $p$ (with a mutation-rate hyper-prior, <span class="in">`-P`</span>, default</span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>$1.1\times10^{-3}$):</span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>P(0/0)=(1-p)^2,\qquad P(0/1)=2p(1-p),\qquad P(1/1)=p^2 .</span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>The posterior is $\propto L\cdot P$. For a single **alt** read:</span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> genotype <span class="pp">|</span> posterior $\propto$ <span class="pp">|</span></span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0/0$ <span class="pp">|</span> $\varepsilon\cdot(1-p)^2$ <span class="pp">|</span></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0/1$ <span class="pp">|</span> $\tfrac12\cdot 2p(1-p) = p(1-p)$ <span class="pp">|</span></span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $1/1$ <span class="pp">|</span> $(1-\varepsilon)\cdot p^2$ <span class="pp">|</span></span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.3 The decision boundaries</span></span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>**HET vs ALT-hom.** $0/1$ is called over $1/1$ whenever</span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>p(1-p) &gt; (1-\varepsilon)\cdot p^2</span>
-<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>\;\Longleftrightarrow\;</span>
-<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>\frac{P(0/1)}{P(1/1)} = \frac{1-p}{(1-\varepsilon)\cdot p}\approx\frac1p &gt; 1</span>
-<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>\;\Longleftrightarrow\; p &lt; \frac{1}{2-\varepsilon}\approx \tfrac12 .</span>
-<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>So for **any allele rarer than ~50% cohort-wide, a single alt read is called</span>
-<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>heterozygous, never homozygous-ALT** — by a margin of $\approx 1/p$.</span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>**HET vs REF.** $0/1$ beats $0/0$ for an alt read when</span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>$p(1-p) &gt; \varepsilon(1-p)^2 \Leftrightarrow p &gt; \varepsilon/(1+\varepsilon)\approx\varepsilon$.</span>
-<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>Combining, the single-alt-read call as a function of $p$ is</span>
-<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>\widehat{g} =</span>
-<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
-<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>0/0 &amp; p &lt; \varepsilon &amp;(\text{alt read absorbed as error})<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>0/1 &amp; \varepsilon &lt; p \lesssim \tfrac12 &amp;(\textbf{heterozygous})<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>1/1 &amp; p \gtrsim \tfrac12 .</span>
-<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.4 Where the cohort actually sits</span></span>
-<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>Alternate-allele frequency spectrum over all 50,995 sites:</span>
-<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> statistic <span class="pp">|</span> value <span class="pp">|</span></span>
-<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
-<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> mean alt AF ($\bar p$) <span class="pp">|</span> **0.0152** <span class="pp">|</span></span>
-<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sites with $p&lt;0.01$ <span class="pp">|</span> 41.8% <span class="pp">|</span></span>
-<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0.01\le p&lt;0.05$ <span class="pp">|</span> 56.7% <span class="pp">|</span></span>
-<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0.05\le p&lt;0.1$ <span class="pp">|</span> 1.5% <span class="pp">|</span></span>
-<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $p\ge 0.1$ <span class="pp">|</span> **0.0%** <span class="pp">|</span></span>
-<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>Every site sits in the middle branch: $\varepsilon \approx 0.003 &lt; p &lt; 0.1 \ll \tfrac12$,</span>
-<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>with a mean margin $1/\bar p \approx 66$ in favor of HET over ALT-hom. **This is</span>
-<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>the 0.00% ALT-hom / het-only pattern, derived.** It is a property of the prior on</span>
-<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>rare alleles, so it would persist at higher depth until $p$ approached $\tfrac12$</span>
-<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>— it is *not* removed by adding reads.</span>
-<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.5 Why the count caller escapes this</span></span>
-<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>The consequence is specific to a caller whose prior is the cohort HWE frequency.</span>
-<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>The count / BetaBinomial emission used by the ancestry callers does **not** inherit</span>
-<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a>it: its per-state prior is the breeding-design expectation (BC2S2/BC2S3 $f_1,f_2$),</span>
-<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>and its &quot;genotype&quot; is the ancestry state decoded by the HMM, not a per-site MAP</span>
-<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>under a rare-allele frequency prior. That is the concrete reason the hard <span class="in">`GT`</span></span>
-<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>path is dead while the AD-count path recovers the donor footprint.</span>
-<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>------</span>
-<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Outbred-donor dilution — most &quot;variant&quot; sites are silent per cross</span></span>
-<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>Even setting the caller aside, the *signal itself* is far weaker than the naive</span>
-<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a><span class="in">`{REF=0, HET=0.5, HOM=1.0}`</span> alt-fraction model, because teosinte donors are</span>
-<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>**outbred and heterozygous**, not inbred lines.</span>
-<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.1 Panel provenance</span></span>
-<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>The reference allele model is the Grzybowski (2023) resequencing panel</span>
-<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>(<span class="in">`##source=&quot;schnable2021&quot;`</span>), filtered to biallelic SNPs with</span>
-<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a><span class="in">`--min-af 0.05:minor`</span> and intersected to the ZEAL HQ sites. **Not imputed.** So</span>
-<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>panel sites are *common* teosinte-vs-B73 variants — segregating in the species,</span>
-<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>but not fixed in any one accession.</span>
-<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.2 Transmission model</span></span>
-<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>The recurrent-parent (B73) gamete is REF (dose 0) at every panel site. A donor</span>
-<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>individual has genotype $<span class="sc">\{</span>0/0, 0/1, 1/1<span class="sc">\}</span>$ with per-site frequencies</span>
-<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>$<span class="sc">\{</span>f_0, f_1, f_2<span class="sc">\}</span>$; the gamete it contributes to the cross carries the **donor</span>
-<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>(ALT) allele** with probability — the **transmitted donor dose** —</span>
-<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>d \;=\; 0\cdot f_0 \;+\; \tfrac{1}{2}\cdot f_1 \;+\; 1\cdot f_2 \;=\; f_2 + \tfrac{1}{2}\, f_1 .</span>
-<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>Each term is (probability the gamete carries ALT given the donor genotype) $\times$</span>
-<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>(genotype frequency): a $0/0$ donor never transmits ALT, a $0/1$ donor transmits it</span>
-<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>half the time, a $1/1$ donor always. So $d$ is simply the **donor&#39;s ALT-allele</span>
-<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>frequency** at panel sites. A panel site &quot;distinguishes the donor gamete from B73&quot;</span>
-<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>only when the gamete carries ALT, i.e. with probability $d$; everything else looks</span>
-<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>like B73.</span>
-<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.3 Panel data</span></span>
-<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>Per-donor-species genotype composition at panel sites (217-sample teosinte panel;</span>
-<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>each row is the per-individual average):</span>
-<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> donor species <span class="pp">|</span> f₀ (REF) <span class="pp">|</span> f₁ (HET) <span class="pp">|</span> f₂ (ALT-hom) <span class="pp">|</span> het<span class="sc">\|</span>non-ref <span class="pp">|</span> **d = f₂ + ½·f₁** <span class="pp">|</span></span>
-<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|---:|---:|</span></span>
-<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> parviglumis (Zv) <span class="pp">|</span> 64.2% <span class="pp">|</span> 15.2% <span class="pp">|</span> 20.6% <span class="pp">|</span> 42.5% <span class="pp">|</span> **0.282** <span class="pp">|</span></span>
-<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> mexicana (Zx) <span class="pp">|</span> 57.7% <span class="pp">|</span> 18.8% <span class="pp">|</span> 23.6% <span class="pp">|</span> 44.3% <span class="pp">|</span> **0.330** <span class="pp">|</span></span>
-<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> luxurians (Zl) <span class="pp">|</span> 62.5% <span class="pp">|</span> 8.3% <span class="pp">|</span> 29.2% <span class="pp">|</span> 22.2% <span class="pp">|</span> 0.333 <span class="pp">|</span></span>
-<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diploperennis (Zd) <span class="pp">|</span> 59.4% <span class="pp">|</span> 12.1% <span class="pp">|</span> 28.5% <span class="pp">|</span> 29.9% <span class="pp">|</span> 0.346 <span class="pp">|</span></span>
-<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> nicaraguensis (Zn) <span class="pp">|</span> 64.5% <span class="pp">|</span> 8.3% <span class="pp">|</span> 27.2% <span class="pp">|</span> 23.3% <span class="pp">|</span> 0.313 <span class="pp">|</span></span>
-<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>The heterozygosity is genuine (parviglumis per-sample het: median **19.4%**, Q1–Q3</span>
-<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>11.3–21.0%, so not an artifact of panel het-undercalling). Two facts dominate:</span>
-<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**f₀ ≈ 60%** — most panel sites are *not segregating in a given donor*</span>
-<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>  (they are variants private to other teosinte lineages, kept by the union-style</span>
-<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>  ascertainment); the donor gamete is REF there, indistinguishable from B73.</span>
-<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>of the sites that *are* non-REF, ~40% (parvi/mex) are heterozygous → the gamete</span>
-<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>  loses the donor allele half the time.</span>
-<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>Net: **d ≈ 0.28–0.35** — only about **one panel site in three** carries</span>
-<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a>the donor allele in a transmitted gamete (fewer for the less-diverse donors). This</span>
-<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>is the quantified form of &quot;~1/5 of variant sites are actually variant between the</span>
-<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>gametes.&quot;</span>
-<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.4 The emission signal is compressed, not at {0, ½, 1}</span></span>
-<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>Expected per-bin alternate-**read** fraction by NIL ancestry state, folding in the</span>
-<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>dose $d$ (het sites emit an alt read w.p. ½; ref/ref sites w.p. $\varepsilon$):</span>
-<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="co">[</span><span class="ot">\text{alt frac}</span><span class="co">]</span> \approx</span>
-<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
-<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>\varepsilon &amp; \text{REF/REF (no introgression)} &amp;\approx 0<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>\tfrac{d}{2} + (1-\tfrac{d}{2})\varepsilon \approx \dfrac{d}{2} &amp; \textbf{donor HET} &amp;\approx 0.14\text{–}0.17<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .</span>
-<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
-<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>So the three ancestry states live at roughly $<span class="sc">\{</span>0,\;0.15,\;0.30<span class="sc">\}</span>$ in</span>
-<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a>alt-fraction space, **not** $<span class="sc">\{</span>0,\;0.5,\;1.0<span class="sc">\}</span>$:</span>
-<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>REF-vs-HET separation is $\approx 0.15$ over an $\approx 0$ floor — a low-SNR</span>
-<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a>  *elevation above baseline*, which is exactly why the binned Gaussian-emission</span>
-<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a>  HMM is the right shape but low-confidence;</span>
-<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>HET-vs-HOM separation is $\approx 0.15$ ($0.15$ vs $0.30$) — barely resolvable,</span>
-<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a>  which is why the caller is het-biased and rarely finds donor-hom.</span>
-<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a>Note the label &quot;donor HET&quot; above is the state the caller *reports* most, not the</span>
-<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a>one the design expects most: by the BC2S3 single-locus frequencies donor-**hom** is</span>
-<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a>actually the more common introgression genotype ($f_{BB}=0.109 &gt; f_{AB}=0.031$) —</span>
-<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a>the caller under-reports it purely because it is undetectable at $0.4\times$. See</span>
-<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">genotype-likelihoods-and-hmm.md</span><span class="co">](genotype_likelihoods_and_hmm.html)</span> §2.</span>
-<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.5 Empirical validation — $d$ from the real read fractions</span></span>
-<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a>We can estimate $d$ directly from the cohort AD, independent of the panel, by</span>
-<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>conditioning on ancestry-segment state and reading off the mean alt-read fraction:</span>
-<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a>REF segments $\to \varepsilon$, HET $\to d/2$, HOM $\to d$</span>
-<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a>(<span class="in">`agent/estimate_dose_from_reads.R`</span>, segments from RTIGER calls which resolve</span>
-<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a>zygosity; alt-fraction pooled over all covered sites of all NILs in a taxon).</span>
-<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> taxon (donor) <span class="pp">|</span> panel $d$ <span class="pp">|</span> REF-bg alt-frac <span class="pp">|</span> HET alt-frac ($\hat d/2$) <span class="pp">|</span> HOM alt-frac ($\hat d$) <span class="pp">|</span> $2\times$HET <span class="pp">|</span> covered sites <span class="pp">|</span></span>
-<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|---:|---:|---:|</span></span>
-<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zd (diploperennis) <span class="pp">|</span> 0.346 <span class="pp">|</span> 0.0057 <span class="pp">|</span> 0.198 <span class="pp">|</span> 0.461 <span class="pp">|</span> 0.396 <span class="pp">|</span> 3.4M <span class="pp">|</span></span>
-<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zl (luxurians) <span class="pp">|</span> 0.333 <span class="pp">|</span> 0.0071 <span class="pp">|</span> 0.164 <span class="pp">|</span> 0.363 <span class="pp">|</span> 0.329 <span class="pp">|</span> 1.9M <span class="pp">|</span></span>
-<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zv (parviglumis) <span class="pp">|</span> 0.282 <span class="pp">|</span> 0.0048 <span class="pp">|</span> 0.157 <span class="pp">|</span> 0.342 <span class="pp">|</span> 0.314 <span class="pp">|</span> 5.3M <span class="pp">|</span></span>
-<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zx (mexicana) <span class="pp">|</span> 0.330 <span class="pp">|</span> 0.0044 <span class="pp">|</span> 0.187 <span class="pp">|</span> 0.492 <span class="pp">|</span> 0.374 <span class="pp">|</span> 9.0M <span class="pp">|</span></span>
-<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zh (huehuetenangensis) <span class="pp">|</span> 0.37<span class="sc">\*</span> <span class="pp">|</span> 0.0070 <span class="pp">|</span> 0.339 <span class="pp">|</span> 0.894 <span class="pp">|</span> 0.678 <span class="pp">|</span> 0.8M <span class="pp">|</span></span>
-<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a><span class="sc">\*</span>Zh panel $d$ is from $n=1$ huehuetenangensis (+8 perennis); poorly sampled.</span>
-<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a>Three things the reads confirm:</span>
-<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**The REF-background floor is $\varepsilon \approx 0.004$–$0.007$**, exactly the</span>
-<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a>   per-read error rate — the REF state emits at the noise floor, not 0 (matching the</span>
-<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a>   nilhifi anchoring rationale).</span>
-<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**The read-based $d$ reproduces the panel-genotype $d$** for the four</span>
-<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>   well-sampled donors: the interval $<span class="co">[</span><span class="ot">\,2\times\text{HET},\ \text{HOM}\,</span><span class="co">]</span>$ brackets</span>
-<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a>   $d$, and both land at $\approx 0.3$–$0.4$ against the panel&#39;s $0.28$–$0.35$</span>
-<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a>   (Zl essentially exact: 0.329 vs 0.333). Two fully independent measurements —</span>
-<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a>   donor-panel genotype composition and NIL read fractions — agree that</span>
-<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a>   **d ≈ 0.3, not ≈ 1.** The reads run slightly high, consistent with</span>
-<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a>   (i) the specific donor accessions carrying more alt than the species average and</span>
-<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a>   (ii) HET segments absorbing some true-HOM markers (see next point).</span>
-<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**The HET/HOM split is not clean — as predicted.** Under the model $2\times$HET</span>
-<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a>   should equal HOM; instead HOM $&gt;2\times$HET (e.g. Zx 0.49 vs 0.37) because at</span>
-<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>   $0.4\times$ the caller thresholds the alt-fraction rather than resolving zygosity,</span>
-<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a>   so HET keeps the low tail and HOM the high tail. The estimator&#39;s own ambiguity is</span>
-<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a>   the identifiability limit this document is about. Zh is the extreme case</span>
-<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a>   (HET alt-frac 0.34, HOM 0.89): huehuetenangensis is the most divergent donor, so</span>
-<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a>   $d$ is genuinely highest, but the value is uncertain (panel $n=1$, strong</span>
-<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a>   het/hom bleed).</span>
-<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a>Estimates: <span class="in">`agent/dose_estimates_by_taxon.csv`</span>.</span>
-<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.6 The site-selection ceiling</span></span>
-<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a>Restricting to sites where the donor is **fixed-ALT** ($f_2\to1$, $d\to1$) would</span>
-<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a>restore the clean $<span class="sc">\{</span>0, \tfrac12, 1<span class="sc">\}</span>$ model. But &quot;fixed in *this* donor&quot; cannot be</span>
-<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a>known without the **donor accession&#39;s own genotypes**, which we do not have; the</span>
-<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a><span class="in">`--min-af 0.05:minor`</span> species panel identifies *common* variants, not</span>
-<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a>accession-fixed ones. This is a more basic reference-data gap than phasing/LD:</span>
-<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a>without the donor genotype we cannot even label which markers are informative for a</span>
-<span id="cb2-303"><a href="#cb2-303" aria-hidden="true" tabindex="-1"></a>given cross. It is the fundamental reason low-coverage genotype-imputation results</span>
-<span id="cb2-304"><a href="#cb2-304" aria-hidden="true" tabindex="-1"></a>from human aDNA or inbred-founder PHGs do not transfer here.</span>
-<span id="cb2-305"><a href="#cb2-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-306"><a href="#cb2-306" aria-hidden="true" tabindex="-1"></a>------</span>
-<span id="cb2-307"><a href="#cb2-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-308"><a href="#cb2-308" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Consequences</span></span>
-<span id="cb2-309"><a href="#cb2-309" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fit the emission means, don&#39;t assume them.** The state means are</span>
-<span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>  $\approx<span class="sc">\{</span>0,\,d/2,\,d<span class="sc">\}</span>$ with a per-donor $d$; a fixed $<span class="sc">\{</span> \varepsilon, \tfrac12,</span>
-<span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a>  1-\varepsilon<span class="sc">\}</span>$ emission is mis-specified. This is why RTIGER&#39;s per-taxon</span>
-<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a>  <span class="in">`fit_means`</span> outperforms the fixed-mean count emission on this data.</span>
-<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Prefer donor-enriched sites where possible.** Selecting sites with high</span>
-<span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a>  species-level $f_2$ raises $d$ toward 1 and widens state separation, up to the</span>
-<span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a>  accession ceiling in §2.6.</span>
-<span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Report honestly.** The donor *footprint* (where introgression is) is</span>
-<span id="cb2-318"><a href="#cb2-318" aria-hidden="true" tabindex="-1"></a>  recoverable; the het-vs-donor-hom split is marginal ($0.15$ vs $0.30$); per-site</span>
-<span id="cb2-319"><a href="#cb2-319" aria-hidden="true" tabindex="-1"></a>  zygosity is not recoverable and should not be claimed. For B1/anthocyanin QTL the</span>
-<span id="cb2-320"><a href="#cb2-320" aria-hidden="true" tabindex="-1"></a>  mapping unit is the **segment/dosage genotype**, obtained by projecting the</span>
-<span id="cb2-321"><a href="#cb2-321" aria-hidden="true" tabindex="-1"></a>  decoded ancestry state onto the markers within a segment — not per-marker calls.</span>
-<span id="cb2-322"><a href="#cb2-322" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-323"><a href="#cb2-323" aria-hidden="true" tabindex="-1"></a>------</span>
-<span id="cb2-324"><a href="#cb2-324" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-325"><a href="#cb2-325" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproduce</span></span>
-<span id="cb2-326"><a href="#cb2-326" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-327"><a href="#cb2-327" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
-<span id="cb2-328"><a href="#cb2-328" aria-hidden="true" tabindex="-1"></a><span class="va">D</span><span class="op">=</span>/Volumes/rsstu/users/r/rrellan/BZea/bzeaseq/50K/results/joint</span>
-<span id="cb2-329"><a href="#cb2-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-330"><a href="#cb2-330" aria-hidden="true" tabindex="-1"></a><span class="co"># §1.4 cohort alt-allele frequency spectrum (justifies p small)</span></span>
-<span id="cb2-331"><a href="#cb2-331" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;%AC\t%AN\n&#39;</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/cohort.vcf.gz&quot;</span> <span class="dt">\</span></span>
-<span id="cb2-332"><a href="#cb2-332" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;$1!=&quot;.&quot;&amp;&amp;$2&gt;0{p=$1/$2;n++;s+=p;if(p&lt;.01)b++} END{print &quot;mean AF&quot;,s/n,&quot;  frac&lt;0.01&quot;,b/n}&#39;</span></span>
-<span id="cb2-333"><a href="#cb2-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-334"><a href="#cb2-334" aria-hidden="true" tabindex="-1"></a><span class="co"># §2.3 per-species donor dose d = f2 + 0.5*f1  (ref_&lt;species&gt;.txt = panel sample lists)</span></span>
-<span id="cb2-335"><a href="#cb2-335" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> view <span class="at">-S</span> ref_Z__parviglumis.txt <span class="at">--force-samples</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/bzea_50K_ref_panel.vcf.gz&quot;</span> <span class="dt">\</span></span>
-<span id="cb2-336"><a href="#cb2-336" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;[%GT\n]&#39;</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-F</span><span class="st">&#39;[/|]&#39;</span> <span class="st">&#39;</span></span>
-<span id="cb2-337"><a href="#cb2-337" aria-hidden="true" tabindex="-1"></a><span class="st">   {n++; if($1==&quot;.&quot;||$2==&quot;.&quot;)next; if($1==0&amp;&amp;$2==0)r++; else if($1==$2)a++; else h++}</span></span>
-<span id="cb2-338"><a href="#cb2-338" aria-hidden="true" tabindex="-1"></a><span class="st">   END{c=r+h+a; printf &quot;REF %.3f HET %.3f ALT %.3f  d=%.3f\n&quot;,r/c,h/c,a/c,(a+0.5*h)/c}&#39;</span></span>
-<span id="cb2-339"><a href="#cb2-339" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-340"><a href="#cb2-340" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-341"><a href="#cb2-341" aria-hidden="true" tabindex="-1"></a><span class="fu">## References</span></span>
-<span id="cb2-342"><a href="#cb2-342" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-343"><a href="#cb2-343" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Grzybowski MW, Mural RV, Xu G, Turkus J, Yang J, Schnable JC (2023). A common</span>
-<span id="cb2-344"><a href="#cb2-344" aria-hidden="true" tabindex="-1"></a>   resequencing-based genetic marker data set for global maize diversity.</span>
-<span id="cb2-345"><a href="#cb2-345" aria-hidden="true" tabindex="-1"></a>   *The Plant Journal* **113**(6):1109–1121.</span>
-<span id="cb2-346"><a href="#cb2-346" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1111/tpj.16123</span><span class="co">](https://doi.org/10.1111/tpj.16123)</span>.</span>
-<span id="cb2-347"><a href="#cb2-347" aria-hidden="true" tabindex="-1"></a>   — the teosinte reference panel used to estimate the donor dose (§2).</span>
-<span id="cb2-348"><a href="#cb2-348" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Li H (2011). A statistical framework for SNP calling, mutation discovery,</span>
-<span id="cb2-349"><a href="#cb2-349" aria-hidden="true" tabindex="-1"></a>   association mapping and population genetical parameter estimation from</span>
-<span id="cb2-350"><a href="#cb2-350" aria-hidden="true" tabindex="-1"></a>   sequencing data. *Bioinformatics* **27**(21):2987–2993.</span>
-<span id="cb2-351"><a href="#cb2-351" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1093/bioinformatics/btr509</span><span class="co">](https://doi.org/10.1093/bioinformatics/btr509)</span>.</span>
-<span id="cb2-352"><a href="#cb2-352" aria-hidden="true" tabindex="-1"></a>   — the samtools/bcftools caller and GL model behind the <span class="in">`call -mv`</span> prior (§1).</span>
-<span id="cb2-353"><a href="#cb2-353" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Hui R, D’Atanasio E, Cassidy LM, Scheib CL, Kivisild T (2020). Evaluating</span>
-<span id="cb2-354"><a href="#cb2-354" aria-hidden="true" tabindex="-1"></a>   genotype imputation pipeline for ultra-low coverage ancient genomes.</span>
-<span id="cb2-355"><a href="#cb2-355" aria-hidden="true" tabindex="-1"></a>   *Scientific Reports* **10**:18542.</span>
-<span id="cb2-356"><a href="#cb2-356" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1038/s41598-020-75387-w</span><span class="co">](https://doi.org/10.1038/s41598-020-75387-w)</span>.</span>
-<span id="cb2-357"><a href="#cb2-357" aria-hidden="true" tabindex="-1"></a>   — reference-panel (aDNA) imputation that does not transfer here (§2.6).</span>
-<span id="cb2-358"><a href="#cb2-358" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Jensen SE, Charles JR, Muleta K, *et al.* (2020). A sorghum practical haplotype</span>
-<span id="cb2-359"><a href="#cb2-359" aria-hidden="true" tabindex="-1"></a>   graph facilitates genome-wide imputation and cost-effective genomic prediction.</span>
-<span id="cb2-360"><a href="#cb2-360" aria-hidden="true" tabindex="-1"></a>   *The Plant Genome* **13**(1):e20009.</span>
-<span id="cb2-361"><a href="#cb2-361" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1002/tpg2.20009</span><span class="co">](https://doi.org/10.1002/tpg2.20009)</span>.</span>
-<span id="cb2-362"><a href="#cb2-362" aria-hidden="true" tabindex="-1"></a>   — inbred-founder PHG imputation that does not transfer here (§2.6).</span>
-<span id="cb2-363"><a href="#cb2-363" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-364"><a href="#cb2-364" aria-hidden="true" tabindex="-1"></a>Full caller / genotype-likelihood method-paper references (GATK HaplotypeCaller,</span>
-<span id="cb2-365"><a href="#cb2-365" aria-hidden="true" tabindex="-1"></a>ANGSD, Li–Stephens) are in the companion</span>
-<span id="cb2-366"><a href="#cb2-366" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">genotype_likelihoods_and_hmm.html</span><span class="co">](genotype_likelihoods_and_hmm.html#references)</span>.</span>
-<span id="cb2-367"><a href="#cb2-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-368"><a href="#cb2-368" aria-hidden="true" tabindex="-1"></a>------</span>
-<span id="cb2-369"><a href="#cb2-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-370"><a href="#cb2-370" aria-hidden="true" tabindex="-1"></a>*Analysis 2026-07-02, <span class="in">`cohort.vcf.gz`</span> / <span class="in">`bzea_50K_ref_panel.vcf.gz`</span> (read-only mount).</span>
-<span id="cb2-371"><a href="#cb2-371" aria-hidden="true" tabindex="-1"></a>Companion to <span class="co">[</span><span class="ot">snp50k-cohort-provenance.md</span><span class="co">](https://github.com/sawers-rellan-labs/zealtiger/blob/main/docs/snp50k-cohort-provenance.md)</span>. Panel:</span>
-<span id="cb2-372"><a href="#cb2-372" aria-hidden="true" tabindex="-1"></a>Grzybowski et al. 2023, <span class="in">`--min-af 0.05:minor`</span>, not imputed.*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Why the SNP50K skim cannot resolve zygosity — two mechanisms, with the math&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> &quot;The caller&#39;s rare-allele prior and outbred-donor dilution — with the panel and read data&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Fausto Rodríguez-Zapata&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> today</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">    embed-resources: true</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>This note derives, and backs with the cohort/panel data, *why* the SNP50K</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>genotype matrix looks the way it does — 97% REF / **0.00% ALT-hom** / 70% missing</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>among 73.4M cells (see <span class="co">[</span><span class="ot">snp50k-cohort-provenance.md</span><span class="co">](https://github.com/sawers-rellan-labs/zealtiger/blob/main/docs/snp50k-cohort-provenance.md)</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>— and why that shape is **not** simply &quot;coverage too low.&quot; There are two distinct</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>causes, and both are calculable:</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>a **caller-prior artifact** that forces every low-frequency non-REF call to</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>   heterozygous and makes homozygous-ALT effectively impossible (§1); and</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>an **outbred-donor dilution** that makes most panel &quot;variant&quot; sites</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>   non-informative for the specific gamete captured in a cross, compressing the</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>   ancestry-state signal from the assumed <span class="in">`{0, ½, 1}`</span> to roughly <span class="in">`{0, 0.15, 0.30}`</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>   (§2).</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>The consequence (§3): per-site zygosity is not recoverable, the emission means</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>must be **fit, not assumed**, and the useful unit is the segment, not the marker.</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>Notation: at a biallelic panel site the reference allele is the **B73** allele</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>(the sites are ascertained teosinte-vs-B73 on the B73 NAM5 reference, so B73 is</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">`0`</span> by construction). $\varepsilon$ = per-read error/mismap rate</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>($\approx 0.003$–$0.01$ from B73 controls). $p$ = alternate-allele frequency at</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>the site across the cohort.</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>------</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. The het-inflation is a prior effect, not a likelihood effect</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.1 Single-read likelihood (necessary, not sufficient)</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>For a diploid site covered by a single read, the genotype likelihoods are</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>L(\text{read}=\text{ref}) : \begin{cases}</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 0/0) = 1-\varepsilon<span class="sc">\\</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 0/1) = \tfrac12<span class="sc">\\</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>P(\text{ref}\mid 1/1) = \varepsilon</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>L(\text{read}=\text{alt}) : \begin{cases}</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 0/0) = \varepsilon<span class="sc">\\</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 0/1) = \tfrac12<span class="sc">\\</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>P(\text{alt}\mid 1/1) = 1-\varepsilon .</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>These numbers come from the **diploid-averaging** likelihood</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>$P(\text{read}\mid G=<span class="sc">\{</span>A_1,A_2<span class="sc">\}</span>) = \tfrac12 P(\text{read}\mid A_1) + \tfrac12 P(\text{read}\mid A_2)$</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>with per-base $P(b\mid A)=1-\varepsilon$ if $b=A$ and $\varepsilon$ (more precisely</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>$\varepsilon/3$) otherwise. Here $\varepsilon$ is a per-read error placeholder.</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **Which likelihood model?** The *structure* above (het pinned at $\tfrac12$;</span></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; the mismatch/error term for the two homozygotes) is the **GATK / &quot;dragon&quot;**</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; model, and at **depth 1** it coincides with what samtools/bcftools (Li 2011) and</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; ANGSD&#39;s GATK-model compute — so the single-read conclusion here is</span></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; caller-independent. The models *do* differ in general</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; (</span><span class="co">[</span><span class="ot">ANGSD GL page</span><span class="co">](https://www.popgen.dk/angsd/index.php/Genotype_Likelihoods)</span><span class="at">):</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; samtools/Li-2011 adds a between-read dependency/overdispersion term that only</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; bites at depth $\ge 2$; SOAPsnp uses empirical base-quality calibration matrices;</span></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; callers differ in how $\varepsilon$ is derived (raw vs recalibrated base</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; qualities, mapping quality). None of that changes the depth-1 story: any diploid</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; model averages the two alleles, so **one read fixes the het likelihood at</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; $\approx\tfrac12$ and yields at most a $\sim2{:}1$ likelihood ratio** — the</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; ceiling is a property of diploid averaging, not of a particular caller. The full</span></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; per-caller comparison and the PL/GQ mechanics are in</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; </span><span class="co">[</span><span class="ot">genotype-likelihoods-and-hmm.md</span><span class="co">](genotype_likelihoods_and_hmm.html)</span><span class="at">.</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>By likelihood alone, an **alt** read favors $1/1$. If genotype calling used the</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>maximum-likelihood genotype we would therefore see homozygous-ALT calls. We see</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>**none** (1,001 in 73.4M). So the likelihood is not what determines the call — and</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>the specific posterior/prior step below (§1.2) is the **bcftools `call -mv`**</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>model; GATK and ANGSD apply the prior at a different stage (again, see the</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>companion doc).</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.2 The posterior carries an allele-frequency prior</span></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a><span class="in">`bcftools call -mv`</span> (the multiallelic caller) reports the **maximum a posteriori**</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>genotype. It places a Hardy–Weinberg prior at the site&#39;s estimated alternate</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>allele frequency $p$ (with a mutation-rate hyper-prior, <span class="in">`-P`</span>, default</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>$1.1\times10^{-3}$):</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>P(0/0)=(1-p)^2,\qquad P(0/1)=2p(1-p),\qquad P(1/1)=p^2 .</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>The posterior is $\propto L\cdot P$. For a single **alt** read:</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> genotype <span class="pp">|</span> posterior $\propto$ <span class="pp">|</span></span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0/0$ <span class="pp">|</span> $\varepsilon\cdot(1-p)^2$ <span class="pp">|</span></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0/1$ <span class="pp">|</span> $\tfrac12\cdot 2p(1-p) = p(1-p)$ <span class="pp">|</span></span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $1/1$ <span class="pp">|</span> $(1-\varepsilon)\cdot p^2$ <span class="pp">|</span></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.3 The decision boundaries</span></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>**HET vs ALT-hom.** $0/1$ is called over $1/1$ whenever</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>p(1-p) &gt; (1-\varepsilon)\cdot p^2</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>\;\Longleftrightarrow\;</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>\frac{P(0/1)}{P(1/1)} = \frac{1-p}{(1-\varepsilon)\cdot p}\approx\frac1p &gt; 1</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>\;\Longleftrightarrow\; p &lt; \frac{1}{2-\varepsilon}\approx \tfrac12 .</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>So for **any allele rarer than ~50% cohort-wide, a single alt read is called</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>heterozygous, never homozygous-ALT** — by a margin of $\approx 1/p$.</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>**HET vs REF.** $0/1$ beats $0/0$ for an alt read when</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>$p(1-p) &gt; \varepsilon(1-p)^2 \Leftrightarrow p &gt; \varepsilon/(1+\varepsilon)\approx\varepsilon$.</span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>Combining, the single-alt-read call as a function of $p$ is</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>\widehat{g} =</span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>0/0 &amp; p &lt; \varepsilon &amp;(\text{alt read absorbed as error})<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>0/1 &amp; \varepsilon &lt; p \lesssim \tfrac12 &amp;(\textbf{heterozygous})<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>1/1 &amp; p \gtrsim \tfrac12 .</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.4 Where the cohort actually sits</span></span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>Alternate-allele frequency spectrum over all 50,995 sites:</span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> statistic <span class="pp">|</span> value <span class="pp">|</span></span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> mean alt AF ($\bar p$) <span class="pp">|</span> **0.0152** <span class="pp">|</span></span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sites with $p&lt;0.01$ <span class="pp">|</span> 41.8% <span class="pp">|</span></span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0.01\le p&lt;0.05$ <span class="pp">|</span> 56.7% <span class="pp">|</span></span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $0.05\le p&lt;0.1$ <span class="pp">|</span> 1.5% <span class="pp">|</span></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $p\ge 0.1$ <span class="pp">|</span> **0.0%** <span class="pp">|</span></span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>Every site sits in the middle branch: $\varepsilon \approx 0.003 &lt; p &lt; 0.1 \ll \tfrac12$,</span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>with a mean margin $1/\bar p \approx 66$ in favor of HET over ALT-hom. **This is</span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>the 0.00% ALT-hom / het-only pattern, derived.** It is a property of the prior on</span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>rare alleles, so it would persist at higher depth until $p$ approached $\tfrac12$</span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>— it is *not* removed by adding reads.</span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1.5 Why the count caller escapes this</span></span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>The consequence is specific to a caller whose prior is the cohort HWE frequency.</span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>The count / BetaBinomial emission used by the ancestry callers does **not** inherit</span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a>it: its per-state prior is the breeding-design expectation (BC2S2/BC2S3 $f_1,f_2$),</span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a>and its &quot;genotype&quot; is the ancestry state decoded by the HMM, not a per-site MAP</span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>under a rare-allele frequency prior. That is the concrete reason the hard <span class="in">`GT`</span></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>path is dead while the AD-count path recovers the donor footprint.</span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>------</span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Outbred-donor dilution — most &quot;variant&quot; sites are silent per cross</span></span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>Even setting the caller aside, the *signal itself* is far weaker than the naive</span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a><span class="in">`{REF=0, HET=0.5, HOM=1.0}`</span> alt-fraction model, because teosinte donors are</span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>**outbred and heterozygous**, not inbred lines.</span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.1 Panel provenance</span></span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>The reference allele model is the Grzybowski (2023) resequencing panel</span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>(<span class="in">`##source=&quot;schnable2021&quot;`</span>), filtered to biallelic SNPs with</span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a><span class="in">`--min-af 0.05:minor`</span> and intersected to the ZEAL HQ sites. **Not imputed.** So</span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>panel sites are *common* teosinte-vs-B73 variants — segregating in the taxon,</span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>but not fixed in any one accession.</span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.2 Transmission model</span></span>
+<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>The recurrent-parent (B73) gamete is REF (dose 0) at every panel site. A donor</span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>individual has genotype $<span class="sc">\{</span>0/0, 0/1, 1/1<span class="sc">\}</span>$ with per-site frequencies</span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>$<span class="sc">\{</span>f_0, f_1, f_2<span class="sc">\}</span>$; the gamete it contributes to the cross carries the **donor</span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>(ALT) allele** with probability — the **transmitted donor dose** —</span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>d \;=\; 0\cdot f_0 \;+\; \tfrac{1}{2}\cdot f_1 \;+\; 1\cdot f_2 \;=\; f_2 + \tfrac{1}{2}\, f_1 .</span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a>Each term is (probability the gamete carries ALT given the donor genotype) $\times$</span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>(genotype frequency): a $0/0$ donor never transmits ALT, a $0/1$ donor transmits it</span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>half the time, a $1/1$ donor always. So $d$ is simply the **donor&#39;s ALT-allele</span>
+<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a>frequency** at panel sites. A panel site &quot;distinguishes the donor gamete from B73&quot;</span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>only when the gamete carries ALT, i.e. with probability $d$; everything else looks</span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>like B73.</span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.3 Panel data</span></span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>Per-donor-taxon genotype composition at panel sites (217-sample teosinte panel;</span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>each row is the per-individual average):</span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> donor taxon <span class="pp">|</span> f₀ (REF) <span class="pp">|</span> f₁ (HET) <span class="pp">|</span> f₂ (ALT-hom) <span class="pp">|</span> het<span class="sc">\|</span>non-ref <span class="pp">|</span> **d = f₂ + ½·f₁** <span class="pp">|</span></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|---:|---:|</span></span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> parviglumis (Zv) <span class="pp">|</span> 64.2% <span class="pp">|</span> 15.2% <span class="pp">|</span> 20.6% <span class="pp">|</span> 42.5% <span class="pp">|</span> **0.282** <span class="pp">|</span></span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> mexicana (Zx) <span class="pp">|</span> 57.7% <span class="pp">|</span> 18.8% <span class="pp">|</span> 23.6% <span class="pp">|</span> 44.3% <span class="pp">|</span> **0.330** <span class="pp">|</span></span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> luxurians (Zl) <span class="pp">|</span> 62.5% <span class="pp">|</span> 8.3% <span class="pp">|</span> 29.2% <span class="pp">|</span> 22.2% <span class="pp">|</span> 0.333 <span class="pp">|</span></span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diploperennis (Zd) <span class="pp">|</span> 59.4% <span class="pp">|</span> 12.1% <span class="pp">|</span> 28.5% <span class="pp">|</span> 29.9% <span class="pp">|</span> 0.346 <span class="pp">|</span></span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> nicaraguensis (Zn) <span class="pp">|</span> 64.5% <span class="pp">|</span> 8.3% <span class="pp">|</span> 27.2% <span class="pp">|</span> 23.3% <span class="pp">|</span> 0.313 <span class="pp">|</span></span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>The heterozygosity is genuine (parviglumis per-sample het: median **19.4%**, Q1–Q3</span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>11.3–21.0%, so not an artifact of panel het-undercalling). Two facts dominate:</span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**f₀ ≈ 60%** — most panel sites are *not segregating in a given donor*</span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a>  (they are variants private to other teosinte lineages, kept by the union-style</span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>  ascertainment); the donor gamete is REF there, indistinguishable from B73.</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>of the sites that *are* non-REF, ~40% (parvi/mex) are heterozygous → the gamete</span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>  loses the donor allele half the time.</span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>Net: **d ≈ 0.28–0.35** — only about **one panel site in three** carries</span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a>the donor allele in a transmitted gamete (fewer for the less-diverse donors). This</span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a>is the quantified form of &quot;~1/5 of variant sites are actually variant between the</span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a>gametes.&quot;</span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.4 The emission signal is compressed, not at {0, ½, 1}</span></span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>Expected per-bin alternate-**read** fraction by NIL ancestry state, folding in the</span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>dose $d$ (het sites emit an alt read w.p. ½; ref/ref sites w.p. $\varepsilon$):</span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="co">[</span><span class="ot">\text{alt frac}</span><span class="co">]</span> \approx</span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>\varepsilon &amp; \text{REF/REF (no introgression)} &amp;\approx 0<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>\tfrac{d}{2} + (1-\tfrac{d}{2})\varepsilon \approx \dfrac{d}{2} &amp; \textbf{donor HET} &amp;\approx 0.14\text{–}0.17<span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>d &amp; \text{donor HOM} &amp;\approx 0.28\text{–}0.35 .</span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>So the three ancestry states live at roughly $<span class="sc">\{</span>0,\;0.15,\;0.30<span class="sc">\}</span>$ in</span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a>alt-fraction space, **not** $<span class="sc">\{</span>0,\;0.5,\;1.0<span class="sc">\}</span>$:</span>
+<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>REF-vs-HET separation is $\approx 0.15$ over an $\approx 0$ floor — a low-SNR</span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>  *elevation above baseline*, which is exactly why the binned Gaussian-emission</span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>  HMM is the right shape but low-confidence;</span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>HET-vs-HOM separation is $\approx 0.15$ ($0.15$ vs $0.30$) — barely resolvable,</span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>  which is why the caller is het-biased and rarely finds donor-hom.</span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>Note the label &quot;donor HET&quot; above is the state the caller *reports* most, not the</span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>one the design expects most: by the BC2S3 single-locus frequencies donor-**hom** is</span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>actually the more common introgression genotype ($f_{BB}=0.109 &gt; f_{AB}=0.031$) —</span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>the caller under-reports it purely because it is undetectable at $0.4\times$. See</span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">genotype-likelihoods-and-hmm.md</span><span class="co">](genotype_likelihoods_and_hmm.html)</span> §2.</span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.5 Empirical validation — $d$ from the real read fractions</span></span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a>We can estimate $d$ directly from the cohort AD, independent of the panel, by</span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a>conditioning on ancestry-segment state and reading off the mean alt-read fraction:</span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a>REF segments $\to \varepsilon$, HET $\to d/2$, HOM $\to d$</span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a>(<span class="in">`agent/estimate_dose_from_reads.R`</span>, segments from rtiger calls which resolve</span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>zygosity; alt-fraction pooled over all covered sites of all NILs in a taxon).</span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> taxon (donor) <span class="pp">|</span> panel $d$ <span class="pp">|</span> REF-bg alt-frac <span class="pp">|</span> HET alt-frac ($\hat d/2$) <span class="pp">|</span> HOM alt-frac ($\hat d$) <span class="pp">|</span> $2\times$HET <span class="pp">|</span> covered sites <span class="pp">|</span></span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|---:|---:|---:|</span></span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zd (diploperennis) <span class="pp">|</span> 0.346 <span class="pp">|</span> 0.0057 <span class="pp">|</span> 0.198 <span class="pp">|</span> 0.461 <span class="pp">|</span> 0.396 <span class="pp">|</span> 3.4M <span class="pp">|</span></span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zl (luxurians) <span class="pp">|</span> 0.333 <span class="pp">|</span> 0.0071 <span class="pp">|</span> 0.164 <span class="pp">|</span> 0.363 <span class="pp">|</span> 0.329 <span class="pp">|</span> 1.9M <span class="pp">|</span></span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zv (parviglumis) <span class="pp">|</span> 0.282 <span class="pp">|</span> 0.0048 <span class="pp">|</span> 0.157 <span class="pp">|</span> 0.342 <span class="pp">|</span> 0.314 <span class="pp">|</span> 5.3M <span class="pp">|</span></span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zx (mexicana) <span class="pp">|</span> 0.330 <span class="pp">|</span> 0.0044 <span class="pp">|</span> 0.187 <span class="pp">|</span> 0.492 <span class="pp">|</span> 0.374 <span class="pp">|</span> 9.0M <span class="pp">|</span></span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Zh (huehuetenangensis) <span class="pp">|</span> 0.37<span class="sc">\*</span> <span class="pp">|</span> 0.0070 <span class="pp">|</span> 0.339 <span class="pp">|</span> 0.894 <span class="pp">|</span> 0.678 <span class="pp">|</span> 0.8M <span class="pp">|</span></span>
+<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a><span class="sc">\*</span>Zh panel $d$ is from $n=1$ huehuetenangensis (+8 perennis); poorly sampled.</span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>Three things the reads confirm:</span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**The REF-background floor is $\varepsilon \approx 0.004$–$0.007$**, exactly the</span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>   per-read error rate — the REF state emits at the noise floor, not 0 (matching the</span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>   nilhifi anchoring rationale).</span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**The read-based $d$ reproduces the panel-genotype $d$** for the four</span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>   well-sampled donors: the interval $<span class="co">[</span><span class="ot">\,2\times\text{HET},\ \text{HOM}\,</span><span class="co">]</span>$ brackets</span>
+<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>   $d$, and both land at $\approx 0.3$–$0.4$ against the panel&#39;s $0.28$–$0.35$</span>
+<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>   (Zl essentially exact: 0.329 vs 0.333). Two fully independent measurements —</span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>   donor-panel genotype composition and NIL read fractions — agree that</span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>   **d ≈ 0.3, not ≈ 1.** The reads run slightly high, consistent with</span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a>   (i) the specific donor accessions carrying more alt than the taxon average and</span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>   (ii) HET segments absorbing some true-HOM markers (see next point).</span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**The HET/HOM split is not clean — as predicted.** Under the model $2\times$HET</span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>   should equal HOM; instead HOM $&gt;2\times$HET (e.g. Zx 0.49 vs 0.37) because at</span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a>   $0.4\times$ the caller thresholds the alt-fraction rather than resolving zygosity,</span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a>   so HET keeps the low tail and HOM the high tail. The estimator&#39;s own ambiguity is</span>
+<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a>   the identifiability limit this document is about. Zh is the extreme case</span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>   (HET alt-frac 0.34, HOM 0.89): huehuetenangensis is the most divergent donor, so</span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>   $d$ is genuinely highest, but the value is uncertain (panel $n=1$, strong</span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>   het/hom bleed).</span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>Estimates: <span class="in">`agent/dose_estimates_by_taxon.csv`</span>.</span>
+<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.6 Empirical validation, a third measurement: the caller&#39;s own fitted emission</span></span>
+<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a>The <span class="in">`bbnil`</span> count caller gives a third, fully independent estimate of the dose. Its</span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a>BetaBinomial emission can EM-fit the per-state means (<span class="in">`fit_means = TRUE`</span>) instead of</span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a>assuming the fixed <span class="in">`c(`</span>$\varepsilon$<span class="in">`, ½, 1-`</span>$\varepsilon$<span class="in">`)`</span>. If the dilution model is</span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a>right, the fitted means should relax off the assumed $<span class="sc">\{</span>0, \tfrac12, 1<span class="sc">\}</span>$ and onto</span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>$<span class="sc">\{</span>\varepsilon,\ d/2,\ d<span class="sc">\}</span>$. Running the actual EM (the same <span class="in">`nilHMM:::.em_fit_means`</span></span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>that <span class="in">`call_ancestry`</span> uses) on the real skim counts, at the map-derived transition rate</span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a>and <span class="in">`conc = 20`</span>, per calibration NIL and pooled by donor taxon:</span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> donor taxon <span class="pp">|</span> n <span class="pp">|</span> fit REF <span class="pp">|</span> fit HET <span class="pp">|</span> d/2 (panel / reads) <span class="pp">|</span> fit HOM <span class="pp">|</span> d (panel / reads) <span class="pp">|</span> median ΔLL vs fixed <span class="pp">|</span></span>
+<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|---:|---:|---:|---:|</span></span>
+<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> parviglumis (Zv) <span class="pp">|</span> 1 <span class="pp">|</span> 0.004 <span class="pp">|</span> **0.145** <span class="pp">|</span> 0.141 / 0.157 <span class="pp">|</span> 0.169 <span class="pp">|</span> 0.282 / 0.342 <span class="pp">|</span> +338 <span class="pp">|</span></span>
+<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> mexicana (Zx) <span class="pp">|</span> 10 <span class="pp">|</span> 0.004 <span class="pp">|</span> **0.201** <span class="pp">|</span> 0.165 / 0.187 <span class="pp">|</span> 0.421 <span class="pp">|</span> 0.330 / 0.492 <span class="pp">|</span> +206 <span class="pp">|</span></span>
+<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> diploperennis (Zd) <span class="pp">|</span> 3 <span class="pp">|</span> 0.005 <span class="pp">|</span> **0.209** <span class="pp">|</span> 0.173 / 0.198 <span class="pp">|</span> 0.689 <span class="pp">|</span> 0.346 / 0.461 <span class="pp">|</span> +84 <span class="pp">|</span></span>
+<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a><span class="in">`fit *`</span> = median EM-fit <span class="in">`theta`</span>; the <span class="in">`d/2`</span> and <span class="in">`d`</span> reference columns are the panel</span>
+<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a>prediction (§2.3) and the read-based estimate (§2.5). Three things line up with the model:</span>
+<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**REF relaxes to the error floor.** The fitted REF mean is 0.004 to 0.005 across taxa,</span>
+<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>   the per-read error rate $\varepsilon$, matching the REF-background alt-fraction of §2.5.</span>
+<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>   The REF state emits at noise, not at 0.</span>
+<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**HET relaxes to $d/2 \approx 0.15$, not ½.** The fitted HET mean lands at 0.145 to</span>
+<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>   0.209, inside the predicted $d/2$ band (panel 0.14 to 0.17, reads 0.16 to 0.20). The</span>
+<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>   assumed value of ½ is roughly three times too high. This is the single most important</span>
+<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>   number: it is exactly the compression the dilution model predicts, and it is what a</span>
+<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>   fixed emission gets wrong.</span>
+<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**HOM relaxes toward $d$ but stays noisy.** The fitted HOM mean is 0.17 to 0.69,</span>
+<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>   scattered around and above the $d \approx 0.3$ band and consistent with the read-based</span>
+<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a>   HOM of 0.34 to 0.49. The scatter is the identifiability limit itself (§2.5, point 3): at</span>
+<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>   $0.4\times$ the caller thresholds the alt-fraction rather than resolving zygosity, so the</span>
+<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>   HET/HOM split is marginal.</span>
+<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>The marginal log-likelihood increases for **every** sample (+57 to +338 nats), so the</span>
+<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>fixed <span class="in">`c(`</span>$\varepsilon$<span class="in">`, ½, 1-`</span>$\varepsilon$<span class="in">`)`</span> emission does not merely differ from the</span>
+<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>fitted one, it fits the read counts strictly and substantially worse. The mis-specification</span>
+<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>is real, and the fit removes it.</span>
+<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a>This also pins down which knob matters. Of the count emission&#39;s parameters only <span class="in">`fit_means`</span></span>
+<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a>can reach this geometry. The a-priori error <span class="in">`err`</span> sets the means symmetrically to</span>
+<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a><span class="in">`c(err, ½, 1-err)`</span>, so HET is frozen at ½ for any <span class="in">`err`</span> and can never reach 0.15; the</span>
+<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a>concentration <span class="in">`conc`</span> controls overdispersion only and does not move the means at all. So</span>
+<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a><span class="in">`fit_means`</span> is not a tuning convenience among interchangeable knobs, it is the one degree of</span>
+<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a>freedom that corrects the documented mis-specification.</span>
+<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2.7 The site-selection ceiling</span></span>
+<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a>Restricting to sites where the donor is **fixed-ALT** ($f_2\to1$, $d\to1$) would</span>
+<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a>restore the clean $<span class="sc">\{</span>0, \tfrac12, 1<span class="sc">\}</span>$ model. But &quot;fixed in *this* donor&quot; cannot be</span>
+<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a>known without the **donor accession&#39;s own genotypes**, which we do not have; the</span>
+<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a><span class="in">`--min-af 0.05:minor`</span> taxon panel identifies *common* variants, not</span>
+<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a>accession-fixed ones. This is a more basic reference-data gap than phasing/LD:</span>
+<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a>without the donor genotype we cannot even label which markers are informative for a</span>
+<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a>given cross. It is the fundamental reason low-coverage genotype-imputation results</span>
+<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a>from human aDNA or inbred-founder PHGs do not transfer here.</span>
+<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>------</span>
+<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Consequences</span></span>
+<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fit the emission means, don&#39;t assume them.** The state means are</span>
+<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a>  $\approx<span class="sc">\{</span>0,\,d/2,\,d<span class="sc">\}</span>$ with a per-donor $d$; a fixed $<span class="sc">\{</span> \varepsilon, \tfrac12,</span>
+<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a>  1-\varepsilon<span class="sc">\}</span>$ emission is mis-specified. The <span class="in">`bbnil`</span> count caller&#39;s own EM fit confirms</span>
+<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a>  this directly (§2.6): its fitted means relax onto $<span class="sc">\{</span>\varepsilon,\ d/2,\ d<span class="sc">\}</span>$ and the</span>
+<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a>  marginal likelihood improves for every sample. This is why rtiger&#39;s per-taxon <span class="in">`fit_means`</span></span>
+<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a>  outperforms the fixed-mean count emission on this data, and why the a-priori knobs <span class="in">`err`</span></span>
+<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a>  (symmetric, HET pinned at ½) and <span class="in">`conc`</span> (overdispersion only) cannot substitute for it.</span>
+<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Prefer donor-enriched sites where possible.** Selecting sites with high</span>
+<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a>  taxon-level $f_2$ raises $d$ toward 1 and widens state separation, up to the</span>
+<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a>  accession ceiling in §2.7.</span>
+<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Report honestly.** The donor *footprint* (where introgression is) is</span>
+<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>  recoverable; the het-vs-donor-hom split is marginal ($0.15$ vs $0.30$); per-site</span>
+<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>  zygosity is not recoverable and should not be claimed. For B1/anthocyanin QTL the</span>
+<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a>  mapping unit is the **segment/dosage genotype**, obtained by projecting the</span>
+<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a>  decoded ancestry state onto the markers within a segment — not per-marker calls.</span>
+<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a>------</span>
+<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproduce</span></span>
+<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a><span class="va">D</span><span class="op">=</span>/Volumes/rsstu/users/r/rrellan/BZea/bzeaseq/50K/results/joint</span>
+<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a><span class="co"># §1.4 cohort alt-allele frequency spectrum (justifies p small)</span></span>
+<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;%AC\t%AN\n&#39;</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/cohort.vcf.gz&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;$1!=&quot;.&quot;&amp;&amp;$2&gt;0{p=$1/$2;n++;s+=p;if(p&lt;.01)b++} END{print &quot;mean AF&quot;,s/n,&quot;  frac&lt;0.01&quot;,b/n}&#39;</span></span>
+<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a><span class="co"># §2.3 per-taxon donor dose d = f2 + 0.5*f1  (ref_&lt;taxon&gt;.txt = panel sample lists)</span></span>
+<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a><span class="ex">bcftools</span> view <span class="at">-S</span> ref_Z__parviglumis.txt <span class="at">--force-samples</span> <span class="st">&quot;</span><span class="va">$D</span><span class="st">/bzea_50K_ref_panel.vcf.gz&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a> <span class="kw">|</span> <span class="ex">bcftools</span> query <span class="at">-f</span> <span class="st">&#39;[%GT\n]&#39;</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-F</span><span class="st">&#39;[/|]&#39;</span> <span class="st">&#39;</span></span>
+<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a><span class="st">   {n++; if($1==&quot;.&quot;||$2==&quot;.&quot;)next; if($1==0&amp;&amp;$2==0)r++; else if($1==$2)a++; else h++}</span></span>
+<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a><span class="st">   END{c=r+h+a; printf &quot;REF %.3f HET %.3f ALT %.3f  d=%.3f\n&quot;,r/c,h/c,a/c,(a+0.5*h)/c}&#39;</span></span>
+<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>§2.6 (the caller&#39;s fitted emission vs the dose) is reproduced by</span>
+<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/bbnil_fitmeans_theta_check.R`</span>, which runs the actual <span class="in">`nilHMM:::.em_fit_means`</span> on the</span>
+<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a>real skim counts and writes <span class="in">`results/sim/zeal_nil/bbnil_fitmeans_theta_check_bytaxon.csv`</span>:</span>
+<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/bbnil_fitmeans_theta_check.R</span>
+<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a><span class="fu">## References</span></span>
+<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Grzybowski MW, Mural RV, Xu G, Turkus J, Yang J, Schnable JC (2023). A common</span>
+<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>   resequencing-based genetic marker data set for global maize diversity.</span>
+<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>   *The Plant Journal* **113**(6):1109–1121.</span>
+<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1111/tpj.16123</span><span class="co">](https://doi.org/10.1111/tpj.16123)</span>.</span>
+<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>   — the teosinte reference panel used to estimate the donor dose (§2).</span>
+<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Li H (2011). A statistical framework for SNP calling, mutation discovery,</span>
+<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>   association mapping and population genetical parameter estimation from</span>
+<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>   sequencing data. *Bioinformatics* **27**(21):2987–2993.</span>
+<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1093/bioinformatics/btr509</span><span class="co">](https://doi.org/10.1093/bioinformatics/btr509)</span>.</span>
+<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>   — the samtools/bcftools caller and GL model behind the <span class="in">`call -mv`</span> prior (§1).</span>
+<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Hui R, D’Atanasio E, Cassidy LM, Scheib CL, Kivisild T (2020). Evaluating</span>
+<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>   genotype imputation pipeline for ultra-low coverage ancient genomes.</span>
+<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a>   *Scientific Reports* **10**:18542.</span>
+<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1038/s41598-020-75387-w</span><span class="co">](https://doi.org/10.1038/s41598-020-75387-w)</span>.</span>
+<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a>   — reference-panel (aDNA) imputation that does not transfer here (§2.7).</span>
+<span id="cb3-414"><a href="#cb3-414" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Jensen SE, Charles JR, Muleta K, *et al.* (2020). A sorghum practical haplotype</span>
+<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a>   graph facilitates genome-wide imputation and cost-effective genomic prediction.</span>
+<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a>   *The Plant Genome* **13**(1):e20009.</span>
+<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a>   <span class="co">[</span><span class="ot">doi:10.1002/tpg2.20009</span><span class="co">](https://doi.org/10.1002/tpg2.20009)</span>.</span>
+<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a>   — inbred-founder PHG imputation that does not transfer here (§2.7).</span>
+<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a>Full caller / genotype-likelihood method-paper references (GATK HaplotypeCaller,</span>
+<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a>ANGSD, Li–Stephens) are in the companion</span>
+<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">genotype_likelihoods_and_hmm.html</span><span class="co">](genotype_likelihoods_and_hmm.html#references)</span>.</span>
+<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a>------</span>
+<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>*Analysis 2026-07-02, <span class="in">`cohort.vcf.gz`</span> / <span class="in">`bzea_50K_ref_panel.vcf.gz`</span> (read-only mount).</span>
+<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a>Companion to <span class="co">[</span><span class="ot">snp50k-cohort-provenance.md</span><span class="co">](https://github.com/sawers-rellan-labs/zealtiger/blob/main/docs/snp50k-cohort-provenance.md)</span>. Panel:</span>
+<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a>Grzybowski et al. 2023, <span class="in">`--min-af 0.05:minor`</span>, not imputed.*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
