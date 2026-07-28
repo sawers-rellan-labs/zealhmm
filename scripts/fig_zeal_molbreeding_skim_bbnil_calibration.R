@@ -35,12 +35,20 @@ dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
 RR_GRID <- c(1e-6, 1e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 1e-1) # geometric self-transition rate (the smoother)
 CONC_FIX <- 20 # BetaBinomial concentration held at its default
 ERR <- 0.01 # bbnil per-read error (fixed)
+# NNIL_ZEALBB_FITMEANS=1 -> EM-fit the count-emission per-state means instead of the
+# fixed c(err,0.5,1-err). Writes a distinct `_fitmeans` cache/figure so the default
+# fixed-means paper figure is never clobbered. (Holland's nNIL never fits means; this
+# is the count-emission extension, off by default.)
+FITMEANS <- Sys.getenv("NNIL_ZEALBB_FITMEANS") != ""
+SUF <- if (FITMEANS) "_fitmeans" else ""
 R_MOLB <- 1.67e-3 # map estimate for the MolB truth caller (nnil on hardcalls)
 TRUTH_CFG <- data.frame(nir = 0.7, germ = 1e-3, gert = 1e-4, p = 0.9, mr = 0)
 KEEP <- c("name", "chr", "start_bp", "end_bp", "state")
 BASE <- 20
 ANN <- BASE * 0.8 / .pt
-CACHE <- file.path(OUT, "fig_zeal_molbreeding_skim_bbnil_calibration_cache.rds")
+CACHE <- file.path(OUT, sprintf("fig_zeal_molbreeding_skim_bbnil_calibration%s_cache.rds", SUF))
+
+log_info("[bb] emission means: %s", if (FITMEANS) "EM-fit (fit_means=TRUE)" else "fixed c(err,0.5,1-err)")
 
 if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALBB_RECOMPUTE") == "") {
   log_info("[bb] reusing cached compute (%s)", basename(CACHE))
@@ -48,15 +56,28 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALBB_RECOMPUTE") == "") {
 } else {
   seg_at <- function(seg, v) seg[abs(rrate - v) < abs(v) * 1e-6]
   keyv <- function(v) sprintf("%.3e", v)
-  # one bbnil decode of the whole cohort at a fixed rrate (conc/err fixed)
+  # one bbnil decode of the whole cohort at a fixed rrate (conc/err fixed).
+  # fixed-means: caller_grid batches the emission once and sweeps rrate in C++.
+  # fit_means: caller_grid forbids it (emission is data-coupled per decode), so we
+  # route through call_ancestry, which EM-fits per-sample means then decodes.
   bb_grid <- function(dat, rr, threads) {
-    s <- as.data.table(caller_grid(dat,
-      caller = "bbnil",
-      emission_grid = data.frame(fit_means = FALSE), conc = CONC_FIX, err = ERR,
-      rrate = rr, design = "BC2S3", threads = threads
-    ))
+    if (FITMEANS) {
+      s <- as.data.table(caller_grid_fitmeans(dat, rr, threads))
+    } else {
+      s <- as.data.table(caller_grid(dat,
+        caller = "bbnil",
+        emission_grid = data.frame(fit_means = FALSE), conc = CONC_FIX, err = ERR,
+        rrate = rr, design = "BC2S3", threads = threads
+      ))
+    }
     s$rrate <- rr
     s
+  }
+  caller_grid_fitmeans <- function(dat, rr, threads) {
+    as.data.frame(call_ancestry(as.data.frame(dat),
+      caller = "bbnil", fit_means = TRUE, conc = CONC_FIX, err = ERR,
+      rrate = rr, design = "BC2S3", parallel = threads > 1L, threads = threads
+    ))
   }
 
   # ---- SIM leg: bbnil on sim skim COUNTS, sweep rrate; truth = latent ancestry ----
@@ -138,7 +159,7 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALBB_RECOMPUTE") == "") {
     skim_sz_by_rr = setNames(lapply(RR_GRID, function(v) donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP])), keyv(RR_GRID))
   )
   saveRDS(D, CACHE)
-  fwrite(D$sweep, file.path(OUT, "fig_zeal_molbreeding_skim_bbnil_calibration_sweep.csv"))
+  fwrite(D$sweep, file.path(OUT, sprintf("fig_zeal_molbreeding_skim_bbnil_calibration%s_sweep.csv", SUF)))
 }
 list2env(D, environment())
 
@@ -150,18 +171,19 @@ col_molb <- "#D55E00"
 MB_BREAKS <- c(0.1, 1, 10, 100)
 keyv <- function(v) sprintf("%.3e", v)
 
+TT <- if (FITMEANS) " (EM-fit means)" else ""
 CRIT <- list(
   mismatch = list(
     metric = "mismatch", opt = which.min, ylab = "marker mismatch rate",
-    title = "bbnil rrate calibration", legA = c(0.5, 0.99), legAj = c(0.5, 1),
+    title = paste0("bbnil rrate calibration", TT), legA = c(0.5, 0.99), legAj = c(0.5, 1),
     sim_ref = "sim_truth_sz", st_lab = "sim latent ancestry\nBC2S3",
-    out = "fig_zeal_molbreeding_skim_bbnil_calibration.png"
+    out = sprintf("fig_zeal_molbreeding_skim_bbnil_calibration%s.png", SUF)
   ),
   ks = list(
     metric = "ks", opt = which.min, ylab = "introgression-size KS distance (D)",
-    title = "bbnil rrate KS calibration", legA = c(0.5, 0.99), legAj = c(0.5, 1),
+    title = paste0("bbnil rrate KS calibration", TT), legA = c(0.5, 0.99), legAj = c(0.5, 1),
     sim_ref = "sim_gref_sz", st_lab = "sim nnil-on-g_true\nancestry",
-    out = "fig_zeal_molbreeding_skim_bbnil_ks_calibration.png"
+    out = sprintf("fig_zeal_molbreeding_skim_bbnil_ks_calibration%s.png", SUF)
   )
 )
 
