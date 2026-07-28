@@ -1,0 +1,386 @@
+---
+title: "NIL ancestry-times-allele factorization, and the Tier A het coin"
+subtitle: "Why a single-donor NIL genotype is ancestry_dose times a fixed founding-haplotype allele, and why an i.i.d. het coin reproduces it at SNP50K spacing"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+params:
+  n_lines: 800
+  loci_per_chr: 250
+  n_chr: 2
+  chr_cM: 150
+  p_het: 0.20
+  m: 10
+  seed: 1
+---
+
+The ZEAL 6-sib-pool simulator (`scripts/simulate_zeal_pool.R`) generates a NIL
+genotype in two stages: `simcross` simulates the breeding **ancestry** (which
+segments descend from the donor, at what dose, through F1 to BC1 to BC2 to three
+selfings), and then the donor **allele** is painted on. The donors are teosinte
+reference individuals that are ~20% heterozygous per site, so the painting is not a
+constant. This notebook validates the two facts that license that two-stage
+construction, on synthetic data with a fully known, phased donor (so we have exact
+ground truth; this validates the tracking and factorization, not real phasing).
+
+- **Claim 1 (the factorization / IBD collapse).** For a NIL descended from a
+  **single** donor to F1 cross, the BC2S3 ALT dose equals `ancestry_dose x X` at
+  every locus, where `X` is the allele the single founding donor gamete (the F1
+  donor haplotype H) carries there. So allelic inheritance does not need a separate
+  tree through the pedigree: `simcross` tracks the ancestry, and there is exactly
+  one donor haplotype whose allele rides along. This is a memoryless-Markov
+  collapse, the same shape as one round of random mating erasing history under
+  Hardy-Weinberg.
+
+- **Claim 2 (the Tier A coin).** `simulate_zeal_pool.R` replaces the realized
+  recombinant H by an i.i.d. Bernoulli(0.5) coin at het loci. This reproduces the
+  genotype distribution of the true recombinant, because at SNP50K spacing the
+  choice of which donor haplotype carries ALT at each typed het locus is
+  independent of the donor's meiotic block structure. The block structure is real
+  but lives in an **unobservable** source-haplotype layer; it is washed out of the
+  observed genotype.
+
+## Setup
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(ggplot2)
+  library(patchwork)
+  library(simcross)
+  library(here)
+})
+source(here("R/simulate.R")) # .hap_allele_at
+set.seed(params$seed)
+
+theme_set(theme_classic(base_size = 10) +
+  theme(text = element_text(family = "sans"), plot.tag = element_text(face = "bold")))
+ALT <- 1L
+REF <- 0L
+```
+
+### The grandparent-trick pedigree (3-founder diploid donor, single NIL leaf)
+
+A genuine diploid donor cannot be a single inbred `simcross` founder, so we build
+it as the F1 of two inbred grandparents carrying the donor's two haplotypes. Then
+one donor to F1 cross, two backcrosses to the recurrent parent, three selfings.
+`simcross` labels inbred founder `i` with allele `i`, verified in
+`agent/recon_phase_and_simcross.R`.
+
+```{r pedigree}
+gp_bc2s3_pedigree <- function() {
+  # founders: 1 = recurrent (allele 1), 2 = hapA (allele 2), 3 = hapB (allele 3)
+  id <- 1:5
+  mom <- c(0L, 0L, 0L, 2L, 1L) # id4 donor = cross(2,3); id5 F1 = cross(1,4)
+  dad <- c(0L, 0L, 0L, 3L, 4L)
+  gen <- c(0L, 0L, 0L, 1L, 2L)
+  add <- function(mm, dd, g) {
+    i <- length(id) + 1L
+    id[i] <<- i
+    mom[i] <<- mm
+    dad[i] <<- dd
+    gen[i] <<- g
+    i
+  }
+  bc1 <- add(1L, 5L, 3L) # BC1 = recurrent x F1
+  bc2 <- add(1L, bc1, 4L) # BC2 = recurrent x BC1
+  s1 <- add(bc2, bc2, 5L) # selfings
+  s2 <- add(s1, s1, 6L)
+  s3 <- add(s2, s2, 7L) # NIL leaf
+  sex <- ifelse(id %in% mom[mom > 0L], 0L, 1L)
+  list(
+    ped = data.frame(id = id, mom = mom, dad = dad, sex = sex, gen = gen),
+    f1 = "5", nil = as.character(s3)
+  )
+}
+PED <- gp_bc2s3_pedigree()
+knitr::kable(PED$ped, caption = "Grandparent-trick BC2S3 pedigree (F1 = id5, NIL = id10)")
+```
+
+### A synthetic phased donor and marker map
+
+Two chromosomes, evenly spaced markers in cM. ~20% of loci are heterozygous
+(hapA differs from hapB); the rest are homozygous with a shared allele. At het loci
+we assign ALT to hapA or hapB by an independent coin: this is the SNP50K-realistic
+model, since teosinte population LD decays within ~1 to 2 kb, far below the ~43 kb
+SNP50K spacing, so which haplotype carries ALT is independent across typed het loci.
+
+```{r donor-map}
+markers <- rbindlist(lapply(seq_len(params$n_chr), function(ch) {
+  data.table(chr = ch, cm = seq(0, params$chr_cM, length.out = params$loci_per_chr))
+}))[order(chr, cm)]
+markers[, locus := .I]
+cmlen <- markers[, .(L = max(cm)), by = chr][order(chr)]
+M <- nrow(markers)
+
+is_het <- runif(M) < params$p_het
+hapA <- integer(M)
+hapB <- integer(M)
+hom <- !is_het
+sh <- rbinom(sum(hom), 1L, 0.5) # shared allele at hom loci
+hapA[hom] <- sh
+hapB[hom] <- sh
+b <- rbinom(sum(is_het), 1L, 0.5) # b = 1 -> hapA carries ALT (hapB REF) at that het locus
+hapA[is_het] <- b
+hapB[is_het] <- 1L - b
+donor_g <- hapA + hapB # donor genotype: 0 hom REF, 1 het, 2 hom ALT
+
+cat(sprintf(
+  "markers = %d on %d chr (%.0f cM each) | het loci = %d (%.1f%%) | donor hom-ALT = %d, het = %d, hom-REF = %d\n",
+  M, params$n_chr, params$chr_cM, sum(is_het), 100 * mean(is_het),
+  sum(donor_g == 2L), sum(donor_g == 1L), sum(donor_g == 0L)
+))
+```
+
+## Simulate the cohort
+
+Each line is one `sim_from_pedigree` realization (its own independent founding
+gamete). Per line we read, at every marker: the NIL's two haplotype allele **labels**
+(1 = recurrent, 2 = hapA, 3 = hapB), and the F1 donor haplotype's labels (the
+founding gamete H). From these we build every quantity both claims need.
+
+```{r simulate}
+allele_of_label <- function(lab) {
+  # map simcross ancestry label {1,2,3} to the ALT/REF allele it carries
+  out <- integer(length(lab))
+  out[lab == 2L] <- hapA[lab == 2L]
+  out[lab == 3L] <- hapB[lab == 3L]
+  out # label 1 (recurrent) stays 0 = REF
+}
+
+eval_labels <- function(sim, id) {
+  # per-chromosome ancestry labels for one individual, assembled in marker order
+  mat <- integer(M)
+  pat <- integer(M)
+  for (ci in seq_len(nrow(cmlen))) {
+    rows <- which(markers$chr == cmlen$chr[ci])
+    cm <- markers$cm[rows]
+    ind <- sim[[ci]][[id]]
+    mat[rows] <- .hap_allele_at(ind$mat, cm)
+    pat[rows] <- .hap_allele_at(ind$pat, cm)
+  }
+  list(mat = mat, pat = pat)
+}
+
+N <- params$n_lines
+mismatch <- 0L
+geno_hard <- integer(3) # counts of dose 0/1/2 at het loci (hard way)
+geno_coin <- integer(3) # counts of dose 0/1/2 at het loci (Tier A coin)
+het_idx <- which(is_het)
+# per-line het-locus indicator sequences (for autocorrelation), by chromosome
+seq_src <- vector("list", N) # source-haplotype indicator (recombinant H): unobservable
+seq_infR <- vector("list", N) # informative-het indicator, recombinant H: observable
+seq_infC <- vector("list", N) # informative-het indicator, Tier A coin: observable
+dens_hard <- numeric(M)
+dens_coin <- numeric(M) # sum of informative-het indicator per locus (for density)
+
+for (i in seq_len(N)) {
+  sim <- sim_from_pedigree(PED$ped, L = cmlen$L, m = params$m, p = 0)
+  nilL <- eval_labels(sim, PED$nil)
+  f1L <- eval_labels(sim, PED$f1) # F1: mat = recurrent (label 1), pat = donor gamete H
+
+  # --- Claim 1: hard-way genotype vs ancestry_dose x X ---
+  hard <- allele_of_label(nilL$mat) + allele_of_label(nilL$pat)
+  anc <- (nilL$mat %in% c(2L, 3L)) + (nilL$pat %in% c(2L, 3L))
+  Hlab <- f1L$pat # founding gamete labels in {2,3}
+  X <- allele_of_label(Hlab) # allele the founding gamete carries at each locus
+  pred <- anc * X
+  mismatch <- mismatch + sum(hard != pred)
+
+  # --- Claim 2: Tier A coin (same ancestry, X replaced) ---
+  fa <- integer(M)
+  fa[donor_g == 2L] <- 1L
+  het <- which(donor_g == 1L)
+  fa[het] <- rbinom(length(het), 1L, 0.5) # per-line i.i.d. coin at het loci
+  tierA <- anc * fa
+
+  gh <- tabulate(hard[het_idx] + 1L, nbins = 3)
+  gc <- tabulate(tierA[het_idx] + 1L, nbins = 3)
+  geno_hard <- geno_hard + gh
+  geno_coin <- geno_coin + gc
+
+  # indicator sequences at het loci, in marker order, split by chromosome
+  src <- as.integer(Hlab == 2L)[het_idx] # which donor haplotype the gamete carries
+  infR <- X[het_idx] # informative iff founding gamete is ALT here
+  infC <- fa[het_idx]
+  chr_h <- markers$chr[het_idx]
+  seq_src[[i]] <- split(src, chr_h)
+  seq_infR[[i]] <- split(infR, chr_h)
+  seq_infC[[i]] <- split(infC, chr_h)
+  dens_hard <- dens_hard + X
+  dens_coin <- dens_coin + fa
+}
+```
+
+## Claim 1: the factorization is exact
+
+```{r claim1}
+cat(sprintf(
+  "Claim 1: mismatches between hard-way genotype and ancestry_dose x X\n  = %d out of %s NIL-locus comparisons  (expected: 0)\n",
+  mismatch, format(as.numeric(N) * M, big.mark = ",")
+))
+stopifnot(mismatch == 0L)
+cat("PASS: the single-donor NIL genotype equals ancestry_dose x X at every locus.\n")
+```
+
+Zero mismatches. Because there is only one donor haplotype in the whole line, every
+donor-ancestry position carries that haplotype's allele; tracking the ancestry (which
+`simcross` does) times the one fixed allele reconstructs the genotype exactly. No
+separate allele tree is needed. The factorization breaks only if two independent
+donor haplotypes enter the line (two founding crosses), which a NIL does not have.
+
+## Claim 2a: the coin reproduces the het-locus genotype distribution
+
+```{r claim2a}
+fh <- geno_hard / sum(geno_hard)
+fc <- geno_coin / sum(geno_coin)
+tab <- data.table(
+  dose = c("0 (REF)", "1 (het)", "2 (ALT)"),
+  `recombinant H` = round(fh, 4),
+  `Tier A coin` = round(fc, 4),
+  `abs diff` = round(abs(fh - fc), 4)
+)
+knitr::kable(tab, caption = "Genotype-dose frequencies at het loci (pooled over loci and lines)")
+cat(sprintf(
+  "Claim 2a: max abs frequency difference (recombinant H vs Tier A coin) = %.4f\n",
+  max(abs(fh - fc))
+))
+```
+
+The marginal per-locus genotype distribution at het loci is the same under the true
+recombinant founding gamete and under the i.i.d. coin: both are a 50/50 mixture of
+"this locus carries the introgression allele" (a full BC2S3 dosage distribution) and
+"this locus is silent" (all REF).
+
+## Claim 2b: where the block structure lives, and why it is invisible
+
+The donor's meiosis does create Mb-scale blocks, but in the **source-haplotype**
+layer (which of the donor's two haplotypes the founding gamete carries). That layer
+is real and autocorrelated. The **observable** informative-het indicator (does the
+founding gamete carry ALT here) is i.i.d. even for the true recombinant, because
+which haplotype is ALT at a het locus is set independently of the meiotic blocks and
+randomizes them away. The Tier A coin matches the observable exactly.
+
+```{r claim2b}
+mean_lag1 <- function(seqs) {
+  # mean lag-1 autocorrelation of a per-line, per-chromosome binary indicator
+  vals <- unlist(lapply(seqs, function(byline) {
+    lapply(byline, function(v) {
+      if (length(v) < 3L || sd(v) == 0) {
+        return(NA_real_)
+      }
+      a <- acf(v, lag.max = 1, plot = FALSE)$acf[2]
+      a
+    })
+  }))
+  mean(vals, na.rm = TRUE)
+}
+ac <- data.table(
+  layer = c(
+    "source haplotype, recombinant H (unobservable)",
+    "informative-het, recombinant H (observable)",
+    "informative-het, Tier A coin (observable)"
+  ),
+  `mean lag-1 autocorrelation` = round(c(
+    mean_lag1(seq_src), mean_lag1(seq_infR), mean_lag1(seq_infC)
+  ), 4)
+)
+knitr::kable(ac, caption = "Along-chromosome lag-1 autocorrelation, by layer")
+```
+
+```{r claim2b-fig, fig.width = 8, fig.height = 3.2}
+# lag profile, averaged over lines and chromosomes, for the three layers
+lag_profile <- function(seqs, lab, maxlag = 12L) {
+  acc <- matrix(NA_real_, 0, maxlag + 1L)
+  for (byline in seqs) {
+    for (v in byline) {
+      if (length(v) > maxlag + 2L && sd(v) > 0) {
+        acc <- rbind(acc, acf(v, lag.max = maxlag, plot = FALSE)$acf[, 1, 1])
+      }
+    }
+  }
+  data.table(lag = 0:maxlag, acf = colMeans(acc, na.rm = TRUE), series = lab)
+}
+prof <- rbindlist(list(
+  lag_profile(seq_src, "source haplotype, recombinant H (unobservable)"),
+  lag_profile(seq_infR, "informative-het, recombinant H (observable)"),
+  lag_profile(seq_infC, "informative-het, Tier A coin (observable)")
+))[lag > 0]
+pA <- ggplot(prof, aes(lag, acf, colour = series)) +
+  geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey60") +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.2) +
+  scale_colour_manual(values = c("#0072B2", "#D55E00", "#009E73")) +
+  labs(
+    x = "lag (het loci along chromosome)", y = "autocorrelation",
+    colour = NULL, tag = "A"
+  ) +
+  theme(legend.position = "bottom", legend.direction = "vertical")
+
+# density + spatial uniformity of the informative-het indicator
+dens <- data.table(
+  chr = markers$chr, cm = markers$cm, is_het = is_het,
+  recombinant = dens_hard / N, coin = dens_coin / N
+)[is_het == TRUE]
+densL <- melt(dens,
+  id.vars = c("chr", "cm"), measure.vars = c("recombinant", "coin"),
+  variable.name = "model", value.name = "informative_frac"
+)
+densL[, model := factor(model,
+  labels = c("recombinant H", "Tier A coin")
+)]
+pB <- ggplot(densL, aes(cm, informative_frac, colour = model)) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", colour = "grey50") +
+  geom_smooth(se = FALSE, linewidth = 0.6, method = "loess", span = 0.4) +
+  facet_wrap(~chr, nrow = 1, labeller = labeller(chr = function(x) paste("chr", x))) +
+  scale_colour_manual(values = c("#D55E00", "#009E73")) +
+  ylim(0, 1) +
+  labs(
+    x = "position (cM)", y = "informative-het fraction\n(across lines)",
+    colour = NULL, tag = "B"
+  ) +
+  theme(legend.position = "bottom")
+
+pA + pB + plot_layout(widths = c(1, 1.2))
+```
+
+Panel A: the source-haplotype indicator (recombinant H) is strongly autocorrelated,
+the real Mb-scale meiotic blocks. Both observable informative-het indicators, the
+true recombinant and the Tier A coin, sit at ~0 autocorrelation: the block structure
+does not appear in what the caller sees. Panel B: the informative-het fraction is ~0.5
+and spatially uniform under both models, because the donor's two haplotypes are
+complementary at het sites, so whichever haplotype the gamete carries, ~half the het
+loci are informative.
+
+## Conclusion
+
+```{r conclusion}
+cat(sprintf(
+  paste0(
+    "Claim 1  factorization mismatches ....... %d (PASS: exact)\n",
+    "Claim 2a het-locus genotype max |dfreq| .. %.4f (recombinant H vs Tier A coin)\n",
+    "Claim 2b lag-1 autocorrelation:\n",
+    "         source haplotype (recombinant) .. %.3f  (real, unobservable blocks)\n",
+    "         informative-het (recombinant) ... %.3f  (observable: ~0)\n",
+    "         informative-het (Tier A coin) ... %.3f  (observable: ~0, matches)\n"
+  ),
+  mismatch, max(abs(fh - fc)),
+  mean_lag1(seq_src), mean_lag1(seq_infR), mean_lag1(seq_infC)
+))
+```
+
+The single-donor NIL genotype is `ancestry_dose x X` exactly, so the two-stage
+`simulate_zeal_pool.R` construction (simcross ancestry, then paint the founding
+allele) tracks allelic inheritance correctly without a separate allele tree. And at
+SNP50K spacing the Tier A i.i.d. het coin is not merely a convenient approximation:
+it reproduces the observed genotype distribution of the true recombinant founding
+gamete, marginally and in autocorrelation, because the only structure it discards
+(which donor haplotype is the source) is unobservable at this marker density. The
+gain a phased Tier B would add is confined to that hidden layer.

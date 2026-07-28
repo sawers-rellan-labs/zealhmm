@@ -1,0 +1,463 @@
+---
+title: "Calibrating `nnil` on ZEAL by the Holland method: MolBreeding truth versus SNP50K skim"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+::: {.callout-note}
+## Scope: a faithful ZEAL recreation of Holland's nNIL calibration, on real data
+This reproduces Zhong et al.'s (2025) nNIL calibration on the ZEAL population.
+MolBreeding target-capture sequencing (~110x) plays the role of Holland's chip
+(the **truth**); the SNP50K skim (~0.4x) plays the role of his GBS (the **test**);
+and `nnil` is calibrated against Holland's objective, the **per-cell ancestry
+mismatch** between the two platforms. The truth is `nnil` run on the MolBreeding
+hard calls (Holland runs the HMM on the chip too); the test is the skim hard-called
+then run through the same `nnil` over Holland's emission grid. Compute lives in the
+tracked scripts (`scripts/stage_molbreeding_from_zealtiger.sh`,
+`scripts/molbreeding/extract_molbreeding_hardcalls.R`,
+`scripts/molbreeding/build_calibration_pairing.R`,
+`scripts/molbreeding_skim_calibration.R`); this notebook reads their outputs.
+Markers are on maize v5; the genetic map is the native TeoNAM v5 map.
+:::
+
+Holland's calibration minimises the disagreement between two genotyping platforms
+on the lines assayed on both: high-coverage chip calls define the truth, the cheap
+GBS is run through the HMM, and the HMM parameters are chosen to minimise the
+per-cell ancestry-call mismatch. ZEAL has the same structure with different
+platforms: **MolBreeding** target sequencing (~110x, the informative-marker truth)
+and the **SNP50K skim** (~0.4x, the population-scale genotyping). This notebook asks
+the same question Holland asked, on ZEAL: what `nnil` parameters minimise the
+skim-versus-MolBreeding mismatch, and, because the skim genotype call is a choice we
+have to make, whether a maximum-likelihood or a breeding-design genotype prior
+serves the calibration better.
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(ggplot2)
+  library(patchwork)
+  library(here)
+  library(knitr)
+})
+theme_z <- theme_classic(base_size = 10) +
+  theme(
+    text = element_text(family = "sans"),
+    plot.tag = element_text(face = "bold"),
+    legend.position = "top", legend.title = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+col_ml <- "#0072B2" # ML / flat genotype-call prior
+col_br <- "#D55E00" # BC2S3 breeding-design genotype-call prior
+
+# the parameter sweep (skim test vs MolBreeding truth), 945 configs x 2 skim priors.
+# "flat" = call_gt(prior = "flat") = argmax-GL = the maximum-likelihood genotype call;
+# relabel to ML for display (the two are identical).
+sweep <- fread(here("data/zeal/molbreeding_skim_calibration.csv"))
+# normalize the skim genotype-call prior labels (robust to older flat/design runs):
+# ML = the maximum-likelihood (flat) call; breeding = the BC2S3 breeding-design prior.
+sweep[prior %in% c("flat", "ml"), prior := "ML"]
+sweep[prior %in% c("design", "breeding"), prior := "breeding"]
+sweep[, prior := factor(prior, levels = c("ML", "breeding"))]
+
+pair <- fread(here("data/zeal/correspondence/calibration_pairing.csv"))
+hc <- fread(here("data/zeal/molbreeding/molbreeding_hardcalls_wsfilt.tsv"))
+```
+
+## 1. Holland's pipeline, mapped to ZEAL
+
+```{r pipeline-map}
+map_tab <- data.table(
+  role = c("truth (high coverage)", "test (low coverage)", "objective", "sites", "map"),
+  Holland_nNIL = c(
+    "chip nnil calls", "GBS nnil calls", "per-cell ancestry mismatch (GBS-nnil vs chip-nnil)",
+    "chip-GBS shared: 11,310", "native TeoNAM v5 cM"
+  ),
+  ZEAL = c(
+    "targseq nnil calls (~110x)", "skim nnil calls (~0.4x)", "per-cell ancestry mismatch (skim-nnil vs targseq-nnil)",
+    "teosinte-informative: 9,157", "native TeoNAM v5 cM"
+  )
+)
+kable(map_tab,
+  col.names = c("role", "Holland nNIL", "ZEAL"),
+  caption = "The nNIL calibration structure, and the ZEAL platforms that play each role."
+)
+```
+
+The calibration runs on the lines assayed on **both** platforms. Sample identity is
+matched by canonical pedigree (skim and MolBreeding share the `PN#_SID#` id space;
+`scripts/zeal_build_samplesheet.R`), giving 14 NIL pairs plus two B73-bulk controls.
+One pair carries a documented MolBreeding-side well swap: the truth labelled
+`PN4_SID330` is genotypically `PN4_SID322` (donor Jaccard 0.84 versus skim-322, 0.10
+versus its own label), so it is paired to skim `PN4_SID322`; the canonical
+correspondence table is left unchanged and the override is applied only here.
+
+```{r pairs}
+cal <- pair[in_calibration == TRUE]
+kable(
+  cal[, .(truth_sample, test_sample, true_pedigree,
+    note = fifelse(note == "", "", "Jaccard-corrected pair")
+  )],
+  caption = sprintf("The %d calibration NIL pairs (truth MolBreeding sample <-> test skim sample). The B73-bulk checks are MolBreeding-only controls and are not scored.", nrow(cal))
+)
+```
+
+The MolBreeding truth carries real heterozygosity, which matters for what follows:
+the skim is being asked to recover het introgression that genuinely exists. Compared
+against the neutral **BC2S3 single-locus expectation** (2 backcrosses to B73, then 3
+selfs), the truth already shows a **donor deficiency**: a heterozygote excess, a
+homozygous-donor deficit, and a lower overall donor-allele frequency than neutral.
+
+```{r truth-composition}
+obs <- hc[name %in% cal$truth_sample & !is.na(g) & g != 3L]
+fr <- obs[, .N, by = g][order(g)][, f := N / sum(N)]
+# neutral single-locus BC2S3 expectation, from the backcross/selfing transition matrices
+# (2 backcrosses to AA=B73, then 3 selfs); reproduces breeding_prior("BC2S3") exactly.
+Bm <- matrix(c(1, 0, 0, 0.5, 0.5, 0, 0, 1, 0), 3, byrow = TRUE) # backcross to AA
+Sm <- matrix(c(1, 0, 0, 0.25, 0.5, 0.25, 0, 0, 1), 3, byrow = TRUE) # selfing
+p0 <- c(0, 1, 0) # F1
+for (i in 1:2) p0 <- as.vector(p0 %*% Bm)
+for (i in 1:3) p0 <- as.vector(p0 %*% Sm)
+maf_obs <- fr$f[fr$g == 1] / 2 + fr$f[fr$g == 2]
+maf_exp <- p0[2] / 2 + p0[3]
+comp <- data.table(
+  state = c("REF (recurrent)", "HET (introgression)", "ALT (homozygous donor)", "MAF (donor allele freq)"),
+  `molb (observed)` = round(c(fr$f, maf_obs), 4),
+  `expected (BC2S3 neutral)` = round(c(p0, maf_exp), 4)
+)
+kable(comp, caption = "MolBreeding truth composition over the 14 samples versus the neutral BC2S3 single-locus expectation. The donor deficiency is clear: het excess (0.090 vs 0.031), homozygous-donor deficit (0.026 vs 0.109), and overall donor-allele frequency well below neutral (0.071 vs 0.125).")
+```
+
+## 2. The skim genotype-call choice: maximum-likelihood versus the breeding-design prior
+
+`nnil` ingests hard genotype calls, so the skim counts must first be called into
+genotypes, and the prior for that call is a modelling choice. We compare two:
+
+- **ML** (`call_gt(prior = "flat")`): the uniform-prior maximum-likelihood call
+  (`argmax` of the genotype likelihood), the standard data-only caller. Het-blind at
+  depth 1 (a lone ALT read is called homozygous), so it can only call het where at
+  least two reads show both alleles.
+- **breeding** (`call_gt(prior = breeding_prior("BC2S3"))`): the BC2S3 breeding-design
+  prior, which encodes the expected donor content and actively resists het.
+
+Holland's grid (945 configurations) is swept identically on both, and each
+configuration's skim calls are scored against the MolBreeding truth. Reported at each
+prior's mismatch-optimal configuration:
+
+```{r prior-compare}
+best <- sweep[, .SD[which.min(mismatch)], by = prior]
+comp <- best[, .(
+  prior,
+  `mismatch (primary)` = round(mismatch, 4),
+  `nir*` = nir, `p*` = p, `r*` = r,
+  het_recall = round(het_recall, 3),
+  alt_recall = round(alt_recall, 3),
+  donor_recall = round(donor_marker_recall, 3),
+  DSC = round(donor_frag_dice, 3),
+  FDR = round(donor_frag_FDR, 3),
+  KS = round(ks_fragsize, 3)
+)][order(prior)]
+kable(comp, caption = "Skim caller calibrated under each genotype-call prior, at the per-cell mismatch optimum. DSC = donor-fragment Dice-Sorensen coefficient; FDR = donor-fragment false-discovery rate; KS = fragment-size Kolmogorov-Smirnov distance versus truth. Starred columns are the swept parameters at the optimum.")
+```
+
+The ML caller wins on the primary objective and on every diagnostic: lower mismatch,
+higher donor recall, nearly triple the fragment DSC, lower fragment FDR, and a closer
+fragment-size distribution. Two points stand out:
+
+- **The breeding prior's het-suppression is what crippled het recovery.** At the
+  genotype-call stage the breeding prior produced almost no het (het fraction 0.001 of
+  covered calls), so `het_recall` was 0; the ML caller lets balanced two-read sites
+  call het and recovers `het_recall` about 0.09.
+- **The ML optimum lands at `nir` = 0.7**, the same non-informative rate as the truth
+  caller and the authentic ZEAL donor non-informative rate (about 0.68). The breeding
+  prior distorts the optimum down to `nir` = 0.3. So the maximum-likelihood call is
+  also the one that recovers the biologically-consistent `nir`.
+
+The ML caller is therefore the calibration basis; the breeding prior is kept only as
+the het-suppressing foil.
+
+## 3. The objective, and the het floor it exposes
+
+Per-cell mismatch is minimised along `nir`; the other swept parameters move it little
+(quantified by the variance-component analysis below). The primary objective as a
+function of `nir`:
+
+```{r fig-mismatch-nir, fig.width = 6.5, fig.height = 4, fig.cap = "Primary calibration objective: marginal mean per-cell skim-versus-MolBreeding ancestry mismatch (over the 14 pairs and the rest of the grid) against nir, for the ML and breeding skim genotype-call priors. Open circles mark each prior's minimum. ML (blue) reaches a lower mismatch and its minimum sits at nir = 0.7; the breeding prior (orange) is uniformly worse and minimised near nir = 0.3."}
+mm <- sweep[, .(mismatch = mean(mismatch)), by = .(prior, nir)]
+mn <- mm[, .SD[which.min(mismatch)], by = prior]
+ggplot(mm, aes(nir, mismatch, colour = prior)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.3) +
+  geom_point(data = mn, shape = 21, size = 3.5, stroke = 1, fill = NA) +
+  scale_x_log10() +
+  scale_colour_manual(values = c(ML = col_ml, breeding = col_br)) +
+  labs(x = "nir (log scale)", y = "mean per-cell mismatch\n(skim nnil vs MolBreeding truth)") +
+  theme_z
+```
+
+### Variance components of the objective (ML calibration)
+
+A main-effects ANOVA of the ML calibration's per-cell mismatch against the five swept
+parameters shows `nir` dominates (about 61% of the parameter-attributable variance);
+the recombination prior `r` is a distant second (about 7%); and `germ`, `gert`, `p`
+each contribute under 3%.
+
+```{r variance-anova}
+d <- sweep[prior == "ML"]
+aov <- anova(lm(mismatch ~ factor(nir) + factor(germ) + factor(gert) + factor(p) + factor(r), d))
+ss <- aov[["Sum Sq"]]
+nm <- sub("factor\\((.*)\\)", "\\1", rownames(aov))
+nm[nm == "Residuals"] <- "residual"
+vtab <- data.table(
+  term = factor(nm, c("nir", "germ", "gert", "p", "r", "residual")),
+  `variance share (%)` = round(100 * ss / sum(ss), 1)
+)
+setorder(vtab, term)
+kable(vtab, caption = "Main-effects ANOVA variance share of the ML calibration's per-cell mismatch attributed to each swept parameter. nir dominates; the residual is the per-(marker,line) structure the main-effects model does not capture.")
+```
+
+```{r fig-varshare, fig.width = 5.5, fig.height = 3.2, fig.cap = "Variance share of the ML calibration's per-cell mismatch explained by each swept parameter (main-effects ANOVA, residual omitted). nir carries the calibration; r is a weak second; germ/gert/p are near-flat."}
+vp <- vtab[term != "residual"]
+ggplot(vp, aes(term, `variance share (%)`)) +
+  geom_col(fill = col_ml, width = 0.7) +
+  labs(x = "swept parameter", y = "variance share of mismatch (%)") +
+  theme_z
+```
+
+So `nir` carries the calibration (the ML caller places its optimum at `nir` = 0.7,
+Section 2), with the recombination prior `r` a weak secondary axis examined next. The
+large residual reflects between-marker and between-line variation the parameters do
+not touch, consistent with the mismatch floor being a data property (coverage) rather
+than a tuning target.
+
+### The recombination prior `r`: mismatch trades against over-fragmentation
+
+In Holland's nNIL `r` is a benign hyperparameter (0.03% of the objective, a flat
+plateau), so the map value is safe and no calibration of `r` is needed. On the ZEAL
+skim `r` behaves differently: it carries about 7% of the mismatch variance, and
+per-cell mismatch **falls weakly as `r` rises** (0.156 at `r`=1e-6 to 0.148 at 1e-2,
+a 0.0085 range). But that apparent improvement is **over-fragmentation, not better
+calling**: as `r` rises the donor-fragment FDR climbs (0.65 to 0.89) and the
+breakpoint ratio balloons (0.9 to 6.3x the truth). Minimising mismatch alone would
+therefore push `r` spuriously high; the fragment diagnostics show it is manufacturing
+false donor blocks. The map-derived `r` (~3.2e-4, mid-grid, breakpoint ratio ~2) is
+the principled anchor, set by the genetic map rather than by the mismatch curve.
+
+```{r fig-rsweep, fig.width = 8, fig.height = 2.7, fig.cap = "Recombination-prior sweep, ML skim caller, marginal over the emission grid. Per-cell mismatch (left) falls weakly as r rises, but the donor-fragment FDR (middle) and the breakpoint ratio (right, 1 = truth) both climb steeply: the lower mismatch at high r is over-fragmentation, not better calling. Dashed line, the SNP50K map-derived r ~3.2e-4, the principled anchor. Unlike Holland's nNIL, r is not a benign hyperparameter on ZEAL skim, but the map value still lands in the sensible region."}
+map_r_skim <- 3.2e-4
+rs <- melt(
+  sweep[prior == "ML", .(
+    mismatch = mean(mismatch),
+    donor_frag_FDR = mean(donor_frag_FDR), breakpoint_ratio = mean(breakpoint_ratio)
+  ), by = r],
+  id.vars = "r", variable.name = "metric", value.name = "value"
+)
+rs[, metric := factor(
+  metric, c("mismatch", "donor_frag_FDR", "breakpoint_ratio"),
+  c("per-cell mismatch (lower better)", "donor-fragment FDR (lower better)", "breakpoint ratio (1 = truth)")
+)]
+ggplot(rs, aes(r, value)) +
+  geom_vline(xintercept = map_r_skim, linetype = "dashed", colour = "grey40", linewidth = 0.4) +
+  geom_line(colour = col_ml, linewidth = 0.6) +
+  geom_point(colour = col_ml, size = 1.3) +
+  facet_wrap(~metric, scales = "free_y", nrow = 1) +
+  scale_x_log10() +
+  labs(x = "intermarker recombination fraction r (log scale; dashed = map-derived ~3.2e-4)", y = NULL) +
+  theme_z
+```
+
+The mismatch floor is a **het floor**. The skim recovers homozygous donor well
+(`alt_recall` about 0.90 to 0.94) but recovers almost no het (`het_recall` about 0.09
+even under ML), while about 9% of the truth genome is het (Section 1). At 0.4x, with
+71% of markers uncovered and most covered markers at depth 1, the skim cannot see the
+two alleles a het call needs; the ML prior helps at the sites with two reads but
+cannot manufacture coverage. This is the coverage-limited failure mode the calibration
+is meant to characterise, not a tuning artefact.
+
+```{r fig-recall-nir, fig.width = 7.5, fig.height = 3.6, fig.cap = "State-resolved donor recovery versus nir, ML skim caller. Homozygous-donor markers (alt_recall) are recovered across nir; heterozygous markers (het_recall) are barely recovered at all, capped by 0.4x coverage. The skim reads ZEAL introgression as homozygous-donor blocks and misses the het."}
+rr <- melt(sweep[prior == "ML", .(het_recall = mean(het_recall), alt_recall = mean(alt_recall)),
+  by = nir
+], id.vars = "nir", variable.name = "state", value.name = "recall")
+rr[, state := factor(
+  state, c("alt_recall", "het_recall"),
+  c("alt_recall (homozygous donor)", "het_recall (heterozygous)")
+)]
+ggplot(rr, aes(nir, recall, colour = state)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.3) +
+  scale_x_log10() +
+  ylim(0, 1) +
+  scale_colour_manual(values = c(
+    "alt_recall (homozygous donor)" = "#009E73",
+    "het_recall (heterozygous)" = "#CC79A7"
+  )) +
+  labs(x = "nir (log scale)", y = "marker recall vs MolBreeding truth (ML caller)") +
+  theme_z
+```
+
+## 4. Fragment-size distributions across the sweeps
+
+The over-fragmentation the diagnostics flagged is visible directly in the
+donor-fragment-size distribution, and it shows both knobs converging on the truth
+at the calibrated operating point. The truth (black dashed) has ~154 donor blocks
+(median ~15 Mb).
+
+```{r fig-fragsize, fig.width = 9, fig.height = 3.4, fig.cap = "Donor-fragment-size ECDFs (pooled over the 14 pairs), skim ML caller versus the MolBreeding truth (black dashed). A, sweeping r at the ML emission: low r (1e-6) under-fragments (88 blocks vs 154 in truth), the map-derived r recovers the truth distribution almost exactly (151 blocks), and high r (1e-2) shatters it into many small blocks (327). B, sweeping nir at the map r: low nir badly over-fragments (nir = 0.1 gives 537 tiny blocks, median 0.7 Mb) and the distribution climbs to the truth by nir ~0.7-0.9 (151-131 blocks). Both knobs meet the truth at the calibrated operating point (map r, nir ~0.7)."}
+fs <- fread(here("data/zeal/molbreeding_skim_fragsize.csv"))
+fa <- fs[panel %in% c("both", "r")]
+fa[, series := factor(series, levels = c("truth", "r = 1e-06", "r = 3e-04 (map)", "r = 1e-02"))]
+pA <- ggplot(fa, aes(size_mb, colour = series, linetype = series == "truth")) +
+  stat_ecdf(linewidth = 0.7) +
+  scale_x_log10() +
+  scale_colour_manual(values = c(
+    "truth" = "black", "r = 1e-06" = "#a6cee3",
+    "r = 3e-04 (map)" = col_ml, "r = 1e-02" = col_br
+  )) +
+  scale_linetype_manual(values = c(`FALSE` = "solid", `TRUE` = "21"), guide = "none") +
+  labs(x = "donor fragment size (Mb, log)", y = "ECDF", tag = "A", title = "r sweep (ML emission)") +
+  theme_z +
+  theme(legend.title = element_blank(), plot.title = element_text(size = 9))
+fb <- fs[panel %in% c("both", "nir")]
+fb[, series := factor(series, levels = c("truth", sprintf("nir = %.1f", c(0.1, 0.3, 0.5, 0.7, 0.9))))]
+pB <- ggplot(fb, aes(size_mb, colour = series, linetype = series == "truth")) +
+  stat_ecdf(linewidth = 0.7) +
+  scale_x_log10() +
+  scale_colour_manual(values = c(
+    "truth" = "black", "nir = 0.1" = "#c6dbef", "nir = 0.3" = "#9ecae1",
+    "nir = 0.5" = "#6baed6", "nir = 0.7" = "#3182bd", "nir = 0.9" = "#08519c"
+  )) +
+  scale_linetype_manual(values = c(`FALSE` = "solid", `TRUE` = "21"), guide = "none") +
+  labs(x = "donor fragment size (Mb, log)", y = "ECDF", tag = "B", title = "nir sweep (at map r)") +
+  theme_z +
+  theme(legend.title = element_blank(), plot.title = element_text(size = 9))
+pA + pB
+```
+
+On these size ECDFs a leftward shift means smaller blocks (over-fragmentation). The
+truth (black dashed) has the largest blocks (median ~15 Mb). Sweeping `r` (A) shifts
+the distribution left as `r` rises: `r` = 1e-6 is nearest the truth, the map `r` is
+intermediate, and `r` = 1e-2 is badly over-fragmented. Sweeping `nir` (B) shifts it
+right toward the truth as `nir` rises: from shattered at `nir` = 0.1 (median 0.7 Mb)
+up to `nir` = 0.9, which tracks the truth size distribution most closely. Size and
+count do not pick the same config: the block *count* matches the truth (154) at the
+operating point (map `r`, `nir` = 0.7; ~151 blocks), while the size *distribution* is
+closest at `nir` = 0.9 (and the lowest `r`) -- so the operating point calls the right
+*number* of donor blocks but they run somewhat smaller than the truth's. Either view
+is the fragment-level counterpart of the `r`-over-fragmentation and `nir`-under-calling
+the metrics quantified.
+
+### Holland's published `nir` = 0.9 is the fragment-optimum, not the mismatch-optimum
+
+The same tension shows up directly if we evaluate Holland's published emission
+(`nir` = 0.9, `germ` = 1e-3, `gert` = 1e-4, `p` = 0.9) at `r` = 1.67e-3, ML skim
+against the MolBreeding truth, alongside the per-cell mismatch optimum (`nir` = 0.7):
+
+```{r holland-config-table}
+h <- fread(here("data/zeal/molbreeding_skim_holland_config.csv"))
+opt <- sweep[prior == "ML"][which.min(mismatch)]
+htab <- data.table(
+  metric = c(
+    "mismatch (primary)", "donor_marker_recall", "het_recall", "alt_recall",
+    "donor_frag_DSC", "donor_frag_FDR", "ks_fragsize", "breakpoint_ratio"
+  ),
+  value = c(
+    round(h$mismatch, 4), round(h$donor_marker_recall, 3), round(h$het_recall, 3),
+    round(h$alt_recall, 3), round(h$donor_frag_dice, 3), round(h$donor_frag_FDR, 3),
+    round(h$ks_fragsize, 3), round(h$breakpoint_ratio, 2)
+  ),
+  `vs mismatch-optimum (nir = 0.7)` = c(
+    sprintf("worse (%.4f)", opt$mismatch),
+    sprintf("~ (%.3f) better", opt$donor_marker_recall),
+    "worse, high nir suppresses het",
+    sprintf("~ (%.3f)", opt$alt_recall),
+    sprintf("better (%.3f)", opt$donor_frag_dice),
+    sprintf("better (%.3f)", opt$donor_frag_FDR),
+    "better",
+    "near-perfect (~ truth count)"
+  )
+)
+kable(htab, caption = "Holland's published nir = 0.9 emission (germ 1e-3, gert 1e-4, p 0.9) at r = 1.67e-3, ML skim vs MolBreeding truth, against the per-cell mismatch optimum (nir = 0.7).")
+```
+
+So this config (Holland's published `nir` = 0.9) is the **fragment-optimal** operating
+point, best DSC, lowest FDR, best fragment-size KS, and breakpoint ratio ~1 (it
+recovers the truth's block count almost exactly), but it is **mismatch-worse** (0.170
+vs 0.134) and **het-blind** (`het_recall` ~0.006): high `nir` merges everything into
+homozygous-donor blocks.
+
+That is precisely the **mismatch-versus-fragment tension along `nir`**: Holland's
+objective (per-cell mismatch) prefers `nir` ~0.7, but the fragment-level agreement
+(DSC, FDR, KS, block-count) prefers `nir` ~0.9. It is the same size-versus-count split
+the ECDF panels show: `nir` = 0.9 matches the truth's fragment sizes and count, `nir`
+= 0.7 minimises the per-cell rate.
+
+## 5. Calibrated parameters
+
+The calibrated ZEAL skim caller, next to the truth caller. The swept parameters
+(`nir, germ, gert, p, r`) are the grid-search result; `mr` (the missing-genotype
+rate) is a fixed empirical input estimated once from each platform's own missingness,
+not a searched value (as in `File_S16.py`), and the `molb gt` column is the fixed
+truth-caller configuration, not a search result.
+
+```{r param-table}
+b <- sweep[, .SD[which.min(mismatch)], by = prior]
+ptab <- data.table(
+  parameter = c("nir", "germ", "gert", "p", "r", "mr (fixed input)"),
+  `molb gt` = c("0.7", "1e-3", "1e-4", "0.90", "1.67e-3", "~0"),
+  `BC2S3 prior gt` = c(b[prior == "breeding", sprintf("%g", c(nir, germ, gert, p, r))], "0.709"),
+  `flat prior gt` = c(b[prior == "ML", sprintf("%g", c(nir, germ, gert, p, r))], "0.709")
+)
+kable(ptab, caption = "nnil parameters by the genotype calls fed in: molb gt = the MolBreeding truth (fixed config, on the 9,157 informative sites); BC2S3 prior gt and flat prior gt = the skim calls hard-called under the BC2S3-design and flat (maximum-likelihood) genotype priors. Swept parameters (nir, germ, gert, p, r) are the grid-search result; mr is a fixed empirical input, not searched. r is panel-scaled (molb gt 1.67e-3 over 9,157 sites; skim over 51,991 SNP50K sites, around the map-derived 3.2e-4).")
+```
+
+Reading the `flat prior gt` column against `molb gt`: `nir` = 0.7 matches the truth and the
+authentic donor rate; `gert` = 1e-2 (versus 1e-4 for the truth) is the calibration
+learning that skim heterozygote calls are unreliable, while `germ` = 1e-4 keeps the
+reliable single-read homozygous calls; the low `p` = 0.10 routes residual homozygous
+errors to the opposite homozygote rather than manufacturing het (`p` is weakly
+identified, about 0% of the objective variance, but where it is identifiable under ML
+it prefers low).
+
+::: {.callout-important}
+## Calibrated ZEAL skim caller, and what the calibration establishes
+Call the skim genotypes by **maximum likelihood** (`call_gt(prior = "flat")`), then
+`nnil` with `nir` = 0.7 (matching the MolBreeding truth and the authentic donor
+non-informative rate), `germ` = 1e-4, `gert` = 1e-2, `p` low, and `r` at the SNP50K
+map-derived rate; `mr` is set to the realized missing rate. Under this calibration the
+ZEAL skim recovers **homozygous-donor introgression** faithfully (`alt_recall` about
+0.9) but **not heterozygous** introgression (`het_recall` about 0.09 against a 9% het
+truth): at 0.4x the skim reads ZEAL ancestry as homozygous-donor blocks. The
+breeding prior is worse on every metric because its het-suppression
+compounds the coverage limit. The mismatch floor is therefore a coverage-driven het
+floor, quantified here against the MolBreeding truth.
+:::
+
+## Methods
+
+Data staged from the exploratory zealtiger repo into this publication repo by
+`scripts/stage_molbreeding_from_zealtiger.sh` (provenance in `DATA.md`). MolBreeding
+hard calls extracted from the raw GBTS delivery by
+`scripts/molbreeding/extract_molbreeding_hardcalls.R` (the `genotype()` calls the
+count pipeline had dropped; validated against the 110x counts at 0.994 concordance,
+zero REF-to-ALT confusion). Truth-versus-test sample pairing, with the documented
+`PN4_SID330` -> `PN4_SID322` swap applied in-calibration only, by
+`scripts/molbreeding/build_calibration_pairing.R`. The calibration itself
+(`scripts/molbreeding_skim_calibration.R`): truth = `nnil` on the MolBreeding hard
+calls (fixed `nir=0.7, germ=1e-3, gert=1e-4, p=0.9, r=1.67e-3`); test = skim counts
+hard-called with the ML or breeding prior, then `nnil` over Holland's 315-point emission
+grid crossed with a wide `r` sweep (`1e-6` to `1e-2`, one point per order of magnitude;
+the SNP50K map-derived `r` ~3.2e-4 sits inside it) to map `r`-sensitivity on the real
+data, rather than only Holland's narrow `avg_r/2..avg_r*2` band. Both are
+rasterised onto the 9,157 informative sites and scored per (marker x line) cell,
+pooled over the 14 pairs, by `R/metrics.R`: per-cell mismatch (`1 - accuracy`,
+primary), per-class recall (`marker_dice`), donor-fragment DSC and FDR
+(`donor_fragment_dice`), and fragment-size KS (`fragment_size_ks`). This notebook
+reads `data/zeal/molbreeding_skim_calibration.csv`.

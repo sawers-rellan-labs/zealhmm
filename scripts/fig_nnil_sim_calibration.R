@@ -116,17 +116,25 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_SIMCAL_RECOMPUTE") == "") {
     lg("[fig] reusing persisted sweep (%s)", basename(swp_csv))
     sweep <- fread(swp_csv)
   } else {
+    # Two calibration criteria per nir, from ONE decode each:
+    #   mismatch = Holland's per-marker criterion (already used).
+    #   ks       = KS distance between the caller's introgression-size distribution and an
+    #              INDEPENDENT reference (never an nnil run): the sim LATENT ANCESTRY sizes,
+    #              and Jim's CHIP-CALL sizes. If the a-priori KS optimum converges to Jim's
+    #              mismatch optimum, the KS criterion recovers his nir from first principles.
     sweep <- rbindlist(list(
       rbindlist(lapply(NIR_GRID, function(v) {
+        s <- seg_nnil(sim_long, v)
         data.table(
-          truth = "sim", param = v,
-          mismatch = mm_sim(seg_nnil(sim_long, v))
+          truth = "sim", param = v, mismatch = 1 - marker_dice(s, sim_truth, grid_sim)$accuracy,
+          ks = fragment_size_ks(donor_block_sizes(s), sim_truth_sz)
         )
       })),
       rbindlist(lapply(NIR_GRID, function(v) {
+        s <- seg_nnil(real_long, v)
         data.table(
-          truth = "chip", param = v,
-          mismatch = mm_chip(seg_nnil(real_long, v))
+          truth = "chip", param = v, mismatch = 1 - marker_dice(s, chip_seg, grid_chip)$accuracy,
+          ks = fragment_size_ks(donor_block_sizes(s), chip_truth_sz)
         )
       }))
     ))
@@ -160,6 +168,43 @@ lg(
   "[fig] mismatch optima: nir_sim=%.2f nir_chip=%.2f | donor f0 sim=%.3f real=%.3f",
   nir_sim, nir_chip, nir_sim_donor, nir_real_donor
 )
+
+# ---- KS convergence panel (paper figure) ----------------------------------
+# A-priori KS optimum (open circle) vs Holland's mismatch optimum (dashed vertical), on the
+# SAME nir axis. KS reference is INDEPENDENT of our caller: the sim latent ancestry, and
+# Jim's chip calls. If the KS minima converge to each other AND onto Holland's mismatch
+# optimum, the KS criterion recovers his nir from first principles.
+if ("ks" %in% names(sweep)) {
+  ks_opt <- sweep[, .SD[which.min(ks)], by = truth]
+  mm_opt <- sweep[, .SD[which.min(mismatch)], by = truth]
+  lg(
+    "[fig] KS optima: nir_sim_ks=%.2f nir_chip_ks=%.2f | mismatch optima sim=%.2f chip=%.2f",
+    ks_opt[truth == "sim", param], ks_opt[truth == "chip", param], nir_sim, nir_chip
+  )
+  ANN0 <- BASE * 0.8 / .pt
+  p_KS <- ggplot(sweep, aes(param, ks, colour = truth)) +
+    geom_vline(data = mm_opt, aes(xintercept = param, colour = truth), linetype = "dashed", alpha = 0.5, linewidth = 0.7, show.legend = FALSE) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 1.4) +
+    geom_point(data = ks_opt, size = 3.8, shape = 21, fill = "white", stroke = 1.2) +
+    scale_colour_manual(
+      values = c(sim = "#0072B2", chip = "#D55E00"),
+      labels = c(sim = "sim GBS vs sim latent ancestry", chip = "real GBS vs chip calls (Zhong 2025)"),
+      name = "KS reference (independent of caller)"
+    ) +
+    labs(
+      x = expression("non-informative rate " * italic(nir)), y = "introgression-size KS distance (D)",
+      title = "nnil nir: a-priori KS optimum (circle)\nvs Holland mismatch optimum (dashed)"
+    ) +
+    theme_bw(base_size = BASE) +
+    theme(
+      aspect.ratio = 1, legend.position = c(0.5, 0.98), legend.justification = c(0.5, 1),
+      legend.background = element_rect(fill = "transparent", colour = NA),
+      legend.key = element_rect(fill = "transparent", colour = NA)
+    )
+  ggsave(file.path(SIMDIR, "fig_nnil_ks_calibration.png"), p_KS, width = 7.5, height = 7.5, dpi = 150)
+  lg("[fig] wrote fig_nnil_ks_calibration.png")
+}
 
 # ================================ plot ======================================
 ANN <- BASE * 0.8 / .pt # match the legend category-label size (theme legend.text = rel(0.8) of BASE)

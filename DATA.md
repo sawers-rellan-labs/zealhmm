@@ -359,6 +359,56 @@ The sanity-paint sweep inputs currently read from the zealtiger working repo
 paper-bound** subsets migrate onto the mount / local `data/`; the `agent/`
 scratch tree is not copied.
 
+## MolBreeding target-seq vs SNP50K-skim `nnil` calibration inputs (staged from zealtiger)
+
+The faithful ZEAL analog of Holland's chip-vs-GBS calibration: MolBreeding
+target-capture (~110x) defines the truth, the SNP50K skim (~0.4x) is the test,
+both run through `nnil` on the shared NILs. `scripts/stage_molbreeding_from_zealtiger.sh`
+copies the paper-bound subset from the **exploratory** zealtiger repo
+(`ZEALTIGER`, default `~/repos/zealtiger`) into this **publication** repo
+(gitignored `data/`; the staging + provenance scripts are tracked). The full
+skim count set is ~1.5 GB in zealtiger; only the **16 calibration samples**
+(the molbreeding-shared lines) are copied.
+
+- `data/zeal/molbreeding/source/All.Genotype.xls` — raw MolBreeding GBTS delivery
+  (SNP set, AGPv3, 44,935 sites x 16 samples). The per-sample **`genotype(well)`**
+  columns are the **only place the hard calls exist**; the count pipeline dropped
+  them. Source: `zealtiger data/GSER2026030032P01/SNP/`.
+- `data/zeal/molbreeding/counts_targetseq/PN*_SID*.tsv` — 16 target-seq TRUTH count
+  files (~110x, headerless `chr,pos,RefBase,RefCount,AltBase,AltCount`) on the 9,157
+  v5 wideseq-filtered sites. Source: `zealtiger results/sim_calibration/molb_calls/SNP_wsfilt/counts/`.
+- `data/zeal/molbreeding/gatk_table_SNP_wsfilt_v5.tsv` — the v5 wsfilt count table,
+  also the authoritative site REF=B73/ALT=donor polarity. `molbreeding_sample_map.tsv`
+  = well_id -> PN#_SID# -> pedigree(`genotype`). (`sites_v5_SNP.tsv`, `wideseq_keep_v5.tsv`,
+  `markers_molbreeding_cm.tsv` already local; cM is native TeoNAM v5.)
+- `data/zeal/skim/counts/PN*_SID*.tsv` — skim TEST count files (same schema, 51,991
+  sites, 50K grid, ~0.4x) for the molbreeding-shared NILs (14 by label + `PN4_SID322`,
+  the true partner of the mislabelled truth sample; see below). `+ seqlengths.csv`,
+  `calls_taxa_r5.csv` (skim RTIGER reference calls). Source: `zealtiger data/rtiger_50K/`.
+- `data/zeal/correspondence/` — cross-source ID matching. `molbreeding_3way_correspondence.csv`
+  is **canonical and label-based: it assumes NO mislabels** (its `pedigree_agrees` compares
+  the two sources' *labels*, not their genotype data, and is left untouched). Plus
+  `skim_brbseq_correspondence.csv`, `skim_sample_pedigree.csv`, `sample_metadata_master.csv`,
+  `brbseq_metadata_master.csv`. **Join key = canonical pedigree (drop trailing `.B`);
+  skim & MolBreeding share the `PN#_SID#` id space, BRB-seq has its own** (per the
+  `data/zeal/samplesheet_3way.csv` builder `scripts/zeal_build_samplesheet.R`). The 2
+  B73-bulk checks (`PN4_SID326`, `PN6_SID576`) are molbreeding-only (no skim NIL file).
+- `data/zeal/correspondence/calibration_pairing.csv` (built by
+  `scripts/molbreeding/build_calibration_pairing.R`) — the **calibration-context** truth↔test
+  pairing derived from the canonical table with documented, genotype-verified sample-swap
+  overrides applied (valid only for this small-n calibration; canonical file unchanged). One
+  such override: the MolBreeding truth well labelled **`PN4_SID330`** (well 4B6) is a label
+  swap whose DNA is **`PN4_SID322`** (donor Jaccard 0.84 vs skim-322, 0.10 vs its own label;
+  `zealtiger pn4_sid330_mislabel.qmd`), so truth `PN4_SID330.tsv` pairs with skim
+  `PN4_SID322`, and the correctly-labelled but truth-less skim `PN4_SID330` is excluded.
+- `scripts/molbreeding/` — the provenance scripts (how the counts/sites were made):
+  `molbreeding_to_gatk_table.py` (v3 melt, drops GT), `molbreeding_gatk_table_to_v5.py`
+  (coord-only lift, no allele flip), `molbreeding_wsfilt_gatk_table.py` (wideseq intersect),
+  `molbreeding_liftover.R`, `fit_rtiger_molbreeding.R` (truth counts + RTIGER fit).
+
+Known gotcha: `scripts/zeal_build_samplesheet.R` defaults `ZT` to a nonexistent
+`~/Desktop/zealtiger`; run it with `ZEALTIGER=~/repos/zealtiger`.
+
 ## Shareable release bundle (`release/`, gitignored → CyVerse)
 
 `scripts/zeal_export_release.R` assembles the citable ZEAL genotype release into
