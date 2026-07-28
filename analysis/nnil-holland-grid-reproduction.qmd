@@ -83,7 +83,7 @@ roles <- c(
   nir = "emission non-informative rate (a donor-informative site emits no donor signal)",
   germ = "homozygote genotyping-error rate",
   gert = "heterozygote genotyping-error rate",
-  p = "allele-bias term (splits the homozygote error between the two alleles)",
+  p = "fraction of homozygous genotyping errors miscalled as heterozygous (the rest as the opposite homozygote)",
   r = "intermarker recombination fraction (transition / segment-length prior)"
 )
 levels_tab <- rbindlist(lapply(params, function(pp) {

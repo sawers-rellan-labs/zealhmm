@@ -1,0 +1,387 @@
+---
+title: "Choosing the `nnil` calibration objective on the ZEAL pool simulation: per-cell mismatch fails, fragment Dice works"
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+::: {.callout-note}
+## Scope: a simulation diagnostic about the objective, not the MolBreeding-truth calibration
+This notebook reads one artifact: `data/zeal/zeal_holland_grid.csv`, a
+Holland-style parameter grid run through `caller_grid()` on the ZEAL
+**count-from-parents BC2S3 pool simulation** (`scripts/zeal_holland_grid.R`),
+scored against that simulation's own truth. It asks a single methodological
+question: *which objective should calibrate `nnil` on the ZEAL pool?* It shows
+that the per-cell ancestry mismatch rate, the objective Zhong et al. used for the
+nNIL chip-vs-GBS calibration, degenerates on the ZEAL pool, and that a donor
+fragment Dice objective recovers the informative signal. This is a check on the
+*metric*, run on simulated genotypes with known truth. It is **not** the faithful
+ZEAL analogue of Jim's calibration, which scores SNP50K-derived `nnil` calls
+against the MolBreeding high-coverage calls as truth on the same NILs with `r`
+fixed at the map-derived rate; that remains to be run.
+:::
+
+The nNIL calibration (Zhong et al. 2025, reproduced in
+`nnil-holland-grid-reproduction`) picks HMM parameters by minimising the
+GBS-vs-chip **per-cell ancestry mismatch**: one disagreement rate per cell of the
+(marker × line) matrix, pooled over all states including the recurrent
+background. That objective works for near-isogenic lines because the target of
+interest, the donor introgression, is a large enough fraction of each line that
+recovering it moves the pooled rate. The ZEAL material is different: a BC2S3
+six-sib pool is overwhelmingly recurrent background, so the donor signal we
+actually want to recover is a small fraction of every cell. This notebook asks
+what that does to the calibration.
+
+```{r setup}
+suppressMessages({
+  library(data.table)
+  library(ggplot2)
+  library(patchwork)
+  library(here)
+  library(knitr)
+})
+g <- fread(here("data/zeal/zeal_holland_grid.csv")) # nir,germ,gert,p,r,mismatch,donor_frag_dice,frag_ks
+params <- c("nir", "germ", "gert", "p", "r")
+roles <- c(
+  nir = "emission non-informative rate (a donor-informative site emits no donor signal)",
+  germ = "homozygote genotyping-error rate",
+  gert = "heterozygote genotyping-error rate",
+  p = "fraction of homozygous genotyping errors miscalled as heterozygous (the rest as the opposite homozygote)",
+  r = "intermarker recombination fraction (transition / segment-length prior)"
+)
+
+theme_z <- theme_classic(base_size = 10) +
+  theme(
+    text = element_text(family = "sans"),
+    plot.tag = element_text(face = "bold"),
+    legend.position = "top", legend.title = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text.y = element_text(angle = 0)
+  )
+col_mm <- "#D55E00" # per-cell mismatch objective
+col_dc <- "#0072B2" # donor fragment Dice objective
+
+# marginal helper: mean over the emission grid at each level of one parameter,
+# na.rm because degenerate (no-donor-called) configs return an undefined Dice
+marg <- function(dt, resp, pp) {
+  dt[, .(value = mean(get(resp), na.rm = TRUE), n_valid = sum(is.finite(get(resp)))),
+    by = c(pp)
+  ][, .(level = get(pp), value, n_valid, param = pp)][order(level)]
+}
+```
+
+The grid is the Cartesian product of Holland's four emission parameters with a
+deliberately wide five-point recombination axis (one point per order of magnitude
+from `1e-6` to `1e-2`, so the full response is mapped rather than just the
+neighbourhood of the map value).
+
+```{r grid-shape}
+levels_tab <- rbindlist(lapply(params, function(pp) {
+  v <- sort(unique(g[[pp]]))
+  data.table(
+    parameter = pp, role = roles[[pp]], `n points` = length(v),
+    `sample points` = paste(signif(v, 3), collapse = ", ")
+  )
+}))
+kable(levels_tab, caption = sprintf(
+  "The swept parameters. Product = %s = %d configurations on the ZEAL pool simulation.",
+  paste(levels_tab$`n points`, collapse = " x "), nrow(g)
+))
+```
+
+## 1. The per-cell mismatch objective collapses
+
+Under the mismatch objective the grid picks a **degenerate optimum**. The
+configuration with the lowest per-cell mismatch is one that recovers essentially
+no donor ancestry at all: its donor fragment Dice is ~0. Because the pool is
+almost entirely recurrent background, calling everything recurrent scores well on
+a rate that is dominated by that background.
+
+```{r mismatch-optimum}
+mm_opt <- g[which.min(mismatch)]
+dc_opt <- g[which.max(donor_frag_dice)]
+opt_tab <- rbind(
+  data.table(
+    objective = "min per-cell mismatch",
+    mm_opt[, .(nir, germ, gert, p, r, mismatch = round(mismatch, 4), donor_frag_dice = round(donor_frag_dice, 4))]
+  ),
+  data.table(
+    objective = "max donor fragment Dice",
+    dc_opt[, .(nir, germ, gert, p, r, mismatch = round(mismatch, 4), donor_frag_dice = round(donor_frag_dice, 4))]
+  )
+)
+kable(opt_tab, caption = sprintf(
+  "The two objectives disagree completely. Minimising per-cell mismatch selects a config whose donor fragment Dice is %.4f (it calls almost nothing donor); maximising fragment Dice selects a config whose per-cell mismatch (%.4f) is near the middle of the grid's narrow range.",
+  mm_opt$donor_frag_dice, dc_opt$mismatch
+))
+```
+
+Two facts make the mismatch objective the wrong one here.
+
+**Its dynamic range is small.** Across all `r nrow(g)` configurations the per-cell
+mismatch spans only `r sprintf("%.3f to %.3f", min(g$mismatch), max(g$mismatch))`
+: a factor of about `r sprintf("%.2f", max(g$mismatch) / min(g$mismatch))`, so
+even the parameters that move it move it by little in absolute terms.
+
+**What movement it has points at the degenerate solution.** The objective is not
+flat: it does respond to `nir` (Section 3 quantifies this). But it is minimised by
+pushing `nir` *down*, toward the caller that stops recovering donor ancestry, and
+along the recombination axis it *falls* as `r` rises, because higher `r` fragments
+the mosaic and, on a mostly-recurrent pool, that shaves the pooled rate without
+recovering donor blocks. The `nir` gradient of the two objectives is the crux:
+mismatch is best at intermediate-low `nir` (marginal minimum near `nir` = 0.3, and
+its single best configuration sits at `nir` = `r mm_opt$nir`), whereas donor
+recovery, Section 2, wants `nir` = 0.7. Mismatch rewards under-calling donor;
+that is the opposite of what the calibration is for.
+
+```{r fig-mismatch-marginals, fig.width = 9, fig.height = 3, fig.cap = "Marginal mean per-cell ancestry mismatch (ZEAL pool sim, nnil calls vs sim truth) versus each swept parameter, averaged over the rest of the grid. The open circle marks each panel's minimum. Note the compressed y-axis: the total spread is small. The response is essentially flat along germ, gert, and p; it moves with nir but is minimised at intermediate-low nir (~0.3) and worsens toward nir = 0.9, and along r it falls as r rises. The mismatch minimum is reached by degrading the caller toward the all-recurrent solution, not by recovering donor ancestry."}
+mm_marg <- rbindlist(lapply(params, function(pp) marg(g, "mismatch", pp)))
+mm_marg[, param := factor(param, levels = params)]
+mm_min <- mm_marg[, .SD[which.min(value)], by = param]
+ggplot(mm_marg, aes(level, value)) +
+  geom_line(colour = col_mm, linewidth = 0.5) +
+  geom_point(colour = col_mm, size = 1.1) +
+  geom_point(data = mm_min, shape = 21, size = 3, stroke = 0.9, fill = NA, colour = col_mm) +
+  facet_wrap(~param, nrow = 1, scales = "free_x") +
+  scale_x_log10() +
+  labs(
+    x = "parameter value (log scale)",
+    y = "mean per-cell mismatch\n(nnil vs sim truth)"
+  ) +
+  theme_z +
+  theme(legend.position = "none")
+```
+
+## 2. Fragment Dice recovers the signal
+
+Scoring the same grid by **donor fragment Dice**, the overlap between the donor
+blocks the caller places and the donor blocks in the truth, restores a
+well-behaved objective. It has real dynamic range (from ~0 up to
+`r sprintf("%.2f", max(g$donor_frag_dice, na.rm = TRUE))`), and it responds
+sharply and interpretably to the parameters that matter.
+
+```{r fig-dice-marginals, fig.width = 9, fig.height = 3, fig.cap = "Marginal mean donor fragment Dice (ZEAL pool sim, nnil donor blocks vs sim truth donor blocks) versus each swept parameter. The open circle marks each panel's maximum. Unlike mismatch, Dice has a strong gradient: it rises steeply with nir to a peak near nir = 0.7, and falls monotonically as r increases across the swept range (the low-r end is an under-segmentation artifact, not a low-r optimum, see the caution below). germ, gert, and p are close to flat. Degenerate no-donor configs (undefined Dice) are dropped from each mean; the recombination-axis points are averaged only over configs where donor was called."}
+dc_marg <- rbindlist(lapply(params, function(pp) marg(g, "donor_frag_dice", pp)))
+dc_marg[, param := factor(param, levels = params)]
+dc_max <- dc_marg[, .SD[which.max(value)], by = param]
+ggplot(dc_marg, aes(level, value)) +
+  geom_line(colour = col_dc, linewidth = 0.5) +
+  geom_point(colour = col_dc, size = 1.1) +
+  geom_point(data = dc_max, shape = 21, size = 3, stroke = 0.9, fill = NA, colour = col_dc) +
+  facet_wrap(~param, nrow = 1, scales = "free_x") +
+  scale_x_log10() +
+  labs(
+    x = "parameter value (log scale)",
+    y = "mean donor fragment Dice\n(nnil vs sim truth)"
+  ) +
+  theme_z +
+  theme(legend.position = "none")
+```
+
+The clearest way to see the failure and the rescue together is to plot the two
+objectives against each other. The configurations that minimise mismatch (far
+left) are exactly the ones with near-zero Dice: the mismatch-optimal corner is
+the dead corner. Colouring by `nir` shows the structure Dice sees and mismatch
+does not, an ordered fan from low to high `nir`.
+
+```{r fig-tradeoff, fig.width = 6, fig.height = 4.4, fig.cap = "Per-cell mismatch (x) versus donor fragment Dice (y), one point per grid configuration on the ZEAL pool simulation, coloured by nir. The mismatch-minimising configs (left edge) sit at Dice ~ 0: minimising mismatch means abandoning donor recovery. Dice separates configurations that mismatch collapses together, and the separation is organised by nir."}
+gp <- g[is.finite(donor_frag_dice)]
+ggplot(gp, aes(mismatch, donor_frag_dice, colour = factor(nir))) +
+  geom_point(alpha = 0.7, size = 1.3) +
+  scale_colour_viridis_d(name = "nir", option = "C", end = 0.9) +
+  labs(
+    x = "per-cell mismatch (nnil vs sim truth)",
+    y = "donor fragment Dice (nnil vs sim truth)"
+  ) +
+  theme_z +
+  theme(legend.position = "right", legend.title = element_text())
+```
+
+Colouring the same scatter by `r` instead shows the second, weaker axis: within
+each `nir` band, lower `r` lifts Dice by placing fewer, longer blocks, while
+barely touching mismatch. The `r` fan is far narrower than the `nir` fan, matching
+the ANOVA (`r` ~ 5% of Dice variance versus `nir`'s 85%). The direction is real
+but its low end is not a calibration target, as the next caution explains.
+
+```{r fig-tradeoff-r, fig.width = 6, fig.height = 4.4, fig.cap = "The same per-cell mismatch (x) versus donor fragment Dice (y) scatter on the ZEAL pool simulation, one point per configuration, now coloured by the recombination rate r. Lower r reaches higher Dice at a given mismatch, so donor recovery improves as the transition prior favours longer segments; the spread across r is small next to the nir spread of the previous panel."}
+ggplot(gp, aes(mismatch, donor_frag_dice, colour = factor(r))) +
+  geom_point(alpha = 0.7, size = 1.3) +
+  scale_colour_viridis_d(
+    name = "r", option = "D", end = 0.9,
+    labels = function(x) formatC(as.numeric(x), format = "e", digits = 0)
+  ) +
+  labs(
+    x = "per-cell mismatch (nnil vs sim truth)",
+    y = "donor fragment Dice (nnil vs sim truth)"
+  ) +
+  theme_z +
+  theme(legend.position = "right", legend.title = element_text())
+```
+
+::: {.callout-warning}
+## The low-`r` Dice gain is an under-segmentation artifact, not a low-`r` optimum
+`r` is the per-interval ancestry-transition probability, so the expected number of
+ancestry switches per line is $r \times M$, with $M = 48{,}992$ within-chromosome
+intervals. At $r = 10^{-6}$ that is ~0.05 switches across the whole genome: the
+Viterbi is forced to call each chromosome as essentially one block, and it scores
+well on donor fragment Dice only by refusing to fragment a sparse-donor pool, not
+by locating donor better. The physical anchor is the map. The native SNP50K map is
+1559 cM over those 48,992 intervals, a mean intermarker recombination fraction of
+~3.2e-4, about 15.6 crossovers per line (one per Morgan), which is where Holland
+fixes his `r` (`avg_r`, probing only a +/- 2x band around it). That map-derived
+value sits between the grid's `1e-4` and `1e-3` points, mid-axis, not at the low
+end. So the calibrated `r` is the map anchor near `3e-4`; the metric's monotone
+climb toward `1e-6` is the caller degenerating to no-recombination, and must not
+be read as a recommendation to lower `r`.
+:::
+
+## 3. Variance analysis on the Dice objective
+
+A main-effects ANOVA on each objective localises the calibration to the same
+place: `nir` dominates the variance of both. That is the point. Both objectives
+are essentially a function of `nir` with `r` a distant second, so what
+distinguishes them is not *which* parameter matters but *where each drives it*.
+Mismatch's `nir` variance is spent pushing toward the degenerate under-calling
+solution (Section 1); Dice's is spent pushing toward `nir` = 0.7, the authentic
+value and a caller that recovers donor. The variance analysis the calibration
+actually needs is the one on Dice: it says the ZEAL pool is, to first order, a
+two-parameter calibration in `nir` (dominant) and `r`, with the
+homozygote/heterozygote error terms and the error-partition `p` contributing
+essentially nothing.
+
+```{r variance-anova}
+aov_share <- function(dt, resp) {
+  d2 <- dt[is.finite(get(resp))]
+  f <- as.formula(sprintf("%s ~ factor(nir)+factor(germ)+factor(gert)+factor(p)+factor(r)", resp))
+  a <- anova(lm(f, d2))
+  ss <- a[["Sum Sq"]]
+  nm <- sub("factor\\((.*)\\)", "\\1", rownames(a))
+  nm[nm == "Residuals"] <- "residual"
+  data.table(term = nm, share = ss / sum(ss))
+}
+vm <- aov_share(g, "mismatch")[, .(term, `per-cell mismatch` = share)]
+vd <- aov_share(g, "donor_frag_dice")[, .(term, `donor fragment Dice` = share)]
+vtab <- merge(vm, vd, by = "term", all = TRUE)
+vtab[, term := factor(term, levels = c(params, "residual"))]
+setorder(vtab, term)
+vshow <- copy(vtab)
+for (cc in c("per-cell mismatch", "donor fragment Dice")) {
+  vshow[[cc]] <- sprintf("%.1f%%", 100 * vshow[[cc]])
+}
+kable(vshow, caption = "Main-effects ANOVA variance share of each objective attributed to each swept parameter, on the ZEAL pool simulation. nir dominates both objectives (the objectives differ in the direction it drives them, not in which parameter matters); under Dice, nir and r together carry nearly all the explained variance and germ, gert, p carry essentially none.")
+```
+
+```{r fig-varshare, fig.width = 6, fig.height = 3.4, fig.cap = "Variance share of each objective explained by each parameter (main-effects ANOVA), ZEAL pool simulation. nir dominates both objectives; for the donor fragment Dice objective the recombination rate r is a clear second and germ, gert, p are negligible. The objectives differ in the direction nir drives them (Sections 1 and 2), not in which parameter carries the variance."}
+vlong <- melt(vtab, id.vars = "term", variable.name = "objective", value.name = "share")
+vlong <- vlong[term != "residual"]
+ggplot(vlong, aes(term, 100 * share, fill = objective)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+  scale_fill_manual(values = c("per-cell mismatch" = col_mm, "donor fragment Dice" = col_dc)) +
+  labs(x = "swept parameter", y = "variance share of objective (%)") +
+  theme_z
+```
+
+## 4. Reasonable `nnil` parameters for the ZEAL pool
+
+Reading the Dice objective, the calibration lands in a clear region. `nir` near
+0.7 is both the grid optimum and the biologically authentic value: the
+cohort-weighted donor non-informative rate for ZEAL, `f_REF + 0.5 f_HET`, is
+0.676 (see `zeal-calibration-design-decisions`), so the data-driven optimum and
+the first-principles value agree. `r` is not read from the sweep: the faithful
+calibration fixes the transition prior at the map-derived intermarker rate
+(~3.2e-4, mid-axis between the grid's `1e-4` and `1e-3`; Section 2), following
+Holland's `avg_r`. Dice does keep rising toward the `1e-6` end of the swept axis,
+but that is the caller collapsing to no recombination (~0.05 switches per line),
+an under-segmentation artifact rather than a low-`r` optimum. The
+homozygote/heterozygote error terms are close to flat and take conventional small
+values. The homozygous-error partition `p` is flat under Dice too, but its
+principled value is set by the hard-call, not left at Holland's 0.9: because the
+genotypes are hard-called under the BC2S3 design prior, which resists het (HET
+mass 0.031 versus ALT 0.109) and at low coverage resolves a lone spurious read to
+a homozygote, a miscalled homozygote flips to the *opposite homozygote* far more
+often than to het. That is the `(1 - p)` branch of the emission, so a **low `p`**
+is the value consistent with the calling procedure; it matches the nNIL floor
+decomposition, where homozygous errors are ~74% REF-to-ALT and only ~26%
+het-involving.
+
+```{r reasonable-params}
+top <- g[is.finite(donor_frag_dice)][order(-donor_frag_dice)][1:6]
+kable(
+  top[, .(nir, germ, gert, p, r,
+    mismatch = round(mismatch, 4), donor_frag_dice = round(donor_frag_dice, 4), frag_ks = round(frag_ks, 3)
+  )],
+  caption = "Top six configurations by donor fragment Dice on the ZEAL pool simulation. All sit at nir = 0.7 and the lowest recombination points; germ, gert, and p vary freely among them."
+)
+
+rec <- data.table(
+  parameter = params,
+  `recommended` = c("0.7", "1e-3", "1e-4", "0.1 (low)", "~3.2e-4 (map-derived mean)"),
+  basis = c(
+    "grid Dice optimum; equals authentic donor non-informative rate 0.676",
+    "flat under Dice; conventional homozygote error",
+    "flat under Dice; conventional heterozygote error",
+    "flat under Dice, but set low to match the het-resisting BC2S3 design-prior hard-call: hom errors flip to the opposite homozygote, not het (not Holland's 0.9)",
+    "fix at the map (1559 cM / 48,992 intervals -> mean r 3.2e-4, ~15.6 switches/line), Holland's avg_r; NOT swept, NOT the 1e-6 end (0.05 switches/line = no recombination; the low-r Dice gain is an under-segmentation artifact)"
+  )
+)
+kable(rec, caption = "Reasonable nnil parameters for the ZEAL pool, read from the Dice objective. nir and r are the parameters the objective actually constrains; germ, gert, and p are flat under Dice, but p is set by the design-prior hard-call (low), not by the grid.")
+```
+
+::: {.callout-important}
+## Conclusion: calibrate the ZEAL pool on donor recovery, not on per-cell mismatch
+On the ZEAL pool the per-cell ancestry mismatch that calibrates near-isogenic
+lines degenerates: it has a small dynamic range, and although it does respond to
+`nir` its gradient points at the under-calling caller, so its optimum has donor
+fragment Dice ~ 0. The pool is mostly recurrent background, so a rate pooled over
+all cells is minimised by not calling donor. Donor fragment Dice hinges on the
+same dominant parameter, `nir`, but drives it the other way, to `nir` ~ 0.7 (the
+authentic value); it rewards recovering donor rather than suppressing it. The
+recombination prior is not read from the sweep but fixed at the map-derived rate
+(~3.2e-4); the metric's climb toward $r = 10^{-6}$ is the caller degenerating to no
+recombination, not a low-`r` optimum. The faithful next step keeps this
+objective but replaces the simulated truth with the MolBreeding high-coverage
+calls, scoring SNP50K-derived `nnil` calls on the same NILs with `r` fixed at the
+map-derived rate.
+:::
+
+## Methods
+
+The grid was produced by `scripts/zeal_holland_grid.R`: skim counts from the ZEAL
+count-from-parents BC2S3 pool simulation
+(`results/sim/zeal_pool/zeal_pool_bc2s3_full.rds`) are hard-called once via the
+BC2S3 design-prior MAP (`call_gt`), then decoded through `caller_grid()`
+(caller = `nnil`, the unified `viterbi_sweep_cpp` kernel) over the emission grid
+crossed with the five-point recombination axis. Each configuration is scored
+against the simulation truth by two metrics from `R/metrics.R`: per-cell ancestry
+mismatch (`1 - marker_dice$accuracy`, over recurrent / heterozygous /
+homozygous-donor states, one value per marker-by-line cell) and donor fragment
+Dice (`donor_fragment_dice`, block overlap of called vs true donor segments).
+Markers are on native TeoNAM cM at maize v5. This notebook reads the resulting
+`data/zeal/zeal_holland_grid.csv`; it does not re-run the grid.
+
+**The hard-call biases het toward donor-homozygous, by design.** The single
+`call_gt` step upstream of the grid resolves genotypes under the BC2S3 design
+prior `c(REF = 0.859, HET = 0.031, ALT = 0.109)` (`breeding_prior("BC2S3")`).
+Selfing purges heterozygosity, so the prior places over three times as much mass
+on donor-homozygous (ALT) as on heterozygous (HET); combined with low coverage,
+where a lone spurious read is homozygous-looking, ambiguous donor evidence
+resolves to ALT rather than HET (the source documents this intent:
+`call_gt(0, 1, prior = breeding_prior("BC2S3"))` returns ALT, "design prior
+resists the het flip"). This het-to-ALT flip is a genotyping-stage choice,
+upstream of `nnil`'s ancestry emission. It matters for the objective comparison:
+a true-HET cell called ALT is scored as a per-cell mismatch even though the donor
+introgression was correctly detected, so the design prior's intended flips
+directly inflate the mismatch objective, while donor fragment Dice, which counts a
+donor block as donor regardless of zygosity, is unaffected. This is a further
+reason the per-cell mismatch is the wrong objective on this material and fragment
+Dice the right one, and it is why the recommended `p` is low (Section 4): the same
+het-resisting calling that sends true hets to ALT sends homozygous errors to the
+opposite homozygote rather than to het.
