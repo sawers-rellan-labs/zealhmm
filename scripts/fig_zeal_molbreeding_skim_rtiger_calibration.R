@@ -3,8 +3,9 @@
 # fig_zeal_molbreeding_skim_calibration.R (nnil nir). Baseline = the mismatch figure.
 #
 # rtiger consumes read counts (n_ref/n_alt) directly (NO hard-calling) and its only
-# calibrated knob here is the RIGIDITY (minimum run length); caller_sweep(refit="none")
-# fits the count/BetaBinomial emission ONCE and decodes per rigidity. Truths are the
+# calibrated knob here is the RIGIDITY (minimum run length); caller_sweep(refit="cold")
+# fits the count/BetaBinomial emission per rigidity as a POOL (native fit, NOT the median-anchored
+# refit="none" approximation, which is non-monotonic in the 2-10 range). Truths are the
 # SAME as the nnil figure:
 #   SIM  = sim skim counts vs the simulated latent ancestry (BC2S3).
 #   MolB = real skim counts vs nnil-on-molbreeding-hardcalls (the independent truth).
@@ -54,7 +55,7 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALRTIG_RECOMPUTE") == "") {
 
   # ---- SIM leg: rtiger on sim skim COUNTS; truth = latent ancestry ----
   sim <- readRDS(file.path(OUT, "zeal_nil_bc2s3_full.rds"))
-  N_SIM <- as.integer(Sys.getenv("NNIL_ZEALRTIG_NSIM", "500"))
+  N_SIM <- as.integer(Sys.getenv("NNIL_ZEALRTIG_NSIM", "332")) # match the dnarna cohort scale (332; 330 after QC)
   set.seed(1)
   sub <- sort(sample(seq_along(sim$names), min(N_SIM, length(sim$names))))
   sub_names <- sim$names[sub]
@@ -73,18 +74,18 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALRTIG_RECOMPUTE") == "") {
   threads <- min(parallel::detectCores() - 2L, 8L)
   log_info("[rtig] SIM: %d/%d lines x %d markers; rigidity grid %s", length(sub), length(sim$names), M, paste(RIG_GRID, collapse = ","))
   t0 <- Sys.time()
-  sim_seg <- as.data.table(caller_sweep(sim_long, caller = "rtiger", values = RIG_GRID, refit = "none", design = "BC2S3", threads = threads))
+  sim_seg <- as.data.table(caller_sweep(sim_long, caller = "rtiger", values = RIG_GRID, refit = "cold", design = "BC2S3", threads = threads))
   log_info("[rtig] SIM rtiger sweep done in %.0fs", as.numeric(difftime(Sys.time(), t0, units = "secs")))
   # full metric suite per rigidity (all kept in the sweep so any criterion is calibratable)
   metrics_leg <- function(seg, truth, grid, tr, tb) {
     rbindlist(lapply(RIG_GRID, function(v) {
       s <- seg_at(seg, v)[, ..KEEP]
-      md <- marker_dice(s, truth, grid, truth_raster = tr)
+      md <- marker_dsc(s, truth, grid, truth_raster = tr)
       dr <- md$per_class[class == "donor(>0)"]
-      ff <- donor_fragment_dice(s, truth, truth_blocks = tb)
+      ff <- donor_fragment_dsc(s, truth, truth_blocks = tb)
       data.table(
         rigidity = v, mismatch = 1 - md$accuracy, mk_recall = dr$recall[1],
-        dsc = ff$dice, fdr = ff$fdr, frag_recall = ff$recall,
+        dsc = ff$dsc, fdr = ff$fdr, frag_recall = ff$recall,
         n_called = ff$n_called, n_truth = ff$n_truth, nbreak = breakpoint_count(s)
       )
     }))
@@ -103,16 +104,19 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALRTIG_RECOMPUTE") == "") {
   molb_traster <- rasterize_named(molb_truth, molb_grid)
   molb_tblocks <- .donor_blocks(molb_truth)
 
-  skim <- rbindlist(lapply(pair$test_sample, function(s) {
-    cf <- fread(here::here("data/zeal/skim/counts", paste0(s, ".tsv")),
+  # Real skim counts from the unified GATK store (data/zeal/snp50k_counts/<sample>.tsv), keyed by the
+  # canonical pedigree (calibration_pairing.true_pedigree); `name` stays the PN test_sample so it still
+  # matches molb_truth. Replaces the retired GATK-filler tree data/zeal/skim/counts. See [[50k-set-terminology]].
+  skim <- rbindlist(Map(function(s, ped) {
+    cf <- fread(here::here("data/zeal/snp50k_counts", paste0(ped, ".tsv")),
       header = FALSE,
       col.names = c("contig", "pos", "rb", "rc", "ab", "ac")
     )
     data.table(name = s, chr = as.integer(sub("chr", "", cf$contig)), pos = cf$pos, n_ref = cf$rc, n_alt = cf$ac)
-  }))
+  }, pair$test_sample, pair$true_pedigree))
   setorder(skim, name, chr, pos)
   skim_seg <- as.data.table(caller_sweep(skim[, .(name, chr, pos, n_ref, n_alt)],
-    caller = "rtiger", values = RIG_GRID, refit = "none", design = "BC2S3", threads = 4L
+    caller = "rtiger", values = RIG_GRID, refit = "cold", design = "BC2S3", threads = 4L
   ))
   skim_m <- metrics_leg(skim_seg, molb_truth, molb_grid, molb_traster, molb_tblocks)
 

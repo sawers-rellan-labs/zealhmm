@@ -8,7 +8,7 @@
 #
 # Run on the ZEAL count-from-parents BC2S3 6-sib-pool sim (results/sim/zeal_pool),
 # scored against the pooled-dose sim truth by the per-cell ANCESTRY-state mismatch
-# (marker_dice, 1 - accuracy over all states). nnil is categorical: skim counts are
+# (marker_dsc, 1 - accuracy over all states). nnil is categorical: skim counts are
 # hard-called once via the BC2S3 design-prior MAP (call_gt), then the whole grid is
 # decoded on that fixed g. Chunked over the emission grid (score-and-discard, bounded
 # memory), cores capped for <=16 GB, upfront ETA probe + per-batch ETA.
@@ -23,12 +23,12 @@ suppressMessages({
 })
 devtools::load_all(path.expand("~/repos/nilhmm"), quiet = TRUE) # caller_grid, call_gt, breeding_prior
 root <- here::here()
-for (f in list.files(file.path(root, "R"), "\\.R$", full.names = TRUE)) source(f) # marker_dice etc. (R/metrics.R)
+for (f in list.files(file.path(root, "R"), "\\.R$", full.names = TRUE)) source(f) # marker_dsc etc. (R/metrics.R)
 source(file.path(root, "scripts/logging.R"))
 
 MEM_CAP_GB <- 16L
 N_CORES <- min(detectCores() - 2L, 8L)
-N_CAL <- 120L # calibration line subset (full 49K grid; keep RAM bounded)
+N_CAL <- 120L # calibration line subset (full SNP50K grid; keep RAM bounded)
 DESIGN <- "BC2S3"
 SIM <- file.path(root, "results/sim/zeal_pool/zeal_pool_bc2s3_full.rds")
 
@@ -79,11 +79,11 @@ score_batch <- function(eg_batch) {
   cfgs <- unique(seg[, .(nir, germ, gert, p, r = rrate, cfg)])
   out <- rbindlist(lapply(seq_len(nrow(cfgs)), function(i) {
     called <- seg[cfg == cfgs$cfg[i]]
-    mf <- marker_dice(called, truth, grid_eval)
-    ff <- donor_fragment_dice(called, truth)
+    mf <- marker_dsc(called, truth, grid_eval)
+    ff <- donor_fragment_dsc(called, truth)
     data.table(
       nir = cfgs$nir[i], germ = cfgs$germ[i], gert = cfgs$gert[i], p = cfgs$p[i], r = cfgs$r[i],
-      mismatch = 1 - mf$accuracy, donor_frag_dice = ff$dice,
+      mismatch = 1 - mf$accuracy, donor_frag_dsc = ff$dsc,
       frag_ks = fragment_size_ks(donor_block_sizes(called), tr_sizes)
     )
   }))
@@ -122,7 +122,7 @@ best <- score[1]
 log_info("wrote data/zeal/zeal_holland_grid.csv (%d configs)", nrow(score))
 log_info(
   "BEST mismatch=%.4f at nir=%g germ=%g gert=%g p=%g r=%.0e | fragDSC=%.3f KS=%.3f",
-  best$mismatch, best$nir, best$germ, best$gert, best$p, best$r, best$donor_frag_dice, best$frag_ks
+  best$mismatch, best$nir, best$germ, best$gert, best$p, best$r, best$donor_frag_dsc, best$frag_ks
 )
 cat("\n=== mismatch vs rrate (marginal over emission), the wide-rrate curve ===\n")
 print(score[, .(mismatch = round(mean(mismatch), 4)), by = r][order(r)])
