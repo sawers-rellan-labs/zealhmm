@@ -93,7 +93,7 @@ cat("nilHMM", as.character(packageVersion("nilHMM")), "loaded; engine ready.\n")
 
 # 4. What each caller is for
 
-- **nnil** — the count baseline; Holland's near-isogenic-line caller.
+- **nnil** — the count baseline; Holland's near isogenic line caller.
 - **rtiger** — rigidity replaces a free geometric duration; robust at low depth.
 - **binhmm** — anchors REF at the coverage floor on dense per-bin `ALT_FREQ`;
   the only track that keeps the full ~27.6 M-SNP density (skim only).

@@ -17,7 +17,7 @@ execute:
 **What this is.** The ZEAL analog of
 [`teonam-qtl-recovery-dta-mlm-118k`](teonam-qtl-recovery-dta-mlm-118k.html), built from real
 ZEAL data end-to-end: field DTA → SpATS spatial BLUEs → SNP50K teosinte-ancestry dosage →
-rtiger ancestry mosaic → K → JLM + MLM. The population is 1,403 near-isogenic B73×teosinte
+rtiger ancestry mosaic → K → JLM + MLM. The population is 1,403 near isogenic B73×teosinte
 BC2S3 lines from **5 teosinte taxa** (Zx *mexicana* 573, Zv *parviglumis* 383, Zd
 *diploperennis* 254, Zl *luxurians* 118, Zh *huehuetenangensis* 61) — the analog of TeoNAM's
 5 TIL families. The DTA BLUE is the per-field SpATS mean across two fields (CLY23-D4, CLY25-B5;

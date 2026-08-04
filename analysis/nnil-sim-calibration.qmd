@@ -157,5 +157,5 @@ if (file.exists(FIG)) {
   argmin (0.70 vs 0.80) is within noise. A finer sweep would state the plateau
   precisely.
 - Marker mismatch is Zhong et al.'s criterion and is used here so the sim↔chip
-  comparison is on their terms; a donor-recovery metric (e.g. Dice) would sharpen the
+  comparison is on their terms; a donor-recovery metric (e.g. DSC) would sharpen the
   optimum but is a separate analysis.

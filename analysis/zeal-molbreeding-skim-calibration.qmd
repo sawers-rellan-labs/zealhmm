@@ -161,7 +161,7 @@ comp <- best[, .(
   het_recall = round(het_recall, 3),
   alt_recall = round(alt_recall, 3),
   donor_recall = round(donor_marker_recall, 3),
-  DSC = round(donor_frag_dice, 3),
+  DSC = round(donor_frag_dsc, 3),
   FDR = round(donor_frag_FDR, 3),
   KS = round(ks_fragsize, 3)
 )][order(prior)]
@@ -366,11 +366,11 @@ opt <- sweep[prior == "ML"][which.min(mismatch)]
 htab <- data.table(
   metric = c(
     "mismatch (primary)", "donor_marker_recall", "het_recall", "alt_recall",
-    "donor_frag_DSC", "donor_frag_FDR", "ks_fragsize", "breakpoint_ratio"
+    "donor_frag_dsc", "donor_frag_FDR", "ks_fragsize", "breakpoint_ratio"
   ),
   value = c(
     round(h$mismatch, 4), round(h$donor_marker_recall, 3), round(h$het_recall, 3),
-    round(h$alt_recall, 3), round(h$donor_frag_dice, 3), round(h$donor_frag_FDR, 3),
+    round(h$alt_recall, 3), round(h$donor_frag_dsc, 3), round(h$donor_frag_FDR, 3),
     round(h$ks_fragsize, 3), round(h$breakpoint_ratio, 2)
   ),
   `vs mismatch-optimum (nir = 0.7)` = c(
@@ -378,7 +378,7 @@ htab <- data.table(
     sprintf("~ (%.3f) better", opt$donor_marker_recall),
     "worse, high nir suppresses het",
     sprintf("~ (%.3f)", opt$alt_recall),
-    sprintf("better (%.3f)", opt$donor_frag_dice),
+    sprintf("better (%.3f)", opt$donor_frag_dsc),
     sprintf("better (%.3f)", opt$donor_frag_FDR),
     "better",
     "near-perfect (~ truth count)"
@@ -458,6 +458,6 @@ the SNP50K map-derived `r` ~3.2e-4 sits inside it) to map `r`-sensitivity on the
 data, rather than only Holland's narrow `avg_r/2..avg_r*2` band. Both are
 rasterised onto the 9,157 informative sites and scored per (marker x line) cell,
 pooled over the 14 pairs, by `R/metrics.R`: per-cell mismatch (`1 - accuracy`,
-primary), per-class recall (`marker_dice`), donor-fragment DSC and FDR
-(`donor_fragment_dice`), and fragment-size KS (`fragment_size_ks`). This notebook
+primary), per-class recall (`marker_dsc`), donor-fragment DSC and FDR
+(`donor_fragment_dsc`), and fragment-size KS (`fragment_size_ks`). This notebook
 reads `data/zeal/molbreeding_skim_calibration.csv`.

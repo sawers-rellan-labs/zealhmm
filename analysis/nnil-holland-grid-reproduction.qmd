@@ -242,7 +242,7 @@ grid at the R level (one genotype-emission build per combination) and batches th
 transition (`r`) grid through the C++ Viterbi, reproducing a cold `call_ancestry()`
 at every configuration. The objective is the GBS-vs-chip **ancestry-call** mismatch
 rate: `1 - marker accuracy` over all ancestry-state calls (one value per
-(marker × NIL) cell), including the >90% recurrent background (`marker_dice`,
+(marker × NIL) cell), including the >90% recurrent background (`marker_dsc`,
 `R/metrics.R`). Holland's File_S04 reports this same rate divided by the number of
 lines (`File_S16.py:122` includes a per-line `/NIL_vs_chip.shape[0]`, = ÷24); the
 two are otherwise identical (Pearson 1.000). Grid run:

@@ -18,7 +18,7 @@ execute:
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
 same real ZEAL pipeline: field StPi → **per-genotype empirical logit** → SNP50K
 teosinte-ancestry dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same
-near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi is a **binary 0/1**
+near isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. StPi is a **binary 0/1**
 stem-pigment call per plot (pigmented / not); the per-genotype phenotype is the **proportion of
 pigmented plots**, `k/n`, and only ~22% of genotypes are ever pigmented.
 

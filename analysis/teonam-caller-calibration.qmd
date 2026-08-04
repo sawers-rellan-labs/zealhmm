@@ -58,7 +58,7 @@ read_pick <- function(caller) {
   data.table(
     caller = caller, coverage = as.character(d$coverage),
     param = parm, param_value = d[[parm]],
-    fdr = d[["fdr"]], recall = d[["recall"]], dice = d[["dice"]]
+    fdr = d[["fdr"]], recall = d[["recall"]], dsc = d[["dsc"]]
   )
 }
 picks <- rbindlist(lapply(c("rtiger", "nnil", "lbimpute"), read_pick))
