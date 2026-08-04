@@ -96,8 +96,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALBBC_RECOMPUTE") == "") {
     log_info("[bbc] sim conc=%g elapsed %.0fs", cc, as.numeric(difftime(Sys.time(), t0, units = "secs")))
     s
   }))
-  sim_mm <- sapply(CONC_GRID, function(v) 1 - marker_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, sim_grid, truth_raster = sim_traster)$accuracy)
-  sim_dsc <- sapply(CONC_GRID, function(v) donor_fragment_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dice)
+  sim_mm <- sapply(CONC_GRID, function(v) 1 - marker_dsc(seg_at(sim_seg, v)[, ..KEEP], sim_truth, sim_grid, truth_raster = sim_traster)$accuracy)
+  sim_dsc <- sapply(CONC_GRID, function(v) donor_fragment_dsc(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dsc)
 
   # ---- MolB truth (nnil on molbreeding hard calls); skim test: bbnil on COUNTS at R_MOLB ----
   pair <- fread(here::here("data/zeal/correspondence/calibration_pairing.csv"))[in_calibration == TRUE]
@@ -120,8 +120,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALBBC_RECOMPUTE") == "") {
   }))
   setorder(skim, name, chr, pos)
   skim_seg <- rbindlist(lapply(CONC_GRID, function(cc) bb_conc(skim[, .(name, chr, pos, n_ref, n_alt)], cc, R_MOLB, 4L)))
-  skim_mm <- sapply(CONC_GRID, function(v) 1 - marker_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, molb_grid, truth_raster = molb_traster)$accuracy)
-  skim_dsc <- sapply(CONC_GRID, function(v) donor_fragment_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dice)
+  skim_mm <- sapply(CONC_GRID, function(v) 1 - marker_dsc(seg_at(skim_seg, v)[, ..KEEP], molb_truth, molb_grid, truth_raster = molb_traster)$accuracy)
+  skim_dsc <- sapply(CONC_GRID, function(v) donor_fragment_dsc(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dsc)
 
   # KS reference: genotype-derived ancestry (nnil on g_true / hardcalls), never a bbnil run
   sim_gtrue_long <- data.table(

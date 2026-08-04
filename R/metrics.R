@@ -189,7 +189,7 @@ fragment_size_ks <- function(a, b) {
 #' Rasterize a multi-sample segment table to per-name state vectors (once, reusable)
 #'
 #' The truth is CONSTANT across a parameter sweep, so rasterize it ONCE with this and
-#' pass the result to `marker_dice(..., truth_raster = )`, instead of re-rasterizing it
+#' pass the result to `marker_dsc(..., truth_raster = )`, instead of re-rasterizing it
 #' inside every config's call (the dominant serial cost of a large grid).
 #' @param seg Common-schema segments (multi-sample).
 #' @param grid Shared evaluation grid (`data.table(chr, pos)`).
@@ -201,11 +201,11 @@ rasterize_named <- function(seg, grid) {
   stats::setNames(lapply(nms, function(nm) rasterize_states(seg[name == nm], grid)$state), nms)
 }
 
-#' Per-state marker precision/recall/Dice vs truth (pooled over samples)
+#' Per-state marker precision/recall/DSC vs truth (pooled over samples)
 #'
 #' The marker-level score. Includes a binary `donor(>0)` row (introgression
 #' present) — its **recall** is the donor-marker true-positive rate (fraction of
-#' true donor markers recovered), a detection metric; its **Dice** combines that
+#' true donor markers recovered), a detection metric; its **DSC** combines that
 #' with precision, penalizing the false donor calls that drive over-fragmentation.
 #' (Holland's File_S04 objective was minimizing the GBS-vs-chip per-cell mismatch,
 #' not maximizing this recall — see analysis/nnil-holland-grid-reproduction.qmd.)
@@ -214,10 +214,10 @@ rasterize_named <- function(seg, grid) {
 #' @param grid Shared evaluation grid (`data.table(chr, pos)`).
 #' @param truth_raster Optional pre-rasterized truth from [rasterize_named()]; supply it
 #'   across a sweep so the constant truth is rasterized once, not per config.
-#' @return List: `per_class` (REF/HET/ALT + donor(>0): precision, recall, dice,
-#'   n_truth), `macro_dice` (mean over the 3 states), `accuracy`, `n`.
+#' @return List: `per_class` (REF/HET/ALT + donor(>0): precision, recall, dsc,
+#'   n_truth), `macro_dsc` (mean over the 3 states), `accuracy`, `n`.
 #' @export
-marker_dice <- function(called, truth, grid, truth_raster = NULL) {
+marker_dsc <- function(called, truth, grid, truth_raster = NULL) {
   called <- data.table::as.data.table(called)
   # Rasterize the (constant) truth ONCE via truth_raster and reuse it across configs;
   # rasterize_named() builds it. Falls back to rasterizing truth here if not supplied.
@@ -240,35 +240,35 @@ marker_dice <- function(called, truth, grid, truth_raster = NULL) {
     fn <- sum(!pred & tru)
     prec <- if (tp + fp) tp / (tp + fp) else NA_real_
     rec <- if (tp + fn) tp / (tp + fn) else NA_real_
-    dice <- if (!is.na(prec) && !is.na(rec) && (prec + rec) > 0) 2 * prec * rec / (prec + rec) else NA_real_
-    c(precision = prec, recall = rec, dice = dice)
+    dsc <- if (!is.na(prec) && !is.na(rec) && (prec + rec) > 0) 2 * prec * rec / (prec + rec) else NA_real_
+    c(precision = prec, recall = rec, dsc = dsc)
   }
   lab <- c("REF", "HET", "ALT")
   per <- data.table::rbindlist(lapply(0:2, function(s) {
     v <- prf(cc == s, tt == s)
     data.table::data.table(
       class = lab[s + 1L], precision = v[["precision"]],
-      recall = v[["recall"]], dice = v[["dice"]], n_truth = sum(tt == s)
+      recall = v[["recall"]], dsc = v[["dsc"]], n_truth = sum(tt == s)
     )
   }))
   vd <- prf(cc > 0L, tt > 0L)
   per <- rbind(per, data.table::data.table(
     class = "donor(>0)",
-    precision = vd[["precision"]], recall = vd[["recall"]], dice = vd[["dice"]],
+    precision = vd[["precision"]], recall = vd[["recall"]], dsc = vd[["dsc"]],
     n_truth = sum(tt > 0L)
   ))
   list(
-    per_class = per, macro_dice = mean(per$dice[1:3], na.rm = TRUE),
+    per_class = per, macro_dsc = mean(per$dsc[1:3], na.rm = TRUE),
     accuracy = if (length(cc)) mean(cc == tt) else NA_real_, n = length(cc)
   )
 }
 
-#' Donor-fragment precision/recall/Dice by reciprocal overlap (segment level)
+#' Donor-fragment precision/recall/DSC by reciprocal overlap (segment level)
 #'
 #' A called donor block matches a truth block when they **reciprocally** overlap
 #' by at least `min_overlap` (overlap >= min_overlap of *each* block's length).
 #' Recall = matched truth blocks / truth blocks; precision = matched called /
-#' called. This is the block-level score; contrast with marker Dice to expose
+#' called. This is the block-level score; contrast with marker DSC to expose
 #' over-fragmentation (many spurious blocks -> low precision, high FDR).
 #'
 #' @param called,truth Common-schema segments for the same samples.
@@ -276,9 +276,9 @@ marker_dice <- function(called, truth, grid, truth_raster = NULL) {
 #' @param min_overlap Reciprocal-overlap threshold (default 0.5).
 #' @param truth_blocks Optional pre-merged truth blocks (`.donor_blocks(truth, states)`);
 #'   supply it across a sweep so the constant truth blocks are merged once, not per config.
-#' @return List: `precision, recall, dice, fdr, n_truth, n_called`.
+#' @return List: `precision, recall, dsc, fdr, n_truth, n_called`.
 #' @export
-donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap = 0.5, truth_blocks = NULL) {
+donor_fragment_dsc <- function(called, truth, states = c(1L, 2L), min_overlap = 0.5, truth_blocks = NULL) {
   cb <- .donor_blocks(called, states)
   # truth blocks are constant across a sweep -> precompute once with .donor_blocks(truth)
   # and pass as truth_blocks to skip recomputing them every config.
@@ -309,13 +309,13 @@ donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap =
   n_called <- nrow(cb)
   recall <- if (n_truth) sum(tb$hit) / n_truth else NA_real_
   precision <- if (n_called) sum(cb$hit) / n_called else NA_real_
-  dice <- if (!is.na(precision) && !is.na(recall) && (precision + recall) > 0) {
+  dsc <- if (!is.na(precision) && !is.na(recall) && (precision + recall) > 0) {
     2 * precision * recall / (precision + recall)
   } else {
     NA_real_
   }
   list(
-    precision = precision, recall = recall, dice = dice, fdr = 1 - precision,
+    precision = precision, recall = recall, dsc = dsc, fdr = 1 - precision,
     n_truth = n_truth, n_called = n_called
   )
 }
@@ -324,7 +324,7 @@ donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap =
 #'
 #' Runs `nilHMM::call_ancestry(data, caller, <param> = value)` for each value,
 #' scoring vs `truth`. Returns the curve used for the F2 calibration panel and
-#' for picking the Dice optimum vs the marker-true-positive optimum.
+#' for picking the DSC optimum vs the marker-true-positive optimum.
 #'
 #' @param data Marker input for the (degraded-sim) cohort.
 #' @param truth Common-schema truth segments (BC2S2 simcross).
@@ -333,23 +333,23 @@ donor_fragment_dice <- function(called, truth, states = c(1L, 2L), min_overlap =
 #' @param param The swept argument name ("rrate" or "rigidity").
 #' @param values Values to sweep.
 #' @param ... Forwarded to [nilHMM::call_ancestry()] (e.g. design, err).
-#' @return `data.table(param, value, marker_macro_dice, donor_marker_recall,
-#'   donor_marker_dice, donor_frag_dice, donor_frag_FDR, n_breakpoints, ks_fragsize)`.
+#' @return `data.table(param, value, marker_macro_dsc, donor_marker_recall,
+#'   donor_marker_dsc, donor_frag_dsc, donor_frag_FDR, n_breakpoints, ks_fragsize)`.
 #' @export
 calibrate_sweep <- function(data, truth, grid, caller, param, values, ...) {
   truth_sizes <- donor_block_sizes(truth)
   data.table::rbindlist(lapply(values, function(v) {
     args <- c(list(data = data, caller = caller), stats::setNames(list(v), param), list(...))
     called <- data.table::as.data.table(do.call(nilHMM::call_ancestry, args))
-    mf <- marker_dice(called, truth, grid)
-    ff <- donor_fragment_dice(called, truth)
+    mf <- marker_dsc(called, truth, grid)
+    ff <- donor_fragment_dsc(called, truth)
     donor_row <- mf$per_class[class == "donor(>0)"]
     data.table::data.table(
       param = param, value = v,
-      marker_macro_dice = mf$macro_dice,
+      marker_macro_dsc = mf$macro_dsc,
       donor_marker_recall = donor_row$recall, # donor-marker true-positive rate (detection metric)
-      donor_marker_dice = donor_row$dice,
-      donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
+      donor_marker_dsc = donor_row$dsc,
+      donor_frag_dsc = ff$dsc, donor_frag_FDR = ff$fdr,
       n_breakpoints = breakpoint_count(called), # over-fragmentation proxy
       ks_fragsize = fragment_size_ks(donor_block_sizes(called), truth_sizes)
     )

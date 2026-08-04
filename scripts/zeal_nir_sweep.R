@@ -6,7 +6,7 @@
 # (call_gt, NOT HWE/flat), then decoded by nnil. Following S6, the free knob is a
 # MINIMUM-DISTANCE estimator vs sim truth, not an MLE: we FIX rrate at the map
 # value 2L/(100n) (no r sweep) and sweep only `nir`, scoring called-vs-truth by
-# donor-fragment Dice (max) and fragment-size KS (min). Ported from
+# donor-fragment DSC (max) and fragment-size KS (min). Ported from
 # scripts/nnil_foil/09_sim_nir_sweep.R onto the ZEAL Tier-A pool sim; unlike the
 # nNIL case there is no scalar "generation nir" (non-informativeness emerges from
 # the teosinte donor genotypes), so nir* is purely the caller value that best
@@ -67,23 +67,23 @@ sweep <- rbindlist(lapply(nir_grid, function(v) {
     data = skim[, .(name, chr, pos, g)], caller = "nnil", rrate = map_r,
     design = DESIGN, germ = 0.01, gert = 0.5, p = 0, nir = v, mr = 0.1
   ))
-  mf <- marker_dice(called, truth, grid_eval)
-  ff <- donor_fragment_dice(called, truth)
+  mf <- marker_dsc(called, truth, grid_eval)
+  ff <- donor_fragment_dsc(called, truth)
   r <- data.table(
-    nir = v, marker_mismatch = 1 - mf$accuracy, donor_frag_dice = ff$dice,
+    nir = v, marker_mismatch = 1 - mf$accuracy, donor_frag_dsc = ff$dsc,
     frag_ks = fragment_size_ks(donor_block_sizes(called), tr_sizes),
-    donor_marker_dice = mf$per_class[class == "donor(>0)"]$dice
+    donor_marker_dsc = mf$per_class[class == "donor(>0)"]$dsc
   )
   log_info(
-    "  nir=%.3f | frag_dice=%.3f mismatch=%.4f (%.0fs)", v, r$donor_frag_dice,
+    "  nir=%.3f | frag_dsc=%.3f mismatch=%.4f (%.0fs)", v, r$donor_frag_dsc,
     r$marker_mismatch, as.numeric(difftime(Sys.time(), t0, units = "secs"))
   )
   r
 }))
 fwrite(sweep, file.path(root, "data/zeal/zeal_nir_sweep.csv"))
-nir_star_dice <- sweep$nir[which.max(sweep$donor_frag_dice)]
+nir_star_dsc <- sweep$nir[which.max(sweep$donor_frag_dsc)]
 nir_star_ks <- sweep$nir[which.min(sweep$frag_ks)]
-log_info("ZEAL nir* | donor-fragment-DSC max at nir=%.3f | fragment-KS min at nir=%.3f", nir_star_dice, nir_star_ks)
+log_info("ZEAL nir* | donor-fragment-DSC max at nir=%.3f | fragment-KS min at nir=%.3f", nir_star_dsc, nir_star_ks)
 
 # ---- figure: 3 min-distance metrics vs caller nir (every series labeled) -----
 long <- rbind(
@@ -92,7 +92,7 @@ long <- rbind(
     metric = "ZEAL sim (nnil on BC2S3 6-sib pool): marker mismatch vs pooled-dose truth (lower better)"
   ),
   data.table(
-    nir = sweep$nir, val = sweep$donor_frag_dice,
+    nir = sweep$nir, val = sweep$donor_frag_dsc,
     metric = "ZEAL sim (nnil on BC2S3 6-sib pool): donor-fragment DSC vs pooled-dose truth (higher better)"
   ),
   data.table(
@@ -109,7 +109,7 @@ fig <- ggplot(long, aes(nir, val)) +
     y = NULL,
     title = sprintf(
       "ZEAL nnil nir sweep on the count-from-parents BC2S3 6-sib-pool sim (Tier A het); nir*(DSC)=%.3f nir*(KS)=%.3f",
-      nir_star_dice, nir_star_ks
+      nir_star_dsc, nir_star_ks
     )
   ) +
   theme_classic(base_size = 9) +
@@ -117,5 +117,5 @@ fig <- ggplot(long, aes(nir, val)) +
 ggsave(file.path(root, "agent/zeal_nir_sweep.png"), fig, width = 190, height = 66, units = "mm", dpi = 300)
 cat(sprintf(
   "wrote data/zeal/zeal_nir_sweep.csv + agent/zeal_nir_sweep.png | nir*(DSC)=%.3f nir*(KS)=%.3f\n",
-  nir_star_dice, nir_star_ks
+  nir_star_dsc, nir_star_ks
 ))

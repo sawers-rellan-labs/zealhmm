@@ -7,10 +7,10 @@
 # Faithful to Holland: the nnil caller runs with his exact gt-emission and priors
 # (params.json: germ/gert/p/nir/mr, f_1, f_2); only rrate varies. Agreement is
 # scored with the SAME metric functions the sim side uses (R/metrics.R:
-# donor_fragment_dice = primary objective; marker_dice), so the chip and sim
+# donor_fragment_dsc = primary objective; marker_dsc), so the chip and sim
 # calibration curves are directly comparable. The marker-level comparison is
 # restricted to the 11,310 GBS markers the chip projects onto (Holland's footing);
-# donor_fragment_dice compares donor blocks in bp space. Holland's own marker
+# donor_fragment_dsc compares donor blocks in bp space. Holland's own marker
 # mismatch (= 1 - accuracy on the shared markers) is emitted as a secondary curve.
 #
 # Everything is keyed by v5 marker ids; the v4-keyed geno.bed is joined via the
@@ -18,8 +18,8 @@
 #
 #   Rscript scripts/nnil_foil/03_chip_calibrate.R
 # Output (data/nnil_foil/):
-#   chip_rrate_sweep.csv    rrate, donor_frag_dice, donor_frag_FDR, donor_marker_dice,
-#                           marker_macro_dice, holland_mismatch, n_breakpoints
+#   chip_rrate_sweep.csv    rrate, donor_frag_dsc, donor_frag_FDR, donor_marker_dsc,
+#                           marker_macro_dsc, holland_mismatch, n_breakpoints
 #   chip_calib.json         rrate_chip*, avg_r (Holland's reference), n_lines, n_shared
 
 suppressMessages({
@@ -122,12 +122,12 @@ score_one <- function(v) {
     germ = hp$germ, gert = hp$gert, p = hp$p, nir = hp$nir, mr = hp$mr,
     f_1 = hp$f_1, f_2 = hp$f_2
   ))
-  mf <- marker_dice(called, tr, grid_eval)
-  ff <- donor_fragment_dice(called, tr)
+  mf <- marker_dsc(called, tr, grid_eval)
+  ff <- donor_fragment_dsc(called, tr)
   dm <- mf$per_class[class == "donor(>0)"]
   data.table(
-    rrate = v, donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
-    donor_marker_dice = dm$dice, marker_macro_dice = mf$macro_dice,
+    rrate = v, donor_frag_dsc = ff$dsc, donor_frag_FDR = ff$fdr,
+    donor_marker_dsc = dm$dsc, marker_macro_dsc = mf$macro_dsc,
     holland_mismatch = 1 - mf$accuracy, n_breakpoints = breakpoint_count(called)
   )
 }
@@ -136,8 +136,8 @@ log_info("chip-side rrate sweep: %d points (nnil, Holland emission) ...", length
 sweep <- rbindlist(lapply(seq_along(values), function(i) {
   r <- score_one(values[i])
   log_info(
-    "  rrate=%.3e | frag_dice=%.3f mismatch=%.4f (%d/%d, %.0fs)",
-    values[i], r$donor_frag_dice, r$holland_mismatch, i, length(values),
+    "  rrate=%.3e | frag_dsc=%.3f mismatch=%.4f (%d/%d, %.0fs)",
+    values[i], r$donor_frag_dsc, r$holland_mismatch, i, length(values),
     as.numeric(difftime(Sys.time(), t0, units = "secs"))
   )
   r
@@ -145,34 +145,34 @@ sweep <- rbindlist(lapply(seq_along(values), function(i) {
 fwrite(sweep, file.path(FOIL, "chip_rrate_sweep.csv"))
 
 # The chip calls are SPARSE (11,310 markers, few large donor blocks per line), so
-# donor_frag_dice is monotone-decreasing in rrate (low rrate never misses a true
+# donor_frag_dsc is monotone-decreasing in rrate (low rrate never misses a true
 # block; it only cuts spurious ones), and Holland's marker-mismatch is nearly flat
 # over orders of magnitude. There is no sharp interior optimum on the chip side --
 # the sparse chip weakly constrains rrate. So we do NOT report a degenerate
 # boundary argmax as "the" optimum; we record the curve shape and Holland's own
 # documented operating point (avg_r), and characterize the weakly-constrained
-# region (rrate within 0.01 Dice of the grid best, and within 5% of min mismatch).
-best_fd <- max(sweep$donor_frag_dice)
+# region (rrate within 0.01 DSC of the grid best, and within 5% of min mismatch).
+best_fd <- max(sweep$donor_frag_dsc)
 min_mm <- min(sweep$holland_mismatch)
-plat_fd <- sweep[donor_frag_dice >= best_fd - 0.01]
+plat_fd <- sweep[donor_frag_dsc >= best_fd - 0.01]
 plat_mm <- sweep[holland_mismatch <= min_mm * 1.05]
-fd_at_mapr <- approx(log10(sweep$rrate), sweep$donor_frag_dice, log10(map_r))$y
+fd_at_mapr <- approx(log10(sweep$rrate), sweep$donor_frag_dsc, log10(map_r))$y
 mm_at_mapr <- approx(log10(sweep$rrate), sweep$holland_mismatch, log10(map_r))$y
 writeLines(toJSON(list(
   map_r = map_r, # map-defined per-marker recombination fraction (native v5 map)
-  frag_dice_at_map_r = fd_at_mapr, mismatch_at_map_r = mm_at_mapr,
-  rrate_grid_best_fragdice = sweep$rrate[which.max(sweep$donor_frag_dice)],
-  frag_dice_best = best_fd, mismatch_min = min_mm,
-  fragdice_plateau = c(min(plat_fd$rrate), max(plat_fd$rrate)),
+  frag_dsc_at_map_r = fd_at_mapr, mismatch_at_map_r = mm_at_mapr,
+  rrate_grid_best_fragdsc = sweep$rrate[which.max(sweep$donor_frag_dsc)],
+  frag_dsc_best = best_fd, mismatch_min = min_mm,
+  fragdsc_plateau = c(min(plat_fd$rrate), max(plat_fd$rrate)),
   mismatch_plateau = c(min(plat_mm$rrate), max(plat_mm$rrate)),
   n_lines = length(both), n_shared_markers = length(chip_markers),
   n_donor_blocks_truth = nrow(.donor_blocks(tr))
 ), auto_unbox = TRUE, digits = 8), file.path(FOIL, "chip_calib.json"))
 log_info(
-  "chip curve: frag Dice monotone (best %.3f @ %.2e); mismatch flat (min %.4f)",
-  best_fd, sweep$rrate[which.max(sweep$donor_frag_dice)], min_mm
+  "chip curve: frag DSC monotone (best %.3f @ %.2e); mismatch flat (min %.4f)",
+  best_fd, sweep$rrate[which.max(sweep$donor_frag_dsc)], min_mm
 )
 log_info(
-  "map r=%.3e -> frag Dice %.3f, mismatch %.4f; mismatch-plateau rrate [%.2e, %.2e]",
+  "map r=%.3e -> frag DSC %.3f, mismatch %.4f; mismatch-plateau rrate [%.2e, %.2e]",
   map_r, fd_at_mapr, mm_at_mapr, min(plat_mm$rrate), max(plat_mm$rrate)
 )

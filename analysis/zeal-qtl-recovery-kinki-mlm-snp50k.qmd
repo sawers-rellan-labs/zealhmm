@@ -18,7 +18,7 @@ execute:
 [`zeal-qtl-recovery-stpi-mlm-snp50k`](zeal-qtl-recovery-stpi-mlm-snp50k.html), built from the
 same real ZEAL pipeline: field Kinki → **per-genotype empirical logit** → SNP50K
 teosinte-ancestry dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same
-near-isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. Kinki is the classic maize
+near isogenic B73×teosinte BC2S3 lines from **5 teosinte taxa**. Kinki is the classic maize
 **"zigzag culm"** phenotype (Eyster 1920, *J Hered* 11:349): dwarfed plants with shortened,
 thickened, arching ear-region internodes that give the stalk a kinked, zigzag appearance. It was
 scored **CLY23 only** as an ordinal 0/1/2 severity, binarized here to "kinked" (score ≥ 1); the

@@ -7,7 +7,7 @@
 # non-informative rate nir, scoring the real 24-line GBS calls against the chip
 # calls with THREE metrics:
 #   - GBS-vs-chip calls mismatch   (Holland's ORIGINAL objective: GBS call != chip call)
-#   - donor-fragment Dice
+#   - donor-fragment DSC
 #   - donor-fragment-size KS
 # Expectation (reproducing Holland's grid selection): mismatch is minimized near
 # nir = 0.9. The grid is extended past 0.9 to test whether 0.9 is a true optimum
@@ -95,19 +95,19 @@ sweep <- rbindlist(lapply(nir_grid, function(v) {
     data = data, caller = "nnil", rrate = map_r,
     germ = hp$germ, gert = hp$gert, p = hp$p, nir = v, mr = hp$mr, f_1 = hp$f_1, f_2 = hp$f_2
   ))
-  mf <- marker_dice(called, tr, grid_eval)
-  ff <- donor_fragment_dice(called, tr)
+  mf <- marker_dsc(called, tr, grid_eval)
+  ff <- donor_fragment_dsc(called, tr)
   ks <- fragment_size_ks(donor_block_sizes(called), tr_sizes)
   data.table(
     nir = v, marker_mismatch = 1 - mf$accuracy,
-    donor_frag_dice = ff$dice, frag_ks = ks, donor_marker_dice = mf$per_class[class == "donor(>0)"]$dice
+    donor_frag_dsc = ff$dsc, frag_ks = ks, donor_marker_dsc = mf$per_class[class == "donor(>0)"]$dsc
   )
 }))
 fwrite(sweep, file.path(FOIL, "nir_sweep.csv"))
 nir_mm <- sweep$nir[which.min(sweep$marker_mismatch)]
-nir_fd <- sweep$nir[which.max(sweep$donor_frag_dice)]
+nir_fd <- sweep$nir[which.max(sweep$donor_frag_dsc)]
 nir_ks <- sweep$nir[which.min(sweep$frag_ks)]
-log_info("best nir | mismatch-min=%.3f | fragDice-max=%.3f | KS-min=%.3f", nir_mm, nir_fd, nir_ks)
+log_info("best nir | mismatch-min=%.3f | fragDSC-max=%.3f | KS-min=%.3f", nir_mm, nir_fd, nir_ks)
 print(sweep)
 
 # ---- fragment-size ECDF at selected nir (mirror of the r-based fragsize view) ----
@@ -128,7 +128,7 @@ log_info("wrote nir_fragsize_ecdf.csv (%d selected nir + chip calls)", length(ni
 # ---- figure: three metrics vs nir -------------------------------------------
 long <- rbind(
   data.table(nir = sweep$nir, val = sweep$marker_mismatch, metric = "GBS-vs-chip calls mismatch"),
-  data.table(nir = sweep$nir, val = sweep$donor_frag_dice, metric = "Donor-fragment DSC"),
+  data.table(nir = sweep$nir, val = sweep$donor_frag_dsc, metric = "Donor-fragment DSC"),
   data.table(nir = sweep$nir, val = sweep$frag_ks, metric = "Fragment-size KS")
 )
 long[, metric := factor(metric,

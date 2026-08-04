@@ -17,7 +17,7 @@ execute:
 **What this is.** The days-to-silk (DTS) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
 same real ZEAL pipeline: field DTS → SpATS spatial BLUEs → SNP50K teosinte-ancestry dosage →
-rtiger ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near-isogenic
+rtiger ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa** (Zx 578, Zv 385, Zd 255, Zl 118, Zh 61). The
 DTS BLUE is the per-field SpATS mean across two fields (CLY23-D4, CLY25-B5); union mean ≈ 82 ± 4
 days. DTS is a **flowering** trait, essentially the female counterpart of DTA (anthesis): the two

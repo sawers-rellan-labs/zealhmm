@@ -26,7 +26,7 @@ the donor mosaic is known truth, rather than tuned by eye on real data.
 2. **Golden-ratio refine** — golden-section search inside the bracket on the
    continuous `log10(parameter)` to *localize* it (`golden_refine`).
 
-The objective is **donor-fragment Dice** (reciprocal-overlap of called vs true
+The objective is **donor-fragment DSC** (reciprocal-overlap of called vs true
 introgression blocks) — it penalizes both missed donor and the spurious 1-marker
 blocks that over-fragmentation produces, unlike marker recall which saturates.
 
@@ -84,7 +84,7 @@ parameter carried to the benchmark.
 ```{r calib-fig, eval=(exists("have") && have), fig.width=9, fig.height=4}
 calib_panel <- function(sweep, refine, star, xlab, xtrans) {
   ggplot(sweep, aes(value)) +
-    geom_line(aes(y = donor_frag_dice, colour = "donor-fragment Dice")) +
+    geom_line(aes(y = donor_frag_dsc, colour = "donor-fragment DSC")) +
     geom_line(aes(y = donor_frag_FDR, colour = "donor-fragment FDR")) +
     geom_point(data = refine, aes(value, objective, colour = "golden probes"), size = 1.6) +
     geom_vline(xintercept = star, linetype = "dashed") +
@@ -109,10 +109,10 @@ if (patchwork_ok) {
 ```
 
 ```{r calib-tables, eval=(exists("have") && have)}
-# The log-sweep curves (Dice peaks then over-fragments as FDR/breakpoints climb).
+# The log-sweep curves (DSC peaks then over-fragments as FDR/breakpoints climb).
 show <- function(s, pcol) {
   s[, .(
-    value = signif(value, 3), donor_frag_dice = round(donor_frag_dice, 3),
+    value = signif(value, 3), donor_frag_dsc = round(donor_frag_dsc, 3),
     donor_frag_FDR = round(donor_frag_FDR, 3), donor_marker_recall = round(donor_marker_recall, 3),
     n_breakpoints, truth_bp, ks = round(ks_fragsize, 3)
   )]

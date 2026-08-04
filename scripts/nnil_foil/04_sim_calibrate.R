@@ -26,7 +26,7 @@
 #
 #   Rscript scripts/nnil_foil/04_sim_calibrate.R
 # Output (data/nnil_foil/):
-#   sim_rrate_sweep.csv   rrate + donor_frag_dice/FDR, donor_marker_dice, macro_dice,
+#   sim_rrate_sweep.csv   rrate + donor_frag_dsc/FDR, donor_marker_dsc, macro_dsc,
 #                         n_breakpoints, ks_fragsize (vs dense sim truth)
 #   sim_calib.json        rrate_sim*, single-locus check (expected vs observed), config
 #   sim_truth_segments.csv, sim_frag_sizes.csv (for the step-6 figure)
@@ -121,7 +121,7 @@ sl_ok <- max(abs(obsd - as.numeric(expd))) < 0.003
 log_info("single-locus check %s (max abs diff %.4f)", if (sl_ok) "PASS" else "CHECK", max(abs(obsd - as.numeric(expd))))
 
 # ---- calibrate rrate against the DENSE sim truth ----------------------------
-grid_eval <- markers[, .(chr, pos = bp)] # full dense grid for marker_dice
+grid_eval <- markers[, .(chr, pos = bp)] # full dense grid for marker_dsc
 cal_names <- nms[seq_len(N_CAL)]
 tr_cal <- truth[name %in% cal_names]
 values <- log_grid(1e-6, 1e-1, 24L)
@@ -132,12 +132,12 @@ score_one <- function(v) {
     germ = hp$germ, gert = hp$gert, p = hp$p, nir = hp$nir, mr = hp$mr,
     f_1 = hp$f_1, f_2 = hp$f_2
   ))
-  mf <- marker_dice(called, tr_cal, grid_eval)
-  ff <- donor_fragment_dice(called, tr_cal)
+  mf <- marker_dsc(called, tr_cal, grid_eval)
+  ff <- donor_fragment_dsc(called, tr_cal)
   dm <- mf$per_class[class == "donor(>0)"]
   data.table(
-    rrate = v, donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
-    donor_marker_dice = dm$dice, marker_macro_dice = mf$macro_dice,
+    rrate = v, donor_frag_dsc = ff$dsc, donor_frag_FDR = ff$fdr,
+    donor_marker_dsc = dm$dsc, marker_macro_dsc = mf$macro_dsc,
     n_breakpoints = breakpoint_count(called),
     ks_fragsize = fragment_size_ks(donor_block_sizes(called), donor_block_sizes(tr_cal))
   )
@@ -147,26 +147,26 @@ log_info("sim-side rrate sweep: %d points on %d NILs (nnil, caller nir=0.9) ..."
 sweep <- rbindlist(lapply(seq_along(values), function(i) {
   r <- score_one(values[i])
   log_info(
-    "  rrate=%.3e | frag_dice=%.3f FDR=%.3f (%d/%d, %.0fs)",
-    values[i], r$donor_frag_dice, r$donor_frag_FDR, i, length(values),
+    "  rrate=%.3e | frag_dsc=%.3f FDR=%.3f (%d/%d, %.0fs)",
+    values[i], r$donor_frag_dsc, r$donor_frag_FDR, i, length(values),
     as.numeric(difftime(Sys.time(), t1, units = "secs"))
   )
   r
 }))
 fwrite(sweep, file.path(FOIL, "sim_rrate_sweep.csv"))
 
-rrate_sim <- sweep$rrate[which.max(sweep$donor_frag_dice)]
-best_fd <- max(sweep$donor_frag_dice)
-interior <- which.max(sweep$donor_frag_dice) %in% seq(2L, length(values) - 1L)
+rrate_sim <- sweep$rrate[which.max(sweep$donor_frag_dsc)]
+best_fd <- max(sweep$donor_frag_dsc)
+interior <- which.max(sweep$donor_frag_dsc) %in% seq(2L, length(values) - 1L)
 # donor_block_sizes() returns a numeric vector (Mb); wrap for fwrite
 fwrite(data.table(block_mb = donor_block_sizes(truth)), file.path(FOIL, "sim_frag_sizes.csv"))
 
 writeLines(toJSON(list(
   design = DESIGN, nir_founder = NIR_FOUNDER, nir_caller = hp$nir,
   n_sim = N_SIM, n_cal = N_CAL, n_markers = nrow(markers),
-  rrate_sim_star = rrate_sim, frag_dice_best = best_fd, interior_optimum = interior,
+  rrate_sim_star = rrate_sim, frag_dsc_best = best_fd, interior_optimum = interior,
   single_locus_expected = as.list(round(expd, 5)),
   single_locus_observed = list(REF = obsd[1], HET = obsd[2], ALT = obsd[3]),
   single_locus_pass = sl_ok
 ), auto_unbox = TRUE, digits = 8), file.path(FOIL, "sim_calib.json"))
-log_info("rrate_sim* = %.4e (frag Dice %.3f, interior=%s)", rrate_sim, best_fd, interior)
+log_info("rrate_sim* = %.4e (frag DSC %.3f, interior=%s)", rrate_sim, best_fd, interior)

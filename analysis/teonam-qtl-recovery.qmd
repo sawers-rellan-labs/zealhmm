@@ -438,7 +438,7 @@ feed the same `STAM ~ Family + marker` GWAS — only the genotype caller differs
   `scripts/teonam_lbimpute_sweep.R`): coverage-aware emission + distance-dependent
   (map-aware cM) transition with a double-recombination penalty, full-chromosome
   Viterbi (nilHMM native port of Fragoso et al. 2014). `recombdist` is the
-  donor-fragment-Dice-optimal `recombdist_star` from the BC1S4 calibration
+  donor-fragment-DSC-optimal `recombdist_star` from the BC1S4 calibration
   (`scripts/02_calibrate.R`), read from `calib_params.csv` — not hardcoded.
 
 The **contrast is het handling**. The three duration/distance-aware HMMs (B, C, D) tie

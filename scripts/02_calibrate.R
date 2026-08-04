@@ -8,8 +8,8 @@
 #         <design>_truth_segments.csv. Load with load_sim() / sim_counts().
 #   2. two-stage calibrate each knob — nnil rrate, rtiger rigidity, LB-Impute
 #      recombdist: log sweep to bracket the optimum, then golden-ratio refine
-#      (maximize donor-fragment Dice)  [R/calibrate.R]
-#   3. benchmark each caller at its refined Dice-optimal knob against truth
+#      (maximize donor-fragment DSC)  [R/calibrate.R]
+#   3. benchmark each caller at its refined DSC-optimal knob against truth
 #   4. write small summary tables + the fragment-size / genotype-frequency tables
 #
 # DESIGN is parametrized (--design, default BC2S2). All design-derived quantities
@@ -124,11 +124,11 @@ calibrate_param <- function(caller, cal_k, values, integer, ...) {
   sweep <- sweep_calibrate(sk, tr, grid,
     caller = caller, threads = THREADS, values = values, ...
   )
-  br <- bracket_from_sweep(sweep, "donor_frag_dice")
+  br <- bracket_from_sweep(sweep, "donor_frag_dsc")
   message(sprintf("  %s: golden refine in [%.3g, %.3g] ...", caller, br[["lo"]], br[["hi"]]))
   ref <- golden_refine(sk, tr, grid,
     caller = caller, lo = br[["lo"]], hi = br[["hi"]],
-    objective = "donor_frag_dice", threads = THREADS, ...
+    objective = "donor_frag_dsc", threads = THREADS, ...
   )
   list(sweep = sweep, refine = ref)
 }
@@ -160,7 +160,7 @@ fwrite(bbnil_cal$refine$evals, file.path(OUT, "bbnil_rrate_refine.csv"))
 fwrite(rtig_cal$refine$evals, file.path(OUT, "rtiger_rigidity_refine.csv"))
 fwrite(lbi_cal$refine$evals, file.path(OUT, "lbimpute_recombdist_refine.csv"))
 message(sprintf(
-  "Dice-optimal (refined): nnil rrate=%.3g | bbnil rrate=%.3g | rigidity=%d | recombdist=%.4g cM (drp=TRUE)",
+  "DSC-optimal (refined): nnil rrate=%.3g | bbnil rrate=%.3g | rigidity=%d | recombdist=%.4g cM (drp=TRUE)",
   rrate_star, rrate_bb_star, rig_star, recomb_star
 ))
 
@@ -177,14 +177,14 @@ skim_lbi <- as.data.table(call_ancestry(skim_b,
 ))
 
 score_caller <- function(called, tag, param) {
-  mf <- marker_dice(called, sim_b, grid)
-  ff <- donor_fragment_dice(called, sim_b)
+  mf <- marker_dsc(called, sim_b, grid)
+  ff <- donor_fragment_dsc(called, sim_b)
   data.table(
     caller = tag, param = param,
-    marker_macro_dice = round(mf$macro_dice, 3),
-    donor_marker_dice = round(mf$per_class[class == "donor(>0)", dice], 3),
+    marker_macro_dsc = round(mf$macro_dsc, 3),
+    donor_marker_dsc = round(mf$per_class[class == "donor(>0)", dsc], 3),
     donor_marker_recall = round(mf$per_class[class == "donor(>0)", recall], 3),
-    donor_frag_dice = round(ff$dice, 3), donor_frag_FDR = round(ff$fdr, 3),
+    donor_frag_dsc = round(ff$dsc, 3), donor_frag_FDR = round(ff$fdr, 3),
     ks_fragsize = round(fragment_size_ks(donor_block_sizes(called), donor_block_sizes(sim_b)), 3),
     breakpoints = breakpoint_count(called), breakpoints_truth = breakpoint_count(sim_b)
   )

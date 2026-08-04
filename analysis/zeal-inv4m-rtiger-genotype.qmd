@@ -30,7 +30,7 @@ rtiger (HMM on skim allele counts); they differ only in the **reference variant 
 `PZE04175660223` is not a marker in either panel, so for each call set the genotype at
 4:181,637,780 is the state of the rtiger **segment** spanning that coordinate. This is a like-for-like
 comparison: identical locus, identical caller, only the reference variant set changes. The population
-is the same **~1,400 near-isogenic B73×teosinte BC2S3 lines**. Genotype frequency is a per-line
+is the same **~1,400 near isogenic B73×teosinte BC2S3 lines**. Genotype frequency is a per-line
 property, so replicate field plots are collapsed to one call per NIL.
 :::
 

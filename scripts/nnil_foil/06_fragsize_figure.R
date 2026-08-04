@@ -1,13 +1,13 @@
 #!/usr/bin/env Rscript
 # Calibration foil, step 6b: KS (fragment-size) view.
 #
-# The Dice objective (reciprocal-overlap block matching) and the KS objective
+# The DSC objective (reciprocal-overlap block matching) and the KS objective
 # (match of the donor-block-SIZE distribution) pick different rrate. This figure
 # shows both:
 #   A  KS(called block sizes, truth block sizes) vs rrate, with the KS optimum,
-#      the Dice optimum, and Holland's avg_r marked.
+#      the DSC optimum, and Holland's avg_r marked.
 #   B  the donor-fragment-size ECDFs the KS compares: simcross truth vs the nnil
-#      calls at avg_r, the Dice optimum, and the KS optimum.
+#      calls at avg_r, the DSC optimum, and the KS optimum.
 #
 # Regenerates the SAME 300 calibration NILs as 04_sim_calibrate.R (identical seed
 # and RNG order: for i in 1..300, .simulate_dosage() then draw_obs()), so the
@@ -74,9 +74,9 @@ log_info("regenerated %d cal NILs; truth donor blocks = %d", N_CAL, nrow(.donor_
 
 sweep <- fread(file.path(FOIL, "sim_rrate_sweep.csv"))
 map_r <- fromJSON(file.path(FOIL, "chip_calib.json"))$map_r
-r_dice <- sweep$rrate[which.max(sweep$donor_frag_dice)]
+r_dsc <- sweep$rrate[which.max(sweep$donor_frag_dsc)]
 r_ks <- sweep$rrate[which.min(sweep$ks_fragsize)]
-log_info("DSC-opt rrate=%.3e | KS-opt rrate=%.3e | map r=%.3e", r_dice, r_ks, map_r)
+log_info("DSC-opt rrate=%.3e | KS-opt rrate=%.3e | map r=%.3e", r_dsc, r_ks, map_r)
 
 call_sizes <- function(v) {
   seg <- as.data.table(call_ancestry(
@@ -92,10 +92,10 @@ r_mm <- chip_sw$rrate[which.min(chip_sw$holland_mismatch)]
 # include an over-fragmented rrate so Panel B shows what failure looks like
 r_over <- sweep$rrate[which.min(abs(sweep$rrate - 2.2e-2))]
 picks <- data.table(
-  rrate = c(map_r, r_mm, r_dice, r_ks, r_over),
+  rrate = c(map_r, r_mm, r_dsc, r_ks, r_over),
   lab = c(
     sprintf("map r (%.1e)", map_r), sprintf("mismatch r* (%.1e)", r_mm),
-    sprintf("DSC r* (%.1e)", r_dice), sprintf("KS r* (%.1e)", r_ks),
+    sprintf("DSC r* (%.1e)", r_dsc), sprintf("KS r* (%.1e)", r_ks),
     sprintf("over-frag (%.1e)", r_over)
   )
 )
@@ -122,7 +122,7 @@ col_mm <- "#CC79A7" # mismatch r* (matches its ECDF colour in panel B)
 pA <- ggplot(sweep, aes(rrate, ks_fragsize)) +
   geom_vline(xintercept = r_mm, linetype = "twodash", colour = col_mm, linewidth = 0.5) +
   geom_vline(xintercept = map_r, linetype = "dashed", colour = col_holl, linewidth = 0.4) +
-  geom_vline(xintercept = r_dice, linetype = "dotted", colour = col_sim, linewidth = 0.5) +
+  geom_vline(xintercept = r_dsc, linetype = "dotted", colour = col_sim, linewidth = 0.5) +
   geom_vline(xintercept = r_ks, linetype = "dotdash", colour = col_ks, linewidth = 0.5) +
   geom_line(linewidth = 0.6, colour = "grey20") +
   geom_point(size = 1, colour = "grey20") +
@@ -141,7 +141,7 @@ pA <- ggplot(sweep, aes(rrate, ks_fragsize)) +
     parse = TRUE, angle = 90, hjust = 1, vjust = -0.3, size = 2.5, colour = col_holl
   ) +
   annotate("text",
-    x = r_dice, y = max(sweep$ks_fragsize) * 0.6, label = "DSC~italic(r)^'*'", parse = TRUE,
+    x = r_dsc, y = max(sweep$ks_fragsize) * 0.6, label = "DSC~italic(r)^'*'", parse = TRUE,
     angle = 90, hjust = 1, vjust = -0.3, size = 2.5, colour = col_sim
   ) +
   annotate("text",

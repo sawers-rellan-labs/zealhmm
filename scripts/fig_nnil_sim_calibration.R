@@ -106,8 +106,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_SIMCAL_RECOMPUTE") == "") {
   }
   grid_sim <- data.table(chr = as.integer(sim$grid$chr), pos = as.integer(sim$grid$pos))
   grid_chip <- unique(chip_seg[, .(chr, pos = start_bp)])
-  mm_sim <- function(seg) 1 - marker_dice(seg, sim_truth, grid_sim)$accuracy
-  mm_chip <- function(seg) 1 - marker_dice(seg, chip_seg, grid_chip)$accuracy
+  mm_sim <- function(seg) 1 - marker_dsc(seg, sim_truth, grid_sim)$accuracy
+  mm_chip <- function(seg) 1 - marker_dsc(seg, chip_seg, grid_chip)$accuracy
 
   # sweep nir by marker mismatch (the expensive 22-decode step). Reuse the persisted
   # CSV if present; NNIL_SIMCAL_RECOMPUTE=1 forces a fresh sweep.
@@ -126,14 +126,14 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_SIMCAL_RECOMPUTE") == "") {
       rbindlist(lapply(NIR_GRID, function(v) {
         s <- seg_nnil(sim_long, v)
         data.table(
-          truth = "sim", param = v, mismatch = 1 - marker_dice(s, sim_truth, grid_sim)$accuracy,
+          truth = "sim", param = v, mismatch = 1 - marker_dsc(s, sim_truth, grid_sim)$accuracy,
           ks = fragment_size_ks(donor_block_sizes(s), sim_truth_sz)
         )
       })),
       rbindlist(lapply(NIR_GRID, function(v) {
         s <- seg_nnil(real_long, v)
         data.table(
-          truth = "chip", param = v, mismatch = 1 - marker_dice(s, chip_seg, grid_chip)$accuracy,
+          truth = "chip", param = v, mismatch = 1 - marker_dsc(s, chip_seg, grid_chip)$accuracy,
           ks = fragment_size_ks(donor_block_sizes(s), chip_truth_sz)
         )
       }))

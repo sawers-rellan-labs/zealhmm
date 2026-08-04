@@ -101,8 +101,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
     )
     s
   }))
-  sim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(sim_seg, v)[, ..KEEP], NULL, sim_grid, truth_raster = sim_graster)$accuracy)
-  sim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dice)
+  sim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dsc(seg_at(sim_seg, v)[, ..KEEP], NULL, sim_grid, truth_raster = sim_graster)$accuracy)
+  sim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dsc(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dsc)
   # genotype-derived ancestry reference: nnil on the simulated true genotypes g_true -- the
   # sim analog of nnil-on-molb-hardcalls (an achievable ancestry, unlike the latent mosaic).
   # Its introgression-size distribution is the target for the KS-distance criterion.
@@ -156,8 +156,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALCAL_RECOMPUTE") == "") {
     as.integer(gg)
   }), pair$test_sample)
   molb_tblocks <- .donor_blocks(molb_truth) # merge MolB truth blocks ONCE (DSC)
-  skim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dice(seg_at(skim_seg, v)[, ..KEEP], NULL, molb_grid, truth_raster = molb_graster)$accuracy)
-  skim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dice)
+  skim_mm <- sapply(NIR_GRID, function(v) 1 - marker_dsc(seg_at(skim_seg, v)[, ..KEEP], NULL, molb_grid, truth_raster = molb_graster)$accuracy)
+  skim_dsc <- sapply(NIR_GRID, function(v) donor_fragment_dsc(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dsc)
   molb_ref_sz <- donor_block_sizes(molb_truth) # genotype-derived ancestry (nnil on hardcalls) = KS target
   skim_ks <- sapply(NIR_GRID, function(v) fragment_size_ks(donor_block_sizes(seg_at(skim_seg, v)[, ..KEEP]), molb_ref_sz))
 

@@ -89,7 +89,7 @@ per <- rbindlist(lapply(lines24, function(nm) {
   )
 }))
 per <- merge(per, real_long[, .(name, chr, pos, g)], by = c("name", "chr", "pos"), all.x = TRUE)
-ev <- per[!is.na(nnil) & !is.na(chip)] # bins scored by marker_dice
+ev <- per[!is.na(nnil) & !is.na(chip)] # bins scored by marker_dsc
 ev[, mismatch := nnil != chip]
 
 cat(sprintf(

@@ -17,7 +17,7 @@ execute:
 **What this is.** The ear-number (EN) sibling of
 [`zeal-qtl-recovery-eh-mlm-snp50k`](zeal-qtl-recovery-eh-mlm-snp50k.html), built from the
 same real ZEAL pipeline end-to-end: field EN → SpATS spatial BLUEs → SNP50K teosinte-ancestry
-dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same near-isogenic
+dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same near isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa**. EN is **ear number** — the count of ears borne
 per plant — and the per-genotype value is the per-field SpATS mean across the two fields (CLY23-D4,
 CLY25-B5). Only the phenotype and the candidate panel change vs the EH notebook. A closely related
@@ -144,7 +144,7 @@ Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level s
 
 The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the rtiger mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD, unfixable by any fixed factor);
-K deflates λ toward 1 and removes the ancestry-correlated bulk that a near-isogenic,
+K deflates λ toward 1 and removes the ancestry-correlated bulk that a near isogenic,
 teosinte-ancestry-structured ear-number panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}

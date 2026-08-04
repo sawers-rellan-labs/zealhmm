@@ -17,7 +17,7 @@ execute:
 **What this is.** The plant-height (PH) sibling of
 [`zeal-qtl-recovery-dta-mlm-snp50k`](zeal-qtl-recovery-dta-mlm-snp50k.html), built from the
 same real ZEAL pipeline end-to-end: field PH → SpATS spatial BLUEs → SNP50K teosinte-ancestry
-dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near-isogenic
+dosage → rtiger ancestry mosaic → K → JLM + MLM. The population is the same 1,403 near isogenic
 B73×teosinte BC2S3 lines from **5 teosinte taxa** (Zx *mexicana* 578, Zv *parviglumis* 385, Zd
 *diploperennis* 255, Zl *luxurians* 118, Zh *huehuetenangensis* 61). The PH BLUE is the per-field
 SpATS mean across two fields (CLY23-D4, CLY25-B5); union mean ≈ 183 ± 16 cm.
@@ -136,7 +136,7 @@ Here **Family** is the **82 donor-accession** fixed factor (parent-plant-level s
 
 The fixed-effect OLS (Family + marker, no K) vs the MLM (Family + K) on the rtiger mosaic, same
 fixed part. OLS is intrinsically inflated (ancestry-block LD, unfixable by any fixed factor);
-K deflates λ toward 1 and removes the ancestry-correlated bulk that a near-isogenic,
+K deflates λ toward 1 and removes the ancestry-correlated bulk that a near isogenic,
 teosinte-ancestry-structured height panel carries.
 
 ```{r ols-manhattan, fig.width=9, fig.height=4.4}
