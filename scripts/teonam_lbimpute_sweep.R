@@ -28,7 +28,7 @@
 #  - unit = "cm": transition decays over v5 consensus cM, so local recombination-
 #    rate variation (maize centromeric suppression) is captured — consistent with
 #    the cM step-interpolation and rtiger/nnil's map-based operation.
-#  - recombdist + drp: CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+#  - recombdist + drp: CALIBRATED (donor-fragment-DSC optimal on the BC1S4 sim,
 #    scripts/02_calibrate.R) and read from calib_params.csv (drp=TRUE for RILs).
 #  - err = 0.01 (read/allele error, = the read-sim error), genotypeerr = 0.05
 #    (LB-Impute default), min_reads = 0L
@@ -65,7 +65,7 @@ if (!("--generate" %in% commandArgs(TRUE))) {
 }
 
 LAMBDAS <- c(0.1, 0.2, 0.5, 1, 5, 10, 20)
-# recombdist + drp are CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+# recombdist + drp are CALIBRATED (donor-fragment-DSC optimal on the BC1S4 sim,
 # scripts/02_calibrate.R) and READ from calib_params.csv — do not hardcode.
 cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
 RECOMBDIST <- as.numeric(cp$value[cp$key == "recombdist_star"]) # cM (unit-aware transition scale)

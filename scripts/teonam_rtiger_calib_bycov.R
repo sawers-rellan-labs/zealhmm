@@ -12,13 +12,13 @@
 # Method (per coverage lambda, reusing R/calibrate.R):
 #   coarse sweep on a mean-density-centered powers-of-2 grid {8..512}  (markers/Mb
 #   mean ~57 -> center 2^6=64), feasibility-filtered -> bracket_from_sweep ->
-#   golden_refine, objective = donor-fragment Dice. Ties break toward the LARGER
+#   golden_refine, objective = donor-fragment DSC. Ties break toward the LARGER
 #   rigidity ("err long": with linkage, over-merging costs less than over-fragmenting).
 #   min_reads = 1 (decode only read-covered markers; ~2.6x faster at low coverage).
 #
 # Output (ephemeral sim, only small CSVs written):
-#   results/sim/teonam/rtiger_calib_bycov.csv        (rigidity*(lambda) + Dice)
-#   results/sim/teonam/rtiger_calib_bycov_sweep.csv  (full coarse Dice curves)
+#   results/sim/teonam/rtiger_calib_bycov.csv        (rigidity*(lambda) + DSC)
+#   results/sim/teonam/rtiger_calib_bycov_sweep.csv  (full coarse DSC curves)
 # Run: Rscript scripts/teonam_rtiger_calib_bycov.R [--smoke]   (smoke = lambda=1 only)
 # =============================================================================
 suppressMessages({
@@ -103,7 +103,7 @@ for (i in seq_along(LAMBDAS)) {
   t0 <- Sys.time()
   # ONE shared rtiger EM fit + a decode per rigidity (EM is rigidity-independent),
   # so no golden-refine (which would re-fit per probe). The integer grid + flat-top
-  # Dice make sub-octave refinement pointless.
+  # DSC make sub-octave refinement pointless.
   sw <- sweep_calibrate(d, truth, grid,
     caller = "rtiger", values = vals,
     threads = THREADS, min_reads = 1L
@@ -111,7 +111,7 @@ for (i in seq_along(LAMBDAS)) {
   el <- as.numeric(Sys.time() - t0, units = "mins")
   sw[, coverage := covlab]
   sweeps[[covlab]] <- sw
-  # objective = donor-fragment FDR (MINIMIZE): Dice is monotone in rigidity here
+  # objective = donor-fragment FDR (MINIMIZE): DSC is monotone in rigidity here
   # (dominated by saturated recall) so it never brackets an optimum; FDR has a real
   # minimum (few spurious short fragments at low r, merged over-extended fragments at
   # high r). err-long: largest rigidity whose FDR is within TOL of the min (linkage ->
@@ -125,7 +125,7 @@ for (i in seq_along(LAMBDAS)) {
     coverage = covlab, cov_frac = round(cov_frac, 3),
     rigidity = as.integer(rig_star), rigidity_argmin = as.integer(rig_argmin),
     fdr = round(fmin, 4), recall = round(rc, 4),
-    dice = round(sw[value == rig_star, donor_frag_dice], 4), mins = round(el, 1)
+    dsc = round(sw[value == rig_star, donor_frag_dsc], 4), mins = round(el, 1)
   )
   log_info(
     "  [%d/%d] lambda=%-4s (%.0f%% cov): rigidity* = %d (argmin-FDR %d), FDR=%.3f recall=%.3f (%.1f min)",

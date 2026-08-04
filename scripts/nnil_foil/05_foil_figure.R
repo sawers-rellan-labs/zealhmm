@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Calibration foil, step 6: the overlay figure.
 #
-# A  Calibration curves (donor-fragment Dice vs rrate) for the two truth sources:
+# A  Calibration curves (donor-fragment DSC vs rrate) for the two truth sources:
 #    the DENSE simcross truth (sharp interior optimum at rrate_sim*) and the SPARSE
 #    24-line chip calls (no interior optimum -- monotone). Holland's chip-selected
 #    avg_r and rrate_sim* are marked; the chip mismatch-admissible band is shaded.
@@ -28,7 +28,7 @@ sim <- fread(file.path(FOIL, "sim_rrate_sweep.csv"))
 cj <- fromJSON(file.path(FOIL, "chip_calib.json"))
 
 map_r <- cj$map_r # map-defined per-marker recombination fraction (native v5 map)
-rrate_sim <- sim$rrate[which.max(sim$donor_frag_dice)]
+rrate_sim <- sim$rrate[which.max(sim$donor_frag_dsc)]
 band <- cj$mismatch_plateau # chip-admissible rrate band (flat mismatch)
 
 col_sim <- "#0072B2" # Okabe-Ito blue
@@ -50,10 +50,10 @@ lx <- scale_x_log10(
 
 # ---- Panel A: calibration curves --------------------------------------------
 cur <- rbind(
-  data.table(rrate = sim$rrate, dice = sim$donor_frag_dice, src = "Simulation (dense truth)"),
-  data.table(rrate = chip$rrate, dice = chip$donor_frag_dice, src = "Chip (24-line truth)")
+  data.table(rrate = sim$rrate, dsc = sim$donor_frag_dsc, src = "Simulation (dense truth)"),
+  data.table(rrate = chip$rrate, dsc = chip$donor_frag_dsc, src = "Chip (24-line truth)")
 )
-pA <- ggplot(cur, aes(rrate, dice, colour = src)) +
+pA <- ggplot(cur, aes(rrate, dsc, colour = src)) +
   annotate("rect",
     xmin = band[1], xmax = band[2], ymin = -Inf, ymax = Inf,
     fill = "grey85", alpha = 0.5

@@ -57,15 +57,15 @@ seg <- as.data.table(caller_grid(gdat,
   emission_grid = data.frame(nir = CFG$nir, germ = CFG$germ, gert = CFG$gert, p = CFG$p, mr = mr_skim),
   rrate = CFG$r, design = DESIGN, threads = N_CORES
 ))[, ..KEEP]
-md <- marker_dice(seg, truth, grid_eval)
+md <- marker_dsc(seg, truth, grid_eval)
 pc <- md$per_class
-ff <- donor_fragment_dice(seg, truth)
+ff <- donor_fragment_dsc(seg, truth)
 row <- data.table(
   prior = "ml", nir = CFG$nir, germ = CFG$germ, gert = CFG$gert, p = CFG$p, r = CFG$r,
   mismatch = 1 - md$accuracy,
   donor_marker_recall = pc[class == "donor(>0)"]$recall,
   het_recall = pc[class == "HET"]$recall, alt_recall = pc[class == "ALT"]$recall,
-  donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
+  donor_frag_dsc = ff$dsc, donor_frag_FDR = ff$fdr,
   ks_fragsize = fragment_size_ks(donor_block_sizes(seg), tr_sizes),
   breakpoint_ratio = breakpoint_count(seg) / truth_bp
 )

@@ -125,11 +125,11 @@ for (i in seq_along(LAMBDAS)) {
   rd_star <- ref$value
   fdr <- ref$score$donor_frag_FDR[1]
   rc <- ref$score$donor_marker_recall[1]
-  dice <- ref$score$donor_frag_dice[1]
+  dsc <- ref$score$donor_frag_dsc[1]
   best[[covlab]] <- data.table(
     coverage = covlab, cov_frac = round(cov_frac, 3),
     recombdist = signif(rd_star, 4), fdr = round(fdr, 4), recall = round(rc, 4),
-    dice = round(dice, 4), mins = round(el, 1)
+    dsc = round(dsc, 4), mins = round(el, 1)
   )
   log_info(
     "  [%d/%d] lambda=%-4s (%.0f%% cov): recombdist* = %.2f cM, FDR=%.3f recall=%.3f (%.1f min)",

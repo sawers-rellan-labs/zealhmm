@@ -59,7 +59,7 @@ if (!("--generate" %in% commandArgs(TRUE))) {
 }
 
 LAMBDAS <- c(0.1, 0.2, 0.5, 1, 5, 10, 20)
-# rigidity is CALIBRATED (donor-fragment-Dice optimal on the BC1S4 sim,
+# rigidity is CALIBRATED (donor-fragment-DSC optimal on the BC1S4 sim,
 # scripts/02_calibrate.R) and READ from calib_params.csv — do not hardcode.
 cp <- fread(file.path(ROOT, "results/sim/calib_params.csv"))
 RIGIDITY <- as.integer(cp$value[cp$key == "rigidity_star"])

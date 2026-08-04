@@ -77,8 +77,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALLB_RECOMPUTE") == "") {
   t0 <- Sys.time()
   sim_seg <- as.data.table(caller_sweep(sim_long, caller = "lbimpute", values = RD_GRID, unit = "cm", design = "BC2S3", threads = threads))
   log_info("[lb] SIM lbimpute sweep done in %.0fs", as.numeric(difftime(Sys.time(), t0, units = "secs")))
-  sim_mm <- sapply(RD_GRID, function(v) 1 - marker_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, sim_grid, truth_raster = sim_traster)$accuracy)
-  sim_dsc <- sapply(RD_GRID, function(v) donor_fragment_dice(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dice)
+  sim_mm <- sapply(RD_GRID, function(v) 1 - marker_dsc(seg_at(sim_seg, v)[, ..KEEP], sim_truth, sim_grid, truth_raster = sim_traster)$accuracy)
+  sim_dsc <- sapply(RD_GRID, function(v) donor_fragment_dsc(seg_at(sim_seg, v)[, ..KEEP], sim_truth, truth_blocks = sim_tblocks)$dsc)
 
   # ---- MolB truth (nnil on molbreeding hard calls); skim test: lbimpute on COUNTS in cM ----
   pair <- fread(here::here("data/zeal/correspondence/calibration_pairing.csv"))[in_calibration == TRUE]
@@ -105,8 +105,8 @@ if (file.exists(CACHE) && Sys.getenv("NNIL_ZEALLB_RECOMPUTE") == "") {
   skim_seg <- as.data.table(caller_sweep(skim[, .(name, chr, pos, cm, n_ref, n_alt)],
     caller = "lbimpute", values = RD_GRID, unit = "cm", design = "BC2S3", threads = 4L
   ))
-  skim_mm <- sapply(RD_GRID, function(v) 1 - marker_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, molb_grid, truth_raster = molb_traster)$accuracy)
-  skim_dsc <- sapply(RD_GRID, function(v) donor_fragment_dice(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dice)
+  skim_mm <- sapply(RD_GRID, function(v) 1 - marker_dsc(seg_at(skim_seg, v)[, ..KEEP], molb_truth, molb_grid, truth_raster = molb_traster)$accuracy)
+  skim_dsc <- sapply(RD_GRID, function(v) donor_fragment_dsc(seg_at(skim_seg, v)[, ..KEEP], molb_truth, truth_blocks = molb_tblocks)$dsc)
 
   D <- list(
     sweep = rbind(

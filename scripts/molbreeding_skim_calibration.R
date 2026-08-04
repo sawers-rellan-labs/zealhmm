@@ -2,7 +2,7 @@
 # Holland-style nnil calibration for ZEAL, REAL data: MolBreeding target-seq (~110x)
 # = TRUTH (Jim's chip analog), SNP50K skim (~0.4x) = TEST (Jim's GBS analog). Calibrate
 # nnil against Jim's objective -- the per-cell/marker ancestry MISMATCH between the two
-# platforms -- with FDR/recall/Dice/KS/breakpoints reported alongside (NOT as replacements).
+# platforms -- with FDR/recall/DSC/KS/breakpoints reported alongside (NOT as replacements).
 #
 # TRUTH  : nnil on the MolBreeding hard calls -> truth ancestry mosaic. The extracted 110x
 #          genotypes g in {0,1,2} (extract_molbreeding_hardcalls.R) are the nnil INPUT (NOT
@@ -25,7 +25,7 @@ suppressMessages({
 })
 devtools::load_all(path.expand("~/repos/nilhmm"), quiet = TRUE) # caller_grid, call_gt, breeding_prior
 root <- here::here()
-for (f in list.files(file.path(root, "R"), "\\.R$", full.names = TRUE)) source(f) # marker_dice, donor_fragment_dice, ...
+for (f in list.files(file.path(root, "R"), "\\.R$", full.names = TRUE)) source(f) # marker_dsc, donor_fragment_dsc, ...
 source(file.path(root, "scripts/logging.R"))
 
 N_CORES <- min(detectCores() - 2L, 8L)
@@ -130,9 +130,9 @@ run_prior <- function(prior_vec, prior_name) {
     cfgs <- unique(seg[, .(nir, germ, gert, p, r = rrate, cfg)])
     rbindlist(lapply(seq_len(nrow(cfgs)), function(i) {
       called <- seg[cfg == cfgs$cfg[i]]
-      md <- marker_dice(called, truth, grid_eval)
+      md <- marker_dsc(called, truth, grid_eval)
       pc <- md$per_class
-      ff <- donor_fragment_dice(called, truth)
+      ff <- donor_fragment_dsc(called, truth)
       data.table(
         prior = prior_name,
         nir = cfgs$nir[i], germ = cfgs$germ[i], gert = cfgs$gert[i], p = cfgs$p[i], r = cfgs$r[i],
@@ -140,7 +140,7 @@ run_prior <- function(prior_vec, prior_name) {
         donor_marker_recall = pc[class == "donor(>0)"]$recall,
         het_recall = pc[class == "HET"]$recall,
         alt_recall = pc[class == "ALT"]$recall,
-        donor_frag_dice = ff$dice, donor_frag_FDR = ff$fdr,
+        donor_frag_dsc = ff$dsc, donor_frag_FDR = ff$fdr,
         ks_fragsize = fragment_size_ks(donor_block_sizes(called), tr_sizes),
         breakpoint_ratio = breakpoint_count(called) / truth_bp
       )

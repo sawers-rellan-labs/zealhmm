@@ -111,7 +111,7 @@ score_batch <- function(eg_batch) {
   cfgs <- unique(seg[, .(nir, germ, gert, p, r = rrate, cfg)])
   out <- rbindlist(lapply(seq_len(nrow(cfgs)), function(i) {
     called <- seg[cfg == cfgs$cfg[i]]
-    mf <- marker_dice(called, tr, grid_eval)
+    mf <- marker_dsc(called, tr, grid_eval)
     data.table(
       nir = cfgs$nir[i], germ = cfgs$germ[i], gert = cfgs$gert[i],
       p = cfgs$p[i], r = cfgs$r[i], mismatch = 1 - mf$accuracy
