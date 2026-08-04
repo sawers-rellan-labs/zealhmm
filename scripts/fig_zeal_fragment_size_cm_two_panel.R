@@ -165,7 +165,7 @@ fig <- (pA | pB) +
     legend.position = "bottom", legend.direction = "horizontal",
     legend.text = element_text(size = BASE * 0.85), legend.key.width = grid::unit(26, "pt")
   )
-ggsave(file.path(OUT, "fig_zeal_fragment_size_cm_two_panel.png"), fig, width = 15, height = 7, dpi = 150)
+ggsave(file.path(OUT, "zeal_fragment_size_cm_two_panel.png"), fig, width = 15, height = 7, dpi = 150) # name matches main.tex \includegraphics (NO fig_ prefix)
 fwrite(
   rbind(
     ksA[, .(panel = "A", reference = "MolBreeding target-seq ~110x truth", series, descriptor, D, n_nil, n_frag, med_cm)],
@@ -242,4 +242,4 @@ tex <- c(
   "\\end{table}"
 )
 writeLines(tex, file.path(TABDIR, "zeal_fragment_size_operating_points.tex"))
-log_info("[fig2] wrote fig_zeal_fragment_size_cm_two_panel.png + _ks.csv + tables/zeal_fragment_size_operating_points.tex")
+log_info("[fig2] wrote zeal_fragment_size_cm_two_panel.png + _ks.csv + tables/zeal_fragment_size_operating_points.tex")
