@@ -176,7 +176,32 @@ want <- Sys.getenv("ZEAL_DECODE_CALLERS")
 if (want != "") CALLERS <- CALLERS[trimws(strsplit(want, ",")[[1]])]
 log_info("[decode] callers: %s", paste(names(CALLERS), collapse = ", "))
 
-# ---- decode, chunk by chunk, appending as we go -----------------------------
+# ---- pool-fit set for the emission-fitting count callers --------------------
+# rtiger + bbnil fit their BetaBinomial emission on the WHOLE dnarna pool once (paper decision;
+# consistent with build_paint_seg_cache.R), NOT per-20-NIL chunk. Drop lines below the r=5 per-chr
+# floor (the coverage-QC dead lines) so the pool fit does not abort. nnil (deterministic per sample),
+# binhmm (1 Mb bins), googa/atlas (BrB) stay chunked.
+POOL_CALLERS <- c("rtiger", "bbnil")
+long_pool <- load_counts(peds)
+covchk <- long_pool[n_ref + n_alt > 0, .N, by = .(name, chr)][, .(minc = min(N), nchr = .N), by = name]
+fit_peds <- covchk[minc >= 2L * RIG_RTIGER & nchr == 10L, name]
+pool_df <- as.data.frame(long_pool[name %in% fit_peds])
+log_info(
+  "[decode] pool-fit set (rtiger/bbnil): %d/%d NILs fittable at r=%d (dropped %d below the per-chr floor)",
+  length(fit_peds), length(peds), RIG_RTIGER, length(peds) - length(fit_peds)
+)
+pool_fit <- function(cl) {
+  if (cl == "rtiger") {
+    call_ancestry(pool_df, caller = "rtiger", rigidity = RIG_RTIGER, design = "BC2S3", threads = threads)
+  } else {
+    call_ancestry(pool_df,
+      caller = "bbnil", rrate = RRATE_SKIM, fit_means = TRUE, conc = 20, err = 0.01,
+      design = "BC2S3", parallel = TRUE, threads = threads
+    )
+  }
+}
+
+# ---- decode: pool callers in one fit, the rest chunk by chunk ----------------
 for (cl in names(CALLERS)) {
   seg_dir <- file.path(OUT, sprintf("%s_seg_cache", cl))
   dir.create(seg_dir, showWarnings = FALSE, recursive = TRUE)
@@ -186,43 +211,59 @@ for (cl in names(CALLERS)) {
     unlink(cm_csv)
   }
   t0 <- Sys.time()
-  n_this_run <- 0L
-  for (k in seq_along(chunks)) {
-    f <- file.path(seg_dir, sprintf("chunk_%03d.rds", k))
-    if (file.exists(f)) next
-    pp <- chunks[[k]]
-    s <- tryCatch(as.data.table(CALLERS[[cl]](pp))[, ..KEEP],
-      error = function(e) {
-        # A whole-chunk abort must not cost every NIL in the chunk: rtiger refuses a chunk outright
-        # when ANY (sample, chr) chain has < 2*rigidity covered markers. Retry sample by sample so
-        # only the genuinely undecodable lines are lost, and say which ones.
-        log_warn("[decode] %s chunk %d aborted (%s); retrying per NIL", cl, k, sub("\n.*$", "", conditionMessage(e)))
-        one <- lapply(pp, function(p) {
-          tryCatch(as.data.table(CALLERS[[cl]](p))[, ..KEEP],
-            error = function(e2) {
-              log_warn("[decode] %s DROPPED %s: %s", cl, p, sub("\n.*$", "", conditionMessage(e2)))
-              NULL
-            }
-          )
-        })
-        ok <- Filter(Negate(is.null), one)
-        log_info("[decode] %s chunk %d recovered %d/%d NILs per-NIL", cl, k, length(ok), length(pp))
-        if (!length(ok)) NULL else rbindlist(ok)
-      }
-    )
-    if (is.null(s)) next
-    saveRDS(s, f)
-    d <- db_cm(s)
-    d[, `:=`(caller = cl, chunk = k)]
-    fwrite(d, cm_csv, append = file.exists(cm_csv))
-    el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
-    n_this_run <- n_this_run + 1L # chunks decoded in THIS run (cached ones cost no time)
-    log_info(
-      ">>> %s chunk %d/%d (%d NILs, %d donor blocks) | elapsed %.1f min | avg %.2f min/chunk | ETA ~%.1f min",
-      cl, k, length(chunks), length(pp), nrow(d), el, el / n_this_run,
-      (el / n_this_run) * (length(chunks) - k)
-    )
-  }
+  if (cl %in% POOL_CALLERS) {
+    # single pool fit+decode; not chunked (the emission must see the whole dnarna pool)
+    f <- file.path(seg_dir, "pool.rds")
+    if (!file.exists(f)) {
+      s <- as.data.table(pool_fit(cl))[, ..KEEP]
+      saveRDS(s, f)
+      d <- db_cm(s)
+      d[, `:=`(caller = cl, chunk = 0L)]
+      fwrite(d, cm_csv, append = FALSE)
+      log_info(
+        ">>> %s POOL fit: %d NILs, %d donor blocks | %.1f min", cl, uniqueN(s$name), nrow(d),
+        as.numeric(difftime(Sys.time(), t0, units = "mins"))
+      )
+    }
+  } else {
+    n_this_run <- 0L
+    for (k in seq_along(chunks)) {
+      f <- file.path(seg_dir, sprintf("chunk_%03d.rds", k))
+      if (file.exists(f)) next
+      pp <- chunks[[k]]
+      s <- tryCatch(as.data.table(CALLERS[[cl]](pp))[, ..KEEP],
+        error = function(e) {
+          # A whole-chunk abort must not cost every NIL in the chunk: rtiger refuses a chunk outright
+          # when ANY (sample, chr) chain has < 2*rigidity covered markers. Retry sample by sample so
+          # only the genuinely undecodable lines are lost, and say which ones.
+          log_warn("[decode] %s chunk %d aborted (%s); retrying per NIL", cl, k, sub("\n.*$", "", conditionMessage(e)))
+          one <- lapply(pp, function(p) {
+            tryCatch(as.data.table(CALLERS[[cl]](p))[, ..KEEP],
+              error = function(e2) {
+                log_warn("[decode] %s DROPPED %s: %s", cl, p, sub("\n.*$", "", conditionMessage(e2)))
+                NULL
+              }
+            )
+          })
+          ok <- Filter(Negate(is.null), one)
+          log_info("[decode] %s chunk %d recovered %d/%d NILs per-NIL", cl, k, length(ok), length(pp))
+          if (!length(ok)) NULL else rbindlist(ok)
+        }
+      )
+      if (is.null(s)) next
+      saveRDS(s, f)
+      d <- db_cm(s)
+      d[, `:=`(caller = cl, chunk = k)]
+      fwrite(d, cm_csv, append = file.exists(cm_csv))
+      el <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+      n_this_run <- n_this_run + 1L # chunks decoded in THIS run (cached ones cost no time)
+      log_info(
+        ">>> %s chunk %d/%d (%d NILs, %d donor blocks) | elapsed %.1f min | avg %.2f min/chunk | ETA ~%.1f min",
+        cl, k, length(chunks), length(pp), nrow(d), el, el / n_this_run,
+        (el / n_this_run) * (length(chunks) - k)
+      )
+    }
+  } # end else (chunked callers: nnil/binhmm/googa/atlas)
   nseg <- length(list.files(seg_dir, pattern = "\\.rds$"))
   if (file.exists(cm_csv)) {
     tot <- fread(cm_csv)
