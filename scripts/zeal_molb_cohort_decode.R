@@ -65,9 +65,10 @@ log_info(
 )
 
 # ---- loaders ----------------------------------------------------------------
+STORE <- here::here("data/zeal/snp50k_counts") # unified GATK store (canonical id = pedigree for NILs)
 load_counts <- function(pp) {
   rbindlist(lapply(pp, function(p) {
-    cf <- fread(file.path(COH, "skim/counts_50k", sprintf("%s.tsv", p)),
+    cf <- fread(file.path(STORE, sprintf("%s.tsv", p)), # was data/zeal/molb_cohort/skim/counts_50k (bcftools)
       header = FALSE, col.names = c("contig", "pos", "rb", "rc", "ab", "ac")
     )
     data.table(
