@@ -16,7 +16,7 @@ This file is the tracked record of where everything comes from.
 
 | Source | Modality | Marker set | Notes |
 |--------|----------|------------|-------|
-| Skim | low-cov WGS (~0.4×) | 50K panel (thinned) + dense ~27.6 M wideseq | TP teosinte–B73 wideseq filter; MAF ≥ 0.05 |
+| Skim | low-cov WGS (~0.4×) | **SNP50K panel = `HQ_BZEA.vcf.gz`, 51,991 sites** (below) + dense ~27.6 M wideseq | TP teosinte–B73 wideseq filter; MAF ≥ 0.05 |
 | BrB | 3′ RNA-seq (BRB-seq) | wideseq-thinned counts + cassini pangene | expression-driven depth; ASE |
 | Target-seq | MolBreeding 45K, high cov | 45K array | completeness / Holland-style cross-check only |
 
@@ -24,6 +24,112 @@ The ~27.6 M wideseq set = Schnable et al. 2023 teosinte/*Tripsacum* VCF →
 biallelic → MAF ≥ 0.05 (`wideseq_ref`); GATK `CollectAllelicCounts` tallies
 skim/BRB reads at those positions. (memory `snp50k-cohort-provenance`,
 `gatk-table-readcount-standard`.)
+
+### The SNP50K panel, and WHY two count files disagree (51,991 vs 49,002)
+
+**The panel is `/rsstu/users/r/rrellan/BZea/bzeaseq/nilhmm/vcf/HQ_BZEA.vcf.gz`:
+51,991 records, 1,439 samples.** It is the INTERSECTION of two separate lineages
+(Fausto built it; separate lineages does not mean they were never intersected):
+the Nirwan/Asher **200K** imputed set (196,120 SNPs, see the Inv4m section below) ∩ the
+**wideseq teosinte-informative** positions (~27.6 M; the `bzeahq_wideseq_chr*.vcf.gz`
+siblings in the same directory). Hence `HQ` = the high-quality intersection.
+
+The pipeline is `bzeaseq/50K/main.nf` + `nextflow.config`. **Both count paths are pointed
+at the SAME `params.sites_vcf = HQ_BZEA.vcf.gz`, but they do different things with it**,
+which is the whole source of the 51,991-vs-49,002 confusion:
+
+```
+gatk CollectAllelicCounts -I bam -R ref -L HQ_BZEA.vcf.gz     # tallies reads at EVERY supplied site
+bcftools mpileup -R HQ_BZEA.vcf.gz ... | bcftools call -mv     # -v = emit VARIANT sites only
+```
+
+Site ladder, all measured (`bcftools index -n`):
+
+| sites | artifact | what removed them |
+|-------|----------|-------------------|
+| **51,991** | `HQ_BZEA.vcf.gz` = the panel; also every `CollectAllelicCounts` output | nothing (`-L` is an interval list; a read tallier needs no call) |
+| 50,995 | `50K/results/joint/cohort.vcf.gz` | `bcftools call -mv`: 996 panel sites monomorphic across the cohort |
+| **49,002** | `bzea_50K_cohort.vcf.gz`, `_cohort_ref`, `_ref_panel` | biallelic-SNP filter dropped 1,993 more |
+
+**Path A — GATK, 51,991 rows/sample (what zealtiger/RTIGER used).**
+`50K/allelic_counts50K.tsv` (2.5 GB, sample-grouped; cols
+`SAMPLE CONTIG POSITION REF_COUNT ALT_COUNT REF_NUCLEOTIDE ALT_NUCLEOTIDE`) →
+reformatted to the RTIGER 6-col layout (`Chr Pos RefBase RefCount AltBase AltCount`) by
+zealtiger `make_rtiger_50K_input.sh` (NILs) / `extract_check_counts_50K.sh` (B73+Purple
+checks) → `zealtiger/data/rtiger_50K/counts/` → staged into this repo (table below).
+**The ALT base column is filler.** GATK writes `ALT_NUCLEOTIDE = N` wherever the panel
+defines no alternate allele, and RTIGER needs a base, so those scripts do
+`if (alt=="N") alt=(ref=="A" ? "C" : "A")`. Measured composition A 39,791 / C 12,115 /
+G 40 / T 45 — the 85 non-A/C are the only sites where GATK reported a real base. Inert
+for the count callers (rtiger/bbnil read `n_ref`/`n_alt`), but never read that column as
+a real alternate allele.
+
+**Path B — bcftools, 49,002 rows/sample (the mount frame).**
+`50K/results/allelic_counts/<sample>_allele_counts.tsv`, written by
+`get_allelic_counts.sh` in that directory ("Simple RTIGER data preparation"):
+`bcftools view -R bzea_50K_cohort_ref.vcf.gz -s $SAMPLE cohort.vcf.gz | bcftools query -f
+'%CHROM\t%POS\t%REF\t[%AD{0}]\t%ALT\t[%AD{1}]'`, i.e. `AD[0]`/`AD[1]` from the joint call,
+real `%ALT`, restricted to the 49,002 biallelic panel sites. An awk step maps `.` → `0`,
+so **zero-read sites are retained as `0 0`** (all 49,002 rows exist for every sample; only
+~15,100 are covered at 0.4×). `caller_sweep()`'s `min_reads = 1L` drops them at decode.
+
+**Consequences — do NOT mix the two frames in one analysis:**
+- Path B is a strict SUBSET of Path A (2,989 Path-A-only sites; 0 Path-B-only). REF bases
+  agree at all 49,002 shared sites.
+- On covered sites the counts disagree on **19.5%** (measured over 11 samples,
+  `scripts/measure_lineage_disagreement.R`; pooled 34,562 / 177,599 covered-either). The
+  disagreement is a **read-depth difference, not an allele-identity one**: GATK counts ~10%
+  more reads (pooled 262,125 vs 237,795; GATK deeper at 27,974 sites vs bcftools at 6,562),
+  because bcftools `mpileup` drops marginal reads via BAQ and its MAPQ/BQ handling while GATK
+  tallies them. `n_alt` almost never differs. Neither counter is broken.
+- Verify a file's frame with `agent/check_50k_frame.R` (keyed merges on typed chr/pos).
+
+### The "50K set" and the single-authority resolution
+
+**Terminology:** the biallelic call set `bzea_50K_cohort.vcf.gz` (49,002 sites) is called the
+**"50K set"** even though it is 49,002 — do not rename it 49K. The biallelic filter that
+defines it is `bcftools view -v snps -m2 -M2` in `50K/results/joint/get_cohort_and_reference_vcf.sh`
+Step 1 (a post-processing reshape of `cohort.vcf.gz`), NOT in `main.nf` — the pipeline emits the
+unfiltered joint call and the 50K set is defined one step downstream.
+
+The 51,991-row GATK files are not a defect: `collectAllelicCounts` and joint calling both branch
+off `filterBam` in parallel, so the counts are tallied before the biallelic set exists (it is only
+knowable after joint calling). The resolution keeps GATK (Path A) as the counter and pins the sites
+and alleles to the 50K set:
+
+- **`data/zeal/snp50k_alleles.tsv`** (`chr pos ref alt`, 49,002 rows) — the single site+allele
+  authority, built by `scripts/build_snp50k_alleles.sh` DIRECTLY from `bzea_50K_cohort.vcf.gz`
+  (one file for BOTH which sites and what alleles; replaces the old `HQ_BZEA` + `markers_snp50k_cm.tsv`
+  pairing, and retires `markers_snp50k_cm.tsv` as the site filter — it stays only for cM). Uses the
+  cohort-called ALT. It differs from the HQ_BZEA donor ALT at only 65 sites, where a read count
+  (`scripts/check_65_alt_reads.R`) found 6 ALT reads total across 11 samples, so the choice is
+  immaterial and self-consistency wins.
+- **`scripts/extract_gatk_counts_50k.sh`** streams the 2.5 GB GATK table
+  (`50K/allelic_counts50K.tsv`), restricts to the 50K set, and attaches the real REF/ALT from the
+  authority (no filler letters; `ALT_COUNT` kept only where GATK's inferred base is the set's ALT,
+  else 0). No BAM rerun: `CollectAllelicCounts` counts each position independently, so subsetting the
+  51,991 table to the 49,002 positions is bit-identical to re-running `-L bzea_50K_cohort.vcf.gz`.
+- **`scripts/verify_snp50k_extractor.sh`** guards the invariant: `n_ref` byte-identical to the
+  GATK-counts-with-filler-alleles tree (only allele labels and a few zeroed non-panel ALT reads may
+  change). Verified on the 11
+  skim samples: n_ref 0 diffs, n_alt differs at 8–50 zeroed sites/sample, ~33k filler labels corrected.
+
+**Status:** the design and tooling are in place and verified; migrating all four count trees onto the
+extractor (retiring the Path-B bcftools files under `data/zeal/{paired,molb}_cohort/`) is the pending
+step. Until then `data/` still holds a mix — check a file's ALT composition (skewed A/C = GATK counts
+with filler alleles; balanced A/T/C/G = bcftools or extractor real alleles).
+
+Superseded interim approach (kept for provenance): the staging scripts `stage_sanity_check_paint.R`
+(`copy_counts_50k()`) and `scripts/stage_molbreeding_from_zealtiger.sh` filtered counts 51,991 → 49,002
+at the repo boundary using `markers_snp50k_cm.tsv`; the extractor above replaces that filler-ALT path.
+
+**Known gap in the script (the data is fine):** `PN4_SID322` is not reached by the loop.
+`skim_ids` comes from `molbreeding_3way_correspondence.csv` column 4, which carries the
+mislabelled `PN4_SID330` rather than `PN4_SID322`, the sample the calibration actually pairs
+with (see the MolBreeding well-swap note below), so that file was hand-staged and had to be
+filtered by hand too (all 15 files in `data/zeal/skim/counts/` are now 49,002). Sourcing the
+id list from `calibration_pairing.csv` would close the gap, but that file has a **quoted
+`note` field containing commas**, so it needs a real CSV parser, not `cut`/`awk -F,`.
 
 ## Staged subset: skim sweep (`data/`, gitignored, ~33 MB)
 
@@ -47,7 +153,7 @@ data/
 
 | Staged path | Source |
 |-------------|--------|
-| `skimsweep/coverage_sweep_members.csv`, `skim/counts_50k/`, `brb/counts_wideseq/` | zealtiger repo |
+| `skimsweep/coverage_sweep_members.csv`, `skim/counts_50k/`, `brb/counts_wideseq/` | zealtiger repo (`data/rtiger_50K/`) — the **GATK `CollectAllelicCounts`** counts, ALT base column is filler; `counts_50k/` is **filtered 51,991 → 49,002 at staging** by `copy_counts_50k()` |
 | `skim/bins/<skim>_bin_genotypes.tsv` | rsstu `BZea/bzeaseq/ancestry/<skim>_bin_genotypes.tsv` (per-sample) |
 | `brb/pangene/`, `ref/` | rsstu `tlaloc/cassini/` (`results/<species>/pangene/`, `data/pangene/`, `data/meta/`) |
 
@@ -342,8 +448,12 @@ Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223
   (`/rsstu/.../DOE_CAREER/BZea/joint_genotype/all_samps/9_final_samples/more_filtered/BZea.vcf.gz`,
   raw, ~98% missing) → MAF ≥ 0.05 + quality filter + rename → **Beagle imputation by Asher (P.
   Balint-Kurti's lab)** → `BZea_MAF_0.05_qfiltered_newnames_imputed.vcf.gz` (196,120 SNPs) → RTIGER.
-  It is **excluded from the release** (legacy, Beagle-imputed, no pipeline on hand; regenerate with
-  recalibrated RTIGER on the SNP50K side if ever needed).
+  These RTIGER *calls* are **excluded from the release** (Beagle-imputed input, no pipeline on hand to
+  reproduce them; regenerate with recalibrated RTIGER on the SNP50K side if ever needed).
+  **But this 200K set is NOT a dead end: intersected with the wideseq teosinte-informative
+  positions it IS the SNP50K panel** `HQ_BZEA.vcf.gz` (51,991 sites) that every skim analysis
+  here runs on — see "The SNP50K panel" near the top of this file. The two lineages are
+  separate in origin and then intersected; do not read "separate lineage" as "unrelated".
 - `rtiger_50K_calls.csv` — **50K (current)** RTIGER 3-state segments (see `zeal_rtiger_mosaic.R`).
 - `CLY25_ZEAL.csv`, `Bzea_metadata.csv` — spatially-corrected NC2025 phenotypes + donor metadata,
   staged from the inv4m Drive repo (`scripts/inversion_paper`).
@@ -381,10 +491,15 @@ skim count set is ~1.5 GB in zealtiger; only the **16 calibration samples**
   also the authoritative site REF=B73/ALT=donor polarity. `molbreeding_sample_map.tsv`
   = well_id -> PN#_SID# -> pedigree(`genotype`). (`sites_v5_SNP.tsv`, `wideseq_keep_v5.tsv`,
   `markers_molbreeding_cm.tsv` already local; cM is native TeoNAM v5.)
-- `data/zeal/skim/counts/PN*_SID*.tsv` — skim TEST count files (same schema, 51,991
-  sites, 50K grid, ~0.4x) for the molbreeding-shared NILs (14 by label + `PN4_SID322`,
-  the true partner of the mislabelled truth sample; see below). `+ seqlengths.csv`,
-  `calls_taxa_r5.csv` (skim RTIGER reference calls). Source: `zealtiger data/rtiger_50K/`.
+- `data/zeal/skim/counts/PN*_SID*.tsv` — skim TEST count files (same schema, **49,002
+  sites** after the staging filter, 50K grid, ~0.4x) for the molbreeding-shared NILs (14 by
+  label + `PN4_SID322`, the true partner of the mislabelled truth sample; see below).
+  `+ seqlengths.csv`, `calls_taxa_r5.csv` (skim RTIGER reference calls). Source:
+  `zealtiger data/rtiger_50K/`. These are the **GATK `CollectAllelicCounts`** counts (ALT
+  base column is filler), read by `scripts/fig_zeal_molbreeding_skim_*_calibration.R`, and
+  the staging script now filters them 51,991 → 49,002 so they share the frame of the sim leg
+  and of `markers_snp50k_cm.tsv`. `PN4_SID322` is the one exception, still 51,991 — see
+  "RESOLVED: filter applied at the staging boundary" at the top of this file.
 - `data/zeal/correspondence/` — cross-source ID matching. `molbreeding_3way_correspondence.csv`
   is **canonical and label-based: it assumes NO mislabels** (its `pedigree_agrees` compares
   the two sources' *labels*, not their genotype data, and is left untouched). Plus
@@ -424,8 +539,9 @@ the native `.rds`. Four are **ancestry mosaics** (`rtiger/nnil/binhmm/lbimpute`)
 calls from `bzea_50K_cohort.vcf.gz`, extracted for the panel (values = the bcftools calls, not a
 reconstruction). **No single-sample GL genotypes are shared.** Shared `markers/snp50k_markers.tsv`
 + `lines/snp50k_lines.tsv`; `MANIFEST.tsv` carries sha256 per file.
-The legacy **200K** RTIGER introgression set is **not** in the release (regenerate with
-recalibrated RTIGER if ever needed).
+The **200K** RTIGER introgression *calls* are **not** in the release (regenerate with
+recalibrated RTIGER if ever needed). Note this excludes only the RTIGER segment calls, not the 200K
+imputed SNP set itself, which is the base the SNP50K panel is intersected from (see "The SNP50K panel").
 
 The cohort VCF is staged from `/Volumes/rsstu/.../bzeaseq/50K/results/joint/bzea_50K_cohort.vcf.gz`
 into `data/zeal/` (gitignored) and consumed by `scripts/zeal_hwe_post_gt.R`. The README states the

@@ -19,7 +19,10 @@
 suppressMessages(library(data.table))
 
 # real sources
-ZT_SRC <- "/Users/fvrodriguez/Desktop/zealtiger"
+# Override with ZEALTIGER=/path. The old ~/Desktop/zealtiger default is dead; the live repo
+# is ~/repos/zealtiger (same convention as scripts/stage_molbreeding_from_zealtiger.sh).
+ZT_SRC <- Sys.getenv("ZEALTIGER", file.path(path.expand("~"), "repos/zealtiger"))
+if (!dir.exists(ZT_SRC)) stop("zealtiger source not found: ", ZT_SRC, " (set ZEALTIGER=/path)")
 CAS_SRC <- "/Volumes/rsstu/users/r/rrellan/tlaloc/cassini"
 MNT_SRC <- "/Volumes/rsstu/users/r/rrellan/BZea/bzeaseq/ancestry"
 
@@ -37,6 +40,36 @@ copy1 <- function(src, dest) {
   file.copy(src, dest, overwrite = TRUE)
 }
 report <- function(tag, ok, n) cat(sprintf("%-14s %d / %d\n", tag, sum(ok), n))
+
+# ---- 49,002-site biallelic filter, applied to every 50K count file staged here ----
+# The zealtiger counts are GATK CollectAllelicCounts over ALL 51,991 HQ_BZEA panel sites. The
+# 2,989 extra sites are exactly the ones bcftools drops downstream: 996 monomorphic across the
+# cohort (no ancestry information) and 1,993 non-biallelic (no well-defined REF/ALT count pair).
+# Filtering HERE, at the single door into this repo, means data/ only ever holds the biallelic
+# frame, so no analysis script needs its own filter. See DATA.md "The SNP50K panel".
+MK49 <- "data/zeal/markers_snp50k_cm.tsv"
+if (!file.exists(MK49)) {
+  stop("missing ", MK49, ": needed as the 49,002-site biallelic panel list (see DATA.md)")
+}
+SITES49 <- local({
+  m <- fread(MK49)
+  stopifnot(nrow(m) == 49002L)
+  paste0("chr", m$chr, ":", m$pos)
+})
+# filtering copy for 50K counts: headerless 6-col (contig pos refbase refcount altbase altcount),
+# source row order preserved (no re-sort, so genomic order survives).
+copy_counts_50k <- function(src, dest) {
+  if (is.na(src) || !file.exists(src)) {
+    return(FALSE)
+  }
+  d <- fread(src, header = FALSE, col.names = c("contig", "pos", "rb", "rc", "ab", "ac"))
+  n0 <- nrow(d)
+  d <- d[paste0(contig, ":", pos) %chin% SITES49]
+  dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
+  fwrite(d, dest, sep = "\t", col.names = FALSE)
+  cat(sprintf("  %-14s %d -> %d sites\n", basename(dest), n0, nrow(d)))
+  nrow(d) == 49002L
+}
 
 # ---- sample list (species-only dir; note maps tax -> species the same way) ---
 mem_src <- file.path(ZT_SRC, "results/sim_calibration/coverage_sweep_members.csv")
@@ -60,7 +93,7 @@ ok <- vapply(unique(rows$skim), function(s) {
   f <- list.files(file.path(ZT_SRC, "data/rtiger_50K"), paste0("^", s, "\\.tsv$"),
     full.names = TRUE, recursive = TRUE
   )
-  length(f) > 0 && copy1(f[1], file.path(SKIM, "counts_50k", paste0(s, ".tsv")))
+  length(f) > 0 && copy_counts_50k(f[1], file.path(SKIM, "counts_50k", paste0(s, ".tsv")))
 }, logical(1))
 report("skim counts", ok, length(unique(rows$skim)))
 
