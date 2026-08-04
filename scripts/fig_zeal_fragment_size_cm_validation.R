@@ -23,7 +23,8 @@ BASE <- 20
 KEEP <- c("name", "chr", "start_bp", "end_bp", "state")
 SEG_DIR <- file.path(OUT, "paint_seg_cache")
 dir.create(SEG_DIR, showWarnings = FALSE)
-if (Sys.getenv("NNIL_CMVAL_RECOMPUTE") != "") unlink(list.files(SEG_DIR, full.names = TRUE))
+# only clears binhmm.rds (the one still fit here); nnil/bbnil/rtiger are owned by build_paint_seg_cache.R
+if (Sys.getenv("NNIL_CMVAL_RECOMPUTE") != "") unlink(file.path(SEG_DIR, "binhmm.rds"))
 threads <- min(parallel::detectCores() - 2L, 8L)
 
 # ---- native TeoNAM v5 Marey spline (bp -> cM), reused from nilHMM -------------
@@ -38,17 +39,8 @@ db_cm <- function(seg) { # donor-block cM lengths (>0)
   cm[is.finite(cm) & cm > 0]
 }
 
-# ---- skim callers at operating points on the vary_skim NILs (cached) ---------
-load_skim <- function() {
-  fs <- list.files(here::here("data/skimsweep/skim/counts_50k"), pattern = "\\.tsv$", full.names = TRUE)
-  rbindlist(lapply(fs, function(f) {
-    cf <- fread(f, header = FALSE, col.names = c("contig", "pos", "rb", "rc", "ab", "ac"))
-    data.table(
-      name = sub("\\.tsv$", "", basename(f)), chr = as.integer(sub("chr", "", cf$contig)),
-      pos = as.integer(cf$pos), n_ref = as.integer(cf$rc), n_alt = as.integer(cf$ac)
-    )
-  }))
-}
+# ---- skim binhmm on 1 Mb bins (the only caller still fit here; nnil/bbnil/rtiger are pooled in
+#      scripts/build_paint_seg_cache.R). load_skim was retired with the fit-on-11 caller production.
 load_bins <- function() {
   fs <- list.files(here::here("data/skimsweep/skim/bins"), pattern = "\\.tsv$", full.names = TRUE)
   rbindlist(lapply(fs, function(f) {
@@ -72,27 +64,20 @@ run_cached <- function(tag, fn) {
   log_info("[cmval] %s decoded (%.0fs)", tag, as.numeric(difftime(Sys.time(), t0, units = "secs")))
   s
 }
-nnil_seg <- run_cached("nnil", function() { # per-SNP: hard-call via BC2S3 design-prior MAP, then gt+geom
-  sk <- load_skim()
-  g <- call_gt(sk$n_ref, sk$n_alt, prior = breeding_prior("BC2S3"), error = 0.01, return = "call")
-  g[is.na(g)] <- 3L
-  call_ancestry(data.frame(name = sk$name, chr = sk$chr, pos = sk$pos, g = as.integer(g)),
-    caller = "nnil", rrate = 6.36e-4, nir = 0.70, germ = 1e-4, gert = 1e-2, p = 0.1,
-    design = "BC2S3", threads = threads
-  )
-})
-bbnil_seg <- run_cached("bbnil", function() {
-  call_ancestry(as.data.frame(load_skim()),
-    caller = "bbnil",
-    rrate = 6.36e-4, fit_means = TRUE, conc = 20, err = 0.01, design = "BC2S3", parallel = TRUE, threads = threads
-  )
-})
-rtiger_seg <- run_cached("rtiger", function() {
-  call_ancestry(as.data.frame(load_skim()),
-    caller = "rtiger",
-    rigidity = 2L, design = "BC2S3", threads = threads
-  )
-})
+# nnil/bbnil/rtiger segments are produced by scripts/build_paint_seg_cache.R as a SINGLE-POOL fit on
+# the 330 dnarna cohort at each operating point (NOT fit here on the 11 coverage-sweep samples, which
+# was an unrepresentative basis). This script now CONSUMES that cache; run build_paint_seg_cache.R
+# first. binhmm stays fit here (1 Mb bins, a separate modality/input). See [[50k-set-terminology]].
+require_cached <- function(tag) {
+  f <- file.path(SEG_DIR, paste0(tag, ".rds"))
+  if (!file.exists(f)) {
+    stop(sprintf("[cmval] %s.rds missing -- run scripts/build_paint_seg_cache.R first (pool-330 fit)", tag))
+  }
+  as.data.table(readRDS(f))
+}
+nnil_seg <- require_cached("nnil")
+bbnil_seg <- require_cached("bbnil")
+rtiger_seg <- require_cached("rtiger")
 binhmm_seg <- run_cached("binhmm", function() call_ancestry(as.data.frame(load_bins()), caller = "binhmm", design = "BC2S3"))
 # ---- BrB callers from the nir-calibration caches (operating points) ----------
 googa_seg <- as.data.table(readRDS(file.path(OUT, "googa_nir_seg_cache", "nir_0.200.rds")))
@@ -113,7 +98,7 @@ log_info(
 L_ref <- "BC2S3 sim latent (truth)"
 L <- c(
   nnil = "Skim-nnil (hard-call BC2S3, rrate=map, nir=0.70)",
-  bbnil = "Skim-bbnil (rrate=map, fit_means)", rtiger = "Skim-rtiger (r=2)",
+  bbnil = "Skim-bbnil (rrate=map, fit_means)", rtiger = "Skim-rtiger (r=5)",
   binhmm = "Skim-binhmm (stay=0.995)", googa = "BrB-googa (rrate=map, nir=0.20)",
   atlas = "BrB-atlas (r=50, nir=0.10)"
 )
