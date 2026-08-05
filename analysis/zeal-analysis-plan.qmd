@@ -1,0 +1,258 @@
+---
+title: "ZEAL population analysis: proposed scope, phenotypes, and current QTL status"
+subtitle: "Planning document for group discussion. The proposed structure follows Chen et al. 2019 (TeoNAM) as a template only."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: false
+---
+
+```{r}
+#| label: setup
+library(here)
+suppressPackageStartupMessages(library(data.table))
+RQ <- here("results/sim/zeal/rqtl")
+
+# Live QTL count = peaks in the taxon-covariate joint scan (taxa Zv, Zx, Zl, Zd, Zh),
+# one peak per chromosome. We deliberately skip the refine-peaks (multi-peak) step
+# because it over-segments, so counts come from the confidence-interval peak table.
+count_qtl <- function(stem, model = "taxon") {
+  f <- file.path(RQ, sprintf("zeal_%s_peaks_ci_%s.csv", stem, model))
+  if (!file.exists(f)) {
+    return(NA_integer_)
+  }
+  d <- tryCatch(fread(f), error = function(e) data.table())
+  nrow(d)
+}
+```
+
+## Purpose
+
+This document is to align the group on the analysis scope for the ZEAL (Zea Exotic
+Allele Library) population before we commit to writing. It collects three things: a
+proposed paper structure, the phenotype inventory with current QTL counts, and a first
+draft of the whole-genome QTL figure. The structure borrows the shape of Chen et al.
+2019 (TeoNAM), which is the closest published analog.
+
+The phenotype panel is fixed to the measurements we already have. This document does
+not propose scoring any new phenotypes.
+
+## Proposed paper structure (for discussion)
+
+Resource-first framing, with hypothesis-driven vignettes on the traits where the
+teosinte contrast is sharpest. Proposed, not settled:
+
+1. **Introduction.** Teosinte as a reservoir of domestication and adaptation alleles;
+   what an exotic-allele library in a maize background offers; how ZEAL relates to and
+   differs from TeoNAM.
+2. **Materials and methods.** Population and design; SNP50K plus skim genotyping and the
+   RTIGER ancestry mosaic (cite the nilHMM methods paper, do not re-derive it);
+   phenotyping across CLY23, CLY25, and Guadalajara; SpATS BLUEs and empirical-logit
+   binary traits; R/qtl joint scan and MLM SNP50K.
+3. **Results.**
+   - The resource: population, marker density, ancestry-mosaic summary.
+   - Phenotypic variation: heritabilities and trait correlations across environments.
+   - Genetic architecture: the whole-genome QTL figure (below).
+   - Comparison with TeoNAM: the four overlapping traits (table below).
+   - Hypothesis-driven vignettes: flowering time (with the North Carolina vs
+     Guadalajara photoperiod contrast) and the ZEAL-signature qualitative traits
+     TeoNAM never scored (StPu, StPi, Kinki, inv4m).
+4. **Discussion.** Resource value; what the overlap does and does not cover; novel loci.
+5. **Data and resource availability.** Genotype and phenotype data, tracked reproduction
+   scripts, and the zealbrowser fragment browser.
+
+## Phenotypes we have
+
+Fourteen mapped traits. QTL counts are computed live from the R/qtl joint scan with a
+taxon covariate (taxa Zv, Zx, Zl, Zd, Zh), taking one peak per chromosome (the refine-peaks
+multi-peak step is skipped because it over-segments). This taxon-covariate joint scan is
+the authoritative model for reported QTL. Counts are provisional, not final.
+
+```{r}
+#| label: pheno-inventory
+inv <- data.table(
+  Trait = c(
+    "DTA", "DTS", "PH", "Prolif", "EH", "EN", "LAE", "NBR",
+    "SPAD", "SPAD20DAS", "SPAD36DAS", "StPi", "StPu", "Kinki"
+  ),
+  stem = c(
+    "dta", "dts", "ph", "prolif", "eh", "en", "lae", "nbr",
+    "spad", "spad20das", "spad36das", "stpi", "stpu", "kinki"
+  ),
+  Description = c(
+    "days to anthesis", "days to silk", "plant height",
+    "prolificacy (ears per plant)", "ear height", "ear number",
+    "leaves above ear", "brace root number", "leaf greenness (leaf N proxy)",
+    "SPAD 20 days after sowing", "SPAD 36 days after sowing",
+    "stem pigment, anthocyanin (binary)", "stem pubescence, macrohairs (binary)",
+    "zigzag culm (binary)"
+  ),
+  Field = c(
+    "CLY23 + CLY25", "CLY23 + CLY25", "CLY23 + CLY25", "CLY23 + CLY25",
+    "CLY23 + CLY25", "CLY23 + CLY25", "CLY25", "CLY23 + CLY25",
+    "CLY25", "introfinder", "introfinder", "CLY23", "CLY23", "CLY23"
+  ),
+  Type = c(
+    "SpATS BLUE", "SpATS BLUE", "SpATS BLUE", "SpATS BLUE", "SpATS BLUE",
+    "SpATS BLUE", "SpATS BLUE", "SpATS BLUE", "SpATS BLUE",
+    "as measured (per line mean)", "as measured (per line mean)",
+    "empirical logit", "empirical logit", "empirical logit"
+  ),
+  Status = c(
+    "TeoNAM overlap", "TeoNAM overlap", "TeoNAM overlap", "TeoNAM overlap",
+    "mapped; not a TeoNAM trait", "mapped; not a TeoNAM trait",
+    "mapped; single environment", "mapped; not a TeoNAM trait",
+    "source to standardize", "secondary source (introfinder)",
+    "secondary source (introfinder)", "qualitative; ZEAL signature",
+    "qualitative; 0 QTL in taxon scan", "qualitative; single environment"
+  )
+)
+inv[, `QTL (joint scan)` := vapply(stem, count_qtl, integer(1))]
+inv[, stem := NULL]
+setcolorder(inv, c("Trait", "Description", "Field", "Type", "QTL (joint scan)", "Status"))
+knitr::kable(inv)
+```
+
+**EN vs Prolif.** These are distinct ear-count traits (definitions in TERMINOLOGY.md):
+EN (ear number) counts the number of nodes that bear ears, whereas Prolif (prolificacy)
+counts the total number of ears per plant, so a single node bearing more than one ear adds
+to Prolif but not to EN. The CLY25 protocol counts every ear where a cob can be felt.
+
+**Notes on the current numbers.**
+
+- **StPu shows 0 QTL in the taxon-covariate joint scan but has peaks in the per-taxon
+  scans.** This looks like the taxon covariate absorbing the signal, and it needs
+  understanding before StPu is reported. SPAD20DAS shows the same pattern (0).
+- **Skipping the refine step returns counts to one peak per chromosome** (for example EN
+  drops from 17 refined peaks to 7). This is the authoritative setting going forward.
+- **The taxon-covariate joint scan is authoritative** for the reported QTL, matching the
+  family-nested joint scan TeoNAM used, here nested on the five teosinte taxa.
+
+## Decisions still open
+
+These are existing data or provenance cleanups, not new phenotyping.
+
+```{r}
+#| label: decisions
+dec <- data.table(
+  Item = c("Nitrogen content", "Guadalajara flowering", "SPAD sourcing"),
+  Data = c("existing (Hannah)", "existing (Ruben)", "two lineages exist"),
+  Decision = c(
+    "add as its own trait to the rqtl list; needs units, tissue, and field. SPAD stays as a correlated proxy, not a substitute",
+    "add as a second environment for DTA and DTS; needs the fieldbook and a line-name crosswalk. Enables the photoperiod contrast",
+    "standardize on the primary CLY25 fieldbook SpATS BLUE; demote the introfinder SPAD20DAS and SPAD36DAS to secondary"
+  )
+)
+knitr::kable(dec)
+```
+
+## Overlap with TeoNAM (Chen et al. 2019)
+
+TeoNAM measured 22 traits: 15 domestication traits (CULM, EB, ED, EL, GLCO, GLUM, KRN,
+KW, LFLN, LFWD, PROL, REPE, SHN, STAM, TILN) and 7 agronomic traits (ASI, BARE, DTA, DTS,
+PLHT, TBN, YEPE). Of these, four are measured in ZEAL:
+
+```{r}
+#| label: overlap
+ov <- data.table(
+  ZEAL = c("DTA", "DTS", "PH", "Prolif"),
+  `Chen 2019` = c("DTA", "DTS", "PLHT", "PROL"),
+  Trait = c("days to anthesis", "days to silk", "plant height", "prolificacy"),
+  `Chen's bucket` = c(
+    "agronomic", "agronomic", "agronomic",
+    "domestication (Chen scored binary presence; ZEAL scores a count)"
+  )
+)
+knitr::kable(ov)
+```
+
+Read honestly: three of the four overlaps are Chen's agronomic traits and one (prolificacy)
+is his domestication bucket. So the comparison reads as "ZEAL recovers TeoNAM's agronomic
+architecture plus one domestication trait." The classic domestication-syndrome traits that
+carry TeoNAM's headline results (shattering, glume/cupule, kernel row number, tillering)
+are not in the ZEAL panel, so the ZEAL contribution on the domestication side runs through
+the qualitative traits TeoNAM did not score (StPu, StPi, Kinki, inv4m).
+
+## Mapping software note
+
+QTL mapping uses R/qtl (version 1) with a BC2S3 `bcsft` cross. We do not use R/qtl2, whose
+`find_peaks` handles multiple peaks per chromosome natively, because R/qtl2 does not support
+the BCsFt (backcross then selfing) cross type. R/qtl2's cross-type set is bc, f2, riself and
+risib, dh, haploid, ail, do, hs, genail and genril, and magic19, with no bcsft (confirmed
+from the R/qtl2 source). The only workaround, computing BC2S3 genotype probabilities in
+R/qtl and passing that probability array to R/qtl2, is unnecessary now that we take one peak
+per chromosome.
+
+## Current QTL status: draft figure
+
+Draft, scoped to the four TeoNAM-overlap traits (the same four as the comparison table
+above). Taxon-covariate joint scan, one peak per chromosome (refine step skipped). Produced
+by `scripts/zeal_qtl_effects.R` (per-QTL variance and effect) and
+`scripts/fig_zeal_qtl_summary.R` (the composite), reading the R/qtl joint-scan outputs.
+
+```{r}
+#| label: fig-qtl
+#| fig-cap: "Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (DTA, DTS, PH, Prolif). A: genome-wide QTL support intervals in Mb, bar width scaled by LOD, candidate genes labeled. B: per-QTL variance explained (fitqtl drop-one). C: raw allele effect at two headline loci, phenotype BLUE by genotype class (A = B73, H = het, B = teosinte). D: variance explained by the mapped-QTL joint model."
+#| out-width: 100%
+knitr::include_graphics(here("results/sim/zeal/fig_zeal_qtl_summary.png"))
+```
+
+Full-model variance explained by the mapped QTL:
+
+```{r}
+#| label: varpart
+vp <- fread(here("results/sim/zeal/rqtl/zeal_qtl_variance_partition.csv"))
+vp[, pct_var_qtl_model := round(pct_var_qtl_model, 1)]
+setnames(
+  vp, c("trait", "n_qtl", "pct_var_qtl_model"),
+  c("Trait", "QTL", "Variance explained (%)")
+)
+knitr::kable(vp)
+```
+
+**Draft refinements still needed** (so the group reads the figure as provisional):
+
+- Several support intervals are very wide (tens of Mb). The candidate-gene labels on those
+  peaks imply a localization the intervals do not support; wide intervals should be
+  de-emphasized or their labels dropped.
+- Candidate-label crowding near chromosomes 9 and 10 (the flowering candidate prints twice;
+  one peak stacks three symbols). Curate to one label per locus.
+- The Prolif headline locus in panel C is a top-LOD peak with no candidate overlap; a
+  candidate-overlapping Prolif peak (ub3, chromosome 4) may be the more meaningful headline.
+- Panel reading order and gene-symbol styling (italic, correct casing) to fix.
+
+## Open questions for the meeting
+
+1. Nitrogen content: units, tissue, and field, so it can be added to the rqtl list.
+2. Guadalajara flowering: fieldbook and line-name crosswalk, to add it as a second
+   environment for DTA and DTS.
+3. Confirm SPAD is sourced from the primary CLY25 fieldbook, with the introfinder
+   SPAD20DAS/SPAD36DAS demoted to secondary.
+4. Which traits carry the hypothesis-driven vignettes (flowering plus the qualitative
+   teosinte traits), and how much of the paper is resource description vs those vignettes.
+
+## QTL by taxon
+
+The taxon-covariate joint scan pools the five teosinte taxa. A separate question is which
+taxon contributes each QTL. TeoNAM answered the analog with a heatmap of allele effect by
+donor; the ZEAL analog is effect by taxon (Zv, Zx, Zl, Zd, Zh). We also run per-taxon
+additive scans, which show in one multicolor panel where each taxon peaks. Proposed: a
+paper section on the per-taxon QTL, using the effect-by-taxon summary plus the per-taxon
+scans.
+
+Pigmentation (StPi, stem anthocyanin) is a clean example. Different taxa peak at different
+anthocyanin-pathway loci:
+
+```{r}
+#| label: fig-stpi-taxon
+#| fig-cap: "ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JLM grid. LOD by taxon (Zd, Zh, Zl, Zv, Zx); dotted verticals mark anthocyanin-pathway candidate genes (b1, a1, c2, pr1, pl1, bz1, and others). Different taxa contribute pigmentation signal at different loci, for example Zx and Zv near b1 on chromosome 2 and Zd near chromosome 8."
+#| out-width: 100%
+knitr::include_graphics(here("results/sim/zeal/rqtl/zeal_stpi_lod_by_taxon.png"))
+```
