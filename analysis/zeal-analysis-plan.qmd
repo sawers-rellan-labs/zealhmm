@@ -224,15 +224,15 @@ knitr::kable(vp)
 - Panel C Prolif headline is a top-LOD peak with no candidate overlap.
 - Panel reading order and gene-symbol styling to fix.
 
-## Open questions for the meeting
+## Discussion points
 
-1. Nitrogen content: units, tissue, and field, so it can be added to the rqtl list.
-2. Guadalajara flowering: fieldbook and line-name crosswalk, to add it as a second
-   environment for DTA and DTS.
-3. Confirm SPAD is sourced from the primary CLY25 fieldbook, with the introfinder
-   SPAD20DAS/SPAD36DAS demoted to secondary.
-4. Which traits carry the hypothesis-driven vignettes (flowering plus the qualitative
-   teosinte traits), and how much of the paper is resource description vs those vignettes.
+1. Final phenotypes to analyze, including the Mexico (Guadalajara) flowering time and the
+   SPAD and nitrogen data that are not included yet.
+2. Outline of the paper, using the TeoNAM paper (Chen et al. 2019,
+   <https://academic.oup.com/genetics/article/213/3/1065/5930618>) as the template. The QTL
+   figure here is a dummy placeholder.
+3. How much per-taxon QTL analysis to include.
+4. Data, analysis, and repository handover.
 
 ## QTL by taxon
 
