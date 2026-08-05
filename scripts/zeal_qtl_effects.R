@@ -5,9 +5,10 @@
 #   1. per-QTL percent variance explained + additive effect (teosinte-B vs B73-A)
 #   2. per-trait total QTL-model variance explained (full-model R2)
 #
-# For each trait: load the R/qtl bcsft cross and its confidence-interval peak
-# table (zeal_<trait>_peaks_ci_taxon.csv, one peak per chromosome from the
-# taxon-covariate joint scan), build a multi-QTL model at the peak markers
+# For each trait: load the R/qtl bcsft cross and its peakdrop peak table
+# (zeal_<trait>_peaks_peakdrop_taxon.csv, peakdrop = 5 peaks from the
+# taxon-covariate joint scan; see scripts/detect_peaks_peakdrop.R), build a
+# multi-QTL model at the peak markers
 # (makeqtl on the peak cM positions), then fitqtl with a formula summing the
 # QTL. From fitqtl we read the drop-one percent variance per QTL, the additive
 # effect per QTL, and the full-model R2.
@@ -48,7 +49,7 @@ marker_bp <- function(m) as.numeric(sub("^S[0-9]+_", "", m))
 fit_one_trait <- function(trait) {
   pcol <- PHENO_COL[[trait]]
   cross_path <- file.path(RQTL_DIR, sprintf("zeal_%s_cross.rds", trait))
-  peaks_path <- file.path(RQTL_DIR, sprintf("zeal_%s_peaks_ci_taxon.csv", trait))
+  peaks_path <- file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", trait))
 
   logmsg("trait ", trait, " (pheno ", pcol, "): loading cross + peaks")
   cross <- readRDS(cross_path)

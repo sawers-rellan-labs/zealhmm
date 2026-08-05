@@ -21,10 +21,11 @@ suppressPackageStartupMessages(library(data.table))
 RQ <- here("results/sim/zeal/rqtl")
 
 # Live QTL count = peaks in the taxon-covariate joint scan (taxa Zv, Zx, Zl, Zd, Zh),
-# one peak per chromosome. We deliberately skip the refine-peaks (multi-peak) step
-# because it over-segments, so counts come from the confidence-interval peak table.
+# called with the R/qtl2 peakdrop rule (peakdrop = 5) ported to our bcsft scan (see
+# scripts/detect_peaks_peakdrop.R): a chromosome is split into separate peaks only where
+# the LOD valley between them drops at least 5 below both.
 count_qtl <- function(stem, model = "taxon") {
-  f <- file.path(RQ, sprintf("zeal_%s_peaks_ci_%s.csv", stem, model))
+  f <- file.path(RQ, sprintf("zeal_%s_peaks_peakdrop_%s.csv", stem, model))
   if (!file.exists(f)) {
     return(NA_integer_)
   }
@@ -71,9 +72,10 @@ teosinte contrast is sharpest. Proposed, not settled:
 ## Phenotypes we have
 
 Fourteen mapped traits. QTL counts are computed live from the R/qtl joint scan with a
-taxon covariate (taxa Zv, Zx, Zl, Zd, Zh), taking one peak per chromosome (the refine-peaks
-multi-peak step is skipped because it over-segments). This taxon-covariate joint scan is
-the authoritative model for reported QTL. Counts are provisional, not final.
+taxon covariate (taxa Zv, Zx, Zl, Zd, Zh). Peaks are called with the R/qtl2 peakdrop rule
+(peakdrop = 5), Broman's algorithm ported to our bcsft scan, which splits a chromosome into
+separate peaks only where the LOD valley between them drops at least 5 below both. This is
+the authoritative peak set for reported QTL. Counts are provisional, not final.
 
 ```{r}
 #| label: pheno-inventory
@@ -130,8 +132,10 @@ to Prolif but not to EN. The CLY25 protocol counts every ear where a cob can be 
 - **StPu shows 0 QTL in the taxon-covariate joint scan but has peaks in the per-taxon
   scans.** This looks like the taxon covariate absorbing the signal, and it needs
   understanding before StPu is reported. SPAD20DAS shows the same pattern (0).
-- **Skipping the refine step returns counts to one peak per chromosome** (for example EN
-  drops from 17 refined peaks to 7). This is the authoritative setting going forward.
+- **peakdrop = 5 is the principled middle** between R/qtl refine (over-segments; EN gave 17)
+  and one peak per chromosome (too coarse). At peakdrop = 5 the four overlap traits are
+  unchanged, while EN gives 10 and StPi gives 5. The knob was compared over 1.5, 3, 5, and
+  Inf in `scripts/detect_peaks_peakdrop.R` before settling on 5.
 - **The taxon-covariate joint scan is authoritative** for the reported QTL, matching the
   family-nested joint scan TeoNAM used, here nested on the five teosinte taxa.
 
@@ -183,13 +187,14 @@ the qualitative traits TeoNAM did not score (StPu, StPi, Kinki, inv4m).
 ## Current QTL status: draft figure
 
 Draft, scoped to the four TeoNAM-overlap traits (the same four as the comparison table
-above). Taxon-covariate joint scan, one peak per chromosome (refine step skipped). Produced
-by `scripts/zeal_qtl_effects.R` (per-QTL variance and effect) and
+above). Taxon-covariate joint scan; peaks and 1.5-LOD support intervals from the R/qtl2
+peakdrop rule (peakdrop = 5) ported to our bcsft scan (`scripts/detect_peaks_peakdrop.R`).
+Produced by `scripts/zeal_qtl_effects.R` (per-QTL variance and effect) and
 `scripts/fig_zeal_qtl_summary.R` (the composite), reading the R/qtl joint-scan outputs.
 
 ```{r}
 #| label: fig-qtl
-#| fig-cap: "Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (DTA, DTS, PH, Prolif). A: genome-wide QTL support intervals in Mb, bar width scaled by LOD, candidate genes labeled. B: per-QTL variance explained (fitqtl drop-one). C: raw allele effect at two headline loci, phenotype BLUE by genotype class (A = B73, H = het, B = teosinte). D: variance explained by the mapped-QTL joint model."
+#| fig-cap: "Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (DTA, DTS, PH, Prolif). A: genome-wide QTL positions in Mb, bars are the 1.5-LOD peakdrop support intervals, bar width scaled by LOD. B: per-QTL variance explained (fitqtl drop-one). C: raw allele effect at two headline loci, phenotype BLUE by genotype class (A = B73, H = het, B = teosinte). D: variance explained by the mapped-QTL joint model."
 #| out-width: 100%
 knitr::include_graphics(here("results/sim/zeal/fig_zeal_qtl_summary.png"))
 ```
@@ -209,14 +214,15 @@ knitr::kable(vp)
 
 **Draft refinements still needed** (so the group reads the figure as provisional):
 
-- Several support intervals are very wide (tens of Mb). The candidate-gene labels on those
-  peaks imply a localization the intervals do not support; wide intervals should be
-  de-emphasized or their labels dropped.
-- Candidate-label crowding near chromosomes 9 and 10 (the flowering candidate prints twice;
-  one peak stacks three symbols). Curate to one label per locus.
-- The Prolif headline locus in panel C is a top-LOD peak with no candidate overlap; a
-  candidate-overlapping Prolif peak (ub3, chromosome 4) may be the more meaningful headline.
-- Panel reading order and gene-symbol styling (italic, correct casing) to fix.
+- Support intervals are now the tight 1.5-LOD peakdrop intervals, which fixes the earlier
+  wide-bar problem. Caution: the mechanical candidate-overlap test now labels no genes, but
+  that is a limitation of the test (and of tight intervals in this population), not evidence
+  against the candidates. The DTA chromosome 10 peak at 101.4 Mb is very likely *ZmCCT10*
+  (Zm00001eb418700, about 96.2 Mb), the major chromosome 10 flowering-time domestication
+  gene; the interval simply does not reach it. Candidate labeling should use biological
+  knowledge, not raw interval overlap.
+- Panel C Prolif headline is a top-LOD peak with no candidate overlap.
+- Panel reading order and gene-symbol styling to fix.
 
 ## Open questions for the meeting
 
