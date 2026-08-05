@@ -71,7 +71,7 @@ peaks_all <- list()
 eff_all <- list()
 cand_all <- list()
 for (tr in TRAITS) {
-  peaks_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_peaks_ci_taxon.csv", tr)), stringsAsFactors = FALSE)
+  peaks_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", tr)), stringsAsFactors = FALSE)
   eff_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_qtl_effects.csv", tr)), stringsAsFactors = FALSE)
   cp <- file.path("results/sim/zeal", sprintf("%s_candidate_overlap.csv", tr))
   cand_all[[tr]] <- if (file.exists(cp)) read.csv(cp, stringsAsFactors = FALSE) else NULL
