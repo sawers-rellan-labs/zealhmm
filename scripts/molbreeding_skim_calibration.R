@@ -65,8 +65,12 @@ log_info(
 )
 
 # --- TEST: skim counts (prior-independent load); hard call compared under two priors ---
-skim0 <- rbindlist(lapply(pair$test_sample, function(s) {
-  cf <- fread(file.path(SK, "counts", paste0(s, ".tsv")),
+# Counts from the unified GATK store (data/zeal/snp50k_counts, keyed by canonical pedigree); `name`
+# kept as the PN test_sample so it matches the truth (relabelled to test_sample above). Replaces the
+# retired GATK-filler tree data/zeal/skim/counts. See [[50k-set-terminology]].
+STORE <- file.path(root, "data/zeal/snp50k_counts")
+skim0 <- rbindlist(Map(function(s, ped) {
+  cf <- fread(file.path(STORE, paste0(ped, ".tsv")),
     header = FALSE,
     col.names = c("contig", "pos", "rb", "rc", "ab", "ac")
   )
@@ -74,7 +78,7 @@ skim0 <- rbindlist(lapply(pair$test_sample, function(s) {
     name = s, chr = as.integer(sub("chr", "", cf$contig)), pos = cf$pos,
     n_ref = as.integer(cf$rc), n_alt = as.integer(cf$ac)
   )
-}))
+}, pair$test_sample, pair$true_pedigree))
 mr_skim <- skim0[, mean(n_ref + n_alt == 0)]
 design_prior <- breeding_prior(DESIGN)
 # Skim genotype caller. ML = call_gt(prior = "flat") = uniform-prior argmax-GL = the

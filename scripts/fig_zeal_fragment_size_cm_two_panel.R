@@ -87,7 +87,7 @@ SPEC <- data.table(
   data_source = c("skim", "skim", "skim", "skim bins", "BRB-seq", "BRB-seq"),
   emission = c("categorical", "BetaBin.", "BetaBin.", "Gaussian", "categorical", "categorical"),
   duration = c(
-    "$r=6.4$e$-4$", "$r=6.4$e$-4$", "$\\ell=2$", "$\\sigma=0.995$", "$r=8.9$e$-4$", "$\\ell=50$"
+    "$r=6.4$e$-4$", "$r=6.4$e$-4$", "$\\ell=5$", "$\\sigma=0.995$", "$r=8.9$e$-4$", "$\\ell=50$"
   ),
   extra = c("$0.70$", "---", "---", "---", "$0.20$", "$0.10$")
 )
