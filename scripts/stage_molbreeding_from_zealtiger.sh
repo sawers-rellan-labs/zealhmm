@@ -39,9 +39,25 @@ cp -f "$ZT/data/rtiger_50K/seqlengths.csv" "$SK/seqlengths.csv"
 cp -f "$ZT/data/rtiger_50K/calls_taxa_r5.csv" "$SK/calls_taxa_r5.csv"
 # skim ids of the molbreeding-shared samples = skim_prefix (col 4) of the 3-way correspondence
 skim_ids=$(tail -n +2 "$CO/molbreeding_3way_correspondence.csv" | cut -d, -f4)
+
+# 49,002-site biallelic filter, applied as the counts enter this repo.
+# The zealtiger counts are GATK CollectAllelicCounts over ALL 51,991 HQ_BZEA panel sites. The
+# 2,989 extra sites are the ones bcftools drops downstream: 996 monomorphic across the cohort (no
+# ancestry information) and 1,993 non-biallelic (no well-defined REF/ALT count pair). Filtering at
+# this single door means data/ only ever holds the biallelic frame, so no analysis script needs its
+# own filter. See DATA.md "The SNP50K panel".
+MK49="data/zeal/markers_snp50k_cm.tsv"
+[ -r "$MK49" ] || { echo "ERROR: missing $MK49 (the 49,002-site biallelic panel list; see DATA.md)" >&2; exit 1; }
+
 for id in $skim_ids; do
   src=$(find "$ZT/data/rtiger_50K/counts" -name "${id}.tsv" | head -1)
-  if [ -n "$src" ]; then cp -f "$src" "$SK/counts/${id}.tsv"; else echo "WARN: skim counts not found for $id"; fi
+  if [ -z "$src" ]; then echo "WARN: skim counts not found for $id"; continue; fi
+  # keep only panel sites; awk streams so the source genomic order is preserved
+  awk -F'\t' -v MK="$MK49" '
+    BEGIN { while ((getline l < MK) > 0) { split(l, a, "\t"); if (a[2] == "chr") continue; keep["chr" a[2] SUBSEP a[3]] = 1 } }
+    ($1 SUBSEP $2) in keep { print }
+  ' "$src" > "$SK/counts/${id}.tsv"
+  printf "  %-14s %s -> %s sites\n" "${id}.tsv" "$(wc -l < "$src" | tr -d ' ')" "$(wc -l < "$SK/counts/${id}.tsv" | tr -d ' ')"
 done
 
 # --- provenance scripts (how the v3 melt / v5 lift / wsfilt / truth counts were produced)
