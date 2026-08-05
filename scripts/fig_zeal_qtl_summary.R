@@ -192,11 +192,7 @@ nq <- table(factor(peaks_df$trait, levels = TRAITS))
 xlab_b <- sprintf("%s\n(%d QTL)", TRAITS, as.integer(nq[TRAITS]))
 
 panelB <- ggplot(eff_df, aes(x = trait, y = pct_var, colour = trait)) +
-  geom_segment(aes(xend = trait, y = 0, yend = pct_var),
-    position = position_jitter(width = 0.12, seed = 1),
-    linewidth = 0.25, alpha = 0.5, show.legend = FALSE
-  ) +
-  geom_point(position = position_jitter(width = 0.12, seed = 1), size = 1.4, alpha = 0.9) +
+  geom_point(position = position_jitter(width = 0.12, seed = 1), size = 1.6, alpha = 0.9) +
   trait_scale_col +
   scale_x_discrete(labels = xlab_b) +
   guides(colour = "none") + # trait colour legend supplied by Panel A
