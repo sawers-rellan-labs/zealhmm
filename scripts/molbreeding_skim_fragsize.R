@@ -38,8 +38,9 @@ truth_seg[, name := pair$test_sample[match(name, pair$truth_sample)]]
 truth_sizes <- donor_block_sizes(truth_seg[, ..KEEP])
 
 # --- skim ML (flat = argmax-GL = maximum-likelihood) hard call ---
-skim <- rbindlist(lapply(pair$test_sample, function(s) {
-  cf <- fread(file.path(SK, "counts", paste0(s, ".tsv")),
+STORE <- file.path(root, "data/zeal/snp50k_counts") # unified GATK store, keyed by canonical pedigree
+skim <- rbindlist(Map(function(s, ped) {
+  cf <- fread(file.path(STORE, paste0(ped, ".tsv")),
     header = FALSE,
     col.names = c("contig", "pos", "rb", "rc", "ab", "ac")
   )
@@ -47,7 +48,7 @@ skim <- rbindlist(lapply(pair$test_sample, function(s) {
     name = s, chr = as.integer(sub("chr", "", cf$contig)), pos = cf$pos,
     n_ref = as.integer(cf$rc), n_alt = as.integer(cf$ac)
   )
-}))
+}, pair$test_sample, pair$true_pedigree))
 mr_skim <- skim[, mean(n_ref + n_alt == 0)]
 skim[, g := {
   gg <- call_gt(n_ref, n_alt, prior = "flat", error = 0.01)
