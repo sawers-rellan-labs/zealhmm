@@ -180,16 +180,6 @@ carry TeoNAM's headline results (shattering, glume/cupule, kernel row number, ti
 are not in the ZEAL panel, so the ZEAL contribution on the domestication side runs through
 the qualitative traits TeoNAM did not score (StPu, StPi, Kinki, inv4m).
 
-## Mapping software note
-
-QTL mapping uses R/qtl (version 1) with a BC2S3 `bcsft` cross. We do not use R/qtl2, whose
-`find_peaks` handles multiple peaks per chromosome natively, because R/qtl2 does not support
-the BCsFt (backcross then selfing) cross type. R/qtl2's cross-type set is bc, f2, riself and
-risib, dh, haploid, ail, do, hs, genail and genril, and magic19, with no bcsft (confirmed
-from the R/qtl2 source). The only workaround, computing BC2S3 genotype probabilities in
-R/qtl and passing that probability array to R/qtl2, is unnecessary now that we take one peak
-per chromosome.
-
 ## Current QTL status: draft figure
 
 Draft, scoped to the four TeoNAM-overlap traits (the same four as the comparison table

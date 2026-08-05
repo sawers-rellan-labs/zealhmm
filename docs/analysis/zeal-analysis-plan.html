@@ -4079,7 +4079,6 @@ vertical-align: -.125em;
   <li><a href="#phenotypes-we-have" id="toc-phenotypes-we-have" class="nav-link" data-scroll-target="#phenotypes-we-have">Phenotypes we have</a></li>
   <li><a href="#decisions-still-open" id="toc-decisions-still-open" class="nav-link" data-scroll-target="#decisions-still-open">Decisions still open</a></li>
   <li><a href="#overlap-with-teonam-chen-et-al.-2019" id="toc-overlap-with-teonam-chen-et-al.-2019" class="nav-link" data-scroll-target="#overlap-with-teonam-chen-et-al.-2019">Overlap with TeoNAM (Chen et al. 2019)</a></li>
-  <li><a href="#mapping-software-note" id="toc-mapping-software-note" class="nav-link" data-scroll-target="#mapping-software-note">Mapping software note</a></li>
   <li><a href="#current-qtl-status-draft-figure" id="toc-current-qtl-status-draft-figure" class="nav-link" data-scroll-target="#current-qtl-status-draft-figure">Current QTL status: draft figure</a></li>
   <li><a href="#open-questions-for-the-meeting" id="toc-open-questions-for-the-meeting" class="nav-link" data-scroll-target="#open-questions-for-the-meeting">Open questions for the meeting</a></li>
   <li><a href="#qtl-by-taxon" id="toc-qtl-by-taxon" class="nav-link" data-scroll-target="#qtl-by-taxon">QTL by taxon</a></li>
@@ -4382,10 +4381,6 @@ vertical-align: -.125em;
 </div>
 </div>
 <p>Read honestly: three of the four overlaps are Chen’s agronomic traits and one (prolificacy) is his domestication bucket. So the comparison reads as “ZEAL recovers TeoNAM’s agronomic architecture plus one domestication trait.” The classic domestication-syndrome traits that carry TeoNAM’s headline results (shattering, glume/cupule, kernel row number, tillering) are not in the ZEAL panel, so the ZEAL contribution on the domestication side runs through the qualitative traits TeoNAM did not score (StPu, StPi, Kinki, inv4m).</p>
-</section>
-<section id="mapping-software-note" class="level2">
-<h2 class="anchored" data-anchor-id="mapping-software-note">Mapping software note</h2>
-<p>QTL mapping uses R/qtl (version 1) with a BC2S3 <code>bcsft</code> cross. We do not use R/qtl2, whose <code>find_peaks</code> handles multiple peaks per chromosome natively, because R/qtl2 does not support the BCsFt (backcross then selfing) cross type. R/qtl2’s cross-type set is bc, f2, riself and risib, dh, haploid, ail, do, hs, genail and genril, and magic19, with no bcsft (confirmed from the R/qtl2 source). The only workaround, computing BC2S3 genotype probabilities in R/qtl and passing that probability array to R/qtl2, is unnecessary now that we take one peak per chromosome.</p>
 </section>
 <section id="current-qtl-status-draft-figure" class="level2">
 <h2 class="anchored" data-anchor-id="current-qtl-status-draft-figure">Current QTL status: draft figure</h2>
@@ -5115,82 +5110,72 @@ Figure 2: ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JL
 <span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>are not in the ZEAL panel, so the ZEAL contribution on the domestication side runs through</span>
 <span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>the qualitative traits TeoNAM did not score (StPu, StPi, Kinki, inv4m).</span>
 <span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mapping software note</span></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a><span class="fu">## Current QTL status: draft figure</span></span>
 <span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>QTL mapping uses R/qtl (version 1) with a BC2S3 <span class="in">`bcsft`</span> cross. We do not use R/qtl2, whose</span>
-<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a><span class="in">`find_peaks`</span> handles multiple peaks per chromosome natively, because R/qtl2 does not support</span>
-<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>the BCsFt (backcross then selfing) cross type. R/qtl2&#39;s cross-type set is bc, f2, riself and</span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>risib, dh, haploid, ail, do, hs, genail and genril, and magic19, with no bcsft (confirmed</span>
-<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>from the R/qtl2 source). The only workaround, computing BC2S3 genotype probabilities in</span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>R/qtl and passing that probability array to R/qtl2, is unnecessary now that we take one peak</span>
-<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>per chromosome.</span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="fu">## Current QTL status: draft figure</span></span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>Draft, scoped to the four TeoNAM-overlap traits (the same four as the comparison table</span>
-<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>above). Taxon-covariate joint scan, one peak per chromosome (refine step skipped). Produced</span>
-<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>by <span class="in">`scripts/zeal_qtl_effects.R`</span> (per-QTL variance and effect) and</span>
-<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/fig_zeal_qtl_summary.R`</span> (the composite), reading the R/qtl joint-scan outputs.</span>
-<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-qtl</span></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (DTA, DTS, PH, Prolif). A: genome-wide QTL support intervals in Mb, bar width scaled by LOD, candidate genes labeled. B: per-QTL variance explained (fitqtl drop-one). C: raw allele effect at two headline loci, phenotype BLUE by genotype class (A = B73, H = het, B = teosinte). D: variance explained by the mapped-QTL joint model.&quot;</span></span>
-<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/fig_zeal_qtl_summary.png&quot;</span>))</span>
-<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>Full-model variance explained by the mapped QTL:</span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: varpart</span></span>
-<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>vp <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_qtl_variance_partition.csv&quot;</span>))</span>
-<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>vp[, pct_var_qtl_model <span class="sc">:</span><span class="er">=</span> <span class="fu">round</span>(pct_var_qtl_model, <span class="dv">1</span>)]</span>
-<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a><span class="fu">setnames</span>(</span>
-<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>  vp, <span class="fu">c</span>(<span class="st">&quot;trait&quot;</span>, <span class="st">&quot;n_qtl&quot;</span>, <span class="st">&quot;pct_var_qtl_model&quot;</span>),</span>
-<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;Trait&quot;</span>, <span class="st">&quot;QTL&quot;</span>, <span class="st">&quot;Variance explained (%)&quot;</span>)</span>
-<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(vp)</span>
-<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>**Draft refinements still needed** (so the group reads the figure as provisional):</span>
-<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Several support intervals are very wide (tens of Mb). The candidate-gene labels on those</span>
-<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>  peaks imply a localization the intervals do not support; wide intervals should be</span>
-<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>  de-emphasized or their labels dropped.</span>
-<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Candidate-label crowding near chromosomes 9 and 10 (the flowering candidate prints twice;</span>
-<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>  one peak stacks three symbols). Curate to one label per locus.</span>
-<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The Prolif headline locus in panel C is a top-LOD peak with no candidate overlap; a</span>
-<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>  candidate-overlapping Prolif peak (ub3, chromosome 4) may be the more meaningful headline.</span>
-<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Panel reading order and gene-symbol styling (italic, correct casing) to fix.</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>Draft, scoped to the four TeoNAM-overlap traits (the same four as the comparison table</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>above). Taxon-covariate joint scan, one peak per chromosome (refine step skipped). Produced</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>by <span class="in">`scripts/zeal_qtl_effects.R`</span> (per-QTL variance and effect) and</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="in">`scripts/fig_zeal_qtl_summary.R`</span> (the composite), reading the R/qtl joint-scan outputs.</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-qtl</span></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (DTA, DTS, PH, Prolif). A: genome-wide QTL support intervals in Mb, bar width scaled by LOD, candidate genes labeled. B: per-QTL variance explained (fitqtl drop-one). C: raw allele effect at two headline loci, phenotype BLUE by genotype class (A = B73, H = het, B = teosinte). D: variance explained by the mapped-QTL joint model.&quot;</span></span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/fig_zeal_qtl_summary.png&quot;</span>))</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>Full-model variance explained by the mapped QTL:</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: varpart</span></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>vp <span class="ot">&lt;-</span> <span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_qtl_variance_partition.csv&quot;</span>))</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>vp[, pct_var_qtl_model <span class="sc">:</span><span class="er">=</span> <span class="fu">round</span>(pct_var_qtl_model, <span class="dv">1</span>)]</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="fu">setnames</span>(</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>  vp, <span class="fu">c</span>(<span class="st">&quot;trait&quot;</span>, <span class="st">&quot;n_qtl&quot;</span>, <span class="st">&quot;pct_var_qtl_model&quot;</span>),</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;Trait&quot;</span>, <span class="st">&quot;QTL&quot;</span>, <span class="st">&quot;Variance explained (%)&quot;</span>)</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(vp)</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>**Draft refinements still needed** (so the group reads the figure as provisional):</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Several support intervals are very wide (tens of Mb). The candidate-gene labels on those</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>  peaks imply a localization the intervals do not support; wide intervals should be</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>  de-emphasized or their labels dropped.</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Candidate-label crowding near chromosomes 9 and 10 (the flowering candidate prints twice;</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>  one peak stacks three symbols). Curate to one label per locus.</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The Prolif headline locus in panel C is a top-LOD peak with no candidate overlap; a</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>  candidate-overlapping Prolif peak (ub3, chromosome 4) may be the more meaningful headline.</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Panel reading order and gene-symbol styling (italic, correct casing) to fix.</span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a><span class="fu">## Open questions for the meeting</span></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Nitrogen content: units, tissue, and field, so it can be added to the rqtl list.</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Guadalajara flowering: fieldbook and line-name crosswalk, to add it as a second</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>   environment for DTA and DTS.</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Confirm SPAD is sourced from the primary CLY25 fieldbook, with the introfinder</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>   SPAD20DAS/SPAD36DAS demoted to secondary.</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Which traits carry the hypothesis-driven vignettes (flowering plus the qualitative</span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>   teosinte traits), and how much of the paper is resource description vs those vignettes.</span>
 <span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="fu">## Open questions for the meeting</span></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="fu">## QTL by taxon</span></span>
 <span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Nitrogen content: units, tissue, and field, so it can be added to the rqtl list.</span>
-<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Guadalajara flowering: fieldbook and line-name crosswalk, to add it as a second</span>
-<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>   environment for DTA and DTS.</span>
-<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Confirm SPAD is sourced from the primary CLY25 fieldbook, with the introfinder</span>
-<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>   SPAD20DAS/SPAD36DAS demoted to secondary.</span>
-<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Which traits carry the hypothesis-driven vignettes (flowering plus the qualitative</span>
-<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>   teosinte traits), and how much of the paper is resource description vs those vignettes.</span>
-<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a><span class="fu">## QTL by taxon</span></span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>The taxon-covariate joint scan pools the five teosinte taxa. A separate question is which</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>taxon contributes each QTL. TeoNAM answered the analog with a heatmap of allele effect by</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>donor; the ZEAL analog is effect by taxon (Zv, Zx, Zl, Zd, Zh). We also run per-taxon</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>additive scans, which show in one multicolor panel where each taxon peaks. Proposed: a</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>paper section on the per-taxon QTL, using the effect-by-taxon summary plus the per-taxon</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>scans.</span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>Pigmentation (StPi, stem anthocyanin) is a clean example. Different taxa peak at different</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>anthocyanin-pathway loci:</span>
 <span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>The taxon-covariate joint scan pools the five teosinte taxa. A separate question is which</span>
-<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>taxon contributes each QTL. TeoNAM answered the analog with a heatmap of allele effect by</span>
-<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>donor; the ZEAL analog is effect by taxon (Zv, Zx, Zl, Zd, Zh). We also run per-taxon</span>
-<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a>additive scans, which show in one multicolor panel where each taxon peaks. Proposed: a</span>
-<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>paper section on the per-taxon QTL, using the effect-by-taxon summary plus the per-taxon</span>
-<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>scans.</span>
-<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a>Pigmentation (StPi, stem anthocyanin) is a clean example. Different taxa peak at different</span>
-<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>anthocyanin-pathway loci:</span>
-<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-stpi-taxon</span></span>
-<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JLM grid. LOD by taxon (Zd, Zh, Zl, Zv, Zx); dotted verticals mark anthocyanin-pathway candidate genes (b1, a1, c2, pr1, pl1, bz1, and others). Different taxa contribute pigmentation signal at different loci, for example Zx and Zv near b1 on chromosome 2 and Zd near chromosome 8.&quot;</span></span>
-<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
-<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_stpi_lod_by_taxon.png&quot;</span>))</span>
-<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-stpi-taxon</span></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JLM grid. LOD by taxon (Zd, Zh, Zl, Zv, Zx); dotted verticals mark anthocyanin-pathway candidate genes (b1, a1, c2, pr1, pl1, bz1, and others). Different taxa contribute pigmentation signal at different loci, for example Zx and Zv near b1 on chromosome 2 and Zd near chromosome 8.&quot;</span></span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_stpi_lod_by_taxon.png&quot;</span>))</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
