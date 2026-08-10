@@ -4306,9 +4306,9 @@ vertical-align: -.125em;
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 6%">
 <col style="width: 5%">
-<col style="width: 87%">
+<col style="width: 4%">
+<col style="width: 90%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -4326,7 +4326,7 @@ vertical-align: -.125em;
 <tr class="even">
 <td style="text-align: left;">Guadalajara flowering</td>
 <td style="text-align: left;">existing (Ruben)</td>
-<td style="text-align: left;">analyzed as the short-day environment (CUCBA only; La Soledad flowering is a derived copy of CUCBA and is excluded) — see the Photoperiod section below. Provisional pending real La Soledad flowering and the definitive line crosswalk; still need the GDL field layout and planting dates</td>
+<td style="text-align: left;">analyzed as the short-day environment (CUCBA only; La Soledad flowering equals CUCBA minus a constant 3 days per genotype (slope 1, R2 = 1), so it carries no independent signal and is excluded) — see the Photoperiod section below. Whether that is a copy or a planting-date arithmetic artifact is undetermined pending the raw flowering/planting dates; still need the GDL field layout too</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SPAD sourcing</td>
@@ -4452,7 +4452,7 @@ Figure 1: Draft. ZEAL R/qtl joint-scan QTL for the four TeoNAM-overlap traits (
 <section id="photoperiod-guadalajara-short-day-flowering-and-the-day-length-contrast" class="level2">
 <h2 class="anchored" data-anchor-id="photoperiod-guadalajara-short-day-flowering-and-the-day-length-contrast">Photoperiod: Guadalajara short-day flowering and the day-length contrast</h2>
 <p>The photoperiod-sensitivity axis of the paper. The Mexican team (Lino, Berenice) evaluated the population in <strong>Guadalajara in 2024</strong> (subtropical, short-day, ~20.5°N; CUCBA and La Soledad); Ruben shared the field books. Guadalajara flowering (FM = days to anthesis, FF = days to silk) is the short-day complement to our long-day Clayton data (Central Crops Research Station, ~35.7°N), and the ~15° latitude gap is the photoperiod contrast the paper hinges on.</p>
-<p><strong>What we can actually use.</strong> Of the two Guadalajara sites, only <strong>CUCBA</strong> carries real flowering data: the La Soledad flowering columns are a derived copy of CUCBA (FM = CUCBA − 3 exactly, verified), so they are excluded. CUCBA is a single <strong>unreplicated augmented</strong> environment (each NIL in one incomplete block; only the 3 checks replicated), and the CUCBA↔︎pedigree join currently uses the Genealogía crosswalk — so these results are <strong>provisional</strong> pending real La Soledad flowering (or more replication) and the definitive three-way sample sheet.</p>
+<p><strong>What we can actually use.</strong> Of the two Guadalajara sites, only <strong>CUCBA</strong> carries real flowering data: the La Soledad flowering columns equal CUCBA minus a constant 3 days (per genotype, slope 1, R² = 1 for both FM and FF), so they carry no independent flowering signal and are excluded. Whether that is a literal copy or a planting-date arithmetic artifact (shared flowering dates, planting dates 3 days apart) cannot be told from these processed files — it needs the raw flowering and planting dates. CUCBA is a single <strong>unreplicated augmented</strong> environment (each NIL in one incomplete block; only the 3 checks replicated), and the CUCBA↔︎pedigree join currently uses the Genealogía crosswalk — so these results are <strong>provisional</strong> pending real La Soledad flowering (or more replication) and the definitive three-way sample sheet.</p>
 <p>Three R/qtl notebooks, on the same TeoNAM JLM grid as the other ZEAL scans:</p>
 <ul>
 <li><a href="../analysis/zeal-rqtl-cucbadta-lod-profile.html">CUCBA DTA — short-day additive scan</a>: one strong QTL on <strong>chr9 (~46 Mb, LOD 9.5)</strong>; the teosinte allele advances short-day flowering.</li>
@@ -5098,7 +5098,7 @@ Figure 2: ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JL
 <span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>  <span class="at">Data =</span> <span class="fu">c</span>(<span class="st">&quot;existing (Hannah)&quot;</span>, <span class="st">&quot;existing (Ruben)&quot;</span>, <span class="st">&quot;two lineages exist&quot;</span>),</span>
 <span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>  <span class="at">Decision =</span> <span class="fu">c</span>(</span>
 <span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;add as its own trait to the rqtl list; needs units, tissue, and field. SPAD stays as a correlated proxy, not a substitute&quot;</span>,</span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;analyzed as the short-day environment (CUCBA only; La Soledad flowering is a derived copy of CUCBA and is excluded) — see the Photoperiod section below. Provisional pending real La Soledad flowering and the definitive line crosswalk; still need the GDL field layout and planting dates&quot;</span>,</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;analyzed as the short-day environment (CUCBA only; La Soledad flowering equals CUCBA minus a constant 3 days per genotype (slope 1, R2 = 1), so it carries no independent signal and is excluded) — see the Photoperiod section below. Whether that is a copy or a planting-date arithmetic artifact is undetermined pending the raw flowering/planting dates; still need the GDL field layout too&quot;</span>,</span>
 <span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;standardize on the primary CLY25 fieldbook SpATS BLUE; demote the introfinder SPAD20DAS and SPAD36DAS to secondary&quot;</span></span>
 <span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -5181,56 +5181,59 @@ Figure 2: ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JL
 <span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>~15° latitude gap is the photoperiod contrast the paper hinges on.</span>
 <span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>**What we can actually use.** Of the two Guadalajara sites, only **CUCBA** carries real flowering</span>
-<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>data: the La Soledad flowering columns are a derived copy of CUCBA (FM = CUCBA − 3 exactly, verified),</span>
-<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>so they are excluded. CUCBA is a single **unreplicated augmented** environment (each NIL in one</span>
-<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>incomplete block; only the 3 checks replicated), and the CUCBA↔pedigree join currently uses the</span>
-<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>Genealogía crosswalk — so these results are **provisional** pending real La Soledad flowering (or more</span>
-<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>replication) and the definitive three-way sample sheet.</span>
-<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>Three R/qtl notebooks, on the same TeoNAM JLM grid as the other ZEAL scans:</span>
-<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">CUCBA DTA — short-day additive scan</span><span class="co">](zeal-rqtl-cucbadta-lod-profile.qmd)</span>: one strong QTL on</span>
-<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>  **chr9 (~46 Mb, LOD 9.5)**; the teosinte allele advances short-day flowering.</span>
-<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">CUCBA DTS — short-day additive scan</span><span class="co">](zeal-rqtl-cucbadts-lod-profile.qmd)</span>: **chr9 (~37 Mb, LOD 10.0)**.</span>
-<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Photoperiod G×ME</span><span class="co">](zeal-rqtl-gxe-photoperiod.qmd)</span>: marker × macroenvironment (short-day CUCBA vs</span>
-<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>  long-day Clayton) interaction, R/qtl Approach B with a 1000-permutation line-level threshold.</span>
-<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>  Significant photoperiod-sensitivity loci on **chr10 (~122 Mb)** and **chr9 (~92–94 Mb)** for *both*</span>
-<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a>  DTA and DTS — distinct from the additive chr9 QTL, and not at *ZmCCT10* (~96 Mb) by position, so the</span>
-<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>  gene identities need a coordinate check rather than assignment by chromosome.</span>
-<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>Still needed from the Mexican team: the **field layout** (plot coordinates) and **planting dates** per</span>
-<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>site (for spatial correction and a GDD/daylength covariate), and confirmation of whether **La Soledad</span>
-<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>flowering** was really measured. The paper&#39;s working outline (Hannah) is</span>
-<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">here</span><span class="co">](https://docs.google.com/document/d/1qyIBb5IQhNMdH4uSiBBthCNJrLP2cydYtHcREgFBYlw/edit)</span> (Google Doc).</span>
-<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a><span class="fu">## Discussion points</span></span>
-<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Final phenotypes to analyze, including the Mexico (Guadalajara) flowering time and the</span>
-<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>   SPAD and nitrogen data that are not included yet.</span>
-<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Outline of the paper, using the TeoNAM paper (Chen et al. 2019,</span>
-<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>   <span class="ot">&lt;https://academic.oup.com/genetics/article/213/3/1065/5930618&gt;</span>) as the template. The QTL</span>
-<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>   figure here is a dummy placeholder.</span>
-<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>How much per-taxon QTL analysis to include.</span>
-<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Data, analysis, and repository handover.</span>
-<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a><span class="fu">## QTL by taxon</span></span>
-<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>The taxon-covariate joint scan pools the five teosinte taxa. A separate question is which</span>
-<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>taxon contributes each QTL. TeoNAM answered the analog with a heatmap of allele effect by</span>
-<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>donor; the ZEAL analog is effect by taxon (Zv, Zx, Zl, Zd, Zh). We also run per-taxon</span>
-<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>additive scans, which show in one multicolor panel where each taxon peaks. Proposed: a</span>
-<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>paper section on the per-taxon QTL, using the effect-by-taxon summary plus the per-taxon</span>
-<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>scans.</span>
-<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>Pigmentation (StPi, stem anthocyanin) is a clean example. Different taxa peak at different</span>
-<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>anthocyanin-pathway loci:</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>data: the La Soledad flowering columns equal CUCBA minus a constant 3 days (per genotype, slope 1,</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>R² = 1 for both FM and FF), so they carry no independent flowering signal and are excluded. Whether</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>that is a literal copy or a planting-date arithmetic artifact (shared flowering dates, planting dates</span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>3 days apart) cannot be told from these processed files — it needs the raw flowering and planting</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>dates. CUCBA is a single **unreplicated augmented** environment (each NIL in one</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>incomplete block; only the 3 checks replicated), and the CUCBA↔pedigree join currently uses the</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>Genealogía crosswalk — so these results are **provisional** pending real La Soledad flowering (or more</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>replication) and the definitive three-way sample sheet.</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>Three R/qtl notebooks, on the same TeoNAM JLM grid as the other ZEAL scans:</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">CUCBA DTA — short-day additive scan</span><span class="co">](zeal-rqtl-cucbadta-lod-profile.qmd)</span>: one strong QTL on</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>  **chr9 (~46 Mb, LOD 9.5)**; the teosinte allele advances short-day flowering.</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">CUCBA DTS — short-day additive scan</span><span class="co">](zeal-rqtl-cucbadts-lod-profile.qmd)</span>: **chr9 (~37 Mb, LOD 10.0)**.</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Photoperiod G×ME</span><span class="co">](zeal-rqtl-gxe-photoperiod.qmd)</span>: marker × macroenvironment (short-day CUCBA vs</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>  long-day Clayton) interaction, R/qtl Approach B with a 1000-permutation line-level threshold.</span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a>  Significant photoperiod-sensitivity loci on **chr10 (~122 Mb)** and **chr9 (~92–94 Mb)** for *both*</span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>  DTA and DTS — distinct from the additive chr9 QTL, and not at *ZmCCT10* (~96 Mb) by position, so the</span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>  gene identities need a coordinate check rather than assignment by chromosome.</span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a>Still needed from the Mexican team: the **field layout** (plot coordinates) and **planting dates** per</span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>site (for spatial correction and a GDD/daylength covariate), and confirmation of whether **La Soledad</span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a>flowering** was really measured. The paper&#39;s working outline (Hannah) is</span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">here</span><span class="co">](https://docs.google.com/document/d/1qyIBb5IQhNMdH4uSiBBthCNJrLP2cydYtHcREgFBYlw/edit)</span> (Google Doc).</span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a><span class="fu">## Discussion points</span></span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Final phenotypes to analyze, including the Mexico (Guadalajara) flowering time and the</span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>   SPAD and nitrogen data that are not included yet.</span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Outline of the paper, using the TeoNAM paper (Chen et al. 2019,</span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a>   <span class="ot">&lt;https://academic.oup.com/genetics/article/213/3/1065/5930618&gt;</span>) as the template. The QTL</span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>   figure here is a dummy placeholder.</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>How much per-taxon QTL analysis to include.</span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Data, analysis, and repository handover.</span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a><span class="fu">## QTL by taxon</span></span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>The taxon-covariate joint scan pools the five teosinte taxa. A separate question is which</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>taxon contributes each QTL. TeoNAM answered the analog with a heatmap of allele effect by</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>donor; the ZEAL analog is effect by taxon (Zv, Zx, Zl, Zd, Zh). We also run per-taxon</span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a>additive scans, which show in one multicolor panel where each taxon peaks. Proposed: a</span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>paper section on the per-taxon QTL, using the effect-by-taxon summary plus the per-taxon</span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>scans.</span>
 <span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-stpi-taxon</span></span>
-<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JLM grid. LOD by taxon (Zd, Zh, Zl, Zv, Zx); dotted verticals mark anthocyanin-pathway candidate genes (b1, a1, c2, pr1, pl1, bz1, and others). Different taxa contribute pigmentation signal at different loci, for example Zx and Zv near b1 on chromosome 2 and Zd near chromosome 8.&quot;</span></span>
-<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
-<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_stpi_lod_by_taxon.png&quot;</span>))</span>
-<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a>Pigmentation (StPi, stem anthocyanin) is a clean example. Different taxa peak at different</span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>anthocyanin-pathway loci:</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-stpi-taxon</span></span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: &quot;ZEAL StPi (stem anthocyanin) per-taxon additive scan on the TeoNAM JLM grid. LOD by taxon (Zd, Zh, Zl, Zv, Zx); dotted verticals mark anthocyanin-pathway candidate genes (b1, a1, c2, pr1, pl1, bz1, and others). Different taxa contribute pigmentation signal at different loci, for example Zx and Zv near b1 on chromosome 2 and Zd near chromosome 8.&quot;</span></span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a><span class="co">#| out-width: 100%</span></span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">&quot;results/sim/zeal/rqtl/zeal_stpi_lod_by_taxon.png&quot;</span>))</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

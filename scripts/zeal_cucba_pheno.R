@@ -3,8 +3,10 @@
 # ZEAL CUCBA (short-day) flowering BLUEs -> R/qtl phenotype files
 # -----------------------------------------------------------------------------
 # Guadalajara CUCBA (subtropical, short-day) is the only real short-day flowering
-# environment in the 2024 GDL evaluation: the La Soledad flowering columns are a
-# derived copy of CUCBA (FM = CUCBA-3 exactly), so they are excluded here. CUCBA
+# environment in the 2024 GDL evaluation: the La Soledad flowering columns equal
+# CUCBA minus a constant 3 days (FM = CUCBA-3 exactly; slope 1, R^2=1), carry no
+# independent signal, and are excluded here (copy vs planting-date artifact
+# undetermined, pending the raw flowering/planting dates). CUCBA
 # is an unreplicated augmented design (each NIL in one incomplete block; only the
 # 3 checks replicated), so BLUEs come from a mixed model with block random:
 #     trait ~ genotype (fixed) + (1 | Bloque)      # FM->DTA, FF->DTS, ASI=FF-FM
