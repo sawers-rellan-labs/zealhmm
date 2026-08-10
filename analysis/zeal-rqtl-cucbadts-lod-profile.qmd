@@ -1,0 +1,332 @@
+---
+title: "ZEAL CUCBA DTS (short-day) — R/qtl (bcsft) additive QTL on the TeoNAM JLM grid"
+subtitle: "Classic R/qtl interval mapping (Haley–Knott) of days-to-silking measured at CUCBA, Guadalajara (subtropical, short-day; ~20.7°N), on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B). Same marker set + genetic map as the Clayton DTS notebook (TeoNAM JLM 0.1-cM, 9,063 markers). Significance = genome-wide 1000-permutation LOD threshold; models: no covariate vs + taxon (5-family), plus per-family scans."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The R/qtl additive scan of ZEAL flowering time (DTS = days to silking)
+measured at **CUCBA in Guadalajara** — the *short-day, subtropical* environment — as the
+short-day counterpart to the Clayton (long-day) `zeal-rqtl-dts-lod-profile` notebook. Same
+`bcsft` cross, TeoNAM JLM map, Haley–Knott interval mapping, **1000-permutation** threshold.
+Inputs: CUCBA BLUEs from `scripts/zeal_cucba_pheno.R`, scanned by `scripts/zeal_rqtl_scan.R`
+(`TRAIT=CUCBADTS`).
+
+::: {.callout-important}
+## Read this first — what is (and isn't) solid here
+- **Environment = CUCBA only.** The *La Soledad* flowering columns are a derived copy of CUCBA
+  (FF ≈ CUCBA − 3), so only **CUCBA** is real short-day flowering. It is one **unreplicated
+  augmented** environment (each NIL in one incomplete block; only the 3 checks replicated), so a
+  BLUE is a block-adjusted single observation — no within-line error.
+- **Provisional line join.** CUCBA is keyed by `Origen` (BZeaPV23-…); the map to the BC2S3
+  pedigree is the Genealogía crosswalk, pending the definitive three-way sample sheet.
+- Marker set, map, and genotype identical to the Clayton DTS notebook: no ZEAL map is estimated
+  (cM = TeoNAM distances); the ZEAL mosaic is projected onto the JLM positions; genotype = ancestry
+  `A/H/B`; the permutation calibrates the threshold to the structured null.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+RQ <- here("results/sim/zeal/rqtl")
+stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_cucba_pheno.R ; TRAITS="CUCBADTA,CUCBADTS" NPERM=1000 Rscript scripts/zeal_rqtl_scan.R
+
+TRAIT <- "CUCBADTS"
+trait_lc <- tolower(TRAIT)
+bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
+ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
+
+cand <- fread(here("data/teonam/dts_candidate_genes.tsv"))
+cand[, mid := (start + end) / 2]
+.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+cand[, cm := mapply(function(c, b) {
+  n <- .nat[chr_v5 == c & is.finite(cm)][order(pos_v5)]
+  if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = b, rule = 2)$y
+}, chr, mid)]
+cand_in_ci <- function(ch, lo, hi) {
+  s <- cand[chr == ch & mid >= min(lo, hi) & mid <= max(lo, hi), symbol]
+  if (length(s)) paste(s, collapse = ", ") else "–"
+}
+
+load_scan <- function(tag) {
+  one <- fread(file.path(RQ, sprintf("zeal_%s_scanone_%s.csv", trait_lc, tag)))
+  perms <- readRDS(file.path(RQ, sprintf("zeal_%s_perms_%s.rds", trait_lc, tag)))
+  th <- summary(perms, alpha = c(0.05, 0.10))
+  list(one = one, thr5 = as.numeric(th[1]), thr10 = as.numeric(th[2]))
+}
+nc <- load_scan("nocovar")
+tx <- load_scan("taxon")
+cross <- readRDS(file.path(RQ, sprintf("zeal_%s_cross.rds", trait_lc)))
+NMARK <- totmar(cross)
+```
+
+```{r meta}
+g <- pull.geno(cross)
+fH <- mean(g == 2, na.rm = TRUE)
+fB <- mean(g == 3, na.rm = TRUE)
+meta <- data.table(
+  metric = c("individuals (CUCBA DTS)", "markers (TeoNAM JLM grid)", "chromosomes", "H / het", "B / teosinte", "H:B ratio"),
+  value = c(
+    sum(!is.na(pull.pheno(cross, TRAIT))), NMARK, nchr(cross),
+    sprintf("%.3f", fH), sprintf("%.3f", fB), sprintf("%.1f", fH / fB)
+  )
+)
+knitr::kable(meta, caption = "Run composition. Individuals = BC2S3 lines with a CUCBA DTS BLUE (provisional join). Markers = the TeoNAM JLM 0.1-cM grid.")
+```
+
+## No covariate vs taxon covariate
+
+```{r compare-table}
+peakrow <- function(tag) {
+  pk <- fread(file.path(RQ, sprintf("zeal_%s_peaks_%s.csv", trait_lc, tag)))
+  setnames(pk, old = names(pk), new = sub("^lod\\.", "", names(pk)))
+  pk
+}
+cmp <- data.table(
+  model = c("no covariate", "+ taxon (5-family)"),
+  `perm 5% LOD` = round(c(nc$thr5, tx$thr5), 2),
+  `perm 10% LOD` = round(c(nc$thr10, tx$thr10), 2),
+  `max LOD` = round(c(max(nc$one$lod), max(tx$one$lod)), 2),
+  `n QTL (FWER 0.05)` = c(nrow(peakrow("nocovar")), nrow(peakrow("taxon")))
+)
+knitr::kable(cmp, caption = "CUCBA short-day DTS: permutation thresholds and QTL counts, no covariate vs the 5-family taxon covariate.")
+```
+
+## Genome-wide LOD profile (taxon model, with no-covariate behind it)
+
+Faceted by chromosome. **Blue** = scanone + taxon; **grey** = no covariate; dashed = 1000-perm 5%
+thresholds; dotted verticals = flowering candidates; red points = per-chromosome maxima above the
+taxon 5% threshold.
+
+```{r lod-profile, fig.width=11, fig.height=4.6}
+prof <- rbindlist(list(
+  cbind(nc$one[, .(marker, chr, pos, lod)], model = "no covariate"),
+  cbind(tx$one[, .(marker, chr, pos, lod)], model = "+ taxon")
+))[is.finite(lod)]
+prof[, model := factor(model, levels = c("no covariate", "+ taxon"))]
+sig <- prof[model == "+ taxon" & lod >= tx$thr5][, .SD[which.max(lod)], by = chr]
+pal <- c("no covariate" = "grey65", "+ taxon" = "#2c6fbb")
+ytop <- max(prof$lod, na.rm = TRUE)
+cl <- cand[chr %in% unique(prof$chr) & is.finite(cm)]
+p <- ggplot(prof, aes(pos, lod, colour = model)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = nc$thr5, linetype = "dashed", colour = pal[["no covariate"]], linewidth = 0.35) +
+  geom_hline(yintercept = tx$thr5, linetype = "dashed", colour = pal[["+ taxon"]], linewidth = 0.35) +
+  geom_point(data = sig, colour = "red", size = 1.6) +
+  ggrepel::geom_text_repel(
+    data = cl, aes(x = cm, y = ytop * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+  ) +
+  expand_limits(y = ytop * 1.45) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal, name = NULL) +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
+    title = "ZEAL CUCBA DTS (short-day, Guadalajara) — R/qtl scanone, Haley–Knott (TeoNAM JLM grid)",
+    subtitle = sprintf(
+      "%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f · dotted = flowering candidates",
+      format(NMARK, big.mark = ","), nc$thr5, tx$thr5
+    )
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, sprintf("zeal_%s_lod_profile.png", trait_lc)), p, width = 11, height = 4.4, dpi = 200, bg = "white")
+p
+```
+
+## Significant peaks (taxon model, α = 0.05)
+
+```{r peaks}
+cipk <- fread(file.path(RQ, sprintf("zeal_%s_peaks_ci_taxon.csv", trait_lc)))
+if (nrow(cipk) == 0) {
+  cat("No chromosome exceeded the taxon-model 1000-perm 5% threshold.")
+} else {
+  knitr::kable(
+    cipk[order(chr, -lod), .(
+      chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), pval, marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+    )],
+    caption = "Genome-wide significant CUCBA-DTS QTL, taxon model (1000-perm threshold). One peak per chromosome; 1.5-LOD interval in v5 Mb; flowering candidate in CI."
+  )
+}
+```
+
+### Multi-peak refinement (airmine `refine_peaks`)
+
+```{r refined-peaks}
+rt <- fread(file.path(RQ, sprintf("zeal_%s_peaks_refined_taxon.csv", trait_lc)))
+if (nrow(rt) == 0) {
+  cat("No refined peaks (no chromosome exceeded the permutation threshold).")
+} else {
+  knitr::kable(
+    rt[order(chr, -lod), .(
+      chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), `perm 5% thr` = round(thresh, 2), marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+    )],
+    caption = sprintf("Refined multi-peak CUCBA-DTS QTL, taxon model (%d QTL across %d chromosomes).", nrow(rt), uniqueN(rt$chr))
+  )
+}
+```
+
+## Per-taxon (family-resolved) additive scan
+
+```{r per-taxon, fig.width=11, fig.height=4.6}
+bt <- fread(file.path(RQ, sprintf("zeal_%s_scanone_by_taxon.csv", trait_lc)))[is.finite(lod)]
+pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+ytop_bt <- max(bt$lod, na.rm = TRUE)
+cl <- cand[chr %in% unique(bt$chr) & is.finite(cm)]
+pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
+  geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+  ggrepel::geom_text_repel(
+    data = cl, aes(x = cm, y = ytop_bt * 1.18, label = symbol), inherit.aes = FALSE,
+    size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+  ) +
+  expand_limits(y = ytop_bt * 1.45) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(
+    data = unique(bt[, .(taxon, thr5)]), aes(yintercept = thr5, colour = taxon),
+    linetype = "dotted", linewidth = 0.4, show.legend = FALSE
+  ) +
+  facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal5, name = "taxon") +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD (additive)",
+    title = "ZEAL CUCBA DTS (short-day) — per-taxon additive scan (TeoNAM JLM grid)",
+    subtitle = "additive-only; per-family filters: frac introgressed (HET or ALT) > 0.05 & ≥3 per present class · dotted = candidate genes"
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_blank(), legend.position = "top"
+  ) +
+  scale_x_continuous(expand = c(0.01, 0))
+ggsave(file.path(RQ, sprintf("zeal_%s_lod_by_taxon.png", trait_lc)), pt, width = 11, height = 4.6, dpi = 200, bg = "white")
+pt
+```
+
+```{r per-taxon-peaks}
+btpk <- bt[,
+  {
+    i <- which.max(lod)
+    ch <- chr[i]
+    L <- lod[i]
+    ins <- .SD[chr == ch][lod >= L - 1.5]
+    lbp <- min(bp_of(ins$marker))
+    hbp <- max(bp_of(ins$marker))
+    .(
+      chr = ch, `pos (cM)` = round(pos[i], 1), `pos (Mb)` = round(bp_of(marker[i]) / 1e6, 1),
+      marker = marker[i], `max LOD` = round(L, 2), `perm 5% thr` = round(thr5[1], 2),
+      sig = fifelse(L > thr5[1], "yes", "no"),
+      `1.5-LOD CI (Mb)` = sprintf("%.1f–%.1f", lbp / 1e6, hbp / 1e6),
+      `candidate in CI` = cand_in_ci(ch, lbp, hbp)
+    )
+  },
+  by = taxon
+][order(-`max LOD`)]
+knitr::kable(btpk, caption = "Genome-wide additive peak per taxon for CUCBA DTS (filtered), with each family's own 1000-perm 5% threshold.")
+```
+
+```{r per-taxon-refined}
+btr <- fread(file.path(RQ, sprintf("zeal_%s_peaks_refined_by_taxon.csv", trait_lc)))
+if (nrow(btr) == 0) {
+  cat("No per-taxon refined peaks cleared the per-family thresholds.")
+} else {
+  knitr::kable(
+    btr[order(taxon, chr, -lod), .(
+      taxon, chr,
+      `pos (cM)` = round(pos, 1), `pos (Mb)` = round(bp_of(marker) / 1e6, 1),
+      LOD = round(lod, 2), `perm 5% thr` = round(thr5, 2), marker,
+      `1.5-LOD CI (Mb)` = ci_str(ci_left, ci_right),
+      `candidate in CI` = mapply(cand_in_ci, chr, ci_left, ci_right)
+    )],
+    caption = sprintf("Refined per-taxon multi-peak CUCBA-DTS QTL (%d QTL across %d families), 1.5-LOD-drop CIs in v5 Mb.", nrow(btr), uniqueN(btr$taxon))
+  )
+}
+```
+
+## Allele effect at the genome-wide peak, by taxon
+
+The teosinte-allele effect on CUCBA DTS at the **strongest genome-wide (taxon-model) peak**, split
+by taxon (marker derived from the peaks table above). Mean ± SE drawn only for genotype classes with
+≥ 3 lines; undersupported classes show raw points + count. `A/A` = B73, `A/B` = het, `B/B` =
+homozygous teosinte. Effect in **days**; LOD above is the support — read separately.
+
+```{r effect-setup}
+.cipk <- fread(file.path(RQ, sprintf("zeal_%s_peaks_ci_taxon.csv", trait_lc)))
+mk <- if (nrow(.cipk)) .cipk[which.max(lod), marker] else tx$one[which.max(lod), marker]
+mk_chr <- tx$one[marker == mk, chr][1]
+mk_mb <- round(bp_of(mk) / 1e6, 1)
+```
+
+```{r effect-plot, fig.width=10, fig.height=4.2}
+pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
+gm <- pull.geno(cross)[, mk]
+y <- as.numeric(pull.pheno(cross, TRAIT))
+ids <- as.character(pull.pheno(cross, "id"))
+ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
+d <- data.table(
+  taxon = ss[match(ids, pedigree), taxon],
+  geno = factor(c("A/A", "A/B", "B/B")[gm], levels = c("A/A", "A/B", "B/B")), y
+)[!is.na(y) & !is.na(geno) & taxon %in% c("Zd", "Zh", "Zl", "Zv", "Zx")]
+summ <- d[, .(mean = mean(y), se = sd(y) / sqrt(.N), n = .N), by = .(taxon, geno)]
+shown <- summ[n >= 3]
+ef <- ggplot(d, aes(geno, y, colour = taxon)) +
+  geom_jitter(width = 0.12, alpha = 0.12, size = 0.5) +
+  geom_line(data = shown, aes(y = mean, group = taxon), linewidth = 0.7) +
+  geom_point(data = shown, aes(y = mean), size = 2.2) +
+  geom_errorbar(data = shown, aes(y = mean, ymin = mean - se, ymax = mean + se), width = 0.15) +
+  geom_text(data = summ, aes(label = n), y = min(d$y), vjust = 0, size = 2.5, show.legend = FALSE) +
+  facet_wrap(~taxon, nrow = 1) +
+  scale_colour_manual(values = pal5, guide = "none") +
+  labs(
+    x = sprintf("genotype at %s (chr%s ~%s Mb)", mk, mk_chr, mk_mb), y = "CUCBA DTS (days)",
+    title = sprintf("ZEAL CUCBA DTS — allele effect at the genome-wide peak %s, by taxon", mk),
+    subtitle = "per-genotype mean DTS ± SE (grey = individual lines; n at base)"
+  ) +
+  theme_bw(base_size = 11) +
+  theme(panel.grid.minor = element_blank())
+ggsave(file.path(RQ, sprintf("zeal_%s_%s_effect.png", trait_lc, mk)), ef, width = 10, height = 4.2, dpi = 200, bg = "white")
+ef
+```
+
+```{r effect-table}
+eff <- dcast(summ, taxon ~ geno, value.var = "mean")
+ns <- dcast(summ, taxon ~ geno, value.var = "n")
+setnames(ns, names(ns)[-1], paste0("n ", names(ns)[-1]), skip_absent = TRUE)
+knitr::kable(merge(eff, ns, by = "taxon"),
+  digits = 1,
+  caption = sprintf("Mean CUCBA DTS by genotype and taxon at %s (chr%s ~%s Mb), with cell counts.", mk, mk_chr, mk_mb)
+)
+```
+
+## Note
+
+Short-day (CUCBA) additive silking scan; compare with the long-day Clayton DTS notebook, and see
+`zeal-rqtl-gxe-photoperiod` for the formal day-length (marker × macroenvironment) contrast. All CUCBA
+results are **provisional**: one unreplicated environment and a Genealogía-mapped line join, pending
+real La Soledad flowering and the definitive three-way sample sheet.
