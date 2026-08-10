@@ -196,6 +196,15 @@ listing:
       - title: "DTS · R/qtl"
         path: analysis/zeal-rqtl-dts-lod-profile.qmd
         description: "Days to silk: same R/qtl pipeline; flowering candidate panel; chr10 support interval spans ZmCCT10"
+      - title: "CUCBA DTA · R/qtl (short-day)"
+        path: analysis/zeal-rqtl-cucbadta-lod-profile.qmd
+        description: "Days to anthesis at CUCBA, Guadalajara (short-day, subtropical, ~20.7°N): same R/qtl additive pipeline on CUCBA BLUEs; the short-day counterpart to the Clayton DTA scan. Provisional — one unreplicated environment, Genealogía-mapped join"
+      - title: "CUCBA DTS · R/qtl (short-day)"
+        path: analysis/zeal-rqtl-cucbadts-lod-profile.qmd
+        description: "Days to silk at CUCBA, Guadalajara (short-day, subtropical): short-day counterpart to the Clayton DTS scan. Provisional — one unreplicated environment, Genealogía-mapped join"
+      - title: "Photoperiod GxE · R/qtl"
+        path: analysis/zeal-rqtl-gxe-photoperiod.qmd
+        description: "Marker × macroenvironment (day-length) interaction for DTA & DTS: short-day CUCBA vs long-day Clayton (R/qtl Approach B, 1000-perm line-level threshold); photoperiod-sensitivity loci on chr9 and chr10"
       - title: "PH · R/qtl"
         path: analysis/zeal-rqtl-ph-lod-profile.qmd
         description: "Plant height: R/qtl LOD profile + multi-peak + per-family scans; dwarf/GA/BR height candidate panel"

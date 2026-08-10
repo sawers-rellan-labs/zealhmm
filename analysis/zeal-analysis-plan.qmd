@@ -150,7 +150,7 @@ dec <- data.table(
   Data = c("existing (Hannah)", "existing (Ruben)", "two lineages exist"),
   Decision = c(
     "add as its own trait to the rqtl list; needs units, tissue, and field. SPAD stays as a correlated proxy, not a substitute",
-    "add as a second environment for DTA and DTS; needs the fieldbook and a line-name crosswalk. Enables the photoperiod contrast",
+    "analyzed as the short-day environment (CUCBA only; La Soledad flowering is a derived copy of CUCBA and is excluded) — see the Photoperiod section below. Provisional pending real La Soledad flowering and the definitive line crosswalk; still need the GDL field layout and planting dates",
     "standardize on the primary CLY25 fieldbook SpATS BLUE; demote the introfinder SPAD20DAS and SPAD36DAS to secondary"
   )
 )
@@ -223,6 +223,37 @@ knitr::kable(vp)
   knowledge, not raw interval overlap.
 - Panel C Prolif headline is a top-LOD peak with no candidate overlap.
 - Panel reading order and gene-symbol styling to fix.
+
+## Photoperiod: Guadalajara short-day flowering and the day-length contrast
+
+The photoperiod-sensitivity axis of the paper. The Mexican team (Lino, Berenice) evaluated the
+population in **Guadalajara in 2024** (subtropical, short-day, ~20.5°N; CUCBA and La Soledad); Ruben
+shared the field books. Guadalajara flowering (FM = days to anthesis, FF = days to silk) is the
+short-day complement to our long-day Clayton data (Central Crops Research Station, ~35.7°N), and the
+~15° latitude gap is the photoperiod contrast the paper hinges on.
+
+**What we can actually use.** Of the two Guadalajara sites, only **CUCBA** carries real flowering
+data: the La Soledad flowering columns are a derived copy of CUCBA (FM = CUCBA − 3 exactly, verified),
+so they are excluded. CUCBA is a single **unreplicated augmented** environment (each NIL in one
+incomplete block; only the 3 checks replicated), and the CUCBA↔pedigree join currently uses the
+Genealogía crosswalk — so these results are **provisional** pending real La Soledad flowering (or more
+replication) and the definitive three-way sample sheet.
+
+Three R/qtl notebooks, on the same TeoNAM JLM grid as the other ZEAL scans:
+
+- [CUCBA DTA — short-day additive scan](zeal-rqtl-cucbadta-lod-profile.qmd): one strong QTL on
+  **chr9 (~46 Mb, LOD 9.5)**; the teosinte allele advances short-day flowering.
+- [CUCBA DTS — short-day additive scan](zeal-rqtl-cucbadts-lod-profile.qmd): **chr9 (~37 Mb, LOD 10.0)**.
+- [Photoperiod G×ME](zeal-rqtl-gxe-photoperiod.qmd): marker × macroenvironment (short-day CUCBA vs
+  long-day Clayton) interaction, R/qtl Approach B with a 1000-permutation line-level threshold.
+  Significant photoperiod-sensitivity loci on **chr10 (~122 Mb)** and **chr9 (~92–94 Mb)** for *both*
+  DTA and DTS — distinct from the additive chr9 QTL, and not at *ZmCCT10* (~96 Mb) by position, so the
+  gene identities need a coordinate check rather than assignment by chromosome.
+
+Still needed from the Mexican team: the **field layout** (plot coordinates) and **planting dates** per
+site (for spatial correction and a GDD/daylength covariate), and confirmation of whether **La Soledad
+flowering** was really measured. The paper's working outline (Hannah) is
+[here](https://docs.google.com/document/d/1qyIBb5IQhNMdH4uSiBBthCNJrLP2cydYtHcREgFBYlw/edit) (Google Doc).
 
 ## Discussion points
 

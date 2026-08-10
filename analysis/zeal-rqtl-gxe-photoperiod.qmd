@@ -1,0 +1,177 @@
+---
+title: "ZEAL flowering — photoperiod QTL (marker × macroenvironment) R/qtl scan"
+subtitle: "The day-length contrast: the same BC2S3 NILs phenotyped in a long-day temperate macroenvironment (Clayton NC, ~35.7°N) and a short-day subtropical one (CUCBA, Guadalajara, ~20.7°N). QTL × macroenvironment (G×ME) interaction by R/qtl Approach B: a doubled cross with an environment covariate, interaction LOD = scanone(full: taxon+env, marker×env) − scanone(additive: taxon+env). Genome-wide 1000-permutation, line-level interaction threshold. Loci with a significant G×ME are photoperiod-sensitivity candidates."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The photoperiod scan for ZEAL flowering time. Macroenvironment (**ME**) = day-length
+class: **long-day temperate** (Clayton CLY23 + CLY25 BLUEs) vs **short-day subtropical** (CUCBA,
+Guadalajara BLUE). A locus whose teosinte-allele effect on flowering **changes between day lengths**
+shows up as a **marker × ME interaction** — that is photoperiod sensitivity. Same `bcsft` cross,
+TeoNAM JLM map, and Haley–Knott machinery as the additive DTA/DTS notebooks. Inputs produced by
+`scripts/zeal_mexg_scan.R` (`TRAIT=DTA` / `TRAIT=DTS`; writes `mexg_<trait>_scan.csv` /
+`mexg_<trait>_result.rds`), whose CUCBA BLUEs come from `scripts/zeal_cucba_pheno.R`.
+
+::: {.callout-important}
+## Method (R/qtl Approach B) and what is / isn't solid
+- **Doubled cross:** each NIL contributes two records — env 0 = Clayton (long day), env 1 = CUCBA
+  (short day) — with identical genotype. `addcovar = [taxon, env]`; the **interaction LOD** is
+  `scanone(intcovar = env)` − `scanone(additive)`, i.e. the marker × ME term.
+- **Threshold** = genome-wide **1000-permutation**, permuted at the **line level** (breaking
+  genotype↔phenotype while keeping the within-line env pairing), so it accounts for the two
+  records-per-line non-independence that a naïve permutation would ignore.
+- **Provisional:** the short-day side is **CUCBA only** (La Soledad flowering is a derived copy of
+  CUCBA and was excluded), one **unreplicated** environment; and the CUCBA↔pedigree join is the
+  Genealogía crosswalk (the mapped subset), pending the definitive three-way sample sheet. Treat as a
+  strong first pass, not a final result.
+- These interaction loci are **distinct from the additive short-day QTL** (see the CUCBA notebooks)
+  and from the main-effect Clayton QTL — read them as their own signal.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+RQ <- here("results/sim/zeal/rqtl")
+bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
+
+# flowering candidates (v5) on the TeoNAM cM axis, per trait
+.nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+load_cand <- function(trait_lc) {
+  cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", trait_lc)))
+  cand[, mid := (start + end) / 2]
+  cand[, cm := mapply(function(c, b) {
+    n <- .nat[chr_v5 == c & is.finite(cm)][order(pos_v5)]
+    if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = b, rule = 2)$y
+  }, chr, mid)]
+  cand[]
+}
+
+# per-trait GxE peaks: per-chr max real marker, 1.5-LOD CI, candidate-in-CI, sig flag
+gxe_peaks <- function(res, cand) {
+  g <- as.data.table(res$gxe, keep.rownames = "marker")
+  g <- g[grepl("^S[0-9]+_", marker)][is.finite(lod)]
+  thr5 <- as.numeric(res$thr[2])
+  g[,
+    {
+      i <- which.max(lod)
+      L <- lod[i]
+      ins <- .SD[lod >= L - 1.5]
+      lbp <- min(bp_of(ins$marker))
+      hbp <- max(bp_of(ins$marker))
+      cin <- cand[chr == .BY$chr & mid >= lbp & mid <= hbp, symbol]
+      .(
+        `pos (cM)` = round(pos[i], 1), `pos (Mb)` = round(bp_of(marker[i]) / 1e6, 1),
+        marker = marker[i], `interaction LOD` = round(L, 2), `perm 5% thr` = round(thr5, 2),
+        sig = fifelse(L >= thr5, "yes", "no"),
+        `1.5-LOD CI (Mb)` = sprintf("%.1f–%.1f", lbp / 1e6, hbp / 1e6),
+        `candidate in CI` = if (length(cin)) paste(cin, collapse = ", ") else "–"
+      )
+    },
+    by = chr
+  ][order(-`interaction LOD`)]
+}
+
+# per-trait GxE genome-wide profile (interaction LOD, cM axis, candidates + threshold)
+gxe_profile <- function(res, cand, trait) {
+  g <- as.data.table(res$gxe, keep.rownames = "marker")[is.finite(lod)]
+  thr5 <- as.numeric(res$thr[2])
+  nperm <- length(res$permmax)
+  sig <- g[grepl("^S[0-9]+_", marker) & lod >= thr5][, .SD[which.max(lod)], by = chr]
+  cl <- cand[chr %in% unique(g$chr) & is.finite(cm)]
+  ytop <- max(g$lod, na.rm = TRUE)
+  ggplot(g, aes(pos, lod)) +
+    geom_vline(data = cl, aes(xintercept = cm), inherit.aes = FALSE, linetype = "dotted", colour = "grey55", linewidth = 0.3) +
+    geom_line(colour = "#2c6fbb", linewidth = 0.4) +
+    geom_hline(yintercept = thr5, linetype = "dashed", colour = "red", linewidth = 0.35) +
+    geom_point(data = sig, colour = "red", size = 1.6) +
+    ggrepel::geom_text_repel(
+      data = cl, aes(x = cm, y = ytop * 1.18, label = symbol), inherit.aes = FALSE,
+      size = 2.2, colour = "grey25", angle = 90, hjust = 0, direction = "x", segment.size = 0.2, min.segment.length = 0
+    ) +
+    expand_limits(y = ytop * 1.45) +
+    facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+    labs(
+      x = "Chromosome (cM, TeoNAM JLM map)", y = "marker × ME interaction LOD",
+      title = sprintf("ZEAL %s GxE — photoperiod (marker × macroenvironment) interaction", trait),
+      subtitle = sprintf("short-day CUCBA vs long-day Clayton · 1000-perm line-level 5%% threshold = %.2f · dotted = flowering candidates", thr5)
+    ) +
+    theme_classic(base_size = 11) +
+    theme(
+      axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+      panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+      strip.background = element_blank()
+    ) +
+    scale_x_continuous(expand = c(0.01, 0))
+}
+
+has_trait <- function(trait_lc) file.exists(file.path(RQ, sprintf("mexg_%s_result.rds", trait_lc)))
+```
+
+## DTA GxE
+
+```{r dta-gxe, fig.width=11, fig.height=4.4}
+if (!has_trait("dta")) {
+  cat("mexg_dta_result.rds not found — run: TRAIT=DTA Rscript scripts/zeal_mexg_scan.R")
+} else {
+  res <- readRDS(file.path(RQ, "mexg_dta_result.rds"))
+  cand <- load_cand("dta")
+  print(gxe_profile(res, cand, "DTA"))
+}
+```
+
+```{r dta-gxe-peaks}
+if (has_trait("dta")) {
+  res <- readRDS(file.path(RQ, "mexg_dta_result.rds"))
+  pk <- gxe_peaks(res, load_cand("dta"))
+  knitr::kable(pk, caption = sprintf(
+    "DTA photoperiod (marker × ME) interaction: per-chromosome peak, %d lines, 1000-perm line-level 5%% threshold = %.2f. 'sig' = clears the interaction threshold. 1.5-LOD interval and any flowering candidate inside.",
+    res$n, as.numeric(res$thr[2])
+  ))
+}
+```
+
+## DTS GxE
+
+```{r dts-gxe, fig.width=11, fig.height=4.4}
+if (!has_trait("dts")) {
+  cat("mexg_dts_result.rds not found yet — run: TRAIT=DTS Rscript scripts/zeal_mexg_scan.R (this notebook picks it up on re-render).")
+} else {
+  res <- readRDS(file.path(RQ, "mexg_dts_result.rds"))
+  print(gxe_profile(res, load_cand("dts"), "DTS"))
+}
+```
+
+```{r dts-gxe-peaks}
+if (has_trait("dts")) {
+  res <- readRDS(file.path(RQ, "mexg_dts_result.rds"))
+  pk <- gxe_peaks(res, load_cand("dts"))
+  knitr::kable(pk, caption = sprintf(
+    "DTS photoperiod (marker × ME) interaction: per-chromosome peak, %d lines, 1000-perm line-level 5%% threshold = %.2f.",
+    res$n, as.numeric(res$thr[2])
+  ))
+}
+```
+
+## Reading the scan
+
+A significant **marker × ME** peak means the teosinte allele's effect on flowering **differs between
+short-day (CUCBA) and long-day (Clayton)** — i.e. the locus is **photoperiod-sensitive**. These are
+not the same as the additive flowering QTL: a locus can have a large, consistent effect in both day
+lengths (strong additive, no interaction) or a modest average effect that flips sign with day length
+(weak additive, strong interaction). Candidate genes are marked for orientation only — a peak's
+identity needs a coordinate check against the v5 annotation, not assignment by chromosome. All results
+are **provisional** pending real La Soledad flowering (or additional replication) and the definitive
+three-way sample sheet; the short-day side is currently one unreplicated environment (CUCBA).
