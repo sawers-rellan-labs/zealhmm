@@ -24,8 +24,9 @@ Inputs: CUCBA BLUEs from `scripts/zeal_cucba_pheno.R`, scanned by `scripts/zeal_
 ::: {.callout-important}
 ## Read this first — what is (and isn't) solid here
 - **Environment = CUCBA only.** The 2024 Guadalajara evaluation had two sites, but the *La
-  Soledad* flowering columns are a derived copy of CUCBA (FM = CUCBA − 3 exactly), so only
-  **CUCBA** is real short-day flowering. This is one **unreplicated augmented** environment
+  Soledad* flowering columns equal CUCBA minus a constant 3 days (slope 1, R² = 1), carrying no
+  independent signal, so only **CUCBA** is usable short-day flowering (copy vs planting-date
+  artifact undetermined, pending the raw dates). This is one **unreplicated augmented** environment
   (each NIL in one incomplete block; only the 3 checks replicated), so the BLUE per line is a
   block-adjusted single observation — no within-line error.
 - **Provisional line join.** CUCBA is keyed by `Origen` (BZeaPV23-…); the map to the BC2S3

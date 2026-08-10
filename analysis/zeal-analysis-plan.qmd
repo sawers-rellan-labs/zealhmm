@@ -150,7 +150,7 @@ dec <- data.table(
   Data = c("existing (Hannah)", "existing (Ruben)", "two lineages exist"),
   Decision = c(
     "add as its own trait to the rqtl list; needs units, tissue, and field. SPAD stays as a correlated proxy, not a substitute",
-    "analyzed as the short-day environment (CUCBA only; La Soledad flowering is a derived copy of CUCBA and is excluded) — see the Photoperiod section below. Provisional pending real La Soledad flowering and the definitive line crosswalk; still need the GDL field layout and planting dates",
+    "analyzed as the short-day environment (CUCBA only; La Soledad flowering equals CUCBA minus a constant 3 days per genotype (slope 1, R2 = 1), so it carries no independent signal and is excluded) — see the Photoperiod section below. Whether that is a copy or a planting-date arithmetic artifact is undetermined pending the raw flowering/planting dates; still need the GDL field layout too",
     "standardize on the primary CLY25 fieldbook SpATS BLUE; demote the introfinder SPAD20DAS and SPAD36DAS to secondary"
   )
 )
@@ -233,8 +233,11 @@ short-day complement to our long-day Clayton data (Central Crops Research Statio
 ~15° latitude gap is the photoperiod contrast the paper hinges on.
 
 **What we can actually use.** Of the two Guadalajara sites, only **CUCBA** carries real flowering
-data: the La Soledad flowering columns are a derived copy of CUCBA (FM = CUCBA − 3 exactly, verified),
-so they are excluded. CUCBA is a single **unreplicated augmented** environment (each NIL in one
+data: the La Soledad flowering columns equal CUCBA minus a constant 3 days (per genotype, slope 1,
+R² = 1 for both FM and FF), so they carry no independent flowering signal and are excluded. Whether
+that is a literal copy or a planting-date arithmetic artifact (shared flowering dates, planting dates
+3 days apart) cannot be told from these processed files — it needs the raw flowering and planting
+dates. CUCBA is a single **unreplicated augmented** environment (each NIL in one
 incomplete block; only the 3 checks replicated), and the CUCBA↔pedigree join currently uses the
 Genealogía crosswalk — so these results are **provisional** pending real La Soledad flowering (or more
 replication) and the definitive three-way sample sheet.

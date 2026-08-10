@@ -30,8 +30,9 @@ TeoNAM JLM map, and Haley–Knott machinery as the additive DTA/DTS notebooks. I
 - **Threshold** = genome-wide **1000-permutation**, permuted at the **line level** (breaking
   genotype↔phenotype while keeping the within-line env pairing), so it accounts for the two
   records-per-line non-independence that a naïve permutation would ignore.
-- **Provisional:** the short-day side is **CUCBA only** (La Soledad flowering is a derived copy of
-  CUCBA and was excluded), one **unreplicated** environment; and the CUCBA↔pedigree join is the
+- **Provisional:** the short-day side is **CUCBA only** (La Soledad flowering equals CUCBA minus a
+  constant 3 days — no independent signal — so it was excluded; copy vs planting-date artifact
+  undetermined), one **unreplicated** environment; and the CUCBA↔pedigree join is the
   Genealogía crosswalk (the mapped subset), pending the definitive three-way sample sheet. Treat as a
   strong first pass, not a final result.
 - These interaction loci are **distinct from the additive short-day QTL** (see the CUCBA notebooks)

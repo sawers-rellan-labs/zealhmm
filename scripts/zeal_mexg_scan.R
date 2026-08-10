@@ -15,8 +15,9 @@
 # Faithful to scripts/zeal_rqtl_scan.R: bcsft, calc.genoprob step=1
 # error.prob=0.01 haldane, method=hk, taxon dummy covariate.
 #
-# CAVEATS (provisional): short-day side = CUCBA only (La Soledad flowering is a
-# derived copy, excluded); one unreplicated environment; CUCBA<->pedigree join via
+# CAVEATS (provisional): short-day side = CUCBA only (La Soledad flowering equals
+# CUCBA minus a constant 3 days, no independent signal, excluded); one unreplicated
+# environment; CUCBA<->pedigree join via
 # the Genealogia crosswalk (pending the definitive three-way sheet).
 #
 # In:  results/sim/zeal/rqtl/zeal_dta_cross.rds              (Clayton cross: genos + DTA/DTS phenos)
