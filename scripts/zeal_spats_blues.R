@@ -10,9 +10,9 @@
 #          data/zeal/CLY25-Fieldbook.xlsx :: B5_BZea_eval          (new-form pedigree)
 #          data/zeal/CLY23_D4_FieldBook.xlsx :: UPDATED_... + GENOTYPE-CONVERSION (old->new)
 #          data/zeal/samplesheet_3way.csv    (pedigree -> taxon, gwas_nil)
-# Outputs: data/zeal/pheno_<trait>_blue.csv  (genotype, per-field + mean BLUE)
-#          data/zeal/pheno_blues_all.csv     (wide, all traits)
-#          data/zeal/tassel/pheno_dta_all.txt (TASSEL: Taxa | DTA | Family=taxon, gwas_nil lines)
+# Outputs: data/zeal/pheno_<trait>_cly_blue.csv  (genotype, per-field + <TRAIT>_CLY_mean BLUE)
+#          data/zeal/pheno_blues_all.csv        (wide, all traits, <TRAIT>_CLY_mean cols)
+#          data/zeal/tassel/pheno_<trait>_cly_all.txt (TASSEL: Taxa | <TRAIT>_CLY | Family=taxon)
 
 suppressMessages({
   library(here)
@@ -26,6 +26,13 @@ IQR_MULT <- as.numeric(Sys.getenv("IQR_MULT", "3")) # per field x taxa upper Tuk
 
 TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "EN", "Prolif", "LAE", "NBR", "StPi", "StPu")
 CONT_TRAITS <- c("DTA", "DTS", "PH", "EH", "SPAD", "LAE") # genuinely continuous; count traits (EN/Prolif/NBR) and binary (StPi/StPu) excluded
+# Environment tag: Clayton (temperate macro-environment), BLUE pooled over years
+# (cly23 + cly25). Output trait tokens carry the _CLY suffix (e.g. PH_CLY) so they
+# never collide with the subtropical _JAL BLUEs (Guadalajara). Base tokens above are
+# kept for the SpATS math; the tag is appended only at write time.
+ENV <- "CLY"
+tag <- function(tr) paste0(tr, "_", ENV) # native-case token, e.g. PH_CLY
+ftag <- function(tr) tolower(tag(tr)) # file stem, e.g. ph_cly
 EXCEL_1970 <- 25569L # Excel(1900) serial for 1970-01-01
 plant_serial <- function(d) as.integer(as.Date(d)) + EXCEL_1970
 canon_ped <- function(x) sub("\\.B$", "", x)
@@ -173,10 +180,10 @@ for (tr in TRAITS) {
   if (!length(cols)) next
   m <- Reduce(function(a, b) merge(a, b, by = "Genotype", all = TRUE), cols)
   fcols <- setdiff(names(m), "Genotype")
-  m[, (paste0(tr, "_mean")) := rowMeans(.SD, na.rm = TRUE), .SDcols = fcols]
-  fwrite(m, here(sprintf("data/zeal/pheno_%s_blue.csv", tolower(tr))))
-  alltraits <- merge(alltraits, m[, .(Genotype, get(paste0(tr, "_mean")))], by = "Genotype", all = TRUE)
-  setnames(alltraits, "V2", paste0(tr, "_mean"))
+  m[, (paste0(tag(tr), "_mean")) := rowMeans(.SD, na.rm = TRUE), .SDcols = fcols]
+  fwrite(m, here(sprintf("data/zeal/pheno_%s_blue.csv", ftag(tr))))
+  alltraits <- merge(alltraits, m[, .(Genotype, get(paste0(tag(tr), "_mean")))], by = "Genotype", all = TRUE)
+  setnames(alltraits, "V2", paste0(tag(tr), "_mean"))
 }
 fwrite(alltraits, here("data/zeal/pheno_blues_all.csv"))
 log_info("wrote per-trait BLUEs + pheno_blues_all.csv (%d genotypes)", nrow(alltraits))
@@ -186,16 +193,16 @@ log_info("wrote per-trait BLUEs + pheno_blues_all.csv (%d genotypes)", nrow(allt
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))
 dir.create(here("data/zeal/tassel"), showWarnings = FALSE)
 for (tr in TRAITS) {
-  bl <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", tolower(tr))))[
-    , .(pedigree = Genotype, y = get(paste0(tr, "_mean")))
+  bl <- fread(here(sprintf("data/zeal/pheno_%s_blue.csv", ftag(tr))))[
+    , .(pedigree = Genotype, y = get(paste0(tag(tr), "_mean")))
   ]
   tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], bl, by = "pedigree")[is.finite(y)]
   log_info(
     "TASSEL %s: %d gwas_nil lines with a BLUE (of %d panel lines)",
     tr, nrow(tass), ss[gwas_nil == TRUE, .N]
   )
-  ph_out <- here(sprintf("data/zeal/tassel/pheno_%s_all.txt", tolower(tr)))
-  writeLines(c("<Phenotype>", "taxa\tdata\tfactor", sprintf("Taxa\t%s\tFamily", tr)), ph_out)
+  ph_out <- here(sprintf("data/zeal/tassel/pheno_%s_all.txt", ftag(tr)))
+  writeLines(c("<Phenotype>", "taxa\tdata\tfactor", sprintf("Taxa\t%s\tFamily", tag(tr))), ph_out)
   fwrite(tass[, .(pedigree, round(y, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
   log_info("wrote %s", ph_out)
 }

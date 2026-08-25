@@ -1,6 +1,6 @@
 ---
 title: "ZEAL CUCBA DTA (short-day) — R/qtl (bcsft) additive QTL on the TeoNAM JLM grid"
-subtitle: "Classic R/qtl interval mapping (Haley–Knott) of days-to-anthesis measured at CUCBA, Guadalajara (subtropical, short-day; ~20.7°N), on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B). Same marker set + genetic map as the Clayton DTA notebook (TeoNAM JLM 0.1-cM, 9,063 markers) so the two are directly comparable. Significance = genome-wide 1000-permutation LOD threshold; models: no covariate vs + taxon (5-family), plus per-family scans."
+subtitle: "Classic R/qtl interval mapping (Haley–Knott) of days-to-anthesis measured at CUCBA, Jalisco (subtropical, short-day; ~20.7°N), on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B). Same marker set + genetic map as the Clayton DTA notebook (TeoNAM JLM 0.1-cM, 9,063 markers) so the two are directly comparable. Significance = genome-wide 1000-permutation LOD threshold; models: no covariate vs + taxon (5-family), plus per-family scans."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -14,19 +14,22 @@ execute:
   echo: true
 ---
 
+> **Phenotype — DTA_JAL.** Spanish (fieldbook): *floración masculina* (column `FM`). English: days to anthesis (male flowering).
+
 **What this is.** The R/qtl additive scan of ZEAL flowering time (DTA = days to anthesis)
-measured at **CUCBA in Guadalajara** — the *short-day, subtropical* environment — as the
+measured at **CUCBA in Jalisco** — the *short-day, subtropical* environment — as the
 short-day counterpart to the Clayton (long-day) `zeal-rqtl-dta-lod-profile` notebook. Same
 `bcsft` cross, same TeoNAM JLM map, Haley–Knott interval mapping, **1000-permutation** threshold.
 Inputs: CUCBA BLUEs from `scripts/zeal_cucba_pheno.R`, scanned by `scripts/zeal_rqtl_scan.R`
-(`TRAIT=CUCBADTA`).
+(`TRAIT=DTA_JAL`).
 
 ::: {.callout-important}
 ## Read this first — what is (and isn't) solid here
-- **Environment = CUCBA only.** The 2024 Guadalajara evaluation had two sites, but the *La
+- **Environment = CUCBA only.** The 2024 Jalisco evaluation had two sites, but the *La
   Soledad* flowering columns equal CUCBA minus a constant 3 days (slope 1, R² = 1), carrying no
-  independent signal, so only **CUCBA** is usable short-day flowering (copy vs planting-date
-  artifact undetermined, pending the raw dates). This is one **unreplicated augmented** environment
+  independent signal, so only **CUCBA** is usable short-day flowering (the cause is not yet
+  established, most likely a planting-date offset or a recording artifact, to be confirmed against
+  the raw dates with the Jalisco team). This is one **unreplicated augmented** environment
   (each NIL in one incomplete block; only the 3 checks replicated), so the BLUE per line is a
   block-adjusted single observation — no within-line error.
 - **Provisional line join.** CUCBA is keyed by `Origen` (BZeaPV23-…); the map to the BC2S3
@@ -45,9 +48,9 @@ library(qtl)
 library(ggplot2)
 library(ggrepel)
 RQ <- here("results/sim/zeal/rqtl")
-stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_cucba_pheno.R ; TRAITS="CUCBADTA,CUCBADTS" NPERM=1000 Rscript scripts/zeal_rqtl_scan.R
+stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_cucba_pheno.R ; TRAITS="DTA_JAL,DTS_JAL" NPERM=1000 Rscript scripts/zeal_rqtl_scan.R
 
-TRAIT <- "CUCBADTA"
+TRAIT <- "DTA_JAL"
 trait_lc <- tolower(TRAIT)
 bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
 ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
@@ -141,7 +144,7 @@ p <- ggplot(prof, aes(pos, lod, colour = model)) +
   scale_colour_manual(values = pal, name = NULL) +
   labs(
     x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
-    title = "ZEAL CUCBA DTA (short-day, Guadalajara) — R/qtl scanone, Haley–Knott (TeoNAM JLM grid)",
+    title = "ZEAL CUCBA DTA (short-day, Jalisco) — R/qtl scanone, Haley–Knott (TeoNAM JLM grid)",
     subtitle = sprintf(
       "%s markers · 1000-perm 5%% threshold: no-cov = %.2f, +taxon = %.2f · dotted = flowering candidates",
       format(NMARK, big.mark = ","), nc$thr5, tx$thr5

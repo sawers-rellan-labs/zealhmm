@@ -21,7 +21,7 @@ suppressMessages({
   library(data.table)
 })
 source(here("scripts/logging.R"))
-TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA_CLY"))
 TTAG <- tolower(TRAIT)
 NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 TDIR <- here("data/zeal/tassel") # JLM inputs (built HapMap + phenotype)

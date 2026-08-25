@@ -37,8 +37,9 @@ library(qtl)
 library(ggplot2)
 library(ggrepel)
 
-TRAIT <- "SPAD36DAS"
+TRAIT <- "SPAD36DAS_CLY"
 trait_lc <- tolower(TRAIT)
+base_lc <- sub("_(cly|jal)$", "", trait_lc) # candidate genes/registry (env-independent)
 PFX <- sprintf("zeal_%s", trait_lc)
 RQ <- here("results/sim/zeal/rqtl")
 stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_rqtl_scan.R
@@ -47,7 +48,7 @@ bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
 ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
 
 # candidate genes (B73 v5) for this trait, placed on the TeoNAM cM axis
-cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", trait_lc)))
+cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", base_lc)))
 cand[, mid := (start + end) / 2]
 .nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
 cand[, cm := mapply(function(c, b) {
@@ -147,7 +148,7 @@ Curated evidence for each **candidate** (tier, causal direction, evidence type, 
 
 ```{r candidate-registry}
 source(here::here("scripts/teonam_notebook_plots.R"))
-candidate_table(TRAIT)
+candidate_table(base_lc)
 ```
 
 ## Significant peaks (taxon model, α = 0.05) — one per chromosome, with candidate colocalization

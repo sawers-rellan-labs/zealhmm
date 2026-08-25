@@ -31,7 +31,10 @@ suppressMessages({
 
 # ---- config -----------------------------------------------------------------
 TRAITS <- c("dta", "dts", "ph", "prolif") # 4 TeoNAM-overlap traits
-PHENO_COL <- c(dta = "DTA", dts = "DTS", ph = "PH", prolif = "Prolif")
+# base trait key -> Clayton (_CLY) pheno column in the cross; scan/cross artifacts carry
+# the _cly file tag (candidate genes + effects tables stay base-keyed = env-independent).
+PHENO_COL <- c(dta = "DTA_CLY", dts = "DTS_CLY", ph = "PH_CLY", prolif = "Prolif_CLY")
+ftag <- function(tr) paste0(tr, "_cly") # scan-artifact file stem, e.g. dta -> dta_cly
 TRAIT_LABEL <- c(
   dta = "DTA (days to anthesis)",
   dts = "DTS (days to silk)",
@@ -71,7 +74,7 @@ peaks_all <- list()
 eff_all <- list()
 cand_all <- list()
 for (tr in TRAITS) {
-  peaks_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", tr)), stringsAsFactors = FALSE)
+  peaks_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", ftag(tr))), stringsAsFactors = FALSE)
   eff_all[[tr]] <- read.csv(file.path(RQTL_DIR, sprintf("zeal_%s_qtl_effects.csv", tr)), stringsAsFactors = FALSE)
   cp <- file.path("results/sim/zeal", sprintf("%s_candidate_overlap.csv", tr))
   cand_all[[tr]] <- if (file.exists(cp)) read.csv(cp, stringsAsFactors = FALSE) else NULL
@@ -227,7 +230,7 @@ headline <- list(dta_head, prol_head)
 
 geno_pheno_panel <- function(pk) {
   tr <- pk$trait
-  cross <- readRDS(file.path(RQTL_DIR, sprintf("zeal_%s_cross.rds", tr)))
+  cross <- readRDS(file.path(RQTL_DIR, sprintf("zeal_%s_cross.rds", ftag(tr))))
   g <- pull.geno(cross)[, pk$marker]
   y <- as.numeric(pull.pheno(cross, PHENO_COL[[tr]]))
   d <- data.frame(g = g, y = y)

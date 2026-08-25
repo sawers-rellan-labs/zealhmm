@@ -1,6 +1,6 @@
 ---
 title: "ZEAL flowering — photoperiod QTL (marker × macroenvironment) R/qtl scan"
-subtitle: "The day-length contrast: the same BC2S3 NILs phenotyped in a long-day temperate macroenvironment (Clayton NC, ~35.7°N) and a short-day subtropical one (CUCBA, Guadalajara, ~20.7°N). QTL × macroenvironment (G×ME) interaction by R/qtl Approach B: a doubled cross with an environment covariate, interaction LOD = scanone(full: taxon+env, marker×env) − scanone(additive: taxon+env). Genome-wide 1000-permutation, line-level interaction threshold. Loci with a significant G×ME are photoperiod-sensitivity candidates."
+subtitle: "The day-length contrast: the same BC2S3 NILs phenotyped in a long-day temperate macroenvironment (Clayton NC, ~35.7°N) and a short-day subtropical one (CUCBA, Jalisco, ~20.7°N). QTL × macroenvironment (G×ME) interaction by R/qtl Approach B: a doubled cross with an environment covariate, interaction LOD = scanone(full: taxon+env, marker×env) − scanone(additive: taxon+env). Genome-wide 1000-permutation, line-level interaction threshold. Loci with a significant G×ME are photoperiod-sensitivity candidates."
 author: "Fausto Rodríguez-Zapata"
 date: today
 format:
@@ -16,7 +16,7 @@ execute:
 
 **What this is.** The photoperiod scan for ZEAL flowering time. Macroenvironment (**ME**) = day-length
 class: **long-day temperate** (Clayton CLY23 + CLY25 BLUEs) vs **short-day subtropical** (CUCBA,
-Guadalajara BLUE). A locus whose teosinte-allele effect on flowering **changes between day lengths**
+Jalisco BLUE). A locus whose teosinte-allele effect on flowering **changes between day lengths**
 shows up as a **marker × ME interaction** — that is photoperiod sensitivity. Same `bcsft` cross,
 TeoNAM JLM map, and Haley–Knott machinery as the additive DTA/DTS notebooks. Inputs produced by
 `scripts/zeal_mexg_scan.R` (`TRAIT=DTA` / `TRAIT=DTS`; writes `mexg_<trait>_scan.csv` /
@@ -31,8 +31,9 @@ TeoNAM JLM map, and Haley–Knott machinery as the additive DTA/DTS notebooks. I
   genotype↔phenotype while keeping the within-line env pairing), so it accounts for the two
   records-per-line non-independence that a naïve permutation would ignore.
 - **Provisional:** the short-day side is **CUCBA only** (La Soledad flowering equals CUCBA minus a
-  constant 3 days — no independent signal — so it was excluded; copy vs planting-date artifact
-  undetermined), one **unreplicated** environment; and the CUCBA↔pedigree join is the
+  constant 3 days — no independent signal — so it was excluded; the cause is not yet established,
+  most likely a planting-date offset or a recording artifact, to be confirmed against the raw dates
+  with the Jalisco team), one **unreplicated** environment; and the CUCBA↔pedigree join is the
   Genealogía crosswalk (the mapped subset), pending the definitive three-way sample sheet. Treat as a
   strong first pass, not a final result.
 - These interaction loci are **distinct from the additive short-day QTL** (see the CUCBA notebooks)

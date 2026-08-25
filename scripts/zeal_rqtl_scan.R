@@ -17,7 +17,7 @@
 # Out: results/sim/zeal/rqtl/  shared: zeal_rqtl_{scanone_<tag>.csv, perms_<tag>.rds};
 #      per-trait (what the notebooks read): zeal_<trait>_{scanone,perms,peaks,peaks_ci,
 #      peaks_refined}_<tag>, _cross.rds, _scanone_by_taxon.csv, _peaks_refined_by_taxon.csv
-# Run: Rscript scripts/zeal_rqtl_scan.R    (or TRAITS="DTA,PH" Rscript scripts/zeal_rqtl_scan.R)
+# Run: Rscript scripts/zeal_rqtl_scan.R    (or TRAITS="DTA_CLY,PH_JAL" Rscript scripts/zeal_rqtl_scan.R)
 # =============================================================================
 suppressMessages({
   library(qtl)
@@ -28,7 +28,7 @@ source(here("scripts/logging.R"))
 source(here("scripts/detect_peaks.R")) # get_peak_table / refine_peaks (airmine multi-peak)
 set.seed(1234567890)
 
-TRAITS <- trimws(strsplit(Sys.getenv("TRAITS", "DTA,DTS,PH,EH,EN,LAE,NBR,Prolif,SPAD"), ",")[[1]])
+TRAITS <- trimws(strsplit(Sys.getenv("TRAITS", "DTA_CLY,DTS_CLY,PH_CLY,EH_CLY,EN_CLY,LAE_CLY,NBR_CLY,Prolif_CLY,SPAD_CLY"), ",")[[1]])
 NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
 INTRO_MIN <- as.numeric(Sys.getenv("INTRO_MIN", "0.05")) # per-family min fraction introgressed (HET or ALT)
 MIN_CLASS <- as.integer(Sys.getenv("MIN_CLASS", "3")) # per-family min samples in any present genotype class
@@ -82,7 +82,7 @@ colnames(Gc) <- mk$marker
 # Most traits are SpATS BLUEs (pheno_<t>_blue.csv); the SPAD-date traits are direct
 # per-line values and the binary stem/kinki traits empirical logits (as in the GWAS
 # drivers). The <TRAIT>_mean column is read case-insensitively.
-PHENO_BY <- c(SPAD20DAS = "direct", SPAD36DAS = "direct", STPI = "elogit", STPU = "elogit", KINKI = "elogit")
+PHENO_BY <- c(SPAD20DAS_CLY = "direct", SPAD36DAS_CLY = "direct", STPI_CLY = "elogit", STPU_CLY = "elogit", KINKI_CLY = "elogit")
 phtype <- function(tr) {
   p <- unname(PHENO_BY[toupper(tr)])
   if (is.na(p)) "blue" else p

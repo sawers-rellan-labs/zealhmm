@@ -17,7 +17,7 @@ source(here("scripts/logging.R"))
 source(here("scripts/emmax_qk.R"))
 source(here("scripts/zeal_gwas_perm.R"))
 
-TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA_CLY"))
 TTAG <- tolower(TRAIT)
 GENO <- Sys.getenv("GENO", "rtiger_mosaic") # <caller>_mosaic = HMM ancestry (Panel C) | <method>_gt = per-site genotype (Panel B); see TERMINOLOGY.md
 
