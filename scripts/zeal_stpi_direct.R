@@ -5,8 +5,8 @@
 # per-genotype mean of the plot scores: mean within each field, then mean across fields
 # (same field combination as the BLUE pipeline, only SpATS -> raw mean).
 # Reuses the exact field manifests from zeal_spats_blues.R (plot_id -> Genotype mapping).
-# Outputs: data/zeal/pheno_stpi_direct.csv (Genotype, StPi_cly23, StPi_cly25, StPi_mean)
-#          data/zeal/tassel/pheno_stpi_all.txt  (TASSEL: Taxa | StPi | Family=taxon, direct)
+# Outputs: data/zeal/pheno_stpi_cly_direct.csv (Genotype, StPi_cly23, StPi_cly25, StPi_CLY_mean)
+#          data/zeal/tassel/pheno_stpi_cly_all.txt  (TASSEL: Taxa | StPi | Family=taxon, direct)
 suppressMessages({
   library(here)
   library(data.table)
@@ -56,12 +56,12 @@ c25 <- field_mean(man25)
 setnames(c23, "v", "StPi_cly23")
 setnames(c25, "v", "StPi_cly25")
 m <- merge(c23, c25, by = "Genotype", all = TRUE)
-m[, StPi_mean := rowMeans(.SD, na.rm = TRUE), .SDcols = c("StPi_cly23", "StPi_cly25")]
-fwrite(m, here("data/zeal/pheno_stpi_direct.csv"))
+m[, StPi_CLY_mean := rowMeans(.SD, na.rm = TRUE), .SDcols = c("StPi_cly23", "StPi_cly25")]
+fwrite(m, here("data/zeal/pheno_stpi_cly_direct.csv"))
 log_info(
   "direct StPi: %d genotypes | mean %.3f sd %.3f range [%.3f, %.3f]",
-  nrow(m), mean(m$StPi_mean, na.rm = TRUE), sd(m$StPi_mean, na.rm = TRUE),
-  min(m$StPi_mean, na.rm = TRUE), max(m$StPi_mean, na.rm = TRUE)
+  nrow(m), mean(m$StPi_CLY_mean, na.rm = TRUE), sd(m$StPi_CLY_mean, na.rm = TRUE),
+  min(m$StPi_CLY_mean, na.rm = TRUE), max(m$StPi_CLY_mean, na.rm = TRUE)
 )
 
 # --- empirical-logit phenotype -----------------------------------------------
@@ -70,20 +70,20 @@ log_info(
 # logit  log((k+0.5)/(n-k+0.5))  (finite at k=0 and k=n), pooling plots across fields.
 plots <- rbind(man23, man25, fill = TRUE)[is.finite(StPi) & !is.na(Genotype)]
 el <- plots[, .(k = sum(StPi), n = .N), by = Genotype]
-el[, prop := k / n][, StPi_mean := log((k + 0.5) / (n - k + 0.5))]
-fwrite(el[, .(Genotype, k, n, prop, StPi_mean)], here("data/zeal/pheno_stpi_elogit.csv"))
+el[, prop := k / n][, StPi_CLY_mean := log((k + 0.5) / (n - k + 0.5))]
+fwrite(el[, .(Genotype, k, n, prop, StPi_CLY_mean)], here("data/zeal/pheno_stpi_cly_elogit.csv"))
 log_info(
   "elogit StPi: %d genotypes | %d ever-pigmented (k>0) | elogit range [%.2f, %.2f]",
-  nrow(el), sum(el$k > 0), min(el$StPi_mean), max(el$StPi_mean)
+  nrow(el), sum(el$k > 0), min(el$StPi_CLY_mean), max(el$StPi_CLY_mean)
 )
 
 # TASSEL phenotype (gwas_nil lines, Family=taxon). PHENO env picks direct or elogit;
 # elogit is the modeled StPi phenotype, so it is the default written to the TASSEL file.
 PHENO <- Sys.getenv("PHENO", "elogit")
-src <- if (PHENO == "elogit") el[, .(Genotype, StPi_mean)] else m[, .(Genotype, StPi_mean)]
+src <- if (PHENO == "elogit") el[, .(Genotype, StPi_CLY_mean)] else m[, .(Genotype, StPi_CLY_mean)]
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))
-tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], src[, .(pedigree = Genotype, y = StPi_mean)], by = "pedigree")[is.finite(y)]
-ph_out <- here("data/zeal/tassel/pheno_stpi_all.txt")
-writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tStPi\tFamily"), ph_out)
+tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], src[, .(pedigree = Genotype, y = StPi_CLY_mean)], by = "pedigree")[is.finite(y)]
+ph_out <- here("data/zeal/tassel/pheno_stpi_cly_all.txt")
+writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tStPi_CLY\tFamily"), ph_out)
 fwrite(tass[, .(pedigree, round(y, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
 log_info("wrote %s (%s phenotype, %d gwas_nil lines)", ph_out, PHENO, nrow(tass))

@@ -4,6 +4,17 @@ project:
   render:
     - index.qmd
     - analysis/*.qmd
+    # Guadalajara data belongs to the collaborators (Prof. Jesus / Bere team); keep
+    # these off the public site. Delivered separately in docs/analysis/zealqtl/ (gitignored).
+    # Photoperiod GxE stays public (per Ruben: photoperiod can be part of ZEAL).
+    - "!analysis/zeal-rqtl-cucbadta-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-cucbadts-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-fw-jal-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-ph-jal-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-eh-jal-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-en-jal-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-inc-jal-lod-profile.qmd"
+    - "!analysis/zeal-rqtl-sev-jal-lod-profile.qmd"
     - analysis/*.md
     - DATA.md
 

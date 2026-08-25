@@ -40,3 +40,7 @@ Rplots.pdf
 
 # Phase B release bundle (bulk; published to CyVerse, see DATA.md)
 /release/
+
+# Guadalajara deliverable, CUCBA team, collaborator data, never publish to GitHub
+docs/analysis/zealqtl/
+/zealqtl/

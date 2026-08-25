@@ -5,9 +5,9 @@
 # "no fit" and the stale BLUEs ran out of [0,1] range (min -0.034). Here, exactly as for StPi
 # (zeal_stpi_direct.R), the phenotype is the empirical logit of the per-genotype pubescent-plot
 # proportion. Reuses the exact field manifests from zeal_spats_blues.R (plot_id -> Genotype).
-# Outputs: data/zeal/pheno_stpu_direct.csv (Genotype, StPu_cly23, StPu_cly25, StPu_mean)
-#          data/zeal/pheno_stpu_elogit.csv (Genotype, k, n, prop, StPu_mean)
-#          data/zeal/tassel/pheno_stpu_all.txt  (TASSEL: Taxa | StPu | Family=taxon)
+# Outputs: data/zeal/pheno_stpu_cly_direct.csv (Genotype, StPu_cly23, StPu_cly25, StPu_CLY_mean)
+#          data/zeal/pheno_stpu_cly_elogit.csv (Genotype, k, n, prop, StPu_CLY_mean)
+#          data/zeal/tassel/pheno_stpu_cly_all.txt  (TASSEL: Taxa | StPu | Family=taxon)
 suppressMessages({
   library(here)
   library(data.table)
@@ -56,12 +56,12 @@ c25 <- field_mean(man25)
 setnames(c23, "v", "StPu_cly23")
 setnames(c25, "v", "StPu_cly25")
 m <- merge(c23, c25, by = "Genotype", all = TRUE)
-m[, StPu_mean := rowMeans(.SD, na.rm = TRUE), .SDcols = c("StPu_cly23", "StPu_cly25")]
-fwrite(m, here("data/zeal/pheno_stpu_direct.csv"))
+m[, StPu_CLY_mean := rowMeans(.SD, na.rm = TRUE), .SDcols = c("StPu_cly23", "StPu_cly25")]
+fwrite(m, here("data/zeal/pheno_stpu_cly_direct.csv"))
 log_info(
   "direct StPu: %d genotypes | mean %.3f sd %.3f range [%.3f, %.3f]",
-  nrow(m), mean(m$StPu_mean, na.rm = TRUE), sd(m$StPu_mean, na.rm = TRUE),
-  min(m$StPu_mean, na.rm = TRUE), max(m$StPu_mean, na.rm = TRUE)
+  nrow(m), mean(m$StPu_CLY_mean, na.rm = TRUE), sd(m$StPu_CLY_mean, na.rm = TRUE),
+  min(m$StPu_CLY_mean, na.rm = TRUE), max(m$StPu_CLY_mean, na.rm = TRUE)
 )
 
 # --- empirical-logit phenotype -----------------------------------------------
@@ -70,20 +70,20 @@ log_info(
 # logit  log((k+0.5)/(n-k+0.5))  (finite at k=0 and k=n), pooling plots across fields.
 plots <- rbind(man23, man25, fill = TRUE)[is.finite(StPu) & !is.na(Genotype)]
 el <- plots[, .(k = sum(StPu), n = .N), by = Genotype]
-el[, prop := k / n][, StPu_mean := log((k + 0.5) / (n - k + 0.5))]
-fwrite(el[, .(Genotype, k, n, prop, StPu_mean)], here("data/zeal/pheno_stpu_elogit.csv"))
+el[, prop := k / n][, StPu_CLY_mean := log((k + 0.5) / (n - k + 0.5))]
+fwrite(el[, .(Genotype, k, n, prop, StPu_CLY_mean)], here("data/zeal/pheno_stpu_cly_elogit.csv"))
 log_info(
   "elogit StPu: %d genotypes | %d ever-pubescent (k>0) | elogit range [%.2f, %.2f]",
-  nrow(el), sum(el$k > 0), min(el$StPu_mean), max(el$StPu_mean)
+  nrow(el), sum(el$k > 0), min(el$StPu_CLY_mean), max(el$StPu_CLY_mean)
 )
 
 # TASSEL phenotype (gwas_nil lines, Family=taxon). PHENO env picks direct or elogit;
 # elogit is the modeled StPu phenotype, so it is the default written to the TASSEL file.
 PHENO <- Sys.getenv("PHENO", "elogit")
-src <- if (PHENO == "elogit") el[, .(Genotype, StPu_mean)] else m[, .(Genotype, StPu_mean)]
+src <- if (PHENO == "elogit") el[, .(Genotype, StPu_CLY_mean)] else m[, .(Genotype, StPu_CLY_mean)]
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))
-tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], src[, .(pedigree = Genotype, y = StPu_mean)], by = "pedigree")[is.finite(y)]
-ph_out <- here("data/zeal/tassel/pheno_stpu_all.txt")
-writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tStPu\tFamily"), ph_out)
+tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)], src[, .(pedigree = Genotype, y = StPu_CLY_mean)], by = "pedigree")[is.finite(y)]
+ph_out <- here("data/zeal/tassel/pheno_stpu_cly_all.txt")
+writeLines(c("<Phenotype>", "taxa\tdata\tfactor", "Taxa\tStPu_CLY\tFamily"), ph_out)
 fwrite(tass[, .(pedigree, round(y, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
 log_info("wrote %s (%s phenotype, %d gwas_nil lines)", ph_out, PHENO, nrow(tass))

@@ -17,7 +17,7 @@ execute:
 **What this is.** A first R/qtl look at ZEAL DTA — the classic linkage-mapping route as a
 contrast to the EMMAX-MLM / TASSEL-JLM pipeline in the other ZEAL notebooks. A `bcsft` cross
 (BC₂S₃), interval mapping by Haley–Knott, and a **1000-permutation** genome-wide threshold. Inputs
-produced by `scripts/zeal_rqtl_scan.R` (TRAIT=DTA).
+produced by `scripts/zeal_rqtl_scan.R` (TRAITS=DTA_CLY).
 
 ::: {.callout-important}
 ## Marker set, map, and genotype — read this first
@@ -39,17 +39,18 @@ library(qtl)
 library(ggplot2)
 library(ggrepel)
 RQ <- here("results/sim/zeal/rqtl")
-stopifnot(dir.exists(RQ)) # run: TRAIT=DTA Rscript scripts/zeal_rqtl_scan.R
+stopifnot(dir.exists(RQ)) # run: TRAITS=DTA_CLY Rscript scripts/zeal_rqtl_scan.R
 
 # Markers are named S<chr_v5>_<pos_v5> (renamed upstream in zeal_rqtl_scan.R), so a
 # peak's v5 position reads straight off its name — no lookup, no v2 confusion.
-TRAIT <- "DTA"
-trait_lc <- tolower(TRAIT)
+TRAIT <- "DTA_CLY" # env-tagged token: scan artifacts + cross pheno column (Clayton, _CLY)
+trait_lc <- tolower(TRAIT) # "dta_cly" -> scan-artifact + figure file stems
+base_lc <- sub("_(cly|jal)$", "", trait_lc) # "dta" -> candidate genes/registry (env-independent)
 bp_of <- function(m) as.integer(sub("^S[0-9]+_", "", m))
 ci_str <- function(lbp, hbp) sprintf("%.1f–%.1f", pmin(lbp, hbp) / 1e6, pmax(lbp, hbp) / 1e6)
 
 # flowering-time candidate genes (B73 v5), placed on the TeoNAM cM axis
-cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", trait_lc)))
+cand <- fread(here(sprintf("data/teonam/%s_candidate_genes.tsv", base_lc)))
 cand[, mid := (start + end) / 2]
 .nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
 cand[, cm := mapply(function(c, b) {
@@ -64,14 +65,14 @@ cand_in_ci <- function(ch, lo, hi) {
 CCT_BP <- cand[symbol == "zmcct10", mid] # for the Zd chr10 effect section below
 
 load_scan <- function(tag) {
-  one <- fread(file.path(RQ, sprintf("zeal_dta_scanone_%s.csv", tag)))
-  perms <- readRDS(file.path(RQ, sprintf("zeal_dta_perms_%s.rds", tag)))
+  one <- fread(file.path(RQ, sprintf("zeal_dta_cly_scanone_%s.csv", tag)))
+  perms <- readRDS(file.path(RQ, sprintf("zeal_dta_cly_perms_%s.rds", tag)))
   th <- summary(perms, alpha = c(0.05, 0.10))
   list(one = one, thr5 = as.numeric(th[1]), thr10 = as.numeric(th[2]))
 }
 nc <- load_scan("nocovar")
 tx <- load_scan("taxon")
-cross <- readRDS(file.path(RQ, "zeal_dta_cross.rds"))
+cross <- readRDS(file.path(RQ, "zeal_dta_cly_cross.rds"))
 NMARK <- totmar(cross)
 ```
 
@@ -82,7 +83,7 @@ fB <- mean(g == 3, na.rm = TRUE)
 meta <- data.table(
   metric = c("individuals (DTA)", "markers (TeoNAM JLM grid)", "chromosomes", "H / het", "B / teosinte", "H:B ratio"),
   value = c(
-    sum(!is.na(pull.pheno(cross, "DTA"))), NMARK, nchr(cross),
+    sum(!is.na(pull.pheno(cross, "DTA_CLY"))), NMARK, nchr(cross),
     sprintf("%.3f", fH), sprintf("%.3f", fB), sprintf("%.1f", fH / fB)
   )
 )
@@ -93,7 +94,7 @@ knitr::kable(meta, caption = "Run composition. Markers = the TeoNAM JLM 0.1-cM g
 
 ```{r compare-table}
 peakrow <- function(tag) {
-  pk <- fread(file.path(RQ, sprintf("zeal_dta_peaks_%s.csv", tag)))
+  pk <- fread(file.path(RQ, sprintf("zeal_dta_cly_peaks_%s.csv", tag)))
   setnames(pk, old = names(pk), new = sub("^lod\\.", "", names(pk)))
   pk
 }
@@ -151,7 +152,7 @@ p <- ggplot(prof, aes(pos, lod, colour = model)) +
     strip.background = element_blank(), legend.position = "top"
   ) +
   scale_x_continuous(expand = c(0.01, 0))
-ggsave(file.path(RQ, "zeal_dta_lod_profile.png"), p, width = 11, height = 4.4, dpi = 200, bg = "white")
+ggsave(file.path(RQ, "zeal_dta_cly_lod_profile.png"), p, width = 11, height = 4.4, dpi = 200, bg = "white")
 p
 ```
 
@@ -161,7 +162,7 @@ Curated evidence for each **candidate** (tier, causal direction, evidence type, 
 
 ```{r candidate-registry}
 source(here::here("scripts/teonam_notebook_plots.R"))
-candidate_table(TRAIT)
+candidate_table(base_lc)
 ```
 
 ## Significant peaks (taxon model, α = 0.05)
@@ -170,7 +171,7 @@ R/qtl's `summary()` reports **at most one peak per chromosome**. That is the tab
 and the **1.5-LOD confidence interval in v5 Mb**, plus any **flowering candidate** whose gene body falls inside.
 
 ```{r peaks}
-cipk <- fread(file.path(RQ, "zeal_dta_peaks_ci_taxon.csv"))
+cipk <- fread(file.path(RQ, "zeal_dta_cly_peaks_ci_taxon.csv"))
 knitr::kable(
   cipk[order(chr, -lod), .(
     chr,
@@ -200,7 +201,7 @@ so the LOD curve fed to peak detection is already error-corrected.
 
 ```{r refined-peaks}
 refined <- function(tag) {
-  r <- fread(file.path(RQ, sprintf("zeal_dta_peaks_refined_%s.csv", tag)))
+  r <- fread(file.path(RQ, sprintf("zeal_dta_cly_peaks_refined_%s.csv", tag)))
   if (nrow(r) == 0) {
     return(r)
   }
@@ -241,7 +242,7 @@ keep low-evidence peaks from surfacing in the small per-family samples (n ≈ 60
   carry no parameter).
 
 ```{r per-taxon, fig.width=11, fig.height=4.6}
-bt <- fread(file.path(RQ, "zeal_dta_scanone_by_taxon.csv"))[is.finite(lod)]
+bt <- fread(file.path(RQ, "zeal_dta_cly_scanone_by_taxon.csv"))[is.finite(lod)]
 pal5 <- c(Zd = "#E41A1C", Zh = "#377EB8", Zl = "#4DAF4A", Zv = "#984EA3", Zx = "#FF7F00")
 ytop_bt <- max(bt$lod, na.rm = TRUE)
 pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
@@ -270,7 +271,7 @@ pt <- ggplot(bt, aes(pos, lod, colour = taxon)) +
     strip.background = element_blank(), legend.position = "top"
   ) +
   scale_x_continuous(expand = c(0.01, 0))
-ggsave(file.path(RQ, "zeal_dta_lod_by_taxon.png"), pt, width = 11, height = 4.6, dpi = 200, bg = "white")
+ggsave(file.path(RQ, "zeal_dta_cly_lod_by_taxon.png"), pt, width = 11, height = 4.6, dpi = 200, bg = "white")
 pt
 ```
 
@@ -303,7 +304,7 @@ QTL on one chromosome (or across the genome) shows all of them, not just its sin
 Thresholded at each family's own per-taxon permutation 5% (`thr5`).
 
 ```{r per-taxon-refined}
-btr <- fread(file.path(RQ, "zeal_dta_peaks_refined_by_taxon.csv"))
+btr <- fread(file.path(RQ, "zeal_dta_cly_peaks_refined_by_taxon.csv"))
 if (nrow(btr) == 0) {
   cat("No per-taxon refined peaks cleared the per-family thresholds.")
 } else {
@@ -338,7 +339,7 @@ zd_ci_lo <- round(min(bp_of(.ins$marker)) / 1e6, 1)
 zd_ci_hi <- round(max(bp_of(.ins$marker)) / 1e6, 1)
 zd_cct_in <- CCT_BP >= min(bp_of(.ins$marker)) & CCT_BP <= max(bp_of(.ins$marker))
 .g <- pull.geno(cross)[, mk]
-.d <- as.numeric(pull.pheno(cross, "DTA"))
+.d <- as.numeric(pull.pheno(cross, "DTA_CLY"))
 .ss <- unique(fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)], by = "pedigree")
 .tx <- .ss[match(as.character(pull.pheno(cross, "id")), pedigree), taxon]
 .k <- .tx == "Zd" & is.finite(.d) & !is.na(.g)
@@ -370,7 +371,7 @@ per-taxa 3·IQR upper fence were dropped upstream. `A/A` = B73, `A/B` = het, `B/
 
 ```{r zl-effect, fig.width=10, fig.height=4.2}
 gm <- pull.geno(cross)[, mk] # mk from the zd-setup chunk (current Zd peak)
-dta <- as.numeric(pull.pheno(cross, "DTA")) # DTA > 100 already dropped upstream
+dta <- as.numeric(pull.pheno(cross, "DTA_CLY")) # DTA > 100 already dropped upstream
 ids <- as.character(pull.pheno(cross, "id"))
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
 d <- data.table(
@@ -394,7 +395,7 @@ ef <- ggplot(d, aes(geno, dta, colour = taxon)) +
   ) +
   theme_bw(base_size = 11) +
   theme(panel.grid.minor = element_blank())
-ggsave(file.path(RQ, sprintf("zeal_dta_%s_effect.png", mk)), ef, width = 10, height = 4.2, dpi = 200, bg = "white")
+ggsave(file.path(RQ, sprintf("zeal_dta_cly_%s_effect.png", mk)), ef, width = 10, height = 4.2, dpi = 200, bg = "white")
 ef
 ```
 

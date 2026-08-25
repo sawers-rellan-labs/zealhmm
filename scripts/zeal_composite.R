@@ -16,11 +16,12 @@ suppressMessages({
 })
 source(here("scripts/teonam_notebook_plots.R"))
 source(here("scripts/logging.R"))
-TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA_CLY")) # env-tagged: GWAS/JLM artifacts carry _CLY/_JAL
 TTAG <- tolower(TRAIT)
+BASE_LC <- sub("_(cly|jal)$", "", TTAG) # base trait (candidate genes are env-independent)
 FAMCOL <- Sys.getenv("FAMILY_COL", "donor_accession") # best-calibrated MLM (lambda 1.19)
 OUT <- here("results/sim/zeal")
-overlap <- here("results/sim/zeal/dta_candidate_overlap.csv")
+overlap <- here(sprintf("results/sim/zeal/%s_candidate_overlap.csv", BASE_LC))
 
 lam <- function(p) {
   p <- p[is.finite(p) & p > 0 & p <= 1]

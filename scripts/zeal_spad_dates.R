@@ -22,16 +22,17 @@ ss <- fread(here("data/zeal/samplesheet_3way.csv"))
 spec <- c(SPAD20DAS = "SPAD_leaf_greenness_20DAS", SPAD36DAS = "SPAD_leaf_greenness_36DAS")
 for (tr in names(spec)) {
   col <- spec[[tr]]
+  trc <- paste0(tr, "_CLY") # Clayton env tag; SPAD dates are Clayton-only
   v <- suppressWarnings(as.numeric(d[[col]]))
   m <- data.table(Genotype = d$Genotype, v = v)[is.finite(v), .(mn = mean(v)), by = Genotype]
-  setnames(m, "mn", paste0(tr, "_mean"))
-  fwrite(m, here(sprintf("data/zeal/pheno_%s_direct.csv", tolower(tr))))
+  setnames(m, "mn", paste0(trc, "_mean"))
+  fwrite(m, here(sprintf("data/zeal/pheno_%s_direct.csv", tolower(trc))))
   tass <- merge(ss[gwas_nil == TRUE, .(pedigree, taxon)],
-    m[, .(pedigree = Genotype, y = get(paste0(tr, "_mean")))],
+    m[, .(pedigree = Genotype, y = get(paste0(trc, "_mean")))],
     by = "pedigree"
   )[is.finite(y)]
-  ph_out <- here(sprintf("data/zeal/tassel/pheno_%s_all.txt", tolower(tr)))
-  writeLines(c("<Phenotype>", "taxa\tdata\tfactor", sprintf("Taxa\t%s\tFamily", tr)), ph_out)
+  ph_out <- here(sprintf("data/zeal/tassel/pheno_%s_all.txt", tolower(trc)))
+  writeLines(c("<Phenotype>", "taxa\tdata\tfactor", sprintf("Taxa\t%s\tFamily", trc)), ph_out)
   fwrite(tass[, .(pedigree, round(y, 4), taxon)], ph_out, sep = "\t", append = TRUE, col.names = FALSE)
   log_info(
     "%s (as-is, per-line mean): %d lines (range %.1f-%.1f) | %d gwas_nil in TASSEL",

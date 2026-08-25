@@ -28,10 +28,11 @@
 suppressMessages(library(qtl))
 
 # ---- config -----------------------------------------------------------------
-TRAITS <- c("dta", "dts", "ph", "prolif") # 4 TeoNAM-overlap traits
+TRAITS <- c("dta", "dts", "ph", "prolif") # 4 TeoNAM-overlap traits (base tokens; Clayton/_CLY)
 
-# map lowercase trait key -> phenotype column name in the cross object
-PHENO_COL <- c(dta = "DTA", dts = "DTS", ph = "PH", prolif = "Prolif")
+# map lowercase base trait key -> Clayton phenotype column / file stem (_CLY env tag)
+PHENO_COL <- c(dta = "DTA_CLY", dts = "DTS_CLY", ph = "PH_CLY", prolif = "Prolif_CLY")
+ftag <- function(trait) paste0(trait, "_cly") # results file stem, e.g. dta -> dta_cly
 
 RQTL_DIR <- "results/sim/zeal/rqtl"
 PARTITION_CSV <- file.path(RQTL_DIR, "zeal_qtl_variance_partition.csv")
@@ -48,8 +49,8 @@ marker_bp <- function(m) as.numeric(sub("^S[0-9]+_", "", m))
 # ---- per-trait effect estimation --------------------------------------------
 fit_one_trait <- function(trait) {
   pcol <- PHENO_COL[[trait]]
-  cross_path <- file.path(RQTL_DIR, sprintf("zeal_%s_cross.rds", trait))
-  peaks_path <- file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", trait))
+  cross_path <- file.path(RQTL_DIR, sprintf("zeal_%s_cross.rds", ftag(trait)))
+  peaks_path <- file.path(RQTL_DIR, sprintf("zeal_%s_peaks_peakdrop_taxon.csv", ftag(trait)))
 
   logmsg("trait ", trait, " (pheno ", pcol, "): loading cross + peaks")
   cross <- readRDS(cross_path)

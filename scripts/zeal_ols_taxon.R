@@ -11,7 +11,7 @@ suppressMessages({
 })
 source(here("scripts/logging.R"))
 source(here("scripts/zeal_gwas_perm.R"))
-TRAIT <- toupper(Sys.getenv("TRAIT", "DTA"))
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA_CLY"))
 TTAG <- tolower(TRAIT)
 
 M0 <- readRDS(here("data/zeal/zeal_rtiger_mosaic.rds"))

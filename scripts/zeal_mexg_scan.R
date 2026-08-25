@@ -4,7 +4,7 @@
 # Approach B (interactive covariate).
 # -----------------------------------------------------------------------------
 # ME (macroenvironment) = day length: long-day temperate (Clayton BLUE, from the
-# zeal_dta_cross.rds phenotypes) vs short-day subtropical (CUCBA BLUE). Same NILs
+# zeal_<trait>_cly_cross.rds phenotypes) vs short-day subtropical (JAL/CUCBA BLUE). Same NILs
 # in both MEs -> a doubled cross with an environment covariate:
 #   out.full = scanone(BLUE, addcovar=[taxon,env], intcovar=env)   # marker x env
 #   out.add  = scanone(BLUE, addcovar=[taxon,env])
@@ -20,11 +20,12 @@
 # environment; CUCBA<->pedigree join via
 # the Genealogia crosswalk (pending the definitive three-way sheet).
 #
-# In:  results/sim/zeal/rqtl/zeal_dta_cross.rds              (Clayton cross: genos + DTA/DTS phenos)
-#      results/sim/zeal/rqtl/zeal_cucba_flowering_blues.csv  (from scripts/zeal_cucba_pheno.R)
-#      data/zeal/samplesheet_3way.csv                        (taxon covariate)
-# Out: results/sim/zeal/rqtl/mexg_<trait>_scan.csv, mexg_<trait>_result.rds
-# Env: TRAIT (DTA|DTS|ASI; default DTA), NPERM (default 1000), MEXG_OUT
+# In:  results/sim/zeal/rqtl/zeal_<trait>_cly_cross.rds       (Clayton cross: genos + <TRAIT>_CLY phenos)
+#      results/sim/zeal/rqtl/zeal_jal_flowering_blues.csv     (from scripts/zeal_cucba_pheno.R)
+#      data/zeal/samplesheet_3way.csv                         (taxon covariate)
+# Out: results/sim/zeal/rqtl/mexg_<trait>_scan.csv, mexg_<trait>_result.rds  (base trait token)
+# Env: TRAIT = base trait DTA|DTS|ASI (default DTA); resolves to <TRAIT>_CLY (temperate,
+#      Clayton) vs <TRAIT>_JAL (subtropical, Guadalajara). NPERM (default 1000), MEXG_OUT
 # Run: TRAIT=DTA NPERM=1000 Rscript scripts/zeal_mexg_scan.R
 #      TRAIT=DTS NPERM=1000 Rscript scripts/zeal_mexg_scan.R
 # =============================================================================
@@ -37,17 +38,20 @@ set.seed(1234567890)
 RQ <- here("results/sim/zeal/rqtl")
 OUT <- Sys.getenv("MEXG_OUT", RQ)
 NPERM <- as.integer(Sys.getenv("NPERM", "1000"))
-TRAIT <- Sys.getenv("TRAIT", "DTA")
+TRAIT <- toupper(Sys.getenv("TRAIT", "DTA")) # base trait; the two macro-environments
+CLY <- paste0(TRAIT, "_CLY") # temperate (Clayton) column/token
+JAL <- paste0(TRAIT, "_JAL") # subtropical (Guadalajara) column/token
 
 # ---- Clayton cross (light rds: genotypes + ALL Clayton trait phenos) --------
-cr <- readRDS(file.path(RQ, "zeal_dta_cross.rds"))
+# any per-trait cross rds carries every scanned trait's pheno column; read the CLY one.
+cr <- readRDS(file.path(RQ, sprintf("zeal_%s_cross.rds", tolower(CLY))))
 ids <- as.character(cr$pheno$id)
-dta_cly <- as.numeric(cr$pheno[[TRAIT]]) # long-day (Clayton) BLUE
+dta_cly <- as.numeric(cr$pheno[[CLY]]) # long-day (Clayton) BLUE
 
-# ---- CUCBA short-day BLUE, joined by line_id (= cross id) -------------------
-cu <- fread(file.path(RQ, "zeal_cucba_flowering_blues.csv"))
-cu <- cu[!is.na(line_id) & line_id != "" & is.finite(get(TRAIT))]
-dta_cu <- setNames(cu[[TRAIT]], cu$line_id)[ids] # short-day (CUCBA) BLUE
+# ---- JAL (CUCBA) short-day BLUE, joined by line_id (= cross id) -------------
+cu <- fread(file.path(RQ, "zeal_jal_flowering_blues.csv"))
+cu <- cu[!is.na(line_id) & line_id != "" & is.finite(get(JAL))]
+dta_cu <- setNames(cu[[JAL]], cu$line_id)[ids] # short-day (CUCBA/JAL) BLUE
 
 # ---- taxon covariate (same source as the additive pipeline) ----------------
 ss <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
