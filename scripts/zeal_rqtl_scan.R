@@ -139,6 +139,12 @@ stopifnot(!anyNA(pcol))
 # ---- JOINT scanone + ONE shared permutation null per model, sliced per trait --
 run_joint <- function(tag, addcov) {
   one <- scanone(cross, pheno.col = pcol, method = "hk", addcovar = addcov)
+  # R/qtl names the LOD column after the trait only when scanning 2+ phenotypes;
+  # for a single phenotype it is always "lod". Normalize both the scan and the
+  # permutation object so the per-trait slicing below works either way — without
+  # this, any single-trait run (e.g. TRAITS=PREDN_CLY) dies at one[, c(...,tr)]
+  # with "undefined columns selected".
+  if (np == 1L) names(one)[3] <- TRAITS[1]
   fwrite(data.table(marker = rownames(one), one), file.path(OUT, sprintf("zeal_rqtl_scanone_%s.csv", tag)))
   log_info("[%s] joint scanone done (%d traits); starting %d SHARED permutations on %d cores ...", tag, np, NPERM, NCORES)
   t0 <- proc.time()
@@ -147,6 +153,7 @@ run_joint <- function(tag, addcov) {
     n.perm = NPERM, n.cluster = NCORES, verbose = FALSE
   )
   el <- (proc.time() - t0)[["elapsed"]]
+  if (np == 1L) colnames(perms) <- TRAITS[1]
   saveRDS(perms, file.path(OUT, sprintf("zeal_rqtl_perms_%s.rds", tag)))
   log_info("[%s] SHARED PERM null: %.1f s for all %d traits (one sample, reused)", tag, el, np)
   for (tr in TRAITS) {
