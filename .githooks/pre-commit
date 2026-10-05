@@ -19,18 +19,33 @@ if ! command -v Rscript >/dev/null 2>&1; then
   exit 0
 fi
 
+# Pass the paths to R as ARGUMENTS, and keep every -e expression on a SINGLE
+# line. Two Windows/MINGW64 constraints force this, and both abort the commit
+# via `set -e` when violated:
+#   * readLines("stdin") segfaults under Rscript here, so the list cannot be
+#     piped in;
+#   * an -e argument containing embedded newlines is mangled when Git Bash
+#     hands it to the native Rscript.exe, and R segfaults on the malformed
+#     code. Repeated single-line -e flags avoid this and behave identically
+#     on macOS and Linux.
+# The read loop (rather than `mapfile`) keeps this working on the bash 3.2
+# that ships with macOS.
+file_list=()
+while IFS= read -r f; do
+  [ -n "$f" ] && file_list+=("$f")
+done <<< "$files"
+[ ${#file_list[@]} -eq 0 ] && exit 0
+
 echo "pre-commit: styling R/Rmd/qmd with styler…"
-printf '%s\n' "$files" | Rscript -e '
-  files <- readLines("stdin")
-  files <- files[nzchar(files) & file.exists(files)]
-  if (!length(files)) quit(status = 0)
-  if (!requireNamespace("styler", quietly = TRUE)) {
-    message("pre-commit: styler not installed; skipping."); quit(status = 0)
-  }
-  invisible(lapply(files, styler::style_file))
-'
+Rscript \
+  -e 'files <- commandArgs(trailingOnly = TRUE)' \
+  -e 'files <- files[nzchar(files) & file.exists(files)]' \
+  -e 'if (!length(files)) quit(status = 0)' \
+  -e 'if (!requireNamespace("styler", quietly = TRUE)) { message("pre-commit: styler not installed; skipping."); quit(status = 0) }' \
+  -e 'invisible(lapply(files, styler::style_file))' \
+  "${file_list[@]}"
 
 # re-stage anything styler reformatted so the styled version is committed
-printf '%s\n' "$files" | while IFS= read -r f; do
-  [ -n "$f" ] && git add -- "$f"
+for f in "${file_list[@]}"; do
+  git add -- "$f"
 done
