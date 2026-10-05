@@ -87,7 +87,8 @@ log_info(
   M_MAX, far, 100 * far / n0, nrow(d), uniqueN(d$Plot), uniqueN(d$Genotype)
 )
 if (length(dropped_geno)) {
-  log_warn("%d genotypes lost entirely (all scans above cutoff): %s",
+  log_warn(
+    "%d genotypes lost entirely (all scans above cutoff): %s",
     length(dropped_geno), paste(head(dropped_geno, 10), collapse = ", ")
   )
 }
