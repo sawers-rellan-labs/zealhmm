@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# ZEAL PREDN_CLY — hyperspectral-predicted leaf nitrogen -> SpATS genotype BLUEs
+# ZEAL PREDN_CLY <U+2014> hyperspectral-predicted leaf nitrogen -> SpATS genotype BLUEs
 # -----------------------------------------------------------------------------
 # Predicted_N is NOT a measured trait: it is a per-scan prediction from
 # hyperspectral reflectance, carrying its own model-space diagnostic
@@ -29,14 +29,27 @@
 #      plots spanning the full extent, which anchors the surface)
 #   5. predict(which = "Genotype") -> BLUEs
 #
-# CHOOSING M_MAX: within-plot SD of Predicted_N rises with M_Distance but
-# PLATEAUS above M = 3 (median within-plot SD 0.152 for M in 2-3, 0.151 for
-# 3-5, 0.149 above 5). A cutoff below 3.5 therefore discards plots that are no
-# less repeatable than ones it keeps, while costing whole genotypes (3.0 loses
-# 15 genotypes, 2.0 loses 58). At 3.5: 141 scans (3.1%) and 5 genotypes drop.
-# Note M_Distance is NOT independent of the trait (r = -0.24 with Predicted_N),
-# so filtering trims both tails of the phenotype distribution — a reason to
-# filter gently rather than strictly.
+# CHOOSING M_MAX: the default 4 matches the cutoff used in the CLY25-B5 data
+# analysis summary, which is the lineage these predictions come from; keeping it
+# avoids two different filters on the same trait. The data support a lenient
+# cutoff independently: within-plot SD of Predicted_N rises with M_Distance but
+# PLATEAUS above M = 3 (median within-plot SD 0.152 for M in 2-3, 0.151 for 3-5,
+# 0.149 above 5), so a stricter cutoff discards plots that are no less repeatable
+# than ones it keeps, while costing whole genotypes (3.5 loses 5, 3.0 loses 15,
+# 2.0 loses 58). At 4: 83 scans (1.8%) and 4 genotypes drop. Note M_Distance is
+# NOT independent of the trait (r = -0.24 with Predicted_N), so filtering trims
+# both tails of the phenotype distribution <U+2014> a further reason to filter gently.
+#
+# SCANNING DRIFT IS ALREADY HANDLED BY THE SPATIAL TERM, DO NOT ADD A COVARIATE:
+# spectra were collected over 2025-07-18..26, and the crew swept the field in
+# Range order (cor(scan day, Range) = 0.98; scan day is predicted from position
+# with R2 = 0.98). The senescence drift over those nine days is therefore the
+# same variable as the Range gradient, and PSANOVA(Row, Range) absorbs it:
+# cor(plot mean, scan day) = -0.19 before correction, +0.03 after. A
+# days-after-flowering covariate would be a near-collinear second correction.
+# The consequence for interpretation is that the fitted surface is soil
+# heterogeneity AND scanning drift, not soil alone. Scan dates per plot are in
+# the fieldspec_analysis repo (2025 spectra/BZ-extended.csv), leaf position 2ae.
 #
 # In : data/zeal/B5_block2_predictedN.csv   (staged from the BZeaPheno repo,
 #        data/B5_block2_predictedN.csv; cols Plot, Row, Range, Predicted_N,
@@ -54,7 +67,7 @@ suppressMessages({
 })
 source(here("scripts/logging.R"))
 
-M_MAX <- as.numeric(Sys.getenv("M_MAX", "3.5")) # Mahalanobis model-space cutoff
+M_MAX <- as.numeric(Sys.getenv("M_MAX", "4")) # Mahalanobis model-space cutoff
 RAW <- Sys.getenv("PREDN_RAW", here("data/zeal/B5_block2_predictedN.csv"))
 ENV <- "CLY" # Clayton, the temperate macro-environment
 FIELD <- "cly25" # the single field these scans come from
