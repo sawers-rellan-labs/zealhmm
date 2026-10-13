@@ -1,0 +1,108 @@
+---
+title: "ZEAL lipids — the 4 heavy-censoring species: below-detection = 0 vs NA"
+subtitle: "LOD profiles for the four lipid species with a high below-detection fraction (DG_34_6, PC_32_4, LPC_18_1, PC_32_1), scanned two ways: below-detection normalized-MS signal set to 0 (the log10(0+1)=0 spike) vs dropped to NA. R/qtl Haley-Knott scanone on the BC2S3 rtiger mosaic / TeoNAM JLM map, taxon covariate, 1000-permutation 5% threshold. Shows whether each species' QTL is a below-detection artifact."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The four lipid species whose normalized-MS signal is **below detection (≤0)** in a
+large fraction of lines — DG_34_6 (13.7%), PC_32_4 (11.2%), LPC_18_1 (5.6%), PC_32_1 (4.7%). Setting
+those below-detection values to **0** makes `log10(0·K+1) = 0`, a spike of identical values that can
+manufacture a QTL where the *detection rate* tracks genotype. Setting them to **NA** (dropped) removes
+that artifact. Below, each trait's genome-wide LOD profile is shown **both ways**, with each scan's own
+1000-permutation 5% threshold, so the artifact is visible directly.
+
+::: {.callout-note}
+## Result
+Under **below-detection → NA**, **none of the four traits has a genome-wide significant QTL** (α=0.05).
+The peaks present in the below-detection→0 scan are **below-detection artifacts**. (This does not affect
+`hpc1`, whose QTL are on **LPE** — a class sum, unaffected — and the LPC_18_1 species peak, which is the
+artifactual one.)
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+
+RQ <- here("results/sim/zeal/rqtl/lipid")
+traits4 <- c("DG_34_6", "PC_32_4", "LPC_18_1", "PC_32_1")
+
+# NA scan (below-detection dropped) + neg0 scan (below-detection = 0)
+na_one <- fread(file.path(RQ, "zeal_lipid_scanone_na4.csv"))
+z_one <- fread(file.path(RQ, "zeal_lipid_scanone_taxon.csv"))[, c("marker", "chr", "pos", ..traits4)]
+na_p <- readRDS(file.path(RQ, "zeal_lipid_perms_na4.rds"))
+z_p <- readRDS(file.path(RQ, "zeal_lipid_perms_taxon.rds"))
+thr_na <- summary(na_p, alpha = 0.05)[1, traits4]
+thr_z <- summary(z_p, alpha = 0.05)[1, traits4]
+
+# below-detection fraction from the raw normalized-MS signal
+raw <- fread(here("data/zeal/BZeaLipid_AdjustedMeans_wSums.csv"))
+pct_bd <- sapply(traits4, function(t) 100 * mean(raw[[t]] <= 0, na.rm = TRUE))
+
+lab <- c("below-detection = 0 (spike)" = "z", "below-detection = NA (dropped)" = "na")
+mk_long <- function(one, key) {
+  m <- melt(one[, c("chr", "pos", ..traits4)], id.vars = c("chr", "pos"), variable.name = "trait", value.name = "LOD")
+  m[, `:=`(trait = as.character(trait), treatment = names(lab)[lab == key])]
+  m
+}
+prof <- rbind(mk_long(z_one, "z"), mk_long(na_one, "na"))
+prof[, trait := factor(trait, levels = traits4)]
+thr_df <- rbind(
+  data.table(trait = traits4, treatment = names(lab)[lab == "z"], thr = as.numeric(thr_z)),
+  data.table(trait = traits4, treatment = names(lab)[lab == "na"], thr = as.numeric(thr_na))
+)[, trait := factor(trait, levels = traits4)]
+pal <- c("below-detection = 0 (spike)" = "#d1495b", "below-detection = NA (dropped)" = "#2c6fbb")
+```
+
+## Peak summary — the QTL are censoring artifacts
+
+```{r table}
+tab <- rbindlist(lapply(traits4, function(tr) {
+  data.table(
+    trait = tr, `% below-detection` = round(pct_bd[tr], 1),
+    `neg→0 max LOD` = round(max(z_one[[tr]], na.rm = TRUE), 1),
+    `neg→0 5% thr` = round(thr_z[tr], 1),
+    `neg→0 sig?` = ifelse(max(z_one[[tr]], na.rm = TRUE) > thr_z[tr], "YES", "no"),
+    `NA max LOD` = round(max(na_one[[tr]], na.rm = TRUE), 1),
+    `NA 5% thr` = round(thr_na[tr], 1),
+    `NA sig?` = ifelse(max(na_one[[tr]], na.rm = TRUE) > thr_na[tr], "YES", "no")
+  )
+}))
+knitr::kable(tab, caption = "Max LOD vs 1000-perm 5% threshold, below-detection=0 vs =NA. The QTL that clear threshold under neg→0 all fall below threshold once below-detection is dropped.")
+```
+
+## LOD profiles (whole genome), both treatments
+
+Solid lines = LOD; dashed horizontals = each treatment's 1000-perm 5% threshold. Where the red
+(neg→0) line clears its red threshold but the blue (NA) line stays under its blue threshold, the peak
+was a below-detection artifact.
+
+```{r lod-profiles, fig.width=12, fig.height=9}
+ggplot(prof, aes(pos, LOD, colour = treatment)) +
+  geom_line(linewidth = 0.45) +
+  geom_hline(data = thr_df, aes(yintercept = thr, colour = treatment), linetype = "dashed", linewidth = 0.35) +
+  facet_grid(trait ~ chr, scales = "free_x", space = "free_x", switch = "x") +
+  scale_colour_manual(values = pal, name = NULL) +
+  labs(
+    x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD",
+    title = "Heavy-censoring lipid species — below-detection = 0 vs NA (HK scanone, taxon covariate, 1000-perm)",
+    subtitle = "each trait's own 5% threshold dashed; a peak clearing red-thr but not blue-thr = a below-detection artifact"
+  ) +
+  theme_bw(base_size = 11) +
+  theme(
+    axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+    strip.background = element_rect(fill = "grey92"), legend.position = "top"
+  )
+```

@@ -1,0 +1,218 @@
+---
+title: "ZEAL lipids: R/qtl (bcsft) LOD profiles on the UNTRANSFORMED abundance signal"
+subtitle: "Multi-trait glycerolipid QTL overview on the RAW (untransformed) normalized HPLC-MS signal, the scale used by the original High-PC1 QTL analysis (PTxB73_lipid_QTL_GxE): raw species, raw class sums, raw ratios, no log, no count scaling. Haley-Knott interval mapping on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B), marker set + genetic map = the TeoNAM JLM 0.1-cM grid (ZEAL mosaic projected on), taxon covariate, genome-wide 1000-permutation threshold. Candidates = the B73 v5 glycerolipid gene set rebuilt from KEGG zma00561/zma00564 + CornCyc(E2P2) via MaizeMine."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** The ZEAL glycerolipid QTL scan run on the **untransformed abundance signal**
+across all 133 lipid traits (115 species + 10 class sums + 8 ratios). This is the **scale-faithful
+reproduction** of the original High-PC1 lipid QTL analysis: verified against the original data-prep
+script (`PTxB73_lipid_QTL_GxE`, the builder of `B73xPT_base_phenotype.csv`), which maps raw species,
+raw `rowSums` class sums, and raw ratios (`num/den` per plant, then averaged) with **no log and no
+count scaling**. The only `log10` in that pipeline is on a throwaway matrix used solely to select
+interesting metabolite ratios via a Gaussian graphical model; it is never a mapped phenotype.
+
+Like the log-scale overview, this reports the traits carrying a **genome-wide significant** QTL,
+shows their LOD profiles grouped **by lipid class / ratio**, and annotates each significant peak with
+the glycerolipid **enzyme candidate(s)** whose B73 v5 locus falls inside the QTL support interval.
+
+::: {.callout-important}
+## Pipeline, map, and genotype, read this first
+- **Scan:** `scripts/zeal_lipid_rqtl_scan.R` with `TAG=raw PHENO_FILE=data/zeal/pheno_lipid_raw.csv`
+  joint `bcsft` (BC₂S₃) Haley-Knott `scanone` over all 133 traits at once, **taxon covariate**
+  (5-family analog), one shared **1000-permutation** genome-wide null. Significance = per-trait 5%
+  permutation LOD threshold.
+- **No ZEAL genetic map is estimated**: every cM is a **TeoNAM JLM** distance (9,063-marker 0.1-cM
+  grid); the ZEAL rtiger mosaic is *projected* onto it (nearest block). Markers `S<chr>_<pos_v5>`.
+  Genotypes are HMM-error-corrected before the scan (`calc.genoprob(error.prob=0.01)`).
+- **Phenotypes:** per-genotype **normalized MS signal** (peak-area of the ion current, HPLC-MS;
+  single rep, field-position-adjusted values, no replicates), IDs matched to the `nil_id` register
+  (`scripts/zeal_lipid_pheno.R TRANSFORM=none` → `data/zeal/pheno_lipid_raw.csv`). **No transform**:
+  the provided species / class-sum / ratio columns are used as-is (negatives and near-zero
+  below-detection values kept). Sums/ratios are the file's plant-level-averaged columns, **not**
+  recomputed from the species.
+- **Candidates:** `scripts/zeal_lipid_candidates_v5.py` (KEGG→CornCyc/E2P2 via MaizeMine, v5 rebuild);
+  symbols/function from the MaizeGDB curated annotation (`data/Zm00001eb.1.fulldata.txt`). Peak↔gene
+  overlap by `TAG=raw` runs of `scripts/zeal_lipid_qtl_annotate.R` / `zeal_lipid_qtl_enzyme_table.py`.
+:::
+
+::: {.callout-warning}
+## Raw scale keeps below-detection values: one peak needs care
+On the raw scale the below-detection cells (normalized signal ≤ 0) are kept as near-zero negatives
+rather than dropped. For **`DGDG_34_6`** (13.7% below-detection) this matters: it shows strong chr3
+peaks here (LOD up to 11.5), yet in the log-scale companion run (`na4`) it had **no** significant QTL
+once below-detection was set to NA, i.e. its signal there was a detection-rate artifact. Read its raw
+chr3 peaks with that in mind. The other heavy-censoring species (`PC_32_4`, `LPC_18_1`, `PC_32_1`) do
+**not** produce significant raw peaks. The strong non-censored hits are unaffected.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+
+RQ <- here("results/sim/zeal/rqtl/lipid")
+stopifnot(dir.exists(RQ))
+# raw-scale scan: TAG=raw PHENO_FILE=data/zeal/pheno_lipid_raw.csv bash scripts/zeal_lipid_scan_parallel.sh
+
+# joint LOD profile (marker, chr, pos[cM], <133 trait LOD columns>) + per-trait perm threshold
+scan <- fread(file.path(RQ, "zeal_lipid_scanone_raw.csv"))
+perms <- readRDS(file.path(RQ, "zeal_lipid_perms_raw.rds"))
+thr5v <- setNames(as.numeric(summary(perms, alpha = 0.05)), colnames(perms))
+
+summ <- fread(file.path(RQ, "zeal_lipid_qtl_summary_raw.csv")) # significant QTL (raw)
+enz <- fread(file.path(RQ, "zeal_lipid_qtl_enzyme_candidates_raw.csv")) # QTL × enzyme candidate (raw)
+
+# trait -> lipid class + display group (species classes; class sums; ratios)
+classify <- function(tr) {
+  fifelse(
+    grepl("^[A-Za-z]+_[0-9]+_[0-9]+$", tr), "species",
+    fifelse(grepl("^[A-Za-z]+$", tr), "sum", "ratio")
+  )
+}
+lipid_class <- function(tr) fifelse(classify(tr) == "ratio", "ratio", sub("_.*$", "", tr))
+sig_traits <- sort(unique(summ$trait))
+```
+
+## Significant QTL summary (raw scale)
+
+```{r summary-table}
+st <- summ[, .(
+  trait, class, chr,
+  `peak (Mb)` = round(peak_mb, 1), LOD = round(lod, 1),
+  `5% thr` = round(get(if ("thresh" %in% names(summ)) "thresh" else "thr5"), 1),
+  `CI (Mb)` = paste0(round(ci_left_mb, 1), "-", round(ci_right_mb, 1)),
+  `CI width (Mb)` = round(width_mb, 2), marker
+)][order(-LOD)]
+knitr::kable(st, caption = sprintf(
+  "Genome-wide significant lipid QTL on the UNTRANSFORMED signal (HK scanone, taxon covariate, 1000-perm 5%%): %d peaks across %d traits.",
+  nrow(st), uniqueN(summ$trait)
+))
+```
+
+## Enzyme candidates in the QTL intervals
+
+Glycerolipid genes (B73 v5) whose locus falls inside a raw QTL's LOD-support CI. Symbol + function are
+the MaizeGDB curated annotation; blank symbol = no curated symbol assigned in v5.
+
+```{r enzyme-table}
+et <- enz[, .(trait, chr,
+  `peak (Mb)` = peak_mb, LOD = lod, `CI (Mb)` = ci_mb,
+  `locus (v5)` = locus_id_v5, symbol, `enzyme / function` = enzyme_function
+)]
+knitr::kable(et, caption = sprintf(
+  "%d QTL×candidate rows; %d distinct enzymes (%d with a curated symbol).",
+  nrow(et), uniqueN(enz$locus_id_v5), uniqueN(enz[symbol != ""]$locus_id_v5)
+))
+```
+
+## LOD profiles by lipid class / ratio
+
+Each figure is one lipid class (or the ratios); coloured lines are the class's traits that carry a
+significant QTL, across the whole genome (all 10 chromosomes, TeoNAM cM). Dotted lines = each
+trait's 5% permutation threshold; red points = significant peaks. **Dashed grey verticals** mark the
+glycerolipid candidate enzyme loci in the QTL intervals, labelled by `gene_label` (the MaizeGDB
+symbol, or the assembly locus id `Zm00001eb…` when no symbol is assigned).
+
+```{r build-plot-data}
+# long LOD for significant traits only
+lodL <- melt(scan[, c("chr", "pos", sig_traits), with = FALSE],
+  id.vars = c("chr", "pos"), variable.name = "trait", value.name = "LOD"
+)
+lodL[, trait := as.character(trait)][, grp := lipid_class(trait)]
+
+# significant peaks (red points)
+pk <- summ[, .(trait, chr, pos = peak_cm, LOD = lod)][, grp := lipid_class(trait)]
+
+# candidate enzyme loci in the QTLs, placed on the TeoNAM cM axis; label = gene_label
+nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+bp2cm <- function(ch, bp) {
+  n <- nat[chr_v5 == ch & is.finite(cm)][order(pos_v5)]
+  if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = bp, rule = 2)$y
+}
+cv5 <- fread(here("data/zeal/lipid_candidates_v5.tsv"))
+cv5[, mid := (as.numeric(start) + as.numeric(end)) / 2]
+ecand <- unique(enz[, .(locus = locus_id_v5, trait, chr, gene_label)])
+ecand[, grp := lipid_class(trait)]
+ecand <- merge(ecand, cv5[, .(locus = gene_v5, mid)], by = "locus", all.x = TRUE)
+ecand[, cm := mapply(bp2cm, chr, mid)]
+cand_grp <- unique(ecand[is.finite(cm), .(grp, chr, cm, gene_label)])
+
+groups <- unique(lodL$grp)
+groups <- groups[order(match(groups, c("DGDG", "MGDG", "DG", "PC", "PE", "PG", "PI", "SQDG", "LPC", "LPE", "ratio")))]
+```
+
+```{r lod-profiles, results='asis', fig.width=13, fig.height=6}
+for (g in groups) {
+  d <- lodL[grp == g]
+  trs <- sort(unique(d$trait))
+  thrg <- data.table(trait = trs, thr = thr5v[trs])
+  pkg <- pk[grp == g]
+  cl <- cand_grp[grp == g]
+  ytop <- max(d$LOD, na.rm = TRUE)
+  cat(sprintf("\n\n### %s: %s\n\n", g, paste(trs, collapse = ", ")))
+  p <- ggplot(d, aes(pos, LOD, colour = trait)) +
+    geom_vline(
+      data = cl, aes(xintercept = cm), inherit.aes = FALSE,
+      linetype = "dashed", colour = "grey55", linewidth = 0.3
+    ) +
+    geom_line(linewidth = 0.5) +
+    geom_hline(
+      data = thrg, aes(yintercept = thr, colour = trait),
+      linetype = "dotted", linewidth = 0.3, show.legend = FALSE
+    ) +
+    geom_point(data = pkg, aes(pos, LOD), colour = "red", size = 1.7, inherit.aes = FALSE) +
+    ggrepel::geom_text_repel(
+      data = cl, aes(x = cm, y = ytop * 1.12, label = gene_label), inherit.aes = FALSE,
+      size = 3.5, colour = "grey15", angle = 90, hjust = 0, direction = "x",
+      segment.size = 0.2, min.segment.length = 0, max.overlaps = Inf
+    ) +
+    expand_limits(y = ytop * 1.7) +
+    facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+    labs(
+      x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD", colour = "trait",
+      title = sprintf("ZEAL %s glycerolipid QTL (untransformed signal): HK scanone, taxon covariate, 1000-perm 5%%", g),
+      subtitle = "dashed grey = candidate enzyme loci (label = MaizeGDB symbol, else assembly locus id)"
+    ) +
+    theme_classic(base_size = 12) +
+    theme(
+      axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+      panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+      strip.background = element_blank(), legend.position = "bottom"
+    ) +
+    scale_x_continuous(expand = c(0.01, 0))
+  print(p)
+  cat("\n")
+}
+```
+
+## How the raw-scale result differs from the log-scale scan
+
+This scan is the scale-faithful reproduction; the companion log-scale notebook
+(`zeal-rqtl-lipid-lod-profile`) uses our own `log10(count+1)` species/sums + `log10(ratio)` variant.
+Key differences, stated so neither is mistaken for the other:
+
+- **Comparable architecture, not identical:** the raw scan finds `r nrow(summ)` significant peaks
+  across `r uniqueN(summ$trait)` traits, close to the log scan's count, so log-transforming did not
+  create or destroy the bulk of the signal.
+- **The `hpc1` chr3 story does NOT reproduce on the raw scale.** In the log run, `hpc1`
+  (Zm00001eb121780, ZmPLA1.2) sat under a chr3 ~8 Mb **LPE**/**LPC_18_1** QTL. On the raw scale
+  **LPE is significant only on chr6 (~120.7 Mb)**, `LPC_18_1` is not significant at all, and **hpc1
+  falls in no raw QTL CI**. Whether the log-scale chr3 hpc1 peak is a transform-induced
+  effect or the raw scan simply lacks power there is not resolved by this notebook; it is flagged, not
+  explained.
+- **`DGDG_34_6` chr3 is strong on raw but was an artifact on log/na4**, see the warning box above.
+- **Top raw hit:** `SQDG_36_5` on chr2 (~224 Mb, LOD ~19.9), with `plc3` (phospholipase C) among the
+  candidates in its interval.

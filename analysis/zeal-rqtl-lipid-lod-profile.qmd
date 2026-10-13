@@ -1,0 +1,323 @@
+---
+title: "ZEAL lipids — R/qtl (bcsft) LOD profiles + enzyme candidates, by lipid class"
+subtitle: "Multi-trait glycerolipid QTL overview: Haley–Knott interval mapping on the BC2S3 rtiger ancestry mosaic (B73=A / het=H / teosinte=B), marker set + genetic map = the TeoNAM JLM 0.1-cM grid (ZEAL mosaic projected on), taxon covariate, genome-wide 1000-permutation threshold. Phenotypes = per-genotype normalized HPLC-MS signal (peak-area of the ion current; single rep, field-position-adjusted, no replicates), preprocessed as below-detection (≤0)→NA, integer counts (×1e9), log10(count+1) for species and the provided class-sum columns; ratios are the file's plant-level-averaged ratio columns (not recomputed), log10-transformed. Candidates = the B73 v5 glycerolipid gene set rebuilt from KEGG zma00561/zma00564 + CornCyc(E2P2) via MaizeMine (NOT lifted from AGPv4)."
+author: "Fausto Rodríguez-Zapata"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+**What this is.** A single overview of the ZEAL glycerolipid QTL scan across all 133 lipid
+traits (115 species + 10 class sums + 8 ratios). Rather than one notebook per trait, it reports
+the traits that carry a **genome-wide significant** QTL, shows their LOD profiles grouped **by
+lipid class / ratio**, and annotates each significant peak with the glycerolipid **enzyme
+candidate(s)** whose B73 v5 locus falls inside the QTL support interval.
+
+::: {.callout-important}
+## Pipeline, map, and genotype — read this first
+- **Scan:** `scripts/zeal_lipid_rqtl_scan.R` — joint `bcsft` (BC₂S₃) Haley–Knott `scanone` over all
+  133 traits at once, **taxon covariate** (5-family analog), one shared **1000-permutation**
+  genome-wide null. Significance = per-trait 5% permutation LOD threshold.
+- **No ZEAL genetic map is estimated**: every cM is a **TeoNAM JLM** distance (9,063-marker 0.1-cM
+  grid); the ZEAL rtiger mosaic is *projected* onto it (nearest block). Markers `S<chr>_<pos_v5>`.
+  Genotypes are HMM-error-corrected before the scan (`calc.genoprob(error.prob=0.01)`).
+- **Phenotypes:** per-genotype **normalized MS signal** (peak-area of the ion current, HPLC-MS;
+  single rep, field-position-adjusted values — no replicates), IDs matched to the `nil_id` register
+  (`scripts/zeal_lipid_pheno.R`); transform = **below-detection (≤0)→NA** (dropped, no 0-spike),
+  integer counts (K=1e9), `log10(count+1)` for species and the **provided** class-sum columns; the
+  ratios are the file's **plant-level-averaged** ratio columns (lower variance than a ratio of means —
+  a per-plant/spike-in normalization that sharpens the ratio peaks), `log10`-transformed. Sums/ratios
+  are **not** recomputed from the species.
+- **Candidates:** `scripts/zeal_lipid_candidates_v5.py` (KEGG→CornCyc/E2P2 via MaizeMine, v5 rebuild);
+  symbols/function from the MaizeGDB curated annotation (`data/Zm00001eb.1.fulldata.txt`). Peak↔gene
+  overlap by `scripts/zeal_lipid_qtl_annotate.R` / `scripts/zeal_lipid_qtl_enzyme_table.R`.
+:::
+
+```{r setup}
+library(here)
+library(data.table)
+library(qtl)
+library(ggplot2)
+library(ggrepel)
+
+RQ <- here("results/sim/zeal/rqtl/lipid")
+stopifnot(dir.exists(RQ)) # run: Rscript scripts/zeal_lipid_rqtl_scan.R (NPERM=1000 NCORES=1)
+
+# joint LOD profile (marker, chr, pos[cM], <133 trait LOD columns>) + per-trait perm threshold
+scan <- fread(file.path(RQ, "zeal_lipid_scanone_taxon.csv"))
+perms <- readRDS(file.path(RQ, "zeal_lipid_perms_taxon.rds"))
+thr5v <- setNames(as.numeric(summary(perms, alpha = 0.05)), colnames(perms))
+
+summ <- fread(file.path(RQ, "zeal_lipid_qtl_summary.csv")) # significant QTL
+enz <- fread(file.path(RQ, "zeal_lipid_qtl_enzyme_candidates.csv")) # QTL × enzyme candidate
+
+# trait -> lipid class + display group (species classes; class sums; ratios)
+classify <- function(tr) {
+  fifelse(
+    grepl("^[A-Za-z]+_[0-9]+_[0-9]+$", tr), "species",
+    fifelse(grepl("^[A-Za-z]+$", tr), "sum", "ratio")
+  )
+}
+lipid_class <- function(tr) fifelse(classify(tr) == "ratio", "ratio", sub("_.*$", "", tr))
+sig_traits <- sort(unique(summ$trait))
+```
+
+## Significant QTL summary
+
+```{r summary-table}
+st <- summ[, .(
+  trait, class, chr,
+  `peak (Mb)` = round(peak_mb, 1), LOD = round(lod, 1),
+  `5% thr` = round(get(if ("thresh" %in% names(summ)) "thresh" else "thr5"), 1),
+  `CI (Mb)` = paste0(round(ci_left_mb, 1), "–", round(ci_right_mb, 1)),
+  `CI width (Mb)` = round(width_mb, 2), marker
+)][order(-LOD)]
+knitr::kable(st, caption = sprintf(
+  "Genome-wide significant lipid QTL (HK scanone, taxon covariate, 1000-perm 5%%): %d peaks across %d traits.",
+  nrow(st), uniqueN(summ$trait)
+))
+```
+
+## Enzyme candidates in the QTL intervals
+
+Glycerolipid genes (B73 v5) whose locus falls inside a QTL's LOD-support CI. Symbol + function are
+the MaizeGDB curated annotation; blank symbol = no curated symbol assigned in v5.
+
+```{r enzyme-table}
+et <- enz[, .(trait, chr,
+  `peak (Mb)` = peak_mb, LOD = lod, `CI (Mb)` = ci_mb,
+  `locus (v5)` = locus_id_v5, symbol, `enzyme / function` = enzyme_function
+)]
+knitr::kable(et, caption = sprintf(
+  "%d QTL×candidate rows; %d distinct enzymes (%d with a curated symbol).",
+  nrow(et), uniqueN(enz$locus_id_v5), uniqueN(enz[symbol != ""]$locus_id_v5)
+))
+```
+
+## LOD profiles by lipid class / ratio
+
+Each figure is one lipid class (or the ratios); coloured lines are the class's traits that carry a
+significant QTL, across the whole genome (all 10 chromosomes, TeoNAM cM). Dotted lines = each
+trait's 5% permutation threshold; red points = significant peaks. **Dashed grey verticals** mark the
+glycerolipid candidate enzyme loci in the QTL intervals, labelled by `gene_label` (the MaizeGDB
+symbol, or the assembly locus id `Zm00001eb…` when no symbol is assigned).
+
+```{r build-plot-data}
+# long LOD for significant traits only
+lodL <- melt(scan[, c("chr", "pos", sig_traits), with = FALSE],
+  id.vars = c("chr", "pos"), variable.name = "trait", value.name = "LOD"
+)
+lodL[, trait := as.character(trait)][, grp := lipid_class(trait)]
+
+# significant peaks (red points)
+pk <- summ[, .(trait, chr, pos = peak_cm, LOD = lod)][, grp := lipid_class(trait)]
+
+# candidate enzyme loci in the QTLs, placed on the TeoNAM cM axis; label = gene_label
+nat <- fread(here("data/teonam/teonam_v5_native.tsv"))
+bp2cm <- function(ch, bp) {
+  n <- nat[chr_v5 == ch & is.finite(cm)][order(pos_v5)]
+  if (nrow(n) < 2) NA_real_ else approx(n$pos_v5, n$cm, xout = bp, rule = 2)$y
+}
+cv5 <- fread(here("data/zeal/lipid_candidates_v5.tsv"))
+cv5[, mid := (as.numeric(start) + as.numeric(end)) / 2]
+ecand <- unique(enz[, .(locus = locus_id_v5, trait, chr, gene_label)])
+ecand[, grp := lipid_class(trait)]
+ecand <- merge(ecand, cv5[, .(locus = gene_v5, mid)], by = "locus", all.x = TRUE)
+ecand[, cm := mapply(bp2cm, chr, mid)]
+cand_grp <- unique(ecand[is.finite(cm), .(grp, chr, cm, gene_label)])
+
+groups <- unique(lodL$grp)
+groups <- groups[order(match(groups, c("DGDG", "MGDG", "DG", "PC", "PE", "PG", "PI", "SQDG", "LPC", "LPE", "ratio")))]
+```
+
+```{r lod-profiles, results='asis', fig.width=13, fig.height=6}
+for (g in groups) {
+  d <- lodL[grp == g]
+  trs <- sort(unique(d$trait))
+  thrg <- data.table(trait = trs, thr = thr5v[trs])
+  pkg <- pk[grp == g]
+  cl <- cand_grp[grp == g]
+  ytop <- max(d$LOD, na.rm = TRUE)
+  cat(sprintf("\n\n### %s — %s\n\n", g, paste(trs, collapse = ", ")))
+  p <- ggplot(d, aes(pos, LOD, colour = trait)) +
+    geom_vline(
+      data = cl, aes(xintercept = cm), inherit.aes = FALSE,
+      linetype = "dashed", colour = "grey55", linewidth = 0.3
+    ) +
+    geom_line(linewidth = 0.5) +
+    geom_hline(
+      data = thrg, aes(yintercept = thr, colour = trait),
+      linetype = "dotted", linewidth = 0.3, show.legend = FALSE
+    ) +
+    geom_point(data = pkg, aes(pos, LOD), colour = "red", size = 1.7, inherit.aes = FALSE) +
+    ggrepel::geom_text_repel(
+      data = cl, aes(x = cm, y = ytop * 1.12, label = gene_label), inherit.aes = FALSE,
+      size = 3.5, colour = "grey15", angle = 90, hjust = 0, direction = "x",
+      segment.size = 0.2, min.segment.length = 0, max.overlaps = Inf
+    ) +
+    expand_limits(y = ytop * 1.7) +
+    facet_grid(~chr, scales = "free_x", space = "free_x", switch = "x") +
+    labs(
+      x = "Chromosome (cM, TeoNAM JLM map)", y = "LOD", colour = "trait",
+      title = sprintf("ZEAL %s glycerolipid QTL — HK scanone, taxon covariate, 1000-perm 5%%", g),
+      subtitle = "dashed grey = candidate enzyme loci (label = MaizeGDB symbol, else assembly locus id)"
+    ) +
+    theme_classic(base_size = 12) +
+    theme(
+      axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+      panel.spacing = unit(0.05, "lines"), strip.placement = "outside",
+      strip.background = element_blank(), legend.position = "bottom"
+    ) +
+    scale_x_continuous(expand = c(0.01, 0))
+  print(p)
+  cat("\n")
+}
+```
+
+## Notes
+
+- The strongest peak overall — **MGDG_34_4 on chr8 (~80.6 Mb, LOD 23.3)** — has **no glycerolipid
+  candidate** in its CI: a novel locus or one acting through a gene outside the curated pathway set.
+- **`hpc1`** (Zm00001eb121780, ZmPLA1.2, patatin-like phospholipase A — the High-PC1 gene) sits under
+  the chr3 ~8 Mb **LPE** and **LPC_18_1** QTL: a phospholipase A1 producing lyso-phospholipids.
+- The chr10 ~147–152 Mb region is a recurrent hotspot across DGDG/PC/SQDG/DG/PE/PI species and the PI
+  sum; candidates there include a Tafazzin-family phospholipid acyltransferase (Zm00001eb433110), a
+  1-phosphatidylinositol 4-kinase (Zm00001eb433200), and `o7` (Zm00001eb434030).
+
+## `hpc1` QTL — allele effect plots
+
+`hpc1` (Zm00001eb121780, ZmPLA1.2, a patatin-like phospholipase A) is the glycerolipid candidate in
+the CI of the **LPE** and **LPC_18_1** QTL on chr3 (~8 Mb). The **first column is the whole ZEAL
+population** (all taxa pooled) allele effect; the remaining columns split it by donor taxon. Below is
+the phenotype (transformed normalized MS signal) by genotype class at each QTL's peak marker — `A/A` = B73, `A/B` = heterozygote, `B/B` = teosinte
+introgression — coloured by donor taxon. A phospholipase A1 releases lyso-phospholipids, so a
+teosinte-allele effect on LPE/LPC is the mechanistically expected direction.
+
+```{r hpc1-cross}
+# rebuild the joint cross (same csv the scan built) to pull genotypes at the peak markers
+crossL <- read.cross(
+  format = "csv", file = file.path(RQ, "zeal_lipid_cross.csv"),
+  genotypes = c("A", "H", "B"), alleles = c("A", "B"),
+  estimate.map = FALSE, BC.gen = 2, F.gen = 3
+)
+crossL <- jittermap(crossL)
+crossL <- calc.genoprob(crossL, step = 1, error.prob = 0.01, map.function = "haldane") # for fitqtl (HK)
+phe <- crossL$pheno
+gmat <- pull.geno(crossL)
+ssx <- fread(here("data/zeal/samplesheet_3way.csv"))[, .(pedigree, taxon)]
+
+hpc1_qtl <- summ[trait %in% c("LPE", "LPC_18_1"), .(trait, chr, marker, peak_cm, lod)]
+eff_one <- function(tr, mk) {
+  data.table(
+    trait = tr, marker = mk,
+    taxon = ssx[match(as.character(phe$id), pedigree), taxon],
+    geno = factor(c("A/A (B73)", "A/B", "B/B (teo)")[gmat[, mk]],
+      levels = c("A/A (B73)", "A/B", "B/B (teo)")
+    ),
+    y = as.numeric(phe[[tr]])
+  )[is.finite(y) & !is.na(geno)]
+}
+ed <- rbindlist(Map(eff_one, hpc1_qtl$trait, hpc1_qtl$marker))
+ed[, facet := sprintf("%s  (chr3 @ %s)", trait, marker)]
+```
+
+```{r hpc1-effect-plot, fig.width=14, fig.height=6}
+# First column = the WHOLE ZEAL population (all taxa pooled) allele-effect; the rest =
+# the per-taxon split. Black line/point = the panel's per-genotype mean ± SE across
+# A/A→A/B→B/B; points coloured by donor taxon; n at the base; estimate drawn only where n≥3.
+pal5 <- c(Zx = "#0571B0", Zv = "#E66101", Zl = "#008837", Zd = "#7B3294", Zh = "#C2A5CF")
+d0 <- ed[taxon %in% names(pal5)]
+taxa <- sort(unique(d0$taxon))
+dd <- rbind(copy(d0)[, panel := "All ZEAL"], copy(d0)[, panel := taxon]) # pooled + per-taxon copies
+dd[, panel := factor(panel, levels = c("All ZEAL", taxa))]
+stat <- dd[, .(mean = mean(y), se = sd(y) / sqrt(.N), n = .N), by = .(trait, panel, geno)]
+shown <- stat[n >= 3]
+ggplot(dd, aes(geno, y)) +
+  geom_jitter(aes(colour = taxon), width = 0.12, alpha = 0.15, size = 0.5) +
+  geom_line(data = shown, aes(y = mean, group = interaction(trait, panel)), colour = "black", linewidth = 0.7) +
+  geom_point(data = shown, aes(y = mean), colour = "black", size = 2.2) +
+  geom_errorbar(data = shown, aes(y = mean, ymin = mean - se, ymax = mean + se), colour = "black", width = 0.15) +
+  geom_text(data = stat, aes(label = n), y = -Inf, vjust = -0.6, size = 2.2, colour = "grey40") +
+  facet_grid(trait ~ panel, scales = "free_y") +
+  scale_colour_manual(values = pal5, name = "donor taxon") +
+  labs(
+    x = "genotype at the QTL peak marker (A/A = B73, A/B = het, B/B = teosinte)",
+    y = "log10 normalized MS signal (+1 count)",
+    title = "hpc1 (Zm00001eb121780) QTL — allele effect: whole ZEAL population (first column) then by taxon",
+    subtitle = "black = per-genotype mean ± SE; LPE (chr3 S3_7895212), LPC_18_1 (chr3 S3_8242637); n at base; estimate where n ≥ 3"
+  ) +
+  theme_bw(base_size = 11) +
+  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+```
+
+```{r hpc1-effect-table}
+# Effects from R/qtl fitqtl (Haley-Knott, the SAME model as the scan), at each QTL's peak
+# marker. Reports the additive (…a) and dominance (…d) effect estimates ± SE with Wald
+# p-values, plus the QTL's joint 2-df LOD and Pvalue(Chi2). All ZEAL = full cross + taxon
+# dummy covariates (as in the scan); each taxon = subset cross. a>0 = teosinte(B) allele
+# raises the log10 signal; d = het deviation. a/d shown only where all three genotype
+# classes have n≥3 (otherwise not separable — reported NA).
+tax_all <- ssx[match(as.character(crossL$pheno$id), pedigree), taxon]
+lv <- levels(factor(tax_all))
+cov_all <- as.data.frame(vapply(lv[-1], function(l) as.integer(tax_all == l), integer(length(tax_all))))
+names(cov_all) <- lv[-1]
+formA <- as.formula(paste("y ~ Q1 +", paste(names(cov_all), collapse = " + ")))
+one_fit <- function(cross, tr, mk, covar = NULL, formula = y ~ Q1) {
+  na_row <- data.table(add = NA_real_, add_SE = NA_real_, add_p = NA_real_, dom = NA_real_, dom_SE = NA_real_, dom_p = NA_real_, LOD = NA_real_, qtl_2df_p = NA_real_, n = "")
+  pc <- which(names(cross$pheno) == tr)
+  fin <- is.finite(cross$pheno[[pc]])
+  g <- pull.geno(cross)[fin, mk]
+  nAA <- sum(g == 1, na.rm = TRUE)
+  nAB <- sum(g == 2, na.rm = TRUE)
+  nBB <- sum(g == 3, na.rm = TRUE)
+  ncell <- sprintf("%d/%d/%d", nAA, nAB, nBB)
+  if (min(nAA, nAB, nBB) < 3) {
+    na_row[, n := ncell]
+    return(na_row)
+  }
+  pos <- find.markerpos(cross, mk)
+  q <- makeqtl(cross, chr = pos$chr, pos = pos$pos, what = "prob")
+  fit <- tryCatch(fitqtl(cross, pheno.col = pc, qtl = q, covar = covar, formula = formula, method = "hk", get.ests = TRUE, dropone = TRUE), error = function(e) NULL)
+  if (is.null(fit)) {
+    na_row[, n := ncell]
+    return(na_row)
+  }
+  s <- summary(fit)
+  E <- s$ests
+  dfE <- s$result.full["Error", "df"]
+  pit <- function(tt) if (is.na(tt)) NA_real_ else 2 * pt(-abs(tt), dfE)
+  A <- E[grep("@.*a$", rownames(E))[1], ]
+  D <- E[grep("@.*d$", rownames(E))[1], ]
+  data.table(
+    add = A["est"], add_SE = A["SE"], add_p = pit(A["t"]), dom = D["est"], dom_SE = D["SE"], dom_p = pit(D["t"]),
+    LOD = s$result.full["Model", "LOD"], qtl_2df_p = s$result.full["Model", "Pvalue(Chi2)"], n = ncell
+  )
+}
+efftab <- rbindlist(lapply(seq_len(nrow(hpc1_qtl)), function(i) {
+  tr <- hpc1_qtl$trait[i]
+  mk <- hpc1_qtl$marker[i]
+  rows <- list(cbind(data.table(trait = tr, panel = "All ZEAL"), one_fit(crossL, tr, mk, covar = cov_all, formula = formA)))
+  for (tx in lv) {
+    idx <- which(tax_all == tx)
+    if (length(idx) < 20) next
+    rows[[length(rows) + 1]] <- cbind(data.table(trait = tr, panel = tx), one_fit(subset(crossL, ind = idx), tr, mk))
+  }
+  rbindlist(rows, fill = TRUE)
+}), fill = TRUE)
+fmtp <- function(p) ifelse(is.na(p), "—", ifelse(p < 1e-3, formatC(p, format = "e", digits = 1), sprintf("%.3f", p)))
+nn <- c("add", "add_SE", "dom", "dom_SE", "LOD")
+efftab[, (nn) := lapply(.SD, function(x) round(as.numeric(x), 3)), .SDcols = nn]
+knitr::kable(efftab[order(trait, panel), .(
+  trait, panel,
+  `additive a` = add, `a SE` = add_SE, `a p` = fmtp(as.numeric(add_p)),
+  `dominance d` = dom, `d SE` = dom_SE, `d p` = fmtp(as.numeric(dom_p)),
+  LOD, `QTL 2df p` = fmtp(as.numeric(qtl_2df_p)), `n AA/AB/BB` = n
+)], caption = "hpc1 QTL — additive (a) and dominance (d) effects from R/qtl **fitqtl** (Haley-Knott, same model as the scan) at the chr3 peak marker: whole ZEAL population (taxon-covariate model) then each taxon. a = teosinte(B)-allele additive effect on the log10 signal; d = heterozygote deviation; p = Wald t-test; QTL 2df p = joint genotype test (Pvalue(Chi2)). a/d shown only where all three classes have n≥3.")
+```
