@@ -34,6 +34,24 @@ the Nirwan/Asher **200K** imputed set (196,120 SNPs, see the Inv4m section below
 **wideseq teosinte-informative** positions (~27.6 M; the `bzeahq_wideseq_chr*.vcf.gz`
 siblings in the same directory). Hence `HQ` = the high-quality intersection.
 
+### How the 200K set was called (Nirwan's VCF headers, 2024)
+
+Read from the VCF headers in `/rsstu/users/r/rrellan/DOE_CAREER/BZea/joint_genotype/all_samps/` (step folders
+`1_GVCFs` … `9_final_samples`; checked 2026-10-22, sample `PN10_SID865`):
+
+| step | command (from the headers) |
+|------|----------------------------|
+| 1. per sample | `HaplotypeCaller --emit-ref-confidence GVCF … --input PN10_SID865.bam`, BAMs from `DOE_CAREER/BZea/dedup_filtered/` |
+| 2. joint call | `CombineGVCFs`, then `GenotypeGVCFs` over all samples |
+| 7. site filter | `bcftools view -i 'INFO/DP>= 427.00 && INFO/DP<=1505 && QUAL>=70 && INFO/MQ>40 && INFO/QD>=0.75'` |
+| 9. clean-up | `bcftools view -m2 -M2` (biallelic), `bcftools norm -d all` (duplicates) |
+| `more_filtered` | MAF ≥ 0.05, then Beagle imputation (Asher) → `BZea_MAF_0.05_qfiltered_newnames_imputed.vcf.gz`; this step's command is not in the header (Beagle rewrote it) |
+| SNP50K | `bcftools view --threads 8 -R ../wideseq_ref/wideseq_all.pos -Oz -o HQ_BZEA.vcf.gz …imputed.vcf.gz` (2025-08-14, `HQ_BZEA.vcf.gz` header) |
+
+`INFO/DP` is the reads summed over all samples at a site (the joint call), so 427–1,505 is a cohort depth window;
+`INFO/MQ` is the site's mean mapping quality. HaplotypeCaller's read filters are cut off in the header line and not
+read.
+
 The pipeline is `bzeaseq/50K/main.nf` + `nextflow.config`. **Both count paths are pointed
 at the SAME `params.sites_vcf = HQ_BZEA.vcf.gz`, but they do different things with it**,
 which is the whole source of the 51,991-vs-49,002 confusion:
@@ -446,7 +464,8 @@ Inputs for `analysis/zeal-inv4m-rtiger-genotype.qmd` (genotype at PZE04175660223
   **Provenance (Nirwan DM 2025-08-15; a lineage SEPARATE from this repo's BzeaSeq/wideseq work,
   and not reproducible here):** Nirwan ran GATK HaplotypeCaller → joint genotyping on the ZEAL BAMs
   (`/rsstu/.../DOE_CAREER/BZea/joint_genotype/all_samps/9_final_samples/more_filtered/BZea.vcf.gz`,
-  raw, ~98% missing) → MAF ≥ 0.05 + quality filter + rename → **Beagle imputation by Asher (P.
+  raw, ~98% missing) → MAF ≥ 0.05 + quality filter (exact commands: "How the 200K set was called" above) + rename →
+  **Beagle imputation by Asher (P.
   Balint-Kurti's lab)** → `BZea_MAF_0.05_qfiltered_newnames_imputed.vcf.gz` (196,120 SNPs) → RTIGER.
   These RTIGER *calls* are **excluded from the release** (Beagle-imputed input, no pipeline on hand to
   reproduce them; regenerate with recalibrated RTIGER on the SNP50K side if ever needed).
