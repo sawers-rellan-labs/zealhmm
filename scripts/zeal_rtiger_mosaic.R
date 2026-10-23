@@ -4,8 +4,8 @@
 # LB-Impute mosaic, which under-called teosinte ~8x — see agent/zeal_dta_repro_plan.md).
 #
 # Reproduce-don't-approximate: use the EXISTING, validated per-accession rtiger-SNP50K
-# calls from zealtiger (fit_rtiger_by_donor.R, rigidity=8 autotune pick on the SNP50K
-# sim, benchmarked on real NILs) rather than a fresh sim calibration. Those calls are
+# calls from zealtiger (fit_rtiger_by_donor.R, rigidity 3: zealtiger agent/fit_all_82.log,
+# all 82 fits' @params$rigidity) rather than a fresh sim calibration. Those calls are
 # ancestry SEGMENTS (name, chr, start_bp, end_bp, state 0/1/2); here we back-project them
 # onto the full SNP50K marker grid to get the marker x line state matrix used by the GWAS.
 # Presence (het+teo) ~10.7% matches the established BzeaSeq block estimate (~10.1%).
